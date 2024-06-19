@@ -32,7 +32,7 @@ export default function Nav({ openNav, onCloseNav }) {
   const upLg = useResponsive('up', 'lg');
 
   const userImage = localStorage.getItem('user_image');
-   const userName = localStorage.getItem('user_name');
+  const userName = localStorage.getItem('user_name');
   useEffect(() => {
     if (openNav) {
       onCloseNav();

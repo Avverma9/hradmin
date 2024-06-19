@@ -1,8 +1,12 @@
+import axios from 'axios';
 import { faker } from '@faker-js/faker';
+import { useState, useEffect } from 'react';
 
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
+
+import { localUrl } from 'src/utils/util';
 
 import Iconify from 'src/components/iconify';
 
@@ -19,6 +23,22 @@ import AppConversionRates from '../app-conversion-rates';
 // ----------------------------------------------------------------------
 
 export default function AppView() {
+const [hotelCount,setHotelCount] = useState("")
+const [bookingCount, setBookingCount] = useState('');
+  const bookingDetails = async()=>{
+    const response = await axios.get(`${localUrl}/get-all/bookings-count`);
+    setBookingCount(response.data);
+  }
+    const Hoteldetails = async () => {
+      const response = await axios.get(`${localUrl}/get-all/bookings-count`);
+      setHotelCount(response.data);
+    };
+  useEffect(()=>{
+    bookingDetails();
+    Hoteldetails()
+  },[])
+
+  console.log(hotelCount);
   return (
     <Container maxWidth="xl">
       <Typography variant="h4" sx={{ mb: 5 }}>
@@ -28,8 +48,8 @@ export default function AppView() {
       <Grid container spacing={3}>
         <Grid xs={12} sm={6} md={3}>
           <AppWidgetSummary
-            title="Weekly Sales"
-            total={714000}
+            title="Total Bookings"
+            total={bookingCount}
             color="success"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_bag.png" />}
           />
@@ -46,8 +66,8 @@ export default function AppView() {
 
         <Grid xs={12} sm={6} md={3}>
           <AppWidgetSummary
-            title="Item Orders"
-            total={1723315}
+            title="Total Listed Hotels"
+            total={hotelCount}
             color="warning"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_buy.png" />}
           />
