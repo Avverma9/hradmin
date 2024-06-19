@@ -19,13 +19,32 @@ const navConfig = [
   },
   {
     title: 'Hotels',
-    path: '/hotels',
     icon: icon('ic_cart'),
+    children: [
+      {
+        title: 'All Hotels',
+        path: '/hotels',
+      },
+      {
+        title: 'Add Hotel',
+        path: '/hotels/add',
+      },
+    ],
   },
   {
     title: 'blog',
     path: '/blog',
     icon: icon('ic_blog'),
+    children: [
+      {
+        title: 'All Posts',
+        path: '/blog/all',
+      },
+      {
+        title: 'Add Post',
+        path: '/blog/add',
+      },
+    ],
   },
   {
     title: 'login',

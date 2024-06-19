@@ -85,7 +85,10 @@ export default function UserTableRow({
           <Iconify icon="eva:edit-fill" sx={{ mr: 2 }} />
           Edit
         </MenuItem>
-
+        <MenuItem onClick={handleEditClick}>
+          <Iconify icon="eva:eye-fill" sx={{ mr: 2 }} />
+          View
+        </MenuItem>
         <MenuItem
           onClick={() => {
             handleDelete();

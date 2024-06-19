@@ -15,7 +15,8 @@ import {
   TablePagination,
 } from '@mui/material';
 
-import { localUrl } from 'src/utils/util';
+import  { localUrl } from 'src/utils/util';
+import LinearLoader from 'src/utils/Loading';
 
 import EditUserModal from './edit-modal';
 import TableNoData from '../table-no-data';
@@ -164,9 +165,13 @@ export default function UserPage() {
 
   const notFound = !dataFiltered.length && !!filterName;
 
-  if (loading) {
-    return <Typography>Loading...</Typography>;
-  }
+   if (loading) {
+     return (
+       <Container>
+         <LinearLoader />
+       </Container>
+     );
+   }
 
   if (error) {
     return <Typography>Error: {error.message}</Typography>;

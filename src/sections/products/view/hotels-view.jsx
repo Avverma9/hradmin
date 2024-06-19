@@ -10,21 +10,23 @@ import { localUrl } from 'src/utils/util';
 import ProductCard from '../hotel-card';
 import ProductSort from '../product-sort';
 import ProductFilters from '../product-filters';
-import ProductCartWidget from '../product-cart-widget';
+
 // ----------------------------------------------------------------------
 
 export default function ProductsView() {
   const [openFilter, setOpenFilter] = useState(false);
-
   const [data, setData] = useState([]);
+
   useEffect(() => {
     getAllHotels();
   }, []);
+
   const getAllHotels = async () => {
     const response = await fetch(`${localUrl}/get/all/hotels`);
     const res = await response.json();
     setData(res.data);
   };
+
   const handleOpenFilter = () => {
     setOpenFilter(true);
   };
@@ -64,8 +66,6 @@ export default function ProductsView() {
           </Grid>
         ))}
       </Grid>
-
-      <ProductCartWidget />
     </Container>
   );
 }
