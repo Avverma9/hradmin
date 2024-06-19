@@ -21,11 +21,12 @@ import EditUserModal from './edit-modal';
 import TableNoData from '../table-no-data';
 import UserTableRow from '../user-table-row';
 import UserTableHead from '../user-table-head';
+import AddUserModal from './add-partner-modal';
 import TableEmptyRows from '../table-empty-rows';
 import UserTableToolbar from '../user-table-toolbar';
 import Iconify from '../../../components/iconify/iconify';
 import Scrollbar from '../../../components/scrollbar/scrollbar';
-import { emptyRows, applyFilter, getComparator } from '../utils'; // Import the EditUserModal component
+import { emptyRows, applyFilter, getComparator } from '../utils';
 
 export default function UserPage() {
   const [page, setPage] = useState(0);
@@ -37,10 +38,13 @@ export default function UserPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [editUser, setEditUser] = useState(null); // State to manage currently editing user
-  const [editModalOpen, setEditModalOpen] = useState(false); // State to manage modal open/close
+  const [editUser, setEditUser] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [refresh, setRefresh] = useState(false); // State to manage refresh
 
   useEffect(() => {
+    setLoading(true);
     fetch(`${localUrl}/login/dashboard/get/all/user`)
       .then((res) => res.json())
       .then((data) => {
@@ -51,13 +55,19 @@ export default function UserPage() {
         setError(error);
         setLoading(false);
       });
-  }, []);
+  }, [refresh]); // Re-fetch data when refresh state changes
 
   const handleEdit = (user) => {
     setEditUser(user);
     setEditModalOpen(true);
   };
 
+  const handleAddModal = (newUser) => {
+    setAddModalOpen(true);
+  };
+  const handleCloseAddModal = (newUser) => {
+    setAddModalOpen(false);
+  };
   const handleCloseEditModal = () => {
     setEditUser(null);
     setEditModalOpen(false);
@@ -66,15 +76,22 @@ export default function UserPage() {
   const handleSubmitEdit = async (updatedUser) => {
     try {
       const response = await axios.patch(
-        `${localUrl}/update/dashboard/updated/partner${updatedUser._id}`,
+        `${localUrl}/update/dashboard/updated/partner/${updatedUser._id}`,
         updatedUser
       );
       if (response.status === 200) {
-        // Update users list with updated user
-        const updatedUsers = users.map((user) =>
-          user._id === updatedUser._id ? { ...user, ...updatedUser } : user
-        );
-        setUsers(updatedUsers);
+        setRefresh((prev) => !prev); // Trigger refresh
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+    }
+  };
+
+  const handleAdd = async (newUser) => {
+    try {
+      const response = await axios.patch(`${localUrl}/create/dashboard/user`, newUser);
+      if (response.status === 201) {
+        setRefresh((prev) => !prev); // Trigger refresh
       }
     } catch (error) {
       console.error('Error updating user:', error);
@@ -85,8 +102,7 @@ export default function UserPage() {
     try {
       const response = await axios.delete(`${localUrl}/delete/dashboard/delete/partner/${id}`);
       if (response.status === 200) {
-        // Assuming response.data is updated users list after deletion
-        setUsers(response.data);
+        setRefresh((prev) => !prev); // Trigger refresh
       }
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -159,9 +175,14 @@ export default function UserPage() {
   return (
     <Container>
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-        <Typography variant="h4">Users</Typography>
+        <Typography variant="h4">Dashboard Partners</Typography>
 
-        <Button variant="contained" color="inherit" startIcon={<Iconify icon="eva:plus-fill" />}>
+        <Button
+          variant="contained"
+          color="inherit"
+          onClick={handleAddModal}
+          startIcon={<Iconify icon="eva:plus-fill" />}
+        >
           New User
         </Button>
       </Stack>
@@ -200,7 +221,7 @@ export default function UserPage() {
                       name={row.name}
                       mobile={row.mobile}
                       email={row.email}
-                      status={row.status}
+                      status={row?.status === true ? 'active' : 'inactive'}
                       avatarUrl={row.avatarUrl || row.images}
                       selected={selected.indexOf(row.name) !== -1}
                       handleClick={(event) => handleClick(event, row.name)}
@@ -230,7 +251,7 @@ export default function UserPage() {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Card>
-
+      <AddUserModal open={addModalOpen} onClose={handleCloseAddModal} onSubmit={handleAdd} />
       {/* Edit User Modal */}
       <EditUserModal
         open={editModalOpen}

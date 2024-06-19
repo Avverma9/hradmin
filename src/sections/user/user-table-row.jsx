@@ -61,7 +61,7 @@ export default function UserTableRow({
         <TableCell>{email}</TableCell>
 
         <TableCell>
-          <Label color={status === 'Active' ? 'success' : 'error'}>{status}</Label>
+          <Label color={status === true ? 'success' : 'error'}>{status}</Label>
         </TableCell>
 
         <TableCell align="right">

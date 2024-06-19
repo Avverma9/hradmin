@@ -1,22 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 
-import { products } from 'src/_mock/products';
+import { localUrl } from 'src/utils/util';
 
-import ProductCard from '../product-card';
+import ProductCard from '../hotel-card';
 import ProductSort from '../product-sort';
 import ProductFilters from '../product-filters';
 import ProductCartWidget from '../product-cart-widget';
-
 // ----------------------------------------------------------------------
 
 export default function ProductsView() {
   const [openFilter, setOpenFilter] = useState(false);
 
+  const [data, setData] = useState([]);
+  useEffect(() => {
+    getAllHotels();
+  }, []);
+  const getAllHotels = async () => {
+    const response = await fetch(`${localUrl}/get/all/hotels`);
+    const res = await response.json();
+    setData(res.data);
+  };
   const handleOpenFilter = () => {
     setOpenFilter(true);
   };
@@ -28,7 +36,7 @@ export default function ProductsView() {
   return (
     <Container>
       <Typography variant="h4" sx={{ mb: 5 }}>
-        Products
+        Hotels
       </Typography>
 
       <Stack
@@ -50,8 +58,8 @@ export default function ProductsView() {
       </Stack>
 
       <Grid container spacing={3}>
-        {products.map((product) => (
-          <Grid key={product.id} xs={12} sm={6} md={3}>
+        {data.map((product) => (
+          <Grid key={product._id} xs={12} sm={6} md={3}>
             <ProductCard product={product} />
           </Grid>
         ))}

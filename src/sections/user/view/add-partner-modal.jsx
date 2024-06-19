@@ -14,35 +14,43 @@ import {
   DialogContent,
 } from '@mui/material';
 
-export default function EditUserModal({ open, onClose, user, onSubmit }) {
-  const [name, setName] = useState(user.name || '');
-  const [mobile, setMobile] = useState(user.mobile || '');
-  const [email, setEmail] = useState(user.email || '');
-  const [status, setStatus] = useState(user.status || '');
+export default function AddUserModal({ open, onClose, onSubmit }) {
+  const [name, setName] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState('');
+  const [images, setImages] = useState([]);
 
   const handleSubmit = () => {
-    // Prepare updated user object
-    const updatedUser = {
-      ...user,
+    // Prepare new user object
+    const newUser = {
       name,
       mobile,
       email,
-      status,
+      status: status === 'active',
+      images,
     };
 
-    onSubmit(updatedUser); // Pass updated user object to onSubmit function
+    onSubmit(newUser); // Pass new user object to onSubmit function
     onClose(); // Close modal
   };
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Edit User</DialogTitle>
+      <DialogTitle>Add User</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
           margin="dense"
+          label="Profile Picture URL"
+          fullWidth
+          value={images}
+          onChange={(e) => setImages(e.target.value)}
+        />
+        <TextField
+          autoFocus
+          margin="dense"
           label="Name"
-          placeholder={user?.name}
           fullWidth
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -50,7 +58,6 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
         <TextField
           margin="dense"
           label="Mobile"
-          placeholder={user?.mobile}
           fullWidth
           value={mobile}
           onChange={(e) => setMobile(e.target.value)}
@@ -58,7 +65,6 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
         <TextField
           margin="dense"
           label="Email"
-          placeholder={user?.email}
           fullWidth
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -66,9 +72,6 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
         <FormControl fullWidth margin="dense">
           <InputLabel>Status</InputLabel>
           <Select value={status} onChange={(e) => setStatus(e.target.value)} label="Status">
-            <MenuItem disabled value="">
-              Previous status: {user?.status === true ? 'Active' : 'Inactive'}
-            </MenuItem>
             <MenuItem value>Active</MenuItem>
             <MenuItem value={false}>Inactive</MenuItem>
           </Select>
@@ -79,16 +82,15 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
           Cancel
         </Button>
         <Button onClick={handleSubmit} color="primary">
-          Save Changes
+          Add User
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
 
-EditUserModal.propTypes = {
+AddUserModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  user: PropTypes.object.isRequired,
   onSubmit: PropTypes.func.isRequired,
 };
