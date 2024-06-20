@@ -26,6 +26,10 @@ const navConfig = [
         path: '/hotels',
       },
       {
+        title: 'Your Hotel',
+        path: '/hotels/list',
+      },
+      {
         title: 'Add Hotel',
         path: '/hotels/add',
       },
@@ -47,14 +51,21 @@ const navConfig = [
     ],
   },
   {
-    title: 'login',
-    path: '/login',
-    icon: icon('ic_lock.svg'),
-  },
-  {
-    title: 'Not found',
-    path: '/404',
-    icon: icon('ic_disabled.svg'),
+    title: 'Site Settings',
+    icon: icon('settings-svgrepo-com.svg'),
+    children: [
+      {
+        title: 'Add travel location',
+        path: '/add-travel-location',
+        icon: icon('add-square-svgrepo-com.svg'),
+      },
+      {
+        title: 'Change banner',
+        path: '/change-banner',
+        icon: icon('sync-svgrepo-com.svg'),
+      },
+     
+    ],
   },
 ];
 
