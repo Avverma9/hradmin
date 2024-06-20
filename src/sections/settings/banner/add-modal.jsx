@@ -28,7 +28,7 @@ const AddBannerModal = ({ open, handleClose, fetchBanners }) => {
     formData.append('description', description);
 
     try {
-      const response = await axios.post(`${localUrl}/add/second/carousel`, formData, {
+      const response = await axios.post(`${localUrl}/create/second/carousel`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
