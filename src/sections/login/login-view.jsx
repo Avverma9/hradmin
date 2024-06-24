@@ -38,12 +38,13 @@ export default function LoginView() {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.post(`${localUrl}/auth/login/new-admin/page`, {
+      const response = await axios.post(`${localUrl}/login/dashboard/user`, {
         email,
         password,
       });
       if (response.status === 200) {
         localStorage.setItem('user_id', response.data.loggedUserId);
+        localStorage.setItem('user_role', response.data.loggedUserRole);
         localStorage.setItem('user_email', response.data.loggedUserEmail);
         localStorage.setItem('user_image', response.data.loggedUserImage);
         localStorage.setItem('user_name', response.data.loggedUserName);

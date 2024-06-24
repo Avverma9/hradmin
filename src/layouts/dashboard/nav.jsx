@@ -33,6 +33,15 @@ export default function Nav({ openNav, onCloseNav }) {
 
   const userImage = localStorage.getItem('user_image');
   const userName = localStorage.getItem('user_name');
+  const userRole = localStorage.getItem('user_role');
+
+  const capitalizeFirstLetter = (string) => {
+    if (!string) return '';
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
+  const displayName = capitalizeFirstLetter(
+    userRole === 'superAdmin' ? 'Super Admin' : userRole || account.displayName
+  );
   useEffect(() => {
     if (openNav) {
       onCloseNav();
@@ -57,7 +66,9 @@ export default function Nav({ openNav, onCloseNav }) {
 
       <Box sx={{ ml: 2 }}>
         <Typography variant="subtitle2">{userName || account.displayName}</Typography>
-
+        <Typography variant="subtitle2">
+          {displayName}
+        </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           {account.role}
         </Typography>

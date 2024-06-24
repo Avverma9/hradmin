@@ -90,7 +90,7 @@ export default function UserPage() {
 
   const handleAdd = async (newUser) => {
     try {
-      const response = await axios.patch(`${localUrl}/create/dashboard/user`, newUser);
+      const response = await axios.post(`${localUrl}/create/dashboard/user`, newUser);
       if (response.status === 201) {
         setRefresh((prev) => !prev); // Trigger refresh
       }

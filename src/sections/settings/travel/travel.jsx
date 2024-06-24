@@ -136,7 +136,7 @@ const TravelLocation = () => {
                 <td>
                   <button
                     type="button"
-                    className="btn btn-danger"
+                    className="btn btn-primary btn-xs"
                     onClick={() => handleDelete(row.id)}
                   >
                     Delete
