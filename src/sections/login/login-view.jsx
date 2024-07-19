@@ -52,6 +52,7 @@ export default function LoginView() {
       }
     } catch (error) {
       console.error('Login failed:', error);
+      alert("Login failed ! Please check your username and password")
     } finally {
       setLoading(false);
     }

@@ -9,9 +9,12 @@ import InputAdornment from '@mui/material/InputAdornment';
 
 import Iconify from 'src/components/iconify';
 
-// ----------------------------------------------------------------------
+export default function UserTableToolbar({ numSelected, filterName, onFilterName, onExport }) {
+  const handleExport = () => {
+    // Call your export function here, e.g., exportToExcel()
+    onExport(); // Example function call, replace with actual export logic
+  };
 
-export default function UserTableToolbar({ numSelected, filterName, onFilterName }) {
   return (
     <Toolbar
       sx={{
@@ -46,9 +49,9 @@ export default function UserTableToolbar({ numSelected, filterName, onFilterName
       )}
 
       {numSelected > 0 ? (
-        <Tooltip title="Delete">
-          <IconButton>
-            <Iconify icon="eva:trash-2-fill" />
+        <Tooltip title="Export to Excel">
+          <IconButton onClick={handleExport}>
+            <Iconify icon="eva:download-outline" />
           </IconButton>
         </Tooltip>
       ) : (
@@ -66,4 +69,5 @@ UserTableToolbar.propTypes = {
   numSelected: PropTypes.number,
   filterName: PropTypes.string,
   onFilterName: PropTypes.func,
+  onExport: PropTypes.func,
 };

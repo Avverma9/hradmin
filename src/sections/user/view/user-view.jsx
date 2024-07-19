@@ -1,7 +1,6 @@
 /* eslint-disable no-shadow */
-/* eslint-disable import/no-extraneous-dependencies */
 import axios from 'axios';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import {
   Card,
@@ -15,8 +14,12 @@ import {
   TablePagination,
 } from '@mui/material';
 
-import  { localUrl } from 'src/utils/util';
+import { localUrl } from 'src/utils/util';
 import LinearLoader from 'src/utils/Loading';
+import { exportToExcel } from 'src/utils/exportFunction';
+
+import Iconify from 'src/components/iconify/iconify';
+import Scrollbar from 'src/components/scrollbar/scrollbar';
 
 import EditUserModal from './edit-modal';
 import TableNoData from '../table-no-data';
@@ -25,9 +28,7 @@ import UserTableHead from '../user-table-head';
 import AddUserModal from './add-partner-modal';
 import TableEmptyRows from '../table-empty-rows';
 import UserTableToolbar from '../user-table-toolbar';
-import Iconify from '../../../components/iconify/iconify';
-import Scrollbar from '../../../components/scrollbar/scrollbar';
-import { emptyRows, applyFilter, getComparator } from '../utils';
+import { emptyRows, applyFilter, getComparator } from '../utils'; // Import export function
 
 export default function UserPage() {
   const [page, setPage] = useState(0);
@@ -63,12 +64,14 @@ export default function UserPage() {
     setEditModalOpen(true);
   };
 
-  const handleAddModal = (newUser) => {
+  const handleAddModal = () => {
     setAddModalOpen(true);
   };
-  const handleCloseAddModal = (newUser) => {
+
+  const handleCloseAddModal = () => {
     setAddModalOpen(false);
   };
+
   const handleCloseEditModal = () => {
     setEditUser(null);
     setEditModalOpen(false);
@@ -95,7 +98,7 @@ export default function UserPage() {
         setRefresh((prev) => !prev); // Trigger refresh
       }
     } catch (error) {
-      console.error('Error updating user:', error);
+      console.error('Error adding user:', error);
     }
   };
 
@@ -148,8 +151,8 @@ export default function UserPage() {
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setPage(0);
     setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   const handleFilterByName = (event) => {
@@ -165,13 +168,18 @@ export default function UserPage() {
 
   const notFound = !dataFiltered.length && !!filterName;
 
-   if (loading) {
-     return (
-       <Container>
-         <LinearLoader />
-       </Container>
-     );
-   }
+  // Function to export data to Excel using the utility function
+  const handleExport = () => {
+    // Implement export logic here, e.g., exporting `users` data
+    exportToExcel(users);
+  };
+  if (loading) {
+    return (
+      <Container>
+        <LinearLoader />
+      </Container>
+    );
+  }
 
   if (error) {
     return <Typography>Error: {error.message}</Typography>;
@@ -197,6 +205,7 @@ export default function UserPage() {
           numSelected={selected.length}
           filterName={filterName}
           onFilterName={handleFilterByName}
+          onExport={handleExport}
         />
 
         <Scrollbar>

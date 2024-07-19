@@ -11,7 +11,6 @@ import Header from './header';
 
 export default function DashboardLayout({ children }) {
   const [openNav, setOpenNav] = useState(false);
-
   return (
     <>
       <Header onOpenNav={() => setOpenNav(true)} />
