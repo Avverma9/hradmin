@@ -23,26 +23,27 @@ import AppConversionRates from '../app-conversion-rates';
 // ----------------------------------------------------------------------
 
 export default function AppView() {
-const [hotelCount,setHotelCount] = useState("")
-const [bookingCount, setBookingCount] = useState('');
-  const bookingDetails = async()=>{
+  const [hotelCount, setHotelCount] = useState('');
+  const [bookingCount, setBookingCount] = useState('');
+  const bookingDetails = async () => {
     const response = await axios.get(`${localUrl}/get-all/bookings-count`);
     setBookingCount(response.data);
-  }
-    const Hoteldetails = async () => {
-      const response = await axios.get(`${localUrl}/get-all/bookings-count`);
-      setHotelCount(response.data);
-    };
-  useEffect(()=>{
+  };
+  const Hoteldetails = async () => {
+    const response = await axios.get(`${localUrl}/get-all/bookings-count`);
+    setHotelCount(response.data);
+  };
+  useEffect(() => {
     bookingDetails();
-    Hoteldetails()
-  },[])
+    Hoteldetails();
+  }, []);
 
   console.log(hotelCount);
+  const name = localStorage.getItem('user_name');
   return (
     <Container maxWidth="xl">
       <Typography variant="h4" sx={{ mb: 5 }}>
-        Hi, Welcome back 👋
+        Hi, Welcome back 👋 {name}
       </Typography>
 
       <Grid container spacing={3}>
