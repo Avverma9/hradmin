@@ -29,6 +29,7 @@ import AddUserModal from './add-partner-modal';
 import TableEmptyRows from '../table-empty-rows';
 import UserTableToolbar from '../user-table-toolbar';
 import { emptyRows, applyFilter, getComparator } from '../utils'; // Import export function
+import ViewUserModal from './view-user-modal';
 
 export default function UserPage() {
   const [page, setPage] = useState(0);
@@ -41,7 +42,9 @@ export default function UserPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editUser, setEditUser] = useState(null);
+  const [viewUser, setViewUser] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [refresh, setRefresh] = useState(false); // State to manage refresh
 
@@ -64,6 +67,10 @@ export default function UserPage() {
     setEditModalOpen(true);
   };
 
+  const handleView = (user) => {
+    setViewUser(user);
+    setViewModalOpen(true);
+  };
   const handleAddModal = () => {
     setAddModalOpen(true);
   };
@@ -76,7 +83,10 @@ export default function UserPage() {
     setEditUser(null);
     setEditModalOpen(false);
   };
-
+  const handleCloseViewModal = () => {
+    setViewUser(null);
+    setViewModalOpen(false);
+  };
   const handleSubmitEdit = async (updatedUser) => {
     try {
       const response = await axios.patch(
@@ -241,6 +251,7 @@ export default function UserPage() {
                       handleClick={(event) => handleClick(event, row.name)}
                       handleDelete={() => handleDelete(row._id)} // Pass handleDelete function to delete button
                       handleEdit={() => handleEdit(row)} // Pass handleEdit function to edit button
+                      handleView={() => handleView(row)} // Pass handleView function to view button
                     />
                   ))}
 
@@ -271,6 +282,12 @@ export default function UserPage() {
         open={editModalOpen}
         onClose={handleCloseEditModal}
         user={editUser || {}} // Pass empty object if editUser is null
+        onSubmit={handleSubmitEdit}
+      />
+      <ViewUserModal
+        open={viewModalOpen}
+        onClose={handleCloseViewModal}
+        user={viewUser || {}} // Pass empty object if editUser is null
         onSubmit={handleSubmitEdit}
       />
     </Container>

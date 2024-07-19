@@ -24,6 +24,7 @@ export default function UserTableRow({
   handleClick,
   handleDelete,
   handleEdit, // Receive handleEdit as prop
+  handleView
 }) {
   const [open, setOpen] = useState(null);
 
@@ -39,7 +40,10 @@ export default function UserTableRow({
     handleEdit(); // Invoke handleEdit function passed as prop
     handleCloseMenu(); // Close the menu after triggering edit action
   };
-
+  const handleViewClick = () => {
+    handleView(); // Invoke handleEdit function passed as prop
+    handleCloseMenu(); // Close the menu after triggering edit action
+  };
   return (
     <>
       <TableRow hover tabIndex={-1} role="checkbox" selected={selected}>
@@ -85,7 +89,7 @@ export default function UserTableRow({
           <Iconify icon="eva:edit-fill" sx={{ mr: 2 }} />
           Edit
         </MenuItem>
-        <MenuItem onClick={handleEditClick}>
+        <MenuItem onClick={handleViewClick}>
           <Iconify icon="eva:eye-fill" sx={{ mr: 2 }} />
           View
         </MenuItem>
@@ -114,4 +118,5 @@ UserTableRow.propTypes = {
   handleClick: PropTypes.func.isRequired,
   handleDelete: PropTypes.func.isRequired,
   handleEdit: PropTypes.func.isRequired, // Ensure handleEdit is defined as a function prop
+  handleView: PropTypes.func.isRequired, // Ensure handleView is defined as a function prop
 };
