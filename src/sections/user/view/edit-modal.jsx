@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { useState, useEffect } from 'react';
 
 import {
   Box,
@@ -18,17 +18,6 @@ import {
 } from '@mui/material';
 
 export default function EditUserModal({ open, onClose, user, onSubmit }) {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    mobile: '',
-    address: '',
-    password: '',
-    role: '',
-    status: '',
-    images: null,
-    imageUrl: '',
-  });
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -40,18 +29,40 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
       setFormData((prev) => ({ ...prev, images: file, imageUrl: URL.createObjectURL(file) }));
     }
   };
-  const handleSubmit = () => {
-    const updatedUser = new FormData();
-    updatedUser.append('name', formData.name);
-    updatedUser.append('email', formData.email);
-    updatedUser.append('mobile', formData.mobile);
-    updatedUser.append('address', formData.address);
-    updatedUser.append('password', formData.password);
-    updatedUser.append('role', formData.role);
-    updatedUser.append('status', formData.status);
-    if (formData.images) {
-      updatedUser.append('images', formData.images);
+  const [formData, setFormData] = useState({
+    _id: '',
+    name: '',
+    email: '',
+    mobile: '',
+    address: '',
+    password: '',
+    role: '',
+    status: '',
+    images: null,
+    imageUrl: '',
+  });
+
+  useEffect(() => {
+    // Populate formData when user prop changes (on modal open)
+    if (user) {
+      setFormData({
+        _id: user._id,
+      });
     }
+  }, [user]);
+
+  const handleSubmit = () => {
+    const updatedUser = {
+      _id: formData._id,
+      name: formData.name,
+      email: formData.email,
+      mobile: formData.mobile,
+      address: formData.address,
+      password: formData.password,
+      role: formData.role,
+      status: formData.status,
+      images: formData.images,
+    };
     onSubmit(updatedUser);
     onClose();
   };

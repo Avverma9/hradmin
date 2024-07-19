@@ -1,5 +1,7 @@
 /* eslint-disable no-shadow */
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import React, { useState, useEffect } from 'react';
 
 import {
@@ -24,12 +26,12 @@ import Scrollbar from 'src/components/scrollbar/scrollbar';
 import EditUserModal from './edit-modal';
 import TableNoData from '../table-no-data';
 import UserTableRow from '../user-table-row';
+import ViewUserModal from './view-user-modal';
 import UserTableHead from '../user-table-head';
 import AddUserModal from './add-partner-modal';
 import TableEmptyRows from '../table-empty-rows';
 import UserTableToolbar from '../user-table-toolbar';
-import { emptyRows, applyFilter, getComparator } from '../utils'; // Import export function
-import ViewUserModal from './view-user-modal';
+import { emptyRows, applyFilter, getComparator } from '../utils';
 
 export default function UserPage() {
   const [page, setPage] = useState(0);
@@ -50,17 +52,19 @@ export default function UserPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${localUrl}/login/dashboard/get/all/user`)
-      .then((res) => res.json())
-      .then((data) => {
-        setUsers(data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        setError(error);
-        setLoading(false);
-      });
+    fetchUsers(); // Fetch users on component mount and refresh
   }, [refresh]); // Re-fetch data when refresh state changes
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get(`${localUrl}/login/dashboard/get/all/user`);
+      setUsers(response.data);
+      setLoading(false);
+    } catch (error) {
+      setError(error);
+      setLoading(false);
+    }
+  };
 
   const handleEdit = (user) => {
     setEditUser(user);
@@ -71,6 +75,7 @@ export default function UserPage() {
     setViewUser(user);
     setViewModalOpen(true);
   };
+
   const handleAddModal = () => {
     setAddModalOpen(true);
   };
@@ -83,21 +88,28 @@ export default function UserPage() {
     setEditUser(null);
     setEditModalOpen(false);
   };
+
   const handleCloseViewModal = () => {
     setViewUser(null);
     setViewModalOpen(false);
   };
+
   const handleSubmitEdit = async (updatedUser) => {
     try {
+      setLoading(true);
       const response = await axios.patch(
         `${localUrl}/update/dashboard/updated/partner/${updatedUser._id}`,
         updatedUser
       );
       if (response.status === 200) {
+        toast.success('Successfully updated');
         setRefresh((prev) => !prev); // Trigger refresh
+        setLoading(false);
       }
     } catch (error) {
       console.error('Error updating user:', error);
+      toast.error('Something went wrong !', error);
+      setLoading(false);
     }
   };
 
@@ -105,10 +117,11 @@ export default function UserPage() {
     try {
       const response = await axios.post(`${localUrl}/create/dashboard/user`, newUser);
       if (response.status === 201) {
+        toast.success('Successfully added');
         setRefresh((prev) => !prev); // Trigger refresh
       }
     } catch (error) {
-      console.error('Error adding user:', error);
+      toast.error('Something went wrong!',error);
     }
   };
 
@@ -116,10 +129,11 @@ export default function UserPage() {
     try {
       const response = await axios.delete(`${localUrl}/delete/dashboard/delete/partner/${id}`);
       if (response.status === 200) {
+        toast.success('Successfully deleted');
         setRefresh((prev) => !prev); // Trigger refresh
       }
     } catch (error) {
-      console.error('Error deleting user:', error);
+      toast.warning('Something went wrong!', error);
     }
   };
 
@@ -183,6 +197,26 @@ export default function UserPage() {
     // Implement export logic here, e.g., exporting `users` data
     exportToExcel(users);
   };
+
+  // Function to handle status change using API
+  const handleStatusChange = async (userId, currentStatus) => {
+    try {
+      const newStatus = !currentStatus; // Toggle the current status
+      const response = await axios.put(`${localUrl}/update/dashboard/user-status/${userId}`, {
+        status: newStatus,
+      });
+      if (response.status === 200) {
+        // Update local users state
+        const updatedUsers = users.map((user) =>
+          user._id === userId ? { ...user, status: newStatus } : user
+        );
+        setUsers(updatedUsers);
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  };
+
   if (loading) {
     return (
       <Container>
@@ -245,13 +279,15 @@ export default function UserPage() {
                       name={row.name}
                       mobile={row.mobile}
                       email={row.email}
-                      status={row?.status === true ? 'active' : 'inactive'}
+                      status={row?.status ? 'Active' : 'Inactive'}
                       avatarUrl={row.avatarUrl || row.images}
                       selected={selected.indexOf(row.name) !== -1}
                       handleClick={(event) => handleClick(event, row.name)}
-                      handleDelete={() => handleDelete(row._id)} // Pass handleDelete function to delete button
-                      handleEdit={() => handleEdit(row)} // Pass handleEdit function to edit button
-                      handleView={() => handleView(row)} // Pass handleView function to view button
+                      handleDelete={() => handleDelete(row._id)}
+                      handleEdit={() => handleEdit(row)}
+                      handleSubmitEdit={() => handleSubmitEdit(row._id)}
+                      handleView={() => handleView(row)}
+                      handleStatusChange={() => handleStatusChange(row._id, row.status)} // Pass user ID and current status
                     />
                   ))}
 
@@ -281,14 +317,14 @@ export default function UserPage() {
       <EditUserModal
         open={editModalOpen}
         onClose={handleCloseEditModal}
-        user={editUser || {}} // Pass empty object if editUser is null
+        user={editUser || {}}
         onSubmit={handleSubmitEdit}
       />
       <ViewUserModal
         open={viewModalOpen}
         onClose={handleCloseViewModal}
-        user={viewUser || {}} // Pass empty object if editUser is null
-        onSubmit={handleSubmitEdit}
+        user={viewUser || {}}
+        onSubmit={handleView}
       />
     </Container>
   );

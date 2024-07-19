@@ -10,8 +10,8 @@ import MenuItem from '@mui/material/MenuItem';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import { Switch, FormControlLabel } from '@mui/material';
 
-import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 
 export default function UserTableRow({
@@ -24,7 +24,8 @@ export default function UserTableRow({
   handleClick,
   handleDelete,
   handleEdit, // Receive handleEdit as prop
-  handleView
+  handleView,
+  handleStatusChange,
 }) {
   const [open, setOpen] = useState(null);
 
@@ -65,7 +66,16 @@ export default function UserTableRow({
         <TableCell>{email}</TableCell>
 
         <TableCell>
-          <Label color={status === true ? 'success' : 'error'}>{status}</Label>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={status === 'Active'} // Assuming status is 'active' or 'inactive'
+                onChange={() => handleStatusChange(name)} // Pass the name or ID to identify user
+                color="primary"
+              />
+            }
+            label={status}
+          />
         </TableCell>
 
         <TableCell align="right">
@@ -118,5 +128,6 @@ UserTableRow.propTypes = {
   handleClick: PropTypes.func.isRequired,
   handleDelete: PropTypes.func.isRequired,
   handleEdit: PropTypes.func.isRequired, // Ensure handleEdit is defined as a function prop
-  handleView: PropTypes.func.isRequired, // Ensure handleView is defined as a function prop
+  handleView: PropTypes.func.isRequired,
+  handleStatusChange: PropTypes.func.isRequired, 
 };
