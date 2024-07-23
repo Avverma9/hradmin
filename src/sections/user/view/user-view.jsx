@@ -121,7 +121,7 @@ export default function UserPage() {
         setRefresh((prev) => !prev); // Trigger refresh
       }
     } catch (error) {
-      toast.error('Something went wrong!',error);
+      toast.error('Something went wrong!', error);
     }
   };
 
@@ -210,9 +210,11 @@ export default function UserPage() {
         const updatedUsers = users.map((user) =>
           user._id === userId ? { ...user, status: newStatus } : user
         );
+        toast.success('Active Status Changed');
         setUsers(updatedUsers);
       }
     } catch (error) {
+      toast.error('Something went wrong!', error);
       console.error('Error updating status:', error);
     }
   };
