@@ -15,6 +15,8 @@ import InputAdornment from '@mui/material/InputAdornment';
 
 import { useRouter } from 'src/routes/hooks'; // Updated import for useRouter from 'next/router'
 
+import { toast } from 'react-toastify';
+
 import { localUrl } from 'src/utils/util';
 
 import { bgGradient } from 'src/theme/css';
@@ -50,10 +52,11 @@ export default function LoginView() {
         localStorage.setItem('user_name', response.data.loggedUserName);
         router.push('/');
         window.location.reload();
+        toast.success('Login successful!');
       }
     } catch (error) {
       console.error('Login failed:', error);
-      alert("Login failed ! Please check your username and password")
+      toast.error('Login failed ! Please check your username and password');
     } finally {
       setLoading(false);
     }

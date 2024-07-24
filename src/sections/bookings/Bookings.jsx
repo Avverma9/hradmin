@@ -1,6 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import { toast } from 'react-toastify';
 import React, { useState, useEffect } from 'react';
-import { Form, Table, Button, Dropdown } from 'react-bootstrap';
+import { Form, Table, Button, Dropdown } from 'react-bootstrap'; // Import toast from React Toastify
+import 'react-toastify/dist/ReactToastify.css';
 
 import { localUrl } from 'src/utils/util';
 
@@ -24,8 +26,11 @@ export default function BookingsView() {
       }
       const data = await response.json();
       setBookings(data);
+
+
     } catch (error) {
       console.error('Error:', error);
+      toast.info('No bookings found');
     }
   };
 
@@ -34,7 +39,7 @@ export default function BookingsView() {
   };
 
   return (
-    <div>
+    <div className="container mt-4">
       <h2>Bookings</h2>
 
       <Form className="mb-3">
@@ -68,8 +73,8 @@ export default function BookingsView() {
               <Dropdown.Item onClick={() => setStatus('Cancelled')}>Cancelled</Dropdown.Item>
               <Dropdown.Item onClick={() => setStatus('Confirmed')}>Confirmed</Dropdown.Item>
               <Dropdown.Item onClick={() => setStatus('Failed')}>Failed</Dropdown.Item>
-              <Dropdown.Item onClick={() => setStatus('CheckedIn')}>CheckedIn</Dropdown.Item>
-              <Dropdown.Item onClick={() => setStatus('CheckedOut')}>CheckedOut</Dropdown.Item>
+              <Dropdown.Item onClick={() => setStatus('Checked-in')}>CheckedIn</Dropdown.Item>
+              <Dropdown.Item onClick={() => setStatus('Checked-out')}>CheckedOut</Dropdown.Item>
             </Dropdown.Menu>
           </Dropdown>
         </Form.Group>
@@ -79,13 +84,13 @@ export default function BookingsView() {
         </Button>
       </Form>
 
-      <Table striped bordered hover>
+      <Table striped bordered hover responsive>
         <thead>
           <tr>
-            <th>ID</th>
+            <th>B.ID</th>
+            <th>Hotel</th>
             <th>Name</th>
             <th>Status</th>
-            <th>Email</th>
             <th>Room Type</th>
             <th>Check-in</th>
             <th>Check-out</th>
@@ -93,14 +98,20 @@ export default function BookingsView() {
         </thead>
         <tbody>
           {bookings.map((booking) => (
-            <tr key={booking.id}>
-              <td>{booking.id}</td>
-              <td>{booking.name}</td>
-              <td>{booking.status}</td>
-              <td>{booking.email}</td>
-              <td>{booking.roomType}</td>
-              <td>{booking.checkIn}</td>
-              <td>{booking.checkOut}</td>
+            <tr key={booking._id}>
+              <td>{booking.bookingId}</td>
+              <td>{booking.hotelName}</td>
+              <td>{booking.user.name}</td>
+              <td>{booking.bookingStatus}</td>
+              <td>
+                {booking.roomDetails.map((room) => (
+                  <div key={room._id}>
+                    {room.type} {/* Assuming type is the correct property */}
+                  </div>
+                ))}
+              </td>
+              <td>{new Date(booking.checkInDate).toLocaleDateString()}</td>
+              <td>{new Date(booking.checkOutDate).toLocaleDateString()}</td>
             </tr>
           ))}
         </tbody>

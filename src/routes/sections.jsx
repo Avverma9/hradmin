@@ -5,6 +5,7 @@ import DashboardLayout from 'src/layouts/dashboard';
 
 
 
+
 const IndexPage = lazy(() => import('src/pages/app'));
 const BlogPage = lazy(() => import('src/pages/blog'));
 const UserPage = lazy(() => import('src/pages/user'));
@@ -15,6 +16,7 @@ const ListTravelPage = lazy(() => import('src/pages/travel-location'));
 const BannerPage = lazy(() => import('src/pages/banner'));
 const HotelDetailsPage = lazy(() => import('src/pages/hotel-details-page'));
 const YourHotelsPage = lazy(() => import('src/pages/your-hotel-page'));
+const BookingsView = lazy(() => import('src/pages/bookings-page'));
 export default function Router() {
   const routes = useRoutes([
     {
@@ -31,6 +33,7 @@ export default function Router() {
         { path: 'hotels', element: <ProductsPage /> },
         { path: 'your-hotels', element: <YourHotelsPage /> },
         { path: 'view-hotel-details/:hotelId', element: <HotelDetailsPage /> },
+        { path: 'all-bookings', element: <BookingsView /> },
         { path: 'blog', element: <BlogPage /> },
         { path: 'add-travel-location', element: <ListTravelPage /> },
         { path: 'change-banner', element: <BannerPage /> },
