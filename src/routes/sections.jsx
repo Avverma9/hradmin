@@ -3,6 +3,8 @@ import { Outlet, Navigate, useRoutes } from 'react-router-dom';
 
 import DashboardLayout from 'src/layouts/dashboard';
 
+
+
 const IndexPage = lazy(() => import('src/pages/app'));
 const BlogPage = lazy(() => import('src/pages/blog'));
 const UserPage = lazy(() => import('src/pages/user'));
@@ -12,7 +14,7 @@ const Page404 = lazy(() => import('src/pages/page-not-found'));
 const ListTravelPage = lazy(() => import('src/pages/travel-location'));
 const BannerPage = lazy(() => import('src/pages/banner'));
 const HotelDetailsPage = lazy(() => import('src/pages/hotel-details-page'));
-
+const YourHotelsPage = lazy(() => import('src/pages/your-hotel-page'));
 export default function Router() {
   const routes = useRoutes([
     {
@@ -27,6 +29,7 @@ export default function Router() {
         { path: '/', element: <IndexPage /> },
         { path: 'user', element: <UserPage /> },
         { path: 'hotels', element: <ProductsPage /> },
+        { path: 'your-hotels', element: <YourHotelsPage /> },
         { path: 'view-hotel-details/:hotelId', element: <HotelDetailsPage /> },
         { path: 'blog', element: <BlogPage /> },
         { path: 'add-travel-location', element: <ListTravelPage /> },

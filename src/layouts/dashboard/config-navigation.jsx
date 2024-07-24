@@ -30,7 +30,7 @@ const getNavConfig = () => {
         },
         {
           title: 'Your Hotel',
-          path: '/hotels/list',
+          path: '/your-hotels',
         },
         {
           title: 'Add Hotel',

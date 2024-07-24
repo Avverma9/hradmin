@@ -1,11 +1,15 @@
-/* eslint-disable jsx-a11y/img-redundant-alt */
 import axios from 'axios';
-import { useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Carousel } from 'react-bootstrap';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+import { Button, Container } from '@mui/material';
+
+import LinearLoader from 'src/utils/Loading';
 
 export default function HotelDetails() {
   const location = useLocation();
+  const navigate = useNavigate();
   const path = location.pathname;
   const hotelId = path.substring(path.lastIndexOf('/') + 1);
 
@@ -25,11 +29,22 @@ export default function HotelDetails() {
   }, [hotelId]);
 
   if (!hotel) {
-    return <p>Loading...</p>;
+    return (
+      <Container>
+        <LinearLoader />
+      </Container>
+    );
   }
+
+  const handleGoBack = () => {
+    navigate(-1); // Go back to the previous page in history
+  };
 
   return (
     <div className="container mt-4">
+      <Button variant="contained" onClick={handleGoBack} sx={{ mb: 2 }}>
+        Back
+      </Button>
       <h4 className="h4">{hotel.hotelName}</h4> <hr />
       <Carousel>
         {hotel.images.map((image, index) => (
@@ -120,9 +135,7 @@ export default function HotelDetails() {
       {hotel.amenities.map((amenity) => (
         <div key={amenity._id} className="card mb-3">
           <div className="card-body">
-            <p className="card-text">
-         {amenity.amenities.join(', ')}
-            </p>
+            <p className="card-text">{amenity.amenities.join(', ')}</p>
             {/* Add more amenity details as needed */}
           </div>
         </div>
