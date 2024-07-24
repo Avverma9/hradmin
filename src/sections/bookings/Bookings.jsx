@@ -7,19 +7,19 @@ import 'react-toastify/dist/ReactToastify.css';
 import { localUrl } from 'src/utils/util';
 
 export default function BookingsView() {
-  const [userId, setUserId] = useState('');
+
   const [bookingId, setBookingId] = useState('');
   const [status, setStatus] = useState('');
   const [bookings, setBookings] = useState([]);
 
   useEffect(() => {
     fetchData();
-  }, [userId, bookingId, status]);
+  }, [bookingId, status]);
 
   const fetchData = async () => {
     try {
       const response = await fetch(
-        `${localUrl}/get/all/filtered/booking/by/query?bookingStatus=${status}&userId=${userId}&bookingId=${bookingId}`
+        `${localUrl}/get/all/filtered/booking/by/query?bookingStatus=${status}&bookingId=${bookingId}`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch bookings');
@@ -43,17 +43,7 @@ export default function BookingsView() {
       <h2>Bookings</h2>
 
       <Form className="mb-3">
-        <Form.Group className="mb-3" controlId="formUserId">
-          <Form.Label>User ID</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Enter User ID"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-          />
-        </Form.Group>
-
-        <Form.Group className="mb-3" controlId="formBookingId">
+               <Form.Group className="mb-3" controlId="formBookingId">
           <Form.Label>Booking ID</Form.Label>
           <Form.Control
             type="text"
