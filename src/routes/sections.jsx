@@ -3,48 +3,40 @@ import { Outlet, Navigate, useRoutes } from 'react-router-dom';
 
 import DashboardLayout from 'src/layouts/dashboard';
 
-export const IndexPage = lazy(() => import('src/pages/app'));
-export const BlogPage = lazy(() => import('src/pages/blog'));
-export const UserPage = lazy(() => import('src/pages/user'));
-export const LoginPage = lazy(() => import('src/pages/login'));
-export const ProductsPage = lazy(() => import('src/pages/products'));
-export const Page404 = lazy(() => import('src/pages/page-not-found'));
-export const ListTravelPage =  lazy(()=>import('src/pages/travel-location'));
-export const BannerPage = lazy(() => import('src/pages/banner'));
-// ----------------------------------------------------------------------
+const IndexPage = lazy(() => import('src/pages/app'));
+const BlogPage = lazy(() => import('src/pages/blog'));
+const UserPage = lazy(() => import('src/pages/user'));
+const LoginPage = lazy(() => import('src/pages/login'));
+const ProductsPage = lazy(() => import('src/pages/products'));
+const Page404 = lazy(() => import('src/pages/page-not-found'));
+const ListTravelPage = lazy(() => import('src/pages/travel-location'));
+const BannerPage = lazy(() => import('src/pages/banner'));
+const HotelDetailsPage = lazy(() => import('src/pages/hotel-details-page'));
 
 export default function Router() {
   const routes = useRoutes([
     {
       element: (
         <DashboardLayout>
-          <Suspense>
+          <Suspense fallback={<div>Loading...</div>}>
             <Outlet />
           </Suspense>
         </DashboardLayout>
       ),
       children: [
-        { element: <IndexPage />, index: true },
+        { path: '/', element: <IndexPage /> },
         { path: 'user', element: <UserPage /> },
         { path: 'hotels', element: <ProductsPage /> },
+        { path: 'view-hotel-details/:hotelId', element: <HotelDetailsPage /> },
         { path: 'blog', element: <BlogPage /> },
         { path: 'add-travel-location', element: <ListTravelPage /> },
         { path: 'change-banner', element: <BannerPage /> },
+        { path: '*', element: <Navigate to="/404" replace /> },
       ],
     },
-    {
-      path: 'login',
-      element: <LoginPage />,
-    },
-
-    {
-      path: '404',
-      element: <Page404 />,
-    },
-    {
-      path: '*',
-      element: <Navigate to="/404" replace />,
-    },
+    { path: 'login', element: <LoginPage /> },
+    { path: '404', element: <Page404 /> },
+    { path: '*', element: <Navigate to="/404" replace /> },
   ]);
 
   return routes;

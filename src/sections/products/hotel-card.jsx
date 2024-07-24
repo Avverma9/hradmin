@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
@@ -10,7 +11,11 @@ import Label from 'src/components/label';
 // ----------------------------------------------------------------------
 
 export default function ShopProductCard({ product }) {
-  console.log('card product: ', product);
+  const navigate = useNavigate();
+
+  const viewDetails = (hotelId) => {
+    navigate(`/view-hotel-details/${hotelId}`);
+  };
   const renderStatus = (
     <Label
       variant="filled"
@@ -43,7 +48,7 @@ export default function ShopProductCard({ product }) {
   );
 
   return (
-    <Card>
+    <Card onClick={() => viewDetails(product.hotelId)}>
       <Box sx={{ pt: '100%', position: 'relative' }}>
         {product.price && renderStatus}
 
@@ -55,7 +60,7 @@ export default function ShopProductCard({ product }) {
           {product?.hotelName}
         </Link>
         <Link color="inherit" underline="hover" variant="subtitle2" noWrap>
-         Owner - {product?.hotelOwnerName}
+          Owner - {product?.hotelOwnerName}
         </Link>
       </Stack>
     </Card>
