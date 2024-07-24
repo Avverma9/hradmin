@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
+import { Button } from '@mui/material';
 import Stack from '@mui/material/Stack';
 
 import Label from 'src/components/label';
@@ -55,13 +56,16 @@ export default function ShopProductCard({ product }) {
         {renderImg}
       </Box>
 
-      <Stack spacing={2} sx={{ p: 3 }}>
+      <Stack spacing={1} sx={{ p: 3 }}>
         <Link color="inherit" underline="hover" variant="subtitle2" noWrap>
           {product?.hotelName}
         </Link>
         <Link color="inherit" underline="hover" variant="subtitle2" noWrap>
-          Owner - {product?.hotelOwnerName}
+          Owner {product?.hotelOwnerName}
         </Link>
+        <Button color="inherit" underline="hover" variant="outlined" noWrap>
+          {product?.isAccepted === true ? 'Live' : 'Needs approval'}
+        </Button>
       </Stack>
     </Card>
   );

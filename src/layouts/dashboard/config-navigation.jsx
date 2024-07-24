@@ -75,7 +75,7 @@ const getNavConfig = () => {
   const Adminconfig = ['partners', 'Site Settings'];
   const AdminChildConfig = ['All Hotels']; // Define child items to filter out for the admin role
   // const superAdminConfig = [''];
-  const superAdminChildConfig = ['Your Hotel'];
+  const superAdminChildConfig = ['Your Hotel',"Add Hotel"];
   if (role === 'admin') {
     return baseConfig.filter((item) => {
       // Filter top-level config

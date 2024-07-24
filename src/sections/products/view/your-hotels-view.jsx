@@ -9,7 +9,7 @@ import { localUrl } from 'src/utils/util';
 import LinearLoader from 'src/utils/Loading';
 
 import ProductSort from '../product-sort';
-import ProductCard from '../your-hotel-card';
+import YourHotelCard from '../your-hotel-card';
 import ProductFilters from '../product-filters';
 
 export default function YourHotelsView() {
@@ -84,7 +84,7 @@ useEffect(() => {
       <Grid container spacing={3}>
         {data.map((product) => (
           <Grid key={product._id} item xs={12} sm={6} md={3}>
-            <ProductCard product={product} />
+            <YourHotelCard product={product} />
           </Grid>
         ))}
       </Grid>
