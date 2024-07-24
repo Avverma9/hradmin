@@ -21,15 +21,33 @@ const getNavConfig = () => {
       icon: icon('ic_user.svg'),
     },
     {
+      title: 'bookings',
+      icon: icon('ic_tag.svg'),
+      children: [
+        {
+          title: 'Bookings',
+          icon: icon('ic_booking.svg'),
+          path: '/all-bookings',
+        },
+        {
+          title: 'Your Bookings',
+          icon: icon('ic_booking.svg'),
+          path: '/your-bookings',
+        },
+      ],
+    },
+    {
       title: 'Hotels',
       icon: icon('ic_cart.svg'),
       children: [
         {
-          title: 'All Hotels',
+          title: 'Hotels',
+          icon: icon('ic_hotel.svg'),
           path: '/hotels',
         },
         {
           title: 'Your Hotel',
+          icon: icon('ic_hotel.svg'),
           path: '/your-hotels',
         },
         {
@@ -72,10 +90,10 @@ const getNavConfig = () => {
   ];
 
   // Define the titles to filter out for the admin role
-  const Adminconfig = ['partners', 'Site Settings'];
-  const AdminChildConfig = ['All Hotels']; // Define child items to filter out for the admin role
-  // const superAdminConfig = [''];
-  const superAdminChildConfig = ['Your Hotel',"Add Hotel"];
+  const Adminconfig = [''];
+  const superAdminConfig = ['Bookings', 'partners', 'Site Settings'];
+  const AdminChildConfig = ['Your Hotel','Your Bookings']; // Define child items to filter out for the admin role
+  const superAdminChildConfig = ['Hotels', 'Bookings'];
   if (role === 'admin') {
     return baseConfig.filter((item) => {
       // Filter top-level config
@@ -92,9 +110,9 @@ const getNavConfig = () => {
   if (role === 'superAdmin') {
     return baseConfig.filter((item) => {
       // Filter top-level config
-      // if (superAdminConfig.includes(item.title)) {
-      //   return false;
-      // }
+      if (superAdminConfig.includes(item.title)) {
+        return false;
+      }
       // Filter children if they exist
       if (item.children) {
         item.children = item.children.filter(

@@ -49,6 +49,7 @@ export default function LoginView() {
         localStorage.setItem('user_image', response.data.loggedUserImage);
         localStorage.setItem('user_name', response.data.loggedUserName);
         router.push('/');
+        window.location.reload();
       }
     } catch (error) {
       console.error('Login failed:', error);
