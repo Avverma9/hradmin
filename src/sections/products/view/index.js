@@ -1,2 +1,2 @@
-export { default as ProductsView } from './all-hotels-view';
-export { default as YourHotelsView } from './your-hotels-view';
+export { default as ProductsView } from './admin/all-hotels-view';
+export { default as YourHotelsView } from './superAdmin/your-hotels-view';

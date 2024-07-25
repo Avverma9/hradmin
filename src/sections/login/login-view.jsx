@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved */
 import axios from 'axios';
 import { useState } from 'react';
 
@@ -53,10 +52,17 @@ export default function LoginView() {
         router.push('/');
         window.location.reload();
         toast.success('Login successful!');
+      } else {
+        // Handle other status codes
+        toast.error('Something went wrong');
       }
     } catch (error) {
-      console.error('Login failed:', error);
-      toast.error('Login failed ! Please check your username and password');
+      if (error.response && error.response.status === 400) {
+        toast.error(error.response.data.message);
+      } else {
+        console.error('Login failed:', error);
+        toast.error('Something went wrong');
+      }
     } finally {
       setLoading(false);
     }

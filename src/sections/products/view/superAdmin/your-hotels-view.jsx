@@ -1,37 +1,43 @@
 import { useState, useEffect } from 'react';
 
+import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import { Container } from '@mui/material';
-import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 
 import { localUrl } from 'src/utils/util';
 import LinearLoader from 'src/utils/Loading';
 
-import ProductSort from '../product-sort';
-import ProductCard from '../all-hotel-card';
-import ProductFilters from '../product-filters';
+import ProductSort from '../../product-sort';
+import YourHotelCard from './your-hotel-card';
+import ProductFilters from '../../product-filters';
 
-export default function ProductsView() {
+export default function YourHotelsView() {
   const [openFilter, setOpenFilter] = useState(false);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true); // Add loading state
+  const hotelEmail = localStorage.getItem('user_email');
 
   useEffect(() => {
-    getAllHotels();
-  }, []);
+    const getAllHotels = async () => {
+      try {
+        const response = await fetch(`${localUrl}/hotels/query/get/by?hotelEmail=${hotelEmail}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch hotels');
+        }
+        const res = await response.json();
+        setData(res);
+        setLoading(false); // Set loading to false once data is fetched
+      } catch (error) {
+        console.error('Error fetching hotels:', error);
+        setLoading(false); // Ensure loading is set to false on error as well
+      }
+    };
 
-  const getAllHotels = async () => {
-    try {
-      const response = await fetch(`${localUrl}/get/all/hotels`);
-      const res = await response.json();
-      setData(res.data);
-      setLoading(false); // Set loading to false once data is fetched
-    } catch (error) {
-      console.error('Error fetching hotels:', error);
-      setLoading(false); // Ensure loading is set to false on error as well
-    }
-  };
+    getAllHotels(); // Call getAllHotels directly inside useEffect
+
+    // No dependencies in the array because getAllHotels doesn't change
+  }, [hotelEmail]);
 
   const handleOpenFilter = () => {
     setOpenFilter(true);
@@ -53,7 +59,7 @@ export default function ProductsView() {
   return (
     <Container>
       <Typography variant="h4" sx={{ mb: 5 }}>
-        Hotels
+        Your Hotels
       </Typography>
 
       <Stack
@@ -76,7 +82,7 @@ export default function ProductsView() {
       <Grid container spacing={3}>
         {data.map((product) => (
           <Grid key={product._id} item xs={12} sm={6} md={3}>
-            <ProductCard product={product} />
+            <YourHotelCard product={product} />
           </Grid>
         ))}
       </Grid>
