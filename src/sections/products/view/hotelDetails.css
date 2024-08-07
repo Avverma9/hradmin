@@ -52,10 +52,16 @@
   border-radius: 10px; /* Rounded corners for the container */
   background-color: #f9f9f9; /* Background color for the container */
 }
-
+.food-card {
+  width: 30%;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow for card */
+  background-color: #fff; /* Background color for each card */
+  border: 1px solid #eee; /* Border around each card */
+}
 .card {
   width: 100%;
-  max-width: 300px; /* Width of each card */
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow for card */

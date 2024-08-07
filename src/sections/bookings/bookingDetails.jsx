@@ -89,11 +89,16 @@ const BookingDetail = () => {
               <Grid item>
                 <Avatar alt="User Avatar" src={booking?.user?.profile} className={classes.avatar} />
               </Grid>
-
               <Grid item>
-                <Typography variant="h6">Booking ID: {booking?.bookingId}</Typography>
+                <Typography variant="h6">{booking?.user?.name}</Typography>
+              </Grid>
+              <Grid item>
+                <Typography variant="h6">
+                  {booking?.bookingId}({booking?.bookingStatus})
+                </Typography>
               </Grid>
             </Grid>
+
             <Grid item>
               <Typography variant="h6">
                 Price <LiaRupeeSignSolid />
@@ -102,15 +107,14 @@ const BookingDetail = () => {
             </Grid>
             <Divider sx={{ margin: '16px 0' }} />
             <Typography variant="subtitle1">
-              <CiUser /> User
+              <CiUser /> Customer Name
             </Typography>
             <Typography variant="body2" gutterBottom>
               {booking?.user?.name}
             </Typography>
             <Typography variant="subtitle1">
               {' '}
-              <LuHotel />{" "}
-              Hotel Name
+              <LuHotel /> Hotel Name
             </Typography>
             <Typography variant="body2" gutterBottom>
               {booking?.hotelName}
@@ -121,8 +125,7 @@ const BookingDetail = () => {
             </Typography>
             <Typography variant="subtitle1">
               {' '}
-              <IoMailOpenOutline />{" "}
-              Email
+              <IoMailOpenOutline /> Email
             </Typography>
             <Typography variant="body2" gutterBottom>
               {booking?.user?.email}
@@ -130,8 +133,7 @@ const BookingDetail = () => {
 
             <Typography variant="subtitle1">
               {' '}
-              <FaPhone />{" "}
-              Mobile
+              <FaPhone /> Mobile
             </Typography>
             <Typography variant="body2" gutterBottom>
               {booking?.user?.mobile}
@@ -159,8 +161,7 @@ const BookingDetail = () => {
             </Typography>
             <Typography variant="subtitle1">
               {' '}
-              <MdAccessTime />{" "}
-              Booking time
+              <MdAccessTime /> Booking time
             </Typography>
             <Typography variant="body2" gutterBottom>
               {fDate(booking?.createdAt)}

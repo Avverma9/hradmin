@@ -134,7 +134,7 @@ export default function HotelDetails() {
       <h3 className="heading-text">Foods</h3>
       <div className="food-container">
         {hotel.foods.map((food) => (
-          <div key={food._id} className="card">
+          <div key={food._id} className="food-card">
             <div className="card-body">
               <p className="card-text">
                 <strong>Name:</strong> {food.name}
