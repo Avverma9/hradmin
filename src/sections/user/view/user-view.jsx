@@ -266,7 +266,6 @@ export default function UserPage() {
                 onSelectAllClick={handleSelectAllClick}
                 headLabel={[
                   { id: 'name', label: 'Name' },
-                  { id: 'mobile', label: 'Mobile' },
                   { id: 'email', label: 'Email' },
                   { id: 'status', label: 'Status' },
                   { id: '' },
@@ -278,8 +277,7 @@ export default function UserPage() {
                   .map((row) => (
                     <UserTableRow
                       key={row._id}
-                      name={row.name}
-                      mobile={row.mobile}
+                      name={`${row.name} (${row.role})`}
                       email={row.email}
                       status={row?.status ? 'Active' : 'Inactive'}
                       avatarUrl={row.avatarUrl || row.images}

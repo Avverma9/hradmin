@@ -1,0 +1,122 @@
+.room-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between; /* Adjust spacing between items */
+  gap: 20px; /* Space between cards */
+  padding: 20px; /* Padding around the container */
+  border: 2px solid #ddd; /* Border around the entire container */
+  border-radius: 10px; /* Rounded corners for the container */
+  background-color: #f9f9f9; /* Background color for the container */
+}
+
+.room-card-container {
+  width: 100%;
+  max-width: 300px; /* Width of each card */
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow for card */
+  background-color: #fff; /* Background color for each card */
+  border: 1px solid #eee; /* Border around each card */
+}
+
+.card-body {
+  padding: 15px;
+}
+
+.room-image img {
+  width: 100%;
+  height: auto;
+  border-bottom: 2px solid #eee;
+}
+
+.card-text {
+  margin: 10px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.card-text strong {
+  color: #007bff; /* Change to your preferred color */
+}
+
+.card-text:last-of-type {
+  margin-bottom: 0;
+}
+.food-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between; /* Adjust spacing between items */
+  gap: 20px; /* Space between cards */
+  padding: 20px; /* Padding around the container */
+  border: 2px solid #ddd; /* Border around the entire container */
+  border-radius: 10px; /* Rounded corners for the container */
+  background-color: #f9f9f9; /* Background color for the container */
+}
+
+.card {
+  width: 100%;
+  max-width: 300px; /* Width of each card */
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow for card */
+  background-color: #fff; /* Background color for each card */
+  border: 1px solid #eee; /* Border around each card */
+}
+
+.card-body {
+  padding: 15px;
+}
+
+.card img {
+  width: 100%;
+  height: auto;
+  border-bottom: 2px solid #eee;
+}
+
+.card-text {
+  margin: 10px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.card-text strong {
+  color: #007bff; /* Change to your preferred color */
+}
+
+.card-text:last-of-type {
+  margin-bottom: 0;
+}
+.heading-text {
+  display: inline-block; /* Make the heading behave like a button */
+  font-size: 14px; /* Adjust font size as needed */
+  font-weight: bold; /* Make the text bold */
+  color: #fff; /* White text color */
+  background-color: #007bff; /* Button background color */
+  border: none; /* Remove default border */
+  border-radius: 5px; /* Rounded corners */
+  padding: 10px 20px; /* Padding inside the heading */
+  margin: 20px 0; /* Margin above and below */
+  text-align: center; /* Center-align the text */
+  text-transform: uppercase; /* Uppercase text for emphasis */
+  cursor: pointer; /* Show pointer cursor on hover */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Optional: add shadow for a 3D effect */
+  transition:
+    background-color 0.3s,
+    box-shadow 0.3s; /* Smooth transition for hover effect */
+}
+
+.heading-text:hover {
+  background-color: #b32700; /* Darker background on hover */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Deeper shadow on hover */
+}
+.main-header {
+  display: inline-block; /* Makes the header behave like an inline-block element */
+  font-size: 16px; /* Font size */
+  font-weight: bold; /* Bold text */
+  color: #171616; /* Text color */
+  background-color: #cdcdcd; /* Background color */
+  padding: 10px 10px; /* Padding inside the button */
+  text-align: center; /* Center-align the text */
+  margin: 0; /* Remove default margin */
+  /* Add margin to space it from other elements, adjust as needed */
+}

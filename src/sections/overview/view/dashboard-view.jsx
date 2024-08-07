@@ -24,21 +24,28 @@ import AppConversionRates from '../app-conversion-rates';
 
 export default function AppView() {
   const [hotelCount, setHotelCount] = useState('');
+  const [userCount, setUserCount] = useState('');
   const [bookingCount, setBookingCount] = useState('');
   const bookingDetails = async () => {
     const response = await axios.get(`${localUrl}/get-all/bookings-count`);
     setBookingCount(response.data);
   };
   const Hoteldetails = async () => {
-    const response = await axios.get(`${localUrl}/get-all/bookings-count`);
+    const response = await axios.get(`${localUrl}/get-hotels/count`);
     setHotelCount(response.data);
+  };
+  const userDetails = async () => {
+    const response = await axios.get(`${localUrl}/get-total/user-details`);
+    setUserCount(response.data);
   };
   useEffect(() => {
     bookingDetails();
     Hoteldetails();
+    userDetails();
   }, []);
 
-  console.log(hotelCount);
+  console.log('hotel count', hotelCount);
+  console.log('User count', userDetails);
   const name = localStorage.getItem('user_name');
   return (
     <Container maxWidth="xl">
@@ -49,7 +56,7 @@ export default function AppView() {
       <Grid container spacing={3}>
         <Grid xs={12} sm={6} md={3}>
           <AppWidgetSummary
-            title="Total Bookings"
+            title="Bookings"
             total={bookingCount}
             color="success"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_bag.png" />}
@@ -58,8 +65,8 @@ export default function AppView() {
 
         <Grid xs={12} sm={6} md={3}>
           <AppWidgetSummary
-            title="New Users"
-            total={1352831}
+            title="Users"
+            total={userCount}
             color="info"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_users.png" />}
           />
@@ -67,7 +74,7 @@ export default function AppView() {
 
         <Grid xs={12} sm={6} md={3}>
           <AppWidgetSummary
-            title="Total Listed Hotels"
+            title="Hotels"
             total={hotelCount}
             color="warning"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_buy.png" />}
@@ -76,7 +83,7 @@ export default function AppView() {
 
         <Grid xs={12} sm={6} md={3}>
           <AppWidgetSummary
-            title="Bug Reports"
+            title="Reports"
             total={234}
             color="error"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_message.png" />}

@@ -1,11 +1,15 @@
+/* eslint-disable jsx-a11y/img-redundant-alt */
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
+import { IoMailOpenOutline } from 'react-icons/io5';
 import { Row, Col, Carousel } from 'react-bootstrap';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Button, Container } from '@mui/material';
 
 import LinearLoader from 'src/utils/Loading';
+
+import './hotelDetails.css';
 
 export default function HotelDetails() {
   const location = useLocation();
@@ -39,13 +43,21 @@ export default function HotelDetails() {
   const handleGoBack = () => {
     navigate(-1); // Go back to the previous page in history
   };
-
+  const handleMailToHotel = () => {
+    const email = hotel.hotelEmail;
+    window.location.href = `mailto:${email}`;
+  };
   return (
     <div className="container mt-4">
       <Button variant="contained" onClick={handleGoBack} sx={{ mb: 2 }}>
         Back
+      </Button>{' '}
+      <Button variant="outlined" sx={{ mb: 2 }} onClick={handleMailToHotel}>
+        {' '}
+        <IoMailOpenOutline /> {'  '} Mail to hotel{' '}
       </Button>
-      <h4 className="h4">{hotel.hotelName}</h4> <hr />
+      <br />
+      <h4 className="main-header">{hotel.hotelName}</h4> <hr />
       <Carousel>
         {hotel.images.map((image, index) => (
           <Carousel.Item key={index}>
@@ -94,44 +106,52 @@ export default function HotelDetails() {
           <strong>Customer Welcome Note:</strong> {hotel.customerWelcomeNote}
         </p>
       </div>
-      <h3 className="h5 mt-4">Rooms:</h3>
-      {hotel.rooms.map((room) => (
-        <div key={room._id} className="card mb-3">
-          <div className="card-body">
-            <p className="card-text">
-              <strong>Type:</strong> {room.type}
-            </p>
-            <p className="card-text">
-              <strong>Bed Types:</strong> {room.bedTypes}
-            </p>
-            <p className="card-text">
-              <strong>Price:</strong> {room.price}
-            </p>
-            <p className="card-text">
-              <strong>Number of Rooms:</strong> {room.countRooms}
-            </p>
-            {/* Add more room details as needed */}
+      <h3 className="heading-text">Rooms Types</h3>
+      <div className="room-container">
+        {hotel.rooms.map((room) => (
+          <div key={room._id} className="room-card-container">
+            <div className="card-body">
+              <div className="room-image">
+                <img src={room?.images} alt={`${room.type} room`} />
+              </div>
+              <p className="card-text">
+                <strong>Type:</strong> {room.type}
+              </p>
+              <p className="card-text">
+                <strong>Bed Types:</strong> {room.bedTypes}
+              </p>
+              <p className="card-text">
+                <strong>Price:</strong> ${room.price}
+              </p>
+              <p className="card-text">
+                <strong>Number of Rooms:</strong> {room.countRooms}
+              </p>
+              {/* Add more room details as needed */}
+            </div>
           </div>
-        </div>
-      ))}
-      <h3 className="h5 mt-4">Foods:</h3>
-      {hotel.foods.map((food) => (
-        <div key={food._id} className="card mb-3">
-          <div className="card-body">
-            <p className="card-text">
-              <strong>Name:</strong> {food.name}
-            </p>
-            <p className="card-text">
-              <strong>About:</strong> {food.about}
-            </p>
-            <p className="card-text">
-              <strong>Price:</strong> {food.price}
-            </p>
-            {/* Add more food details as needed */}
+        ))}
+      </div>
+      <h3 className="heading-text">Foods</h3>
+      <div className="food-container">
+        {hotel.foods.map((food) => (
+          <div key={food._id} className="card">
+            <div className="card-body">
+              <p className="card-text">
+                <strong>Name:</strong> {food.name}
+              </p>
+              <img src={food?.images} alt={`${food.name} image`} />
+              <p className="card-text">
+                <strong>About:</strong> {food.about}
+              </p>
+              <p className="card-text">
+                <strong>Price:</strong> ${food.price}
+              </p>
+              {/* Add more food details as needed */}
+            </div>
           </div>
-        </div>
-      ))}
-      <h3 className="h5 mt-4">Amenities:</h3>
+        ))}
+      </div>
+      <h3 className="heading-text">Amenities</h3>
       {hotel.amenities.map((amenity) => (
         <div key={amenity._id} className="card mb-3">
           <div className="card-body">
@@ -140,7 +160,7 @@ export default function HotelDetails() {
           </div>
         </div>
       ))}
-      <h3 className="h5 mt-4">Policies:</h3>
+      <h3 className="heading-text">Policies</h3>
       {hotel.policies.map((policy) => (
         <div key={policy._id} className="card mb-3">
           <div className="card-body">

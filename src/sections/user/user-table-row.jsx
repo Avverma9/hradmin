@@ -17,7 +17,6 @@ import Iconify from 'src/components/iconify';
 export default function UserTableRow({
   selected,
   name,
-  mobile,
   email,
   status,
   avatarUrl,
@@ -60,8 +59,6 @@ export default function UserTableRow({
             </Typography>
           </Stack>
         </TableCell>
-
-        <TableCell>{mobile}</TableCell>
 
         <TableCell>{email}</TableCell>
 
@@ -121,7 +118,7 @@ export default function UserTableRow({
 UserTableRow.propTypes = {
   selected: PropTypes.bool.isRequired,
   name: PropTypes.string.isRequired,
-  mobile: PropTypes.string.isRequired,
+
   email: PropTypes.string.isRequired,
   status: PropTypes.string.isRequired,
   avatarUrl: PropTypes.string,
@@ -129,5 +126,5 @@ UserTableRow.propTypes = {
   handleDelete: PropTypes.func.isRequired,
   handleEdit: PropTypes.func.isRequired, // Ensure handleEdit is defined as a function prop
   handleView: PropTypes.func.isRequired,
-  handleStatusChange: PropTypes.func.isRequired, 
+  handleStatusChange: PropTypes.func.isRequired,
 };

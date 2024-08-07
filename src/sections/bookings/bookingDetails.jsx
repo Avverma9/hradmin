@@ -109,7 +109,7 @@ const BookingDetail = () => {
             </Typography>
             <Typography variant="subtitle1">
               {' '}
-              <LuHotel />
+              <LuHotel />{" "}
               Hotel Name
             </Typography>
             <Typography variant="body2" gutterBottom>
@@ -121,7 +121,7 @@ const BookingDetail = () => {
             </Typography>
             <Typography variant="subtitle1">
               {' '}
-              <IoMailOpenOutline />
+              <IoMailOpenOutline />{" "}
               Email
             </Typography>
             <Typography variant="body2" gutterBottom>
@@ -130,7 +130,7 @@ const BookingDetail = () => {
 
             <Typography variant="subtitle1">
               {' '}
-              <FaPhone />
+              <FaPhone />{" "}
               Mobile
             </Typography>
             <Typography variant="body2" gutterBottom>
@@ -148,17 +148,18 @@ const BookingDetail = () => {
               Rooms / <CiUser />
               Guests
             </Typography>
-            <Typography variant="body2" gutterBottom>
-              {booking?.numRooms}/ {booking?.guests}
-            </Typography>
 
+            <Typography variant="body2" gutterBottom>
+              {booking?.numRooms}- Room/ {booking?.guests}- Guest
+            </Typography>
+            <hr />
             <Typography variant="subtitle1">Booking Status:</Typography>
             <Typography variant="body2" gutterBottom>
               {booking?.bookingStatus}
             </Typography>
             <Typography variant="subtitle1">
               {' '}
-              <MdAccessTime />
+              <MdAccessTime />{" "}
               Booking time
             </Typography>
             <Typography variant="body2" gutterBottom>
