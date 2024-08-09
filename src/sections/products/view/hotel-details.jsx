@@ -1,11 +1,13 @@
+/* eslint-disable react/no-unescaped-entities */
 /* eslint-disable jsx-a11y/img-redundant-alt */
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import React, { useState, useEffect } from 'react';
-import { IoMailOpenOutline } from 'react-icons/io5';
-import { Row, Col, Carousel } from 'react-bootstrap';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Row, Col, Button, Carousel } from 'react-bootstrap';
+import { IoTrashOutline , IoMailOpenOutline } from 'react-icons/io5';
 
-import { Button, Container } from '@mui/material';
+import { Container } from '@mui/material';
 
 import { localUrl } from 'src/utils/util';
 import LinearLoader from 'src/utils/Loading';
@@ -33,6 +35,44 @@ export default function HotelDetails() {
     fetchHotelDetails();
   }, [hotelId]);
 
+  const handleGoBack = () => {
+    navigate(-1); // Go back to the previous page in history
+  };
+
+  const handleMailToHotel = () => {
+    const email = hotel.hotelEmail;
+    window.location.href = `mailto:${email}`;
+  };
+  /* -----------------------------------------FOOD DELETE FUNCTIONS-----------------------------------------*/
+  const handleDeleteFood = async (foodId) => {
+    try {
+      await axios.delete(`${localUrl}/delete-food/${hotelId}/${foodId}`);
+      // Update local state to remove the deleted food
+      setHotel((prevHotel) => ({
+        ...prevHotel,
+        foods: prevHotel.foods.filter((food) => food.foodId !== foodId),
+      }));
+      toast.success('Successfully deleted food item');
+    } catch (error) {
+      toast.error('Error deleting food item:', error);
+    }
+  };
+  /* -----------------------------------------end-----------------------------------------*/
+
+  /* -----------------------------------------Amenities function-----------------------------------------*/
+const handleDeleteAmenity = async (amenityName) => {
+  try {
+    await axios.delete(`${localUrl}/hotels/${hotelId}/amenities/${amenityName}`);
+    // Re-fetch the hotel details to get the updated list of amenities
+    const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
+    setHotel(response.data);
+    toast.success('Successfully deleted amenity');
+  } catch (error) {
+    toast.error('Error deleting amenity:', error);
+  }
+};
+
+  /* -----------------------------------------end-----------------------------------------*/
   if (!hotel) {
     return (
       <Container>
@@ -41,13 +81,6 @@ export default function HotelDetails() {
     );
   }
 
-  const handleGoBack = () => {
-    navigate(-1); // Go back to the previous page in history
-  };
-  const handleMailToHotel = () => {
-    const email = hotel.hotelEmail;
-    window.location.href = `mailto:${email}`;
-  };
   return (
     <div className="container mt-4">
       <Button variant="contained" onClick={handleGoBack} sx={{ mb: 2 }}>
@@ -72,6 +105,7 @@ export default function HotelDetails() {
         ))}
       </Carousel>
       <hr />
+      {/* ----------------------------------------BASIC DETAILS-------------------------------------- */}
       <h5>Basic Details</h5>
       <hr />
       <div>
@@ -107,6 +141,7 @@ export default function HotelDetails() {
           <strong>Customer Welcome Note:</strong> {hotel.customerWelcomeNote}
         </p>
       </div>
+      {/* ----------------------------------------ROOM-------------------------------------- */}
       <h3 className="heading-text">Rooms Types</h3>
       <div className="room-container">
         {hotel.rooms.map((room) => (
@@ -132,35 +167,55 @@ export default function HotelDetails() {
           </div>
         ))}
       </div>
+      {/* ----------------------------------------FOODS-------------------------------------- */}
       <h3 className="heading-text">Foods</h3>
       <div className="food-container">
-        {hotel.foods.map((food) => (
-          <div key={food._id} className="food-card">
-            <div className="card-body">
-              <p className="card-text">
-                <strong>Name:</strong> {food.name}
-              </p>
-              <img src={food?.images} alt={`${food.name} image`} />
-              <p className="card-text">
-                <strong>About:</strong> {food.about}
-              </p>
-              <p className="card-text">
-                <strong>Price:</strong> ${food.price}
-              </p>
-              {/* Add more food details as needed */}
+        {hotel.foods.length === 0 ? (
+          <p>You haven't added any meals in your hotel.</p>
+        ) : (
+          hotel.foods.map((food) => (
+            <div key={food._id} className="food-card">
+              <div className="card-body">
+                <p className="card-text">
+                  <strong>Name:</strong> {food.name}
+                </p>
+                {food.images && <img src={food.images} alt={`${food.name} image`} />}
+                <p className="card-text">
+                  <strong>About:</strong> {food.about}
+                </p>
+                <p className="card-text">
+                  <strong>Price:</strong> ${food.price}
+                </p>
+                <Button variant="danger" onClick={() => handleDeleteFood(food._id)}>
+                  Delete
+                </Button>
+              </div>
             </div>
+          ))
+        )}
+      </div>
+      {/* ----------------------------------------AMENITIES-------------------------------------- */}
+      <h3 className="heading-text">Amenities</h3>
+      <div className="amenities-list">
+        {hotel.amenities.map((amenity) => (
+          <div key={amenity._id} className="amenity-section">
+            {amenity.amenities.map((amenityName) => (
+              <div
+                key={amenityName}
+                className="amenity-item d-flex justify-content-between align-items-center"
+              >
+                <p className="amenity-text">{amenityName}</p>
+                <IoTrashOutline
+                  onClick={() => handleDeleteAmenity(amenityName)}
+                  className="trash-icon"
+                  title="Delete Amenity"
+                />
+              </div>
+            ))}
           </div>
         ))}
       </div>
-      <h3 className="heading-text">Amenities</h3>
-      {hotel.amenities.map((amenity) => (
-        <div key={amenity._id} className="card mb-3">
-          <div className="card-body">
-            <p className="card-text">{amenity.amenities.join(', ')}</p>
-            {/* Add more amenity details as needed */}
-          </div>
-        </div>
-      ))}
+      {/* ----------------------------------------POLICIES-------------------------------------- */}
       <h3 className="heading-text">Policies</h3>
       {hotel.policies.map((policy) => (
         <div key={policy._id} className="card mb-3">

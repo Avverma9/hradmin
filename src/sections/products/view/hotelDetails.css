@@ -126,3 +126,37 @@
   margin: 0; /* Remove default margin */
   /* Add margin to space it from other elements, adjust as needed */
 }
+
+
+  .amenities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .amenity-section {
+    padding: 0.5rem;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .amenity-item {
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+
+  .amenity-item:hover {
+    background-color: #f9f9f9;
+  }
+
+  .amenity-text {
+    margin: 0;
+    font-size: 1rem;
+    color: #555;
+  }
+
+  .trash-icon {
+    cursor: pointer;
+    color: red;
+    font-size: 1.2rem;
+  }
