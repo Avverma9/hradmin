@@ -44,7 +44,7 @@ export default function AccountPopover() {
   const userId = localStorage.getItem('user_id');
 
   const handleAuth = () => {
-    navigate('/login');
+    navigate('/');
     localStorage.clear()
   };
   return (

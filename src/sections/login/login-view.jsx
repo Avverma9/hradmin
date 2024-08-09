@@ -49,7 +49,7 @@ export default function LoginView() {
         localStorage.setItem('user_email', response.data.loggedUserEmail);
         localStorage.setItem('user_image', response.data.loggedUserImage);
         localStorage.setItem('user_name', response.data.loggedUserName);
-        router.push('/');
+        router.push('/dashboard');
         window.location.reload();
         toast.success('Login successful!');
       } else {

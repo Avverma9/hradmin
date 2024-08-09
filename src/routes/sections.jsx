@@ -28,7 +28,7 @@ export default function Router() {
         </DashboardLayout>
       ),
       children: [
-        { path: '/', element: <IndexPage /> },
+        { path: 'dashboard', element: <IndexPage /> },
         { path: 'user', element: <UserPage /> },
         { path: 'hotels', element: <ProductsPage /> },
         { path: 'your-hotels', element: <YourHotelsPage /> },
@@ -42,7 +42,7 @@ export default function Router() {
         { path: '*', element: <Navigate to="/404" replace /> },
       ],
     },
-    { path: 'login', element: <LoginPage /> },
+    { path: '/', element: <LoginPage /> },
     { path: '404', element: <Page404 /> },
     { path: '*', element: <Navigate to="/404" replace /> },
   ]);

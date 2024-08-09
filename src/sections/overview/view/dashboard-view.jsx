@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { faker } from '@faker-js/faker';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -26,6 +27,7 @@ export default function AppView() {
   const [hotelCount, setHotelCount] = useState('');
   const [userCount, setUserCount] = useState('');
   const [bookingCount, setBookingCount] = useState('');
+  const navigate = useNavigate()
   const bookingDetails = async () => {
     const response = await axios.get(`${localUrl}/get-all/bookings-count`);
     setBookingCount(response.data);
@@ -44,8 +46,11 @@ export default function AppView() {
     userDetails();
   }, []);
 
-  console.log('hotel count', hotelCount);
-  console.log('User count', userDetails);
+const loggedIn= localStorage.getItem('user_email')
+
+  if (!loggedIn) {
+    navigate('/');
+  }
   const name = localStorage.getItem('user_name');
   return (
     <Container maxWidth="xl">
