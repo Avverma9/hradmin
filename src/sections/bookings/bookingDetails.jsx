@@ -17,7 +17,7 @@ import { Box, Grid, Paper, Button, Avatar, Divider, Container, Typography } from
 
 import { localUrl } from 'src/utils/util';
 import LinearLoader from 'src/utils/Loading';
-import { fDate } from 'src/utils/format-time';
+import { fDate, fDateTime } from 'src/utils/format-time';
 
 const BookingDetail = () => {
   const [booking, setBooking] = useState(null);
@@ -165,6 +165,20 @@ const BookingDetail = () => {
             </Typography>
             <Typography variant="body2" gutterBottom>
               {fDate(booking?.createdAt)}
+            </Typography>
+            <Typography variant="subtitle1">
+              {' '}
+              <MdAccessTime /> Check in time
+            </Typography>
+            <Typography variant="body2" gutterBottom>
+              {fDateTime(booking?.checkInTime) || 'Not Checked in'}
+            </Typography>
+            <Typography variant="subtitle1">
+              {' '}
+              <MdAccessTime /> Check out time
+            </Typography>
+            <Typography variant="body2" gutterBottom>
+              {fDateTime(booking?.checkOutTime) || 'Not Checked out'}
             </Typography>
           </Grid>
 
