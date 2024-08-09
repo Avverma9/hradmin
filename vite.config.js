@@ -1,10 +1,7 @@
 import path from 'path';
-import { defineConfig } from 'vite'; // Import `defineConfig` only once
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import checker from 'vite-plugin-checker';
-// import { createHtmlPlugin } from 'vite-plugin-html'; // Uncomment if needed
-// import { ViteHtmlPlugin } from 'vite-plugin-html'; // Uncomment if needed
-// import { ViteBundleAnalyzerPlugin } from 'vite-plugin-bundle-analyzer'; // Uncomment if needed
 
 export default defineConfig({
   plugins: [
@@ -14,14 +11,6 @@ export default defineConfig({
         lintCommand: 'eslint "./src/**/*.{js,jsx,ts,tsx}"',
       },
     }),
-    // Uncomment these lines if you are using the plugins
-    // createHtmlPlugin({
-    //   inject: {
-    //     inject: '<script src="bundle-analyzer.js"></script>',
-    //   },
-    // }),
-    // ViteHtmlPlugin(), // Add if using ViteHtmlPlugin
-    // ViteBundleAnalyzerPlugin() // Add if using ViteBundleAnalyzerPlugin
   ],
   resolve: {
     alias: [
@@ -46,11 +35,16 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            return 'vendor'; // Example: separate node_modules into a vendor chunk
+            // Example: separate node_modules into a vendor chunk
+            return 'vendor';
+          }
+          if (id.includes('src/utils')) {
+            // Example: separate utilities into their own chunk
+            return 'utils';
           }
         },
       },
     },
-    chunkSizeWarningLimit: 1000, // Adjust chunk size limit to 1000 KBs
+    chunkSizeWarningLimit: 5000, // Adjust chunk size limit to 1000 KBs
   },
 });
