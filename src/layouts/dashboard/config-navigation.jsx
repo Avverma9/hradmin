@@ -12,7 +12,7 @@ const getNavConfig = () => {
   const baseConfig = [
     {
       title: 'dashboard',
-      path: '/',
+      path: '/dashboard',
       icon: icon('logo.png'),
     },
     {
