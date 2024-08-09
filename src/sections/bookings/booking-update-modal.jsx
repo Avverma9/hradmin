@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import React, { useState, useEffect } from 'react';
 
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { TimePicker , LocalizationProvider } from '@mui/x-date-pickers';
+import { TimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { Box, Grid, Modal, Button, MenuItem, TextField, Typography } from '@mui/material';
 
 import { localUrl } from 'src/utils/util';
@@ -21,6 +21,8 @@ const modalStyle = {
   borderRadius: 1,
   boxShadow: 24,
   p: 4,
+  maxHeight: '80vh', // Set max height to 80% of viewport height
+  overflowY: 'auto', // Enable vertical scrolling if content overflows
 };
 
 const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
