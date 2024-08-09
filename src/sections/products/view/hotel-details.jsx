@@ -7,6 +7,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Button, Container } from '@mui/material';
 
+import { localUrl } from 'src/utils/util';
 import LinearLoader from 'src/utils/Loading';
 
 import './hotelDetails.css';
@@ -22,7 +23,7 @@ export default function HotelDetails() {
   useEffect(() => {
     const fetchHotelDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/hotels/get-by-id/${hotelId}`);
+        const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
         setHotel(response.data);
       } catch (error) {
         console.error('Error fetching hotel details:', error);

@@ -10,12 +10,16 @@ import LinearLoader from 'src/utils/Loading';
 
 import ProductCard from './all-hotel-card';
 import ProductSort from '../../product-sort';
-import ProductFilters from '../../product-filters';
+import AddFoodModal from '../../add-food-to-hotel';
+import ProductFilters from '../../product-filters'; // Import AddFoodModal
+
 
 export default function ProductsView() {
   const [openFilter, setOpenFilter] = useState(false);
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState(null);
 
   useEffect(() => {
     getAllHotels();
@@ -26,23 +30,27 @@ export default function ProductsView() {
       const response = await fetch(`${localUrl}/get/all/hotels`);
       const res = await response.json();
       setData(res.data);
-      setLoading(false); // Set loading to false once data is fetched
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching hotels:', error);
-      setLoading(false); // Ensure loading is set to false on error as well
+      setLoading(false);
     }
   };
 
-  const handleOpenFilter = () => {
-    setOpenFilter(true);
+  const handleOpenFilter = () => setOpenFilter(true);
+  const handleCloseFilter = () => setOpenFilter(false);
+
+  const handleOpenModal = (hotel) => {
+    setSelectedHotel(hotel);
+    setIsModalOpen(true);
   };
 
-  const handleCloseFilter = () => {
-    setOpenFilter(false);
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedHotel(null);
   };
 
   if (loading) {
-    // Show loading indicator while fetching data
     return (
       <Container>
         <LinearLoader />
@@ -76,10 +84,21 @@ export default function ProductsView() {
       <Grid container spacing={3}>
         {data.map((product) => (
           <Grid key={product._id} item xs={12} sm={6} md={3}>
-            <ProductCard product={product} />
+            <ProductCard
+              product={product}
+              onAddFood={() => handleOpenModal(product)} // Pass handleOpenModal to ProductCard
+            />
           </Grid>
         ))}
       </Grid>
+
+      {selectedHotel && (
+        <AddFoodModal
+          open={isModalOpen}
+          onClose={handleCloseModal}
+          // Additional props if needed
+        />
+      )}
     </Container>
   );
 }
