@@ -234,7 +234,7 @@ export default function UserPage() {
   return (
     <Container>
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-        <Typography variant="h4">Dashboard Partners</Typography>
+        <Typography variant="h4">Partners</Typography>
 
         <Button
           variant="contained"
