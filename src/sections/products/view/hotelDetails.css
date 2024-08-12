@@ -97,7 +97,7 @@
   font-size: 14px; /* Adjust font size as needed */
   font-weight: bold; /* Make the text bold */
   color: #fff; /* White text color */
-  background-color: #007bff; /* Button background color */
+  background-color: #a2a39f; /* Button background color */
   border: none; /* Remove default border */
   border-radius: 5px; /* Rounded corners */
   padding: 10px 20px; /* Padding inside the heading */
@@ -136,7 +136,7 @@
 
   .amenity-section {
     padding: 0.5rem;
-    border-bottom: 1px solid #ddd;
+
   }
 
   .amenity-item {
