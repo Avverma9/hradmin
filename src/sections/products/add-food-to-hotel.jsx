@@ -1,12 +1,12 @@
-/* eslint-disable import/no-unresolved */
 /* eslint-disable jsx-a11y/label-has-associated-control */
-/* eslint-disable import/no-extraneous-dependencies */
+/* eslint-disable react-hooks/exhaustive-deps */
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
 import React, { useState, useEffect } from 'react';
+import { FaIndianRupeeSign } from 'react-icons/fa6';
+import { IoFastFoodOutline } from 'react-icons/io5';
 
-import { styled } from '@mui/system';
 import {
   Box,
   Grid,
@@ -14,6 +14,7 @@ import {
   Input,
   Button,
   Select,
+  styled,
   MenuItem,
   useTheme,
   TextField,
@@ -25,20 +26,21 @@ import {
 
 import { localUrl } from 'src/utils/util';
 
-// Styled component for the modal content
+// Styled components
 const ModalContent = styled(Box)(({ theme }) => ({
   position: 'relative',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: '100%', // Full width for responsiveness
-  maxWidth: 600, // Max width for larger screens
-  maxHeight: '90vh', // Max height to ensure it doesn't exceed viewport
-  overflowY: 'auto', // Enable vertical scrolling if content is too large
+  width: '90%',
+  maxWidth: 500,
+  maxHeight: '90vh',
+  overflowY: 'auto',
   backgroundColor: theme.palette.background.paper,
-  padding: theme.spacing(3),
+  padding: theme.spacing(2),
   boxShadow: theme.shadows[5],
   borderRadius: theme.shape.borderRadius,
+  paddingBottom: theme.spacing(10),
 }));
 
 const Header = styled(Box)(({ theme }) => ({
@@ -69,12 +71,37 @@ const UploadButton = styled(Button)(({ theme }) => ({
 }));
 
 const FoodItem = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(2),
+  display: 'flex',
+  alignItems: 'center',
+  padding: theme.spacing(1),
   border: `1px solid ${theme.palette.divider}`,
   borderRadius: theme.shape.borderRadius,
-  marginBottom: theme.spacing(2),
+  marginBottom: theme.spacing(1),
+  backgroundColor: theme.palette.background.default,
   [theme.breakpoints.down('sm')]: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
     padding: theme.spacing(1),
+  },
+}));
+
+const FoodImage = styled('img')(({ theme }) => ({
+  width: '100px',
+  height: '100px',
+  objectFit: 'cover',
+  borderRadius: theme.shape.borderRadius,
+  [theme.breakpoints.down('sm')]: {
+    width: '80px',
+    height: '80px',
+  },
+}));
+
+const FoodDetails = styled(Box)(({ theme }) => ({
+  marginLeft: theme.spacing(1),
+  [theme.breakpoints.down('sm')]: {
+    marginLeft: 0,
+    marginTop: theme.spacing(1),
+    textAlign: 'center',
   },
 }));
 
@@ -86,37 +113,44 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
   const [images, setImages] = useState([]);
   const [foods, setFoods] = useState([]);
   const [isAddingFood, setIsAddingFood] = useState(false);
+  const [loading, setLoading] = useState(false); // Added loading state
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     if (hotelId) {
-      axios
-        .get(`${localUrl}/hotels/get-by-id/${hotelId}`)
-        .then((response) => {
-          setFoods(response.data.foods); // Assuming response.data.foods contains the food items
-        })
-        .catch((error) => {
-          toast.error('Error fetching foods');
-        });
+      fetchFoods(); // Fetch foods when hotelId changes
     }
   }, [hotelId]);
 
+  const fetchFoods = () => {
+    axios
+      .get(`${localUrl}/hotels/get-by-id/${hotelId}`)
+      .then((response) => {
+        setFoods(response.data.foods); // Update state with fetched foods
+      })
+      .catch(() => {
+        toast.error('Error fetching foods');
+      });
+  };
+
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
-    setImages(files.map((file) => URL.createObjectURL(file))); // Store local URLs for preview
+    setImages(files);
   };
 
   const handleAddFood = () => {
+    setLoading(true); // Set loading state to true
     const formData = new FormData();
     formData.append('hotelId', hotelId);
     formData.append('name', foodName);
     formData.append('price', foodPrice);
     formData.append('foodType', foodType);
     formData.append('about', about);
-    images.forEach((image) => {
-      formData.append('images', image); // Append each image file
+
+    images.forEach((file) => {
+      formData.append('images', file);
     });
 
     axios
@@ -125,17 +159,30 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
           'Content-Type': 'multipart/form-data',
         },
       })
-      .then((response) => {
+      .then(() => {
         toast.success('Food added successfully');
-        onClose(); // Close the modal
-        setIsAddingFood(false); // Close the add food form
+        window.location.reload();
       })
-      .catch((error) => {
+      .catch(() => {
         toast.error('Error adding food');
-        // Handle error (e.g., show an error message)
+      })
+      .finally(() => {
+        setLoading(false); // Set loading state to false
+        setIsAddingFood(false); // Close the add food form
       });
   };
+  const handleCancel = () => {
+    // Reset form state
+    setFoodName('');
+    setFoodPrice('');
+    setFoodType('');
+    setAbout('');
+    setImages([]);
 
+    // Refresh the food list and close the modal
+    fetchFoods();
+    onClose();
+  };
   return (
     <Modal open={open} onClose={onClose}>
       <ModalContent>
@@ -151,34 +198,48 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
               <Box>
                 {foods.map((food, index) => (
                   <FoodItem key={index}>
-                    <Typography variant="h6">{food.name}</Typography>
-                    <Typography variant="body1">Price: {food.price}</Typography>
-                    <Typography variant="body1">Type: {food.foodType}</Typography>
-                    <Typography variant="body2">{food.about}</Typography>
-                    {/* Display food images if available */}
-                    <ImagePreview>
-                      <img src={food?.images} alt="food thumbnail" />
-                    </ImagePreview>
+                    <FoodImage src={food?.images} alt={`food ${index}`} />
+                    <FoodDetails>
+                      <Typography variant="h6">{food?.name}</Typography>
+                      <Typography style={{ color: 'red' }} variant="body1">
+                        <FaIndianRupeeSign /> {food?.price}
+                      </Typography>
+                      <Typography variant="body1">
+                        <IoFastFoodOutline /> {food?.foodType}
+                      </Typography>
+                      <Typography style={{ color: 'green' }} variant="body2">
+                        {food?.about}
+                      </Typography>
+                      <ImagePreview>
+                        {images.length > 0 &&
+                          images.map((file, item) => (
+                            <img
+                              key={item}
+                              src={URL.createObjectURL(file)}
+                              alt={`Food ${item}`}
+                              style={{
+                                width: isMobile ? '60px' : '80px',
+                                height: isMobile ? '60px' : '80px',
+                                objectFit: 'cover',
+                                borderRadius: 4,
+                              }}
+                            />
+                          ))}
+                      </ImagePreview>
+                    </FoodDetails>
                   </FoodItem>
                 ))}
               </Box>
             ) : (
               <>
-                <Typography>This hotel has no food availablity.</Typography>
+                <Typography>This hotel has no food availability.</Typography>
                 <img
                   src="https://media.istockphoto.com/id/1396541669/vector/no-food-or-drink-icon.jpg?s=612x612&w=0&k=20&c=T8qvZM66nqu-Ir_rhjnmlmfTnbSUR4G6t0oPPlvVqfw="
-                  alt=""
+                  alt="No food"
+                  style={{ width: '100px', height: 'auto' }}
                 />
               </>
             )}
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => setIsAddingFood(true)}
-              sx={{ mt: 2 }}
-            >
-              Add Food
-            </Button>
           </>
         ) : (
           <>
@@ -224,8 +285,6 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
                   variant="outlined"
                   fullWidth
                   margin="normal"
-                  multiline
-                  rows={4}
                   value={about}
                   onChange={(e) => setAbout(e.target.value)}
                 />
@@ -243,14 +302,14 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
                 </label>
                 <ImagePreview>
                   {images.length > 0 &&
-                    images.map((image, index) => (
+                    images.map((file, index) => (
                       <img
                         key={index}
-                        src={image}
+                        src={URL.createObjectURL(file)}
                         alt={`Food ${index}`}
                         style={{
-                          width: isMobile ? '80px' : '100px',
-                          height: isMobile ? '80px' : '100px',
+                          width: isMobile ? '60px' : '80px',
+                          height: isMobile ? '60px' : '80px',
                           objectFit: 'cover',
                           borderRadius: 4,
                         }}
@@ -259,16 +318,35 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
                 </ImagePreview>
               </Grid>
             </Grid>
-            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-              <Button onClick={() => setIsAddingFood(false)} color="secondary" sx={{ mr: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                onClick={() => {
+                  handleCancel();
+                  setIsAddingFood(false);
+                }}
+                color="secondary"
+                sx={{ mr: 1 }}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleAddFood} variant="contained" color="primary">
-                Add Food
+              <Button
+                onClick={handleAddFood}
+                variant="contained"
+                color="primary"
+                disabled={loading}
+              >
+                {loading ? 'Adding...' : 'Add Food'}
               </Button>
-            </Box>
+            </div>
           </>
         )}
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          {!isAddingFood && (
+            <Button variant="contained" color="primary" onClick={() => setIsAddingFood(true)}>
+              Add Food
+            </Button>
+          )}
+        </div>
       </ModalContent>
     </Modal>
   );

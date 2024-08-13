@@ -1,32 +1,5 @@
-.room-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between; /* Adjust spacing between items */
-  gap: 20px; /* Space between cards */
-  padding: 20px; /* Padding around the container */
-  border: 2px solid #ddd; /* Border around the entire container */
-  border-radius: 10px; /* Rounded corners for the container */
-  background-color: #f9f9f9; /* Background color for the container */
-}
-
-.room-card-container {
-  width: 100%;
-  max-width: 300px; /* Width of each card */
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow for card */
-  background-color: #fff; /* Background color for each card */
-  border: 1px solid #eee; /* Border around each card */
-}
-
 .card-body {
   padding: 15px;
-}
-
-.room-image img {
-  width: 100%;
-  height: auto;
-  border-bottom: 2px solid #eee;
 }
 
 .card-text {
@@ -42,24 +15,7 @@
 .card-text:last-of-type {
   margin-bottom: 0;
 }
-.food-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between; /* Adjust spacing between items */
-  gap: 20px; /* Space between cards */
-  padding: 20px; /* Padding around the container */
-  border: 2px solid #ddd; /* Border around the entire container */
-  border-radius: 10px; /* Rounded corners for the container */
-  background-color: #f9f9f9; /* Background color for the container */
-}
-.food-card {
-  width: 30%;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow for card */
-  background-color: #fff; /* Background color for each card */
-  border: 1px solid #eee; /* Border around each card */
-}
+
 .card {
   width: 100%;
   border-radius: 10px;
@@ -110,11 +66,6 @@
     background-color 0.3s,
     box-shadow 0.3s; /* Smooth transition for hover effect */
 }
-
-.heading-text:hover {
-  background-color: #b32700; /* Darker background on hover */
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Deeper shadow on hover */
-}
 .main-header {
   display: inline-block; /* Makes the header behave like an inline-block element */
   font-size: 16px; /* Font size */
@@ -127,36 +78,205 @@
   /* Add margin to space it from other elements, adjust as needed */
 }
 
+.amenities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
 
-  .amenities-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+.amenity-section {
+  padding: 0.5rem;
+}
+
+.amenity-item {
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.amenity-item:hover {
+  background-color: #f9f9f9;
+}
+
+.amenity-text {
+  margin: 0;
+  font-size: 1rem;
+  color: #555;
+}
+
+.trash-icon {
+  cursor: pointer;
+  color: red;
+  font-size: 1.2rem;
+}
+
+.food-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  justify-content: center;
+}
+
+.no-foods-message {
+  text-align: center;
+  font-size: 18px;
+  color: #666;
+}
+
+.food-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s;
+  height: 370px;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.food-name {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.food-image {
+  max-width: 100%;
+  height: 120px; /* Adjusted to fit within the card height */
+  object-fit: cover;
+}
+
+.card-body {
+  flex: 1;
+  overflow: hidden;
+  text-align: left;
+}
+
+.card-text {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-footer {
+  background-color: #f9f9f9;
+}
+
+.btn-danger {
+  background-color: #d9534f;
+  border: none;
+  color: #fff;
+  padding: 8px 12px;
+  font-size: 10px;
+}
+
+.btn-danger:hover {
+  background-color: #c9302c;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 1200px) {
+  .food-container {
+    grid-template-columns: repeat(3, 1fr);
   }
+}
 
-  .amenity-section {
-    padding: 0.5rem;
-
+@media (max-width: 900px) {
+  .food-container {
+    grid-template-columns: repeat(2, 1fr);
   }
+}
 
-  .amenity-item {
-    padding: 0.5rem;
-    border-radius: 4px;
-    transition: background-color 0.2s;
+@media (max-width: 600px) {
+  .food-container {
+    grid-template-columns: 1fr;
   }
+}
 
-  .amenity-item:hover {
-    background-color: #f9f9f9;
-  }
+.room-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  justify-content: center;
+}
 
-  .amenity-text {
-    margin: 0;
-    font-size: 1rem;
-    color: #555;
-  }
+.no-rooms-message {
+  text-align: center;
+  font-size: 18px;
+  color: #666;
+}
 
-  .trash-icon {
-    cursor: pointer;
-    color: red;
-    font-size: 1.2rem;
+.room-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  height: 350px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  transition: transform 0.3s;
+}
+.card-header {
+  background-color: #f4f4f4;
+  padding: 10px;
+  flex-shrink: 0;
+}
+
+.room-image img {
+  max-width: 100%;
+  height: 150px; /* Adjusted to fit within the card height */
+  object-fit: cover;
+}
+
+.card-body {
+
+  flex: 1;
+  overflow: hidden;
+  text-align: left;
+}
+
+.card-text {
+  margin: 5px 0;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-footer {
+  padding: 10px 15px;
+  background-color: #f9f9f9;
+}
+
+.btn-danger {
+  background-color: #d9534f;
+  border: none;
+  color: #fff;
+  font-size: 14px;
+}
+
+.btn-danger:hover {
+  background-color: #c9302c;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 1200px) {
+  .room-container {
+    grid-template-columns: repeat(3, 1fr);
   }
+}
+
+@media (max-width: 900px) {
+  .room-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .room-container {
+    grid-template-columns: 1fr;
+  }
+}
