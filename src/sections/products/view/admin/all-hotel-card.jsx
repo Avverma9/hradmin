@@ -1,12 +1,11 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
-import { FcHome } from 'react-icons/fc';
 import { useNavigate } from 'react-router-dom';
 import { PiBathtubThin } from 'react-icons/pi';
 import { IoFastFoodSharp } from 'react-icons/io5';
-import { BsCalendar2Month } from 'react-icons/bs';
 import { FaPersonCircleCheck } from 'react-icons/fa6';
+import { FcHome, FcViewDetails } from 'react-icons/fc';
 
 import { styled } from '@mui/system';
 import { Box, Link, Card, Stack, Button, Tooltip, IconButton } from '@mui/material';
@@ -16,6 +15,7 @@ import Label from 'src/components/label';
 import AddFoodModal from '../../manage-foods'; // Import the AddFoodModal component
 import Amenities from '../../manage-amenties';
 import AddRoomModal from '../../manage-rooms';
+import BasicDetails from '../../basic-details';
 
 // Styled component for the action button container
 const ActionButtonContainer = styled('div')(({ theme }) => ({
@@ -45,10 +45,11 @@ const ActionButtonOverlay = styled('div')(({ theme }) => ({
   zIndex: 10,
 }));
 
-function ShopProductCard({ product, onAddFood, onUpdateAmenities, onAddRoom }) {
+function ShopProductCard({ product, onAddFood, onUpdateAmenities, onAddRoom, onBasicDetails }) {
   const navigate = useNavigate();
   const [isModalOpen, setModalOpen] = useState(false);
   const [isAmenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
+  const [isBasicDetailModalOpen, setBasicDetailsOpen] = useState(false);
   const [isRoomModalOpen, setRoomModalOpen] = useState(false);
   const viewDetails = (hotelId) => {
     navigate(`/view-hotel-details/${hotelId}`);
@@ -70,6 +71,12 @@ function ShopProductCard({ product, onAddFood, onUpdateAmenities, onAddRoom }) {
   const handleCloseAmenitiesModal = () => {
     setAmenitiesModalOpen(false);
   };
+  const handleBasicDetailsClose = () => {
+    setBasicDetailsOpen(false);
+  };
+  const handleBasicDetailsOpen = () => {
+    setBasicDetailsOpen(true);
+  };
   const handleCloseModal = () => {
     setModalOpen(false);
   };
@@ -81,6 +88,10 @@ function ShopProductCard({ product, onAddFood, onUpdateAmenities, onAddRoom }) {
   const handleAddAmenities = (amenitiesData) => {
     onUpdateAmenities(product.hotelId, amenitiesData);
     handleCloseAmenitiesModal();
+  };
+  const basicDetails = (basicData) => {
+    onBasicDetails(product.hotelId, basicData);
+    handleBasicDetailsClose();
   };
   const handleAddRoom = (roomData) => {
     onAddRoom(product.hotelId, roomData); // Pass hotelId and foodData to the onAddFood function
@@ -126,10 +137,10 @@ function ShopProductCard({ product, onAddFood, onUpdateAmenities, onAddRoom }) {
 
         <Stack spacing={1} sx={{ p: 3 }}>
           <Link color="inherit" underline="hover" variant="subtitle2" noWrap>
-           <FcHome/> {product?.hotelName}
+            <FcHome /> {product?.hotelName}
           </Link>
           <Link color="inherit" underline="hover" variant="subtitle2" noWrap>
-            <FaPersonCircleCheck/> Owner - {product?.hotelOwnerName}
+            <FaPersonCircleCheck /> Owner - {product?.hotelOwnerName}
           </Link>
           <Button variant="outlined" color={product?.isAccepted ? 'success' : 'warning'} noWrap>
             {product?.isAccepted === true ? 'Live' : 'Needs approval'}
@@ -174,9 +185,17 @@ function ShopProductCard({ product, onAddFood, onUpdateAmenities, onAddRoom }) {
                 <FcHome size={20} />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Set Monthly Price">
-              <IconButton color="primary" sx={{ width: 32, height: 32 }}>
-                <BsCalendar2Month size={20} />
+
+            <Tooltip title="Basic Details">
+              <IconButton
+                color="primary"
+                sx={{ width: 32, height: 32 }}
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent the card click event from firing
+                  handleBasicDetailsOpen();
+                }}
+              >
+                <FcViewDetails size={20} />
               </IconButton>
             </Tooltip>
           </ActionButtonOverlay>
@@ -202,6 +221,12 @@ function ShopProductCard({ product, onAddFood, onUpdateAmenities, onAddRoom }) {
         hotelId={product.hotelId}
         onAddRoom={handleAddRoom}
       />
+      <BasicDetails
+        open={isBasicDetailModalOpen}
+        onClose={handleBasicDetailsClose}
+        hotelId={product.hotelId}
+        onBasicDetails={basicDetails}
+      />
     </>
   );
 }
@@ -211,6 +236,7 @@ ShopProductCard.propTypes = {
   onAddFood: PropTypes.func.isRequired,
   onAddRoom: PropTypes.func.isRequired,
   onUpdateAmenities: PropTypes.func.isRequired,
+  onBasicDetails: PropTypes.func.isRequired,
 };
 
 export default ShopProductCard;

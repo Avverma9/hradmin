@@ -24,8 +24,10 @@ import AddFoodModal from '../manage-foods'; // Import the AddFoodModal component
 
 import './hotelDetails.css';
 import Amenities from '../manage-amenties';
+import AddRoomModal from '../manage-rooms';
+import BasicDetails from '../basic-details';
 
-export default function HotelDetails({ product, onAddFood, onUpdateAmenities }) {
+export default function HotelDetails({ product, onAddFood, onUpdateAmenities,onAddRoom,onBasicDetails }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [showAllAmenities, setShowAllAmenities] = useState(false);
@@ -35,34 +37,38 @@ export default function HotelDetails({ product, onAddFood, onUpdateAmenities }) 
   const [isModalOpen, setModalOpen] = useState(false);
   const [hotel, setHotel] = useState(null);
   const [isAmenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
-
-  const handleOpenModal = () => {
-    setModalOpen(true);
-  };
-  const handleOpenAmenities = () => {
-    setAmenitiesModalOpen(true);
-  };
-  const handleCloseModal = async () => {
-    setModalOpen(false);
-    const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
-    setHotel(response.data);
-  };
-  const handleCloseAmenitiesModal = async () => {
-    setAmenitiesModalOpen(false);
-    const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
-    setHotel(response.data);
-  };
+  const [isBasicDetailModalOpen, setBasicDetailsOpen] = useState(false);
+  const [isRoomModalOpen, setRoomModalOpen] = useState(false);
+  // ------------------------------------Foods add -------------------------------------//
   const handleAddFood = async (foodData) => {
     onAddFood(product.hotelId, foodData); // Pass hotelId and foodData to the onAddFood function
     const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
     setHotel(response.data);
     handleCloseModal();
   };
+  const handleOpenModal = () => {
+    setModalOpen(true);
+  };
+  const handleCloseModal = async () => {
+    setModalOpen(false);
+    const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
+    setHotel(response.data);
+  };
+
+  // ------------------------------------Amenities add-------------------------------------//
   const handleAddAmenities = async (amenitiesData) => {
     onUpdateAmenities(product.hotelId, amenitiesData);
     const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
     setHotel(response.data);
     handleCloseAmenitiesModal();
+  };
+  const handleOpenAmenities = () => {
+    setAmenitiesModalOpen(true);
+  };
+  const handleCloseAmenitiesModal = async () => {
+    setAmenitiesModalOpen(false);
+    const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
+    setHotel(response.data);
   };
   // ------------------------------------hotel fetch-------------------------------------//
   useEffect(() => {
@@ -129,7 +135,26 @@ export default function HotelDetails({ product, onAddFood, onUpdateAmenities }) 
     gap: '8px',
     marginBottom: '16px',
   });
-
+    const handleAddRoom = (roomData) => {
+      onAddRoom(product.hotelId, roomData); // Pass hotelId and foodData to the onAddFood function
+      handleCloseModal();
+    };
+    const handleOpenRoom = () => {
+      setRoomModalOpen(true);
+    };
+    const handleCloseRoom = () => {
+      setRoomModalOpen(false);
+    };
+    const handleBasicDetailsClose = () => {
+      setBasicDetailsOpen(false);
+    };
+    const handleBasicDetailsOpen = () => {
+      setBasicDetailsOpen(true);
+    };
+ const basicDetails = (basicData) => {
+   onBasicDetails(product.hotelId, basicData);
+   handleBasicDetailsClose();
+ };
   if (!hotel) {
     return (
       <Container>
@@ -190,7 +215,21 @@ export default function HotelDetails({ product, onAddFood, onUpdateAmenities }) 
       <hr />
 
       {/* ---------------------------------------basic detaisl------------------------------------- */}
-      <h5>Basic Details</h5>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h3 style={{ margin: 0 }} className="heading-text">
+          Basic Details
+        </h3>
+        <Button
+          style={{ backgroundColor: 'rgb(222 124 124)', color: 'white', marginLeft: '1rem' }}
+          variant="contained"
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent the card click event from firing
+            handleBasicDetailsOpen();
+          }}
+        >
+          Manage Details
+        </Button>
+      </div>
       <hr />
       <div>
         <Row>
@@ -234,8 +273,9 @@ export default function HotelDetails({ product, onAddFood, onUpdateAmenities }) 
         <Button
           style={{ backgroundColor: 'rgb(222 124 124)', color: 'white', marginLeft: '1rem' }}
           variant="contained"
-          onClick={() => {
-            /* Add your button click handler here */
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent the card click event from firing
+            handleOpenRoom();
           }}
         >
           Manage Rooms
@@ -447,6 +487,18 @@ export default function HotelDetails({ product, onAddFood, onUpdateAmenities }) 
         hotelId={hotel.hotelId}
         onUpdateAmenities={handleAddAmenities}
       />
+      <AddRoomModal
+        open={isRoomModalOpen}
+        onClose={handleCloseRoom}
+        hotelId={hotel.hotelId}
+        onAddRoom={handleAddRoom}
+      />
+      <BasicDetails
+        open={isBasicDetailModalOpen}
+        onClose={handleBasicDetailsClose}
+        hotelId={hotel.hotelId}
+        onBasicDetails={basicDetails}
+      />
     </div>
   );
 }
@@ -454,4 +506,6 @@ HotelDetails.propTypes = {
   product: PropTypes.object.isRequired,
   onAddFood: PropTypes.func.isRequired,
   onUpdateAmenities: PropTypes.func.isRequired,
+  onBasicDetails: PropTypes.func.isRequired,
+  onAddRoom: PropTypes.func.isRequired,
 };

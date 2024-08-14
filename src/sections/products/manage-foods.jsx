@@ -3,6 +3,7 @@
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
+import { AiOutlineDelete } from 'react-icons/ai';
 import React, { useState, useEffect } from 'react';
 import { FaIndianRupeeSign } from 'react-icons/fa6';
 import { IoFastFoodOutline } from 'react-icons/io5';
@@ -117,7 +118,7 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
+  // -------------------------------------------------------------------------//
   useEffect(() => {
     if (hotelId) {
       fetchFoods(); // Fetch foods when hotelId changes
@@ -135,11 +136,7 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
       });
   };
 
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    setImages(files);
-  };
-
+  // -------------------------------------------------------------------------//
   const handleAddFood = () => {
     setLoading(true); // Set loading state to true
     const formData = new FormData();
@@ -161,6 +158,7 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
       })
       .then(() => {
         toast.success('Food added successfully');
+        fetchFoods();
       })
       .catch(() => {
         toast.error('Error adding food');
@@ -170,6 +168,30 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
         setIsAddingFood(false); // Close the add food form
       });
   };
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setImages(files);
+  };
+  // -------------------------------------------------------------------------//
+
+  const handleDeleteFood = async (foodId) => {
+    try {
+      const response = await axios.delete(`${localUrl}/delete-food/${hotelId}/${foodId}`);
+
+      if (response.status === 200) {
+        toast.success('Successfully deleted');
+        // Optionally, refresh the data here if needed
+        fetchFoods(); // Assuming `fetchRooms` is a function that refreshes the list of rooms
+      } else {
+        toast.error('Failed to delete the item');
+      }
+    } catch (error) {
+      console.error('Error deleting food:', error);
+      toast.error('Error deleting item. Please try again.');
+    }
+  };
+
+  // -------------------------------------------------------------------------//
   const handleCancel = () => {
     // Reset form state
     setFoodName('');
@@ -182,6 +204,7 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
     fetchFoods();
     onClose();
   };
+
   return (
     <Modal open={open} onClose={onClose}>
       <ModalContent>
@@ -196,7 +219,9 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
             {foods.length > 0 ? (
               <Box>
                 {foods.map((food, index) => (
-                  <FoodItem key={index}>
+                  <FoodItem key={food.foodId}>
+                    {' '}
+                    {/* Use unique identifier for key */}
                     <FoodImage src={food?.images} alt={`food ${index}`} />
                     <FoodDetails>
                       <Typography variant="h6">{food?.name}</Typography>
@@ -209,8 +234,18 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
                       <Typography style={{ color: 'green' }} variant="body2">
                         {food?.about}
                       </Typography>
+
+                      <Button
+                        onClick={() => handleDeleteFood(food.foodId)}
+                        color="error"
+                        size="small"
+                        startIcon={<AiOutlineDelete />}
+                      >
+                        Delete
+                      </Button>
+
                       <ImagePreview>
-                        {images.length > 0 &&
+                        {images?.length > 0 &&
                           images.map((file, item) => (
                             <img
                               key={item}
@@ -251,6 +286,7 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
                   margin="normal"
                   value={foodName}
                   onChange={(e) => setFoodName(e.target.value)}
+                  required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -261,10 +297,11 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
                   margin="normal"
                   value={foodPrice}
                   onChange={(e) => setFoodPrice(e.target.value)}
+                  required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <FormControl fullWidth margin="normal">
+                <FormControl fullWidth margin="normal" required>
                   <InputLabel>Food Type</InputLabel>
                   <Select
                     value={foodType}
@@ -286,6 +323,7 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
                   margin="normal"
                   value={about}
                   onChange={(e) => setAbout(e.target.value)}
+                  required
                 />
               </Grid>
               <Grid item xs={12}>

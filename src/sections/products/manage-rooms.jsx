@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable react-hooks/exhaustive-deps */
 import axios from 'axios';
@@ -6,6 +7,7 @@ import { toast } from 'react-toastify';
 import { LuBedDouble } from 'react-icons/lu';
 import React, { useState, useEffect } from 'react';
 import { FaIndianRupeeSign } from 'react-icons/fa6';
+import { AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai';
 
 import {
   Box,
@@ -78,13 +80,24 @@ const RoomItem = styled(Box)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius,
   marginBottom: theme.spacing(1),
   backgroundColor: theme.palette.background.default,
+  position: 'relative', // Add position relative for absolute positioning of actions
   [theme.breakpoints.down('sm')]: {
     flexDirection: 'column',
     alignItems: 'flex-start',
     padding: theme.spacing(1),
   },
 }));
-
+const RoomActions = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-end',
+  position: 'absolute',
+  bottom: theme.spacing(1),
+  right: theme.spacing(1),
+  '& > button': {
+    margin: theme.spacing(0.5),
+  },
+}));
 const RoomImage = styled('img')(({ theme }) => ({
   width: '100px',
   height: '100px',
@@ -114,7 +127,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
   const [rooms, setRooms] = useState([]);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [loading, setLoading] = useState(false); // Added loading state
-
+  const [currentRoomId, setCurrentRoomId] = useState(null); // State to manage current room id for updates
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -140,7 +153,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
     setImages(files);
   };
 
-  const handleAddFood = () => {
+  const handleAddRoom = () => {
     setLoading(true); // Set loading state to true
     const formData = new FormData();
     formData.append('hotelId', hotelId);
@@ -161,7 +174,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
       })
       .then(() => {
         toast.success('Room added successfully');
-        window.location.reload();
+        fetchRooms();
       })
       .catch(() => {
         toast.error('Error adding room');
@@ -183,12 +196,70 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
     fetchRooms();
     onClose();
   };
+
+  const handleDelete = (roomId) => {
+    axios
+      .request({
+        url: `${localUrl}/delete-rooms-by-id`,
+        method: 'DELETE',
+        data: { roomId },
+      })
+      .then(() => {
+        toast.success('Room deleted successfully');
+        fetchRooms(); // Refresh the room list
+      })
+      .catch(() => {
+        toast.error('Error deleting room');
+      });
+  };
+
+  const handleUpdateRoom = () => {
+    setLoading(true); // Set loading state to true
+    const formData = new FormData();
+    formData.append('roomId', currentRoomId);
+    formData.append('type', roomType);
+    formData.append('price', roomPrice);
+    formData.append('bedTypes', bedTypes);
+    formData.append('countRooms', countRooms);
+
+    images.forEach((file) => {
+      formData.append('images', file);
+    });
+
+    axios
+      .patch(`${localUrl}/update-your/room`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .then(() => {
+        toast.success('Room updated successfully');
+        setImages([]);
+      })
+      .catch(() => {
+        toast.error('Error updating room');
+      })
+      .finally(() => {
+        setLoading(false); // Set loading state to false
+        setIsAddingRoom(false); // Close the add room form
+        fetchRooms(); // Refresh the room list
+      });
+  };
+  const handleEdit = (room) => {
+    setRoomType(room.type);
+    setRoomPrice(room.price);
+    setBedTypes(room.bedTypes);
+    setCountRooms(room.countRooms);
+    setImages([]); // Optionally clear images or handle images differently
+    setCurrentRoomId(room.roomId); // Set the current room id for updates
+    setIsAddingRoom(true); // Open the form in update mode
+  };
   return (
     <Modal open={open} onClose={onClose}>
       <ModalContent>
         <Header>
           <Typography variant="h6">
-            {isAddingRoom ? 'Add Room' : 'Available Hotel Rooms'}
+            {isAddingRoom ? (currentRoomId ? 'Update Room' : 'Add Room') : 'Available Hotel Rooms'}
           </Typography>
           <Button onClick={onClose} color="inherit">
             Close
@@ -206,7 +277,6 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
                       <Typography style={{ color: 'red' }} variant="body1">
                         <FaIndianRupeeSign /> {room?.price}
                       </Typography>
-                    
                       <Typography variant="body1">
                         <LuBedDouble /> {room?.bedTypes}
                       </Typography>
@@ -230,6 +300,24 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
                           ))}
                       </ImagePreview>
                     </RoomDetails>
+                    <RoomActions>
+                      <Button
+                        onClick={() => handleDelete(room.roomId)}
+                        color="error"
+                        size="small"
+                        startIcon={<AiOutlineDelete />}
+                      >
+                        Delete
+                      </Button>
+                      <Button
+                        onClick={() => handleEdit(room)}
+                        color="primary"
+                        size="small"
+                        startIcon={<AiOutlineEdit />}
+                      >
+                        Update
+                      </Button>
+                    </RoomActions>
                   </RoomItem>
                 ))}
               </Box>
@@ -237,7 +325,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
               <>
                 <Typography>This hotel has no room availability.</Typography>
                 <img
-                  src="https://media.istockphoto.com/id/1396541669/vector/no-food-or-drink-icon.jpg?s=612x612&w=0&k=20&c=T8qvZM66nqu-Ir_rhjnmlmfTnbSUR4G6t0oPPlvVqfw="
+                  src="https://images.tv9kannada.com/wp-content/uploads/2022/03/sorry.jpg"
                   alt="No room"
                   style={{ width: '100px', height: 'auto' }}
                 />
@@ -275,10 +363,9 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
                     onChange={(e) => setBedTypes(e.target.value)}
                     label="Bed Type"
                   >
-                    <MenuItem value="Appetizer">Appetizer</MenuItem>
-                    <MenuItem value="Main Course">Main Course</MenuItem>
-                    <MenuItem value="Dessert">Dessert</MenuItem>
-                    <MenuItem value="Beverage">Beverage</MenuItem>
+                    <MenuItem value="Single">Single</MenuItem>
+                    <MenuItem value="Double">Double</MenuItem>
+                    <MenuItem value="Suite">Suite</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -309,7 +396,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
                       <img
                         key={index}
                         src={URL.createObjectURL(file)}
-                        alt={`Food ${index}`}
+                        alt={`File ${index}`}
                         style={{
                           width: isMobile ? '60px' : '80px',
                           height: isMobile ? '60px' : '80px',
@@ -333,12 +420,12 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
                 Cancel
               </Button>
               <Button
-                onClick={handleAddFood}
+                onClick={currentRoomId ? handleUpdateRoom : handleAddRoom}
                 variant="contained"
                 color="primary"
                 disabled={loading}
               >
-                {loading ? 'Adding...' : 'Add Room'}
+                {loading ? 'Saving...' : currentRoomId ? 'Update Room' : 'Add Room'}
               </Button>
             </div>
           </>
