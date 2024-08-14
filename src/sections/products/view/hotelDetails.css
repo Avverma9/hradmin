@@ -78,36 +78,34 @@
   /* Add margin to space it from other elements, adjust as needed */
 }
 
-.amenities-list {
+/* styles.css */
+.header {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
 }
 
-.amenity-section {
-  padding: 0.5rem;
+.amenities-list {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
 .amenity-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 0.5rem;
+  border: 1px solid #ddd;
   border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.amenity-item:hover {
   background-color: #f9f9f9;
 }
 
-.amenity-text {
-  margin: 0;
-  font-size: 1rem;
-  color: #555;
-}
-
-.trash-icon {
-  cursor: pointer;
-  color: red;
-  font-size: 1.2rem;
+.button-show-more {
+  background-color: #007bff;
+  color: #fff;
+  margin-top: 1rem;
 }
 
 .food-container {
@@ -129,7 +127,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: transform 0.3s;
-  height: 370px;
+  height: 300px;
   display: flex;
   flex-direction: column;
   text-align: center;
@@ -212,7 +210,7 @@
   background-color: #fff;
   border: 1px solid #ddd;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  height: 350px;
+  height: 320px;
   overflow: hidden;
   display: flex;
   flex-direction: column;

@@ -4,7 +4,6 @@
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { FiDelete } from 'react-icons/fi';
 /* eslint-disable jsx-a11y/img-redundant-alt */
 import React, { useState, useEffect } from 'react';
 import { FaIndianRupeeSign } from 'react-icons/fa6';
@@ -21,35 +20,49 @@ import Tooltip from '@mui/material/Tooltip';
 import { styled, Container } from '@mui/material';
 import { localUrl } from 'src/utils/util';
 import LinearLoader from 'src/utils/Loading';
-import AddFoodModal from '../add-food-to-hotel'; // Import the AddFoodModal component
+import AddFoodModal from '../manage-foods'; // Import the AddFoodModal component
 
 import './hotelDetails.css';
+import Amenities from '../manage-amenties';
 
-const ITEMS_PER_PAGE = 4;
-
-export default function HotelDetails({ product, onAddFood }) {
+export default function HotelDetails({ product, onAddFood, onUpdateAmenities }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [amenitiesToShow, setAmenitiesToShow] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [currentRoomPage, setCurrentRoomPage] = useState(1);
   const path = location.pathname;
   const hotelId = path.substring(path.lastIndexOf('/') + 1);
   const [isModalOpen, setModalOpen] = useState(false);
   const [hotel, setHotel] = useState(null);
+  const [isAmenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
 
   const handleOpenModal = () => {
     setModalOpen(true);
   };
-
-  const handleCloseModal = () => {
-    setModalOpen(false);
+  const handleOpenAmenities = () => {
+    setAmenitiesModalOpen(true);
   };
-
-  const handleAddFood = (foodData) => {
+  const handleCloseModal = async () => {
+    setModalOpen(false);
+    const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
+    setHotel(response.data);
+  };
+  const handleCloseAmenitiesModal = async () => {
+    setAmenitiesModalOpen(false);
+    const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
+    setHotel(response.data);
+  };
+  const handleAddFood = async (foodData) => {
     onAddFood(product.hotelId, foodData); // Pass hotelId and foodData to the onAddFood function
+    const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
+    setHotel(response.data);
     handleCloseModal();
+  };
+  const handleAddAmenities = async (amenitiesData) => {
+    onUpdateAmenities(product.hotelId, amenitiesData);
+    const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
+    setHotel(response.data);
+    handleCloseAmenitiesModal();
   };
   // ------------------------------------hotel fetch-------------------------------------//
   useEffect(() => {
@@ -66,6 +79,9 @@ export default function HotelDetails({ product, onAddFood }) {
 
     fetchHotelDetails();
   }, [hotelId]);
+
+  const limitedFood = hotel?.foods?.slice(0, 4);
+  const limitedRoom = hotel?.rooms?.slice(0, 4);
   // ------------------------------------amenities flat--------------------------------------//
   useEffect(() => {
     if (hotel) {
@@ -105,69 +121,7 @@ export default function HotelDetails({ product, onAddFood }) {
       toast.error(`Error updating hotel status: ${errorMessage}`);
     }
   };
-  //  ---------------------------------Delete Food ------------------------------------------
-  const handleDeleteFood = async (foodId) => {
-    try {
-      await axios.delete(`${localUrl}/delete-food/${hotelId}/${foodId}`);
-      const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
-      setHotel(response.data);
-      toast.success('Successfully deleted food item');
-    } catch (error) {
-      toast.error('Error deleting food item:', error);
-    }
-  };
-  // ---------------------------------------Delete amenities-------------------------------------
-  const handleDeleteAmenity = async (amenityName) => {
-    try {
-      await axios.delete(`${localUrl}/hotels/${hotelId}/amenities/${amenityName}`);
-      const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
-      setHotel(response.data);
-      toast.success('Successfully deleted amenity');
-    } catch (error) {
-      toast.error('Error deleting amenity:', error);
-    }
-  };
 
-  // -----------------------------------Pagination---------------------------------------------
-  const totalFoodPages = Math.ceil(hotel?.foods.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentFoods = hotel?.foods.slice(startIndex, startIndex + ITEMS_PER_PAGE) || [];
-
-  const totalRoomPages = Math.ceil(hotel?.rooms.length / ITEMS_PER_PAGE);
-  const startRoomIndex = (currentRoomPage - 1) * ITEMS_PER_PAGE;
-  const currentRooms = hotel?.rooms.slice(startRoomIndex, startRoomIndex + ITEMS_PER_PAGE) || [];
-
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalFoodPages) {
-      setCurrentPage((prevPage) => prevPage + 1);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prevPage) => prevPage - 1);
-    }
-  };
-
-  const handleRoomPageChange = (pageNumber) => {
-    setCurrentRoomPage(pageNumber);
-  };
-
-  const handleNextRoomPage = () => {
-    if (currentRoomPage < totalRoomPages) {
-      setCurrentRoomPage((prevPage) => prevPage + 1);
-    }
-  };
-
-  const handlePreviousRoomPage = () => {
-    if (currentRoomPage > 1) {
-      setCurrentRoomPage((prevPage) => prevPage - 1);
-    }
-  };
   // -------------------------------------------------------------------------------------------
   const FlexContainer = styled('div')({
     display: 'flex',
@@ -278,67 +232,48 @@ export default function HotelDetails({ product, onAddFood }) {
           Room Types
         </h3>
         <Button
-          style={{ backgroundColor: '#007bff', color: 'white', marginLeft: '1rem' }}
+          style={{ backgroundColor: 'rgb(222 124 124)', color: 'white', marginLeft: '1rem' }}
           variant="contained"
           onClick={() => {
             /* Add your button click handler here */
           }}
         >
-          Add Rooms
+          Manage Rooms
         </Button>
       </div>
       <br />
       <div className="room-container">
-        {currentRooms.map((room) => (
-          <div key={room._id} className="room-card">
-            <div className="card-header">
-              <div className="room-image">
-                <img src={room.images} alt={`${room.type} room`} />
+        {hotel?.rooms?.length === 0 ? (
+          <img
+            src="https://cdni.iconscout.com/illustration/premium/thumb/data-error-11521121-9404366.png?f=webp"
+            alt="No rooms available"
+            style={{ display: 'block', margin: 'auto' }}
+          />
+        ) : (
+          limitedRoom?.map((room) => (
+            <div key={room._id} className="room-card">
+              <div className="card-header">
+                <div className="room-image">
+                  <img src={room.images} alt={`${room.type} room`} />
+                </div>
+              </div>
+              <div className="card-body">
+                <p className="card-text">{room.type}</p>
+                <p className="card-text">
+                  <strong>Bed Type:</strong> {room.bedTypes}
+                </p>
+                <p style={{ color: 'red' }} className="card-text">
+                  <FaIndianRupeeSign /> {room?.price}
+                </p>
+                <p className="card-text">
+                  <strong>Number of Rooms:</strong> {room.countRooms}
+                </p>
               </div>
             </div>
-            <div className="card-body">
-              <p className="card-text">{room.type}</p>
-              <p className="card-text">
-                <strong>Bed Type</strong> {room.bedTypes}
-              </p>
-              <p style={{ color: 'red' }} className="card-text">
-                <FaIndianRupeeSign /> {room?.price}
-              </p>
-              <p className="card-text">
-                <strong>Number of Rooms:</strong> {room.countRooms}
-              </p>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
-      {hotel?.rooms.length > ITEMS_PER_PAGE && (
-        <div className="pagination">
-          <Button
-            variant="outlined"
-            disabled={currentRoomPage === 1}
-            onClick={handlePreviousRoomPage}
-          >
-            Previous
-          </Button>
-          {Array.from({ length: totalRoomPages }, (_, index) => (
-            <Button
-              key={index + 1}
-              variant="outlined"
-              className={`pagination-button ${currentRoomPage === index + 1 ? 'active' : ''}`}
-              onClick={() => handleRoomPageChange(index + 1)}
-            >
-              {index + 1}
-            </Button>
-          ))}
-          <Button
-            variant="outlined"
-            disabled={currentRoomPage === totalRoomPages}
-            onClick={handleNextRoomPage}
-          >
-            Next
-          </Button>
-        </div>
-      )}
+
       <br />
       {/* ----------------------------------------------food details--------------------------------- */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -346,21 +281,24 @@ export default function HotelDetails({ product, onAddFood }) {
           Foods
         </h3>
         <Button
-          style={{ backgroundColor: '#007bff', color: 'white', marginLeft: '1rem' }}
+          style={{ backgroundColor: 'rgb(222 124 124)', color: 'white', marginLeft: '1rem' }}
           variant="contained"
           onClick={() => {
             handleOpenModal();
           }}
         >
-          Add Foods
+          Manage Foods
         </Button>
       </div>
       <br />
       <div className="food-container">
         {hotel.foods.length === 0 ? (
-          <p className="no-foods-message">You haven't added any meals in your hotel.</p>
+          <img
+            src="https://cdni.iconscout.com/illustration/premium/thumb/data-error-11521121-9404366.png?f=webp"
+            alt=""
+          />
         ) : (
-          currentFoods.map((food) => (
+          limitedFood?.map((food) => (
             <div key={food._id} className="food-card">
               <div className="card-header">
                 <h4 className="food-name">{food.name}</h4>
@@ -380,102 +318,104 @@ export default function HotelDetails({ product, onAddFood }) {
                   <Tooltip title={food?.about}>{food.about}</Tooltip>
                 </p>
               </div>
-
-              <div className="card-footer">
-                <Button
-                  style={{ backgroundColor: '#e5e5e4' }}
-                  variant="outlined"
-                  onClick={() => handleDeleteFood(food.foodId)}
-                >
-                  <FiDelete /> Delete
-                </Button>
-              </div>
             </div>
           ))
         )}
       </div>
-
-      {/* Food Pagination */}
-      {totalFoodPages > 1 && (
-        <div className="pagination">
-          <Button variant="outlined" disabled={currentPage === 1} onClick={handlePreviousPage}>
-            Previous
-          </Button>
-          {Array.from({ length: totalFoodPages }, (_, index) => (
-            <Button
-              key={index + 1}
-              variant="outlined"
-              className={`pagination-button ${currentPage === index + 1 ? 'active' : ''}`}
-              onClick={() => handlePageChange(index + 1)}
-            >
-              {index + 1}
-            </Button>
-          ))}
-          <Button
-            variant="outlined"
-            disabled={currentPage === totalFoodPages}
-            onClick={handleNextPage}
-          >
-            Next
-          </Button>
-        </div>
-      )}
-      <br />
-      {/* -----------------------------------------amenities details--------------------------------- */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h3 style={{ margin: 0 }} className="heading-text">
-          Amenities
-        </h3>
+      <hr />
+      {hotel?.foods?.length > 0 && (
         <Button
           style={{
-            backgroundColor: '#28a745', // Adjust the color as needed
-            color: 'white',
+            backgroundColor: 'rgba(171, 171, 171, 0.13)',
+            color: 'black',
             marginLeft: '1rem',
-            padding: '0.5rem 1rem',
           }}
           variant="contained"
           onClick={() => {
-            /* Add your button click handler here */
+            handleOpenModal();
           }}
         >
-          Update Amenities
-        </Button>
-      </div>
-      <br />
-      <div className="amenities-list">
-        {amenitiesToShow.map((amenityName, index) => (
-          <div
-            key={index}
-            className="amenity-item d-flex justify-content-between align-items-center"
-          >
-            <p className="amenity-text">{amenityName}</p>
-            <IoTrashOutline
-              onClick={() => handleDeleteAmenity(amenityName)}
-              className="trash-icon"
-              title="Delete Amenity"
-            />
-          </div>
-        ))}
-      </div>
-      {!showAllAmenities &&
-        amenitiesToShow.length < hotel.amenities.flatMap((a) => a.amenities).length && (
-          <Button
-            onClick={() => setShowAllAmenities(true)}
-            style={{ backgroundColor: '#007bff', color: '#fff' }}
-            className="mt-2"
-          >
-            Show More ...
-          </Button>
-        )}
-      {showAllAmenities && (
-        <Button
-          onClick={() => setShowAllAmenities(false)}
-          style={{ backgroundColor: '#007bff', color: '#fff' }}
-          className="mt-2"
-        >
-          Show Less ...
+          See all Foods
         </Button>
       )}
+
+      <hr />
+      <br />
+      {/* -----------------------------------------amenities details--------------------------------- */}
+      <div style={{ padding: '1rem' }}>
+        {/* Header Section */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '1rem',
+          }}
+        >
+          <h3 style={{ margin: 0 }} className="heading-text">
+            Amenities
+          </h3>
+          <Button
+            style={{
+              backgroundColor: 'rgb(222 124 124)', // Green button color
+              color: 'white',
+              padding: '0.5rem 1rem',
+            }}
+            variant="contained"
+            onClick={() => handleOpenAmenities()}
+          >
+            Manage Amenities
+          </Button>
+        </div>
+
+        {/* Amenities List */}
+        <div
+          className="amenities-list"
+          style={{
+            display: 'grid',
+            gap: '1rem',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          }}
+        >
+          {amenitiesToShow.map((amenityName, index) => (
+            <div
+              key={index}
+              className="amenity-item"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.5rem',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                backgroundColor: '#f9f9f9',
+              }}
+            >
+              <p style={{ margin: 0 }}>{amenityName}</p>
+            </div>
+          ))}
+        </div>
+        <hr />
+        {!showAllAmenities &&
+          amenitiesToShow.length < hotel.amenities.flatMap((a) => a.amenities).length && (
+            <Button
+              onClick={() => setShowAllAmenities(true)}
+              style={{ backgroundColor: 'rgb(171 171 171 / 13%)', color: 'black' }}
+              className="mt-2"
+            >
+              Show More ...
+            </Button>
+          )}
+        {showAllAmenities && (
+          <Button
+            onClick={() => setShowAllAmenities(false)}
+            style={{ backgroundColor: 'rgb(171 171 171 / 13%)', color: 'black' }}
+            className="mt-2"
+          >
+            Show Less ...
+          </Button>
+        )}
+      </div>
       <br />
 
       {/* ------------------------------------policies details---------------------------------------- */}
@@ -501,10 +441,17 @@ export default function HotelDetails({ product, onAddFood }) {
         hotelId={hotel.hotelId}
         onAddFood={handleAddFood} // Pass the function to handle adding food
       />
+      <Amenities
+        open={isAmenitiesModalOpen}
+        onClose={handleCloseAmenitiesModal}
+        hotelId={hotel.hotelId}
+        onUpdateAmenities={handleAddAmenities}
+      />
     </div>
   );
 }
 HotelDetails.propTypes = {
   product: PropTypes.object.isRequired,
   onAddFood: PropTypes.func.isRequired,
+  onUpdateAmenities: PropTypes.func.isRequired,
 };

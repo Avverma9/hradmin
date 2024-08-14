@@ -1,15 +1,20 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
+import { FcHome } from 'react-icons/fc';
 import { useNavigate } from 'react-router-dom';
-import { FaBed, FaEdit, FaUtensils, FaCalendarAlt } from 'react-icons/fa';
+import { PiBathtubThin } from 'react-icons/pi';
+import { IoFastFoodSharp } from 'react-icons/io5';
+import { BsCalendar2Month } from 'react-icons/bs';
 
 import { styled } from '@mui/system';
 import { Box, Link, Card, Stack, Button, Tooltip, IconButton } from '@mui/material';
 
 import Label from 'src/components/label';
 
-import AddFoodModal from '../../add-food-to-hotel'; // Import the AddFoodModal component
+import AddFoodModal from '../../manage-foods'; // Import the AddFoodModal component
+import Amenities from '../../manage-amenties';
+import AddRoomModal from '../../manage-rooms';
 
 // Styled component for the action button container
 const ActionButtonContainer = styled('div')(({ theme }) => ({
@@ -39,10 +44,11 @@ const ActionButtonOverlay = styled('div')(({ theme }) => ({
   zIndex: 10,
 }));
 
-function ShopProductCard({ product, onAddFood }) {
+function ShopProductCard({ product, onAddFood, onUpdateAmenities, onAddRoom }) {
   const navigate = useNavigate();
   const [isModalOpen, setModalOpen] = useState(false);
-
+  const [isAmenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
+  const [isRoomModalOpen, setRoomModalOpen] = useState(false);
   const viewDetails = (hotelId) => {
     navigate(`/view-hotel-details/${hotelId}`);
   };
@@ -50,7 +56,19 @@ function ShopProductCard({ product, onAddFood }) {
   const handleOpenModal = () => {
     setModalOpen(true);
   };
+  const handleOpenRoom = () => {
+    setRoomModalOpen(true);
+  };
+  const handleCloseRoom = () => {
+    setRoomModalOpen(false);
+  };
+  const handleOpenAmenities = () => {
+    setAmenitiesModalOpen(true);
+  };
 
+  const handleCloseAmenitiesModal = () => {
+    setAmenitiesModalOpen(false);
+  };
   const handleCloseModal = () => {
     setModalOpen(false);
   };
@@ -59,7 +77,14 @@ function ShopProductCard({ product, onAddFood }) {
     onAddFood(product.hotelId, foodData); // Pass hotelId and foodData to the onAddFood function
     handleCloseModal();
   };
-
+  const handleAddAmenities = (amenitiesData) => {
+    onUpdateAmenities(product.hotelId, amenitiesData);
+    handleCloseAmenitiesModal();
+  };
+  const handleAddRoom = (roomData) => {
+    onAddRoom(product.hotelId, roomData); // Pass hotelId and foodData to the onAddFood function
+    handleCloseModal();
+  };
   const renderStatus = (
     <Label
       variant="filled"
@@ -121,22 +146,36 @@ function ShopProductCard({ product, onAddFood }) {
                   handleOpenModal();
                 }}
               >
-                <FaUtensils size={20} />
+                <IoFastFoodSharp size={20} />
               </IconButton>
             </Tooltip>
             <Tooltip title="Update Amenities">
-              <IconButton color="primary" sx={{ width: 32, height: 32 }}>
-                <FaBed size={20} />
+              <IconButton
+                color="primary"
+                sx={{ width: 32, height: 32 }}
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent the card click event from firing
+                  handleOpenAmenities();
+                }}
+              >
+                <PiBathtubThin size={20} />
               </IconButton>
             </Tooltip>
             <Tooltip title="Update Rooms">
-              <IconButton color="primary" sx={{ width: 32, height: 32 }}>
-                <FaEdit size={20} />
+              <IconButton
+                color="primary"
+                sx={{ width: 32, height: 32 }}
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent the card click event from firing
+                  handleOpenRoom();
+                }}
+              >
+                <FcHome size={20} />
               </IconButton>
             </Tooltip>
             <Tooltip title="Set Monthly Price">
               <IconButton color="primary" sx={{ width: 32, height: 32 }}>
-                <FaCalendarAlt size={20} />
+                <BsCalendar2Month size={20} />
               </IconButton>
             </Tooltip>
           </ActionButtonOverlay>
@@ -150,6 +189,18 @@ function ShopProductCard({ product, onAddFood }) {
         hotelId={product.hotelId}
         onAddFood={handleAddFood} // Pass the function to handle adding food
       />
+      <Amenities
+        open={isAmenitiesModalOpen}
+        onClose={handleCloseAmenitiesModal}
+        hotelId={product.hotelId}
+        onUpdateAmenities={handleAddAmenities}
+      />
+      <AddRoomModal
+        open={isRoomModalOpen}
+        onClose={handleCloseRoom}
+        hotelId={product.hotelId}
+        onAddRoom={handleAddRoom}
+      />
     </>
   );
 }
@@ -157,6 +208,8 @@ function ShopProductCard({ product, onAddFood }) {
 ShopProductCard.propTypes = {
   product: PropTypes.object.isRequired,
   onAddFood: PropTypes.func.isRequired,
+  onAddRoom: PropTypes.func.isRequired,
+  onUpdateAmenities: PropTypes.func.isRequired,
 };
 
 export default ShopProductCard;

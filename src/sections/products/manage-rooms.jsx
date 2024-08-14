@@ -3,9 +3,9 @@
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
+import { LuBedDouble } from 'react-icons/lu';
 import React, { useState, useEffect } from 'react';
 import { FaIndianRupeeSign } from 'react-icons/fa6';
-import { IoFastFoodOutline } from 'react-icons/io5';
 
 import {
   Box,
@@ -70,7 +70,7 @@ const UploadButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-const FoodItem = styled(Box)(({ theme }) => ({
+const RoomItem = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   padding: theme.spacing(1),
@@ -85,7 +85,7 @@ const FoodItem = styled(Box)(({ theme }) => ({
   },
 }));
 
-const FoodImage = styled('img')(({ theme }) => ({
+const RoomImage = styled('img')(({ theme }) => ({
   width: '100px',
   height: '100px',
   objectFit: 'cover',
@@ -96,7 +96,7 @@ const FoodImage = styled('img')(({ theme }) => ({
   },
 }));
 
-const FoodDetails = styled(Box)(({ theme }) => ({
+const RoomDetails = styled(Box)(({ theme }) => ({
   marginLeft: theme.spacing(1),
   [theme.breakpoints.down('sm')]: {
     marginLeft: 0,
@@ -105,14 +105,14 @@ const FoodDetails = styled(Box)(({ theme }) => ({
   },
 }));
 
-const AddFoodModal = ({ open, onClose, hotelId }) => {
-  const [foodName, setFoodName] = useState('');
-  const [foodPrice, setFoodPrice] = useState('');
-  const [foodType, setFoodType] = useState('');
-  const [about, setAbout] = useState('');
+const AddRoomModal = ({ open, onClose, hotelId }) => {
+  const [roomType, setRoomType] = useState('');
+  const [roomPrice, setRoomPrice] = useState('');
+  const [bedTypes, setBedTypes] = useState('');
+  const [countRooms, setCountRooms] = useState('');
   const [images, setImages] = useState([]);
-  const [foods, setFoods] = useState([]);
-  const [isAddingFood, setIsAddingFood] = useState(false);
+  const [rooms, setRooms] = useState([]);
+  const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [loading, setLoading] = useState(false); // Added loading state
 
   const theme = useTheme();
@@ -120,18 +120,18 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
 
   useEffect(() => {
     if (hotelId) {
-      fetchFoods(); // Fetch foods when hotelId changes
+      fetchRooms(); // Fetch rooms when hotelId changes
     }
   }, [hotelId]);
 
-  const fetchFoods = () => {
+  const fetchRooms = () => {
     axios
       .get(`${localUrl}/hotels/get-by-id/${hotelId}`)
       .then((response) => {
-        setFoods(response.data.foods); // Update state with fetched foods
+        setRooms(response.data.rooms); // Update state with fetched rooms
       })
       .catch(() => {
-        toast.error('Error fetching foods');
+        toast.error('Error fetching rooms');
       });
   };
 
@@ -144,71 +144,74 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
     setLoading(true); // Set loading state to true
     const formData = new FormData();
     formData.append('hotelId', hotelId);
-    formData.append('name', foodName);
-    formData.append('price', foodPrice);
-    formData.append('foodType', foodType);
-    formData.append('about', about);
+    formData.append('type', roomType);
+    formData.append('price', roomPrice);
+    formData.append('bedTypes', bedTypes);
+    formData.append('countRooms', countRooms);
 
     images.forEach((file) => {
       formData.append('images', file);
     });
 
     axios
-      .post(`${localUrl}/add/food-to/your-hotel`, formData, {
+      .post(`${localUrl}/create-a-room-to-your-hotel`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       })
       .then(() => {
-        toast.success('Food added successfully');
+        toast.success('Room added successfully');
         window.location.reload();
       })
       .catch(() => {
-        toast.error('Error adding food');
+        toast.error('Error adding room');
       })
       .finally(() => {
         setLoading(false); // Set loading state to false
-        setIsAddingFood(false); // Close the add food form
+        setIsAddingRoom(false); // Close the add room form
       });
   };
   const handleCancel = () => {
     // Reset form state
-    setFoodName('');
-    setFoodPrice('');
-    setFoodType('');
-    setAbout('');
+    setRoomType('');
+    setRoomPrice('');
+    setBedTypes('');
+    setCountRooms('');
     setImages([]);
 
-    // Refresh the food list and close the modal
-    fetchFoods();
+    // Refresh the room list and close the modal
+    fetchRooms();
     onClose();
   };
   return (
     <Modal open={open} onClose={onClose}>
       <ModalContent>
         <Header>
-          <Typography variant="h6">{isAddingFood ? 'Add Food' : 'Hotel Foods'}</Typography>
+          <Typography variant="h6">
+            {isAddingRoom ? 'Add Room' : 'Available Hotel Rooms'}
+          </Typography>
           <Button onClick={onClose} color="inherit">
             Close
           </Button>
         </Header>
-        {!isAddingFood ? (
+        {!isAddingRoom ? (
           <>
-            {foods.length > 0 ? (
+            {rooms.length > 0 ? (
               <Box>
-                {foods.map((food, index) => (
-                  <FoodItem key={index}>
-                    <FoodImage src={food?.images} alt={`food ${index}`} />
-                    <FoodDetails>
-                      <Typography variant="h6">{food?.name}</Typography>
+                {rooms.map((room, index) => (
+                  <RoomItem key={index}>
+                    <RoomImage src={room?.images} alt={`room ${index}`} />
+                    <RoomDetails>
+                      <Typography variant="h6">{room?.type}</Typography>
                       <Typography style={{ color: 'red' }} variant="body1">
-                        <FaIndianRupeeSign /> {food?.price}
+                        <FaIndianRupeeSign /> {room?.price}
                       </Typography>
+                    
                       <Typography variant="body1">
-                        <IoFastFoodOutline /> {food?.foodType}
+                        <LuBedDouble /> {room?.bedTypes}
                       </Typography>
                       <Typography style={{ color: 'green' }} variant="body2">
-                        {food?.about}
+                        Number of Rooms - {room?.countRooms}
                       </Typography>
                       <ImagePreview>
                         {images.length > 0 &&
@@ -226,16 +229,16 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
                             />
                           ))}
                       </ImagePreview>
-                    </FoodDetails>
-                  </FoodItem>
+                    </RoomDetails>
+                  </RoomItem>
                 ))}
               </Box>
             ) : (
               <>
-                <Typography>This hotel has no food availability.</Typography>
+                <Typography>This hotel has no room availability.</Typography>
                 <img
                   src="https://media.istockphoto.com/id/1396541669/vector/no-food-or-drink-icon.jpg?s=612x612&w=0&k=20&c=T8qvZM66nqu-Ir_rhjnmlmfTnbSUR4G6t0oPPlvVqfw="
-                  alt="No food"
+                  alt="No room"
                   style={{ width: '100px', height: 'auto' }}
                 />
               </>
@@ -246,31 +249,31 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Food Name"
+                  label="Type of room"
                   variant="outlined"
                   fullWidth
                   margin="normal"
-                  value={foodName}
-                  onChange={(e) => setFoodName(e.target.value)}
+                  value={roomType}
+                  onChange={(e) => setRoomType(e.target.value)}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Food Price"
+                  label="Room Price"
                   variant="outlined"
                   fullWidth
                   margin="normal"
-                  value={foodPrice}
-                  onChange={(e) => setFoodPrice(e.target.value)}
+                  value={roomPrice}
+                  onChange={(e) => setRoomPrice(e.target.value)}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth margin="normal">
-                  <InputLabel>Food Type</InputLabel>
+                  <InputLabel>Bed Type</InputLabel>
                   <Select
-                    value={foodType}
-                    onChange={(e) => setFoodType(e.target.value)}
-                    label="Food Type"
+                    value={bedTypes}
+                    onChange={(e) => setBedTypes(e.target.value)}
+                    label="Bed Type"
                   >
                     <MenuItem value="Appetizer">Appetizer</MenuItem>
                     <MenuItem value="Main Course">Main Course</MenuItem>
@@ -281,12 +284,12 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="About"
+                  label="Number of rooms"
                   variant="outlined"
                   fullWidth
                   margin="normal"
-                  value={about}
-                  onChange={(e) => setAbout(e.target.value)}
+                  value={countRooms}
+                  onChange={(e) => setCountRooms(e.target.value)}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -322,7 +325,7 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
               <Button
                 onClick={() => {
                   handleCancel();
-                  setIsAddingFood(false);
+                  setIsAddingRoom(false);
                 }}
                 color="secondary"
                 sx={{ mr: 1 }}
@@ -335,15 +338,15 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
                 color="primary"
                 disabled={loading}
               >
-                {loading ? 'Adding...' : 'Add Food'}
+                {loading ? 'Adding...' : 'Add Room'}
               </Button>
             </div>
           </>
         )}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          {!isAddingFood && (
-            <Button variant="contained" color="primary" onClick={() => setIsAddingFood(true)}>
-              Add Food
+          {!isAddingRoom && (
+            <Button variant="contained" color="primary" onClick={() => setIsAddingRoom(true)}>
+              Add Room
             </Button>
           )}
         </div>
@@ -352,10 +355,10 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
   );
 };
 
-AddFoodModal.propTypes = {
+AddRoomModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   hotelId: PropTypes.string.isRequired,
 };
 
-export default AddFoodModal;
+export default AddRoomModal;
