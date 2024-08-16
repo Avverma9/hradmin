@@ -5,9 +5,10 @@ import {
   MdPerson,
   MdSettings,
   MdDashboard,
+  MdOutlineTravelExplore,
   MdOutlineAdminPanelSettings,
 } from 'react-icons/md'; // Ensure these are correct
-import { ImBlogger } from 'react-icons/im';
+import { CiImageOn } from 'react-icons/ci';
 import { BsInfoSquare } from 'react-icons/bs';
 
 // Define icon mappings
@@ -16,9 +17,10 @@ const icons = {
   partners: <MdPerson style={{ width: '24px', height: '24px' }} />,
   bookings: <MdEvent style={{ width: '24px', height: '24px' }} />,
   hotels: <MdHotel style={{ width: '24px', height: '24px' }} />,
-  blog: <ImBlogger style={{ width: '24px', height: '24px' }} />,
+  travel: <MdOutlineTravelExplore style={{ width: '24px', height: '24px' }} />,
   settings: <MdSettings style={{ width: '24px', height: '24px' }} />,
   complaints: <BsInfoSquare style={{ width: '24px', height: '24px' }} />,
+  banner: <CiImageOn style={{ width: '24px', height: '24px' }} />,
   admin: <MdOutlineAdminPanelSettings style={{ width: '24px', height: '24px' }} />,
   user: <FaRegUserCircle style={{ width: '24px', height: '24px' }} />,
   setMonthlyPrice: <FaDollarSign style={{ width: '24px', height: '24px' }} />,
@@ -90,22 +92,7 @@ const getNavConfig = () => {
     //     },
     //   ],
     // },
-    {
-      title: 'Site Settings',
-      icon: icons.settings,
-      children: [
-        {
-          title: 'Add travel location',
-          path: '/add-travel-location',
-          icon: icons.settings,
-        },
-        {
-          title: 'Change banner',
-          path: '/change-banner',
-          icon: icons.settings,
-        },
-      ],
-    },
+
     {
       title: 'Admin features',
       icon: icons.admin,
@@ -120,12 +107,22 @@ const getNavConfig = () => {
           path: '/all-users',
           icon: icons.user,
         },
+        {
+          title: 'Add travel location',
+          path: '/add-travel-location',
+          icon: icons.travel,
+        },
+        {
+          title: 'Change banner',
+          path: '/change-banner',
+          icon: icons.banner,
+        },
       ],
     },
   ];
 
   const Adminconfig = [''];
-  const superAdminConfig = ['Bookings', 'partners', 'Site Settings', 'Admin features'];
+  const superAdminConfig = ['Bookings', 'partners', 'Admin features'];
   const AdminChildConfig = ['Your Hotel', 'Your Bookings'];
   const superAdminChildConfig = ['Hotels', 'Bookings'];
 
