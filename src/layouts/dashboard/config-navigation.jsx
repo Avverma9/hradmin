@@ -1,6 +1,15 @@
-import { FaDollarSign } from 'react-icons/fa'; // Example import for FaDollarSign from 'react-icons/fa'
-import { MdEvent, MdHotel, MdPerson, MdSettings, MdDashboard } from 'react-icons/md'; // Ensure these are correct
+import { FaDollarSign, FaRegUserCircle } from 'react-icons/fa'; // Example import for FaDollarSign from 'react-icons/fa'
+import {
+  MdEvent,
+  MdHotel,
+  MdPerson,
+  MdSettings,
+  MdDashboard,
+  MdOutlineAdminPanelSettings,
+} from 'react-icons/md'; // Ensure these are correct
 import { ImBlogger } from 'react-icons/im';
+import { BsInfoSquare } from 'react-icons/bs';
+
 // Define icon mappings
 const icons = {
   dashboard: <MdDashboard style={{ width: '24px', height: '24px' }} />,
@@ -9,6 +18,9 @@ const icons = {
   hotels: <MdHotel style={{ width: '24px', height: '24px' }} />,
   blog: <ImBlogger style={{ width: '24px', height: '24px' }} />,
   settings: <MdSettings style={{ width: '24px', height: '24px' }} />,
+  complaints: <BsInfoSquare style={{ width: '24px', height: '24px' }} />,
+  admin: <MdOutlineAdminPanelSettings style={{ width: '24px', height: '24px' }} />,
+  user: <FaRegUserCircle style={{ width: '24px', height: '24px' }} />,
   setMonthlyPrice: <FaDollarSign style={{ width: '24px', height: '24px' }} />,
 };
 
@@ -63,21 +75,21 @@ const getNavConfig = () => {
         },
       ],
     },
-    {
-      title: 'blog',
-      path: '/blog',
-      icon: icons.blog,
-      children: [
-        {
-          title: 'All Posts',
-          path: '/blog/all',
-        },
-        {
-          title: 'Add Post',
-          path: '/blog/add',
-        },
-      ],
-    },
+    // {
+    //   title: 'blog',
+    //   path: '/blog',
+    //   icon: icons.blog,
+    //   children: [
+    //     {
+    //       title: 'All Posts',
+    //       path: '/blog/all',
+    //     },
+    //     {
+    //       title: 'Add Post',
+    //       path: '/blog/add',
+    //     },
+    //   ],
+    // },
     {
       title: 'Site Settings',
       icon: icons.settings,
@@ -94,10 +106,26 @@ const getNavConfig = () => {
         },
       ],
     },
+    {
+      title: 'Admin features',
+      icon: icons.admin,
+      children: [
+        {
+          title: 'Complaints',
+          path: '/complaints',
+          icon: icons.complaints,
+        },
+        {
+          title: 'Manage users',
+          path: '/all-users',
+          icon: icons.user,
+        },
+      ],
+    },
   ];
 
   const Adminconfig = [''];
-  const superAdminConfig = ['Bookings', 'partners', 'Site Settings'];
+  const superAdminConfig = ['Bookings', 'partners', 'Site Settings', 'Admin features'];
   const AdminChildConfig = ['Your Hotel', 'Your Bookings'];
   const superAdminChildConfig = ['Hotels', 'Bookings'];
 
