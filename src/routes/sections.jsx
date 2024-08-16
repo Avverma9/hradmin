@@ -17,6 +17,7 @@ const YourHotelsPage = lazy(() => import('src/pages/superAdmin/your-hotel-page')
 const BookingsView = lazy(() => import('src/pages/admin/admin-bookings-page'));
 const BookingDetail = lazy(() => import('src/pages/booking-details'));
 const SuperAdminBookingsView = lazy(() => import('src/pages/superAdmin/superAdmin-bookings-page'));
+const MonthlyPricePage = lazy(() => import('src/pages/monthly-price'))
 export default function Router() {
   const routes = useRoutes([
     {
@@ -31,6 +32,7 @@ export default function Router() {
         { path: 'dashboard', element: <IndexPage /> },
         { path: 'user', element: <UserPage /> },
         { path: 'hotels', element: <ProductsPage /> },
+        { path: 'hotels/monthly-price', element: <MonthlyPricePage /> },
         { path: 'your-hotels', element: <YourHotelsPage /> },
         { path: 'view-hotel-details/:hotelId', element: <HotelDetailsPage /> },
         { path: 'all-bookings', element: <BookingsView /> },

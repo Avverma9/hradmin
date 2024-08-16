@@ -278,3 +278,41 @@
     grid-template-columns: 1fr;
   }
 }
+.policy-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 15px;
+}
+
+.policy-card-body {
+  padding: 15px;
+}
+
+.policy-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.policy-icon {
+  margin-right: 12px;
+  font-size: 24px;
+  color: #007bff;
+}
+
+.policy-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.policy-key {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.policy-value {
+  margin-left: 5px;
+}
+
+

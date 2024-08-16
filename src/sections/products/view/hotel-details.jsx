@@ -5,8 +5,17 @@ import PropTypes from 'prop-types';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 /* eslint-disable jsx-a11y/img-redundant-alt */
+import { HiOutlineDocumentText } from 'react-icons/hi';
 import React, { useState, useEffect } from 'react';
 import { FaIndianRupeeSign } from 'react-icons/fa6';
+import {
+  FaBed,
+  FaReply,
+  FaUtensils,
+  FaCalendarAlt,
+  FaMoneyBillWave,
+} from 'react-icons/fa';
+import { MdCancel, MdCheckCircle } from 'react-icons/md';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Row, Col, Button, Carousel } from 'react-bootstrap';
 import {
@@ -175,17 +184,17 @@ export default function HotelDetails({ product, onAddFood, onUpdateAmenities,onA
         >
           {hotel?.isAccepted ? (
             <>
-              <IoTrashOutline /> Remove this hotel
+              <IoTrashOutline /> Remove 
             </>
           ) : (
             <>
-              <GrStatusGood /> Approve this hotel
+              <GrStatusGood /> Approve 
             </>
           )}
         </Button>
 
         <Button variant="danger" sx={{ mb: 2 }} onClick={handleMailToHotel}>
-          <IoMailOpenOutline /> Mail to hotel
+          <IoMailOpenOutline /> Mail
         </Button>
       </FlexContainer>
 
@@ -460,21 +469,427 @@ export default function HotelDetails({ product, onAddFood, onUpdateAmenities,onA
 
       {/* ------------------------------------policies details---------------------------------------- */}
       <h3 className="heading-text">Policies</h3>
-      {hotel.policies.map((policy) => (
-        <div key={policy._id} className="card mb-3">
-          <div className="card-body">
-            <p className="card-text">
-              <strong>Hotels Policy:</strong> {policy.hotelsPolicy}
-            </p>
-            <p className="card-text">
-              <strong>Check-In Policy:</strong> {policy.checkInPolicy}
-            </p>
-            <p className="card-text">
-              <strong>Check-Out Policy:</strong> {policy.checkOutPolicy}
-            </p>
+      {hotel?.policies && hotel?.policies.length > 0 ? (
+        hotel?.policies.map((policy) => (
+          <div key={policy._id} className="policy-card">
+            <div className="policy-card-body">
+              {policy.hotelsPolicy && (
+                <div className="policy-item">
+                  <HiOutlineDocumentText className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Hotels Policy</span>
+                    <span className="policy-value">{policy.hotelsPolicy}</span>
+                  </div>
+                </div>
+              )}
+              {policy.checkInPolicy && (
+                <div className="policy-item">
+                  <FaCalendarAlt className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Check-In Policy</span>
+                    <span className="policy-value">{policy.checkInPolicy}</span>
+                  </div>
+                </div>
+              )}
+              {policy.checkOutPolicy && (
+                <div className="policy-item">
+                  <FaCalendarAlt className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Check-Out Policy</span>
+                    <span className="policy-value">{policy.checkOutPolicy}</span>
+                  </div>
+                </div>
+              )}
+              {policy.outsideFoodPolicy && (
+                <div className="policy-item">
+                  <FaUtensils className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Outside Food Policy</span>
+                    <span className="policy-value">{policy.outsideFoodPolicy}</span>
+                  </div>
+                </div>
+              )}
+              {policy.cancellationPolicy && (
+                <div className="policy-item">
+                  <FaReply className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Cancellation Policy</span>
+                    <span className="policy-value">{policy.cancellationPolicy}</span>
+                  </div>
+                </div>
+              )}
+              {policy.paymentMode && (
+                <div className="policy-item">
+                  <FaMoneyBillWave className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Payment Mode</span>
+                    <span className="policy-value">{policy.paymentMode}</span>
+                  </div>
+                </div>
+              )}
+              {policy.petsAllowed && (
+                <div className="policy-item">
+                  {policy.petsAllowed === 'Yes' ? (
+                    <MdCheckCircle className="policy-icon" />
+                  ) : (
+                    <MdCancel className="policy-icon" />
+                  )}
+                  <div className="policy-content">
+                    <span className="policy-key">Pets Allowed</span>
+                    <span className="policy-value">{policy.petsAllowed}</span>
+                  </div>
+                </div>
+              )}
+              {policy.bachelorAllowed && (
+                <div className="policy-item">
+                  {policy.bachelorAllowed === 'Yes' ? (
+                    <MdCheckCircle className="policy-icon" />
+                  ) : (
+                    <MdCancel className="policy-icon" />
+                  )}
+                  <div className="policy-content">
+                    <span className="policy-key">Bachelor Allowed</span>
+                    <span className="policy-value">{policy.bachelorAllowed}</span>
+                  </div>
+                </div>
+              )}
+              {policy.smokingAllowed && (
+                <div className="policy-item">
+                  {policy.smokingAllowed === 'Yes' ? (
+                    <MdCheckCircle className="policy-icon" />
+                  ) : (
+                    <MdCancel className="policy-icon" />
+                  )}
+                  <div className="policy-content">
+                    <span className="policy-key">Smoking Allowed</span>
+                    <span className="policy-value">{policy.smokingAllowed}</span>
+                  </div>
+                </div>
+              )}
+              {policy.alcoholAllowed && (
+                <div className="policy-item">
+                  {policy.alcoholAllowed === 'Yes' ? (
+                    <MdCheckCircle className="policy-icon" />
+                  ) : (
+                    <MdCancel className="policy-icon" />
+                  )}
+                  <div className="policy-content">
+                    <span className="policy-key">Alcohol Allowed</span>
+                    <span className="policy-value">{policy.alcoholAllowed}</span>
+                  </div>
+                </div>
+              )}
+              {policy.unmarriedCouplesAllowed && (
+                <div className="policy-item">
+                  {policy.unmarriedCouplesAllowed === 'Yes' ? (
+                    <MdCheckCircle className="policy-icon" />
+                  ) : (
+                    <MdCancel className="policy-icon" />
+                  )}
+                  <div className="policy-content">
+                    <span className="policy-key">Unmarried Couples Allowed</span>
+                    <span className="policy-value">{policy.unmarriedCouplesAllowed}</span>
+                  </div>
+                </div>
+              )}
+              {policy.internationalGuestAllowed && (
+                <div className="policy-item">
+                  {policy.internationalGuestAllowed === 'Yes' ? (
+                    <MdCheckCircle className="policy-icon" />
+                  ) : (
+                    <MdCancel className="policy-icon" />
+                  )}
+                  <div className="policy-content">
+                    <span className="policy-key">International Guest Allowed</span>
+                    <span className="policy-value">{policy.internationalGuestAllowed}</span>
+                  </div>
+                </div>
+              )}
+              {policy.returnPolicy && (
+                <div className="policy-item">
+                  <FaReply className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Return Policy</span>
+                    <span className="policy-value">{policy.returnPolicy}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onDoubleSharing && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On Season Double Sharing</span>
+                    <span className="policy-value">{policy.onDoubleSharing}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onQuadSharing && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On Season Quad Sharing</span>
+                    <span className="policy-value">{policy.onQuadSharing}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onBulkBooking && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On Season Bulk Booking</span>
+                    <span className="policy-value">{policy.onBulkBooking}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onTrippleSharing && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On Season Triple Sharing</span>
+                    <span className="policy-value">{policy.onTrippleSharing}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onMoreThanFour && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On Season More Than Four</span>
+                    <span className="policy-value">{policy.onMoreThanFour}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offDoubleSharing && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season Double Sharing</span>
+                    <span className="policy-value">{policy.offDoubleSharing}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offQuadSharing && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season Quad Sharing</span>
+                    <span className="policy-value">{policy.offQuadSharing}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offBulkBooking && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season Bulk Booking:</span>
+                    <span className="policy-value">{policy.offBulkBooking}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offTrippleSharing && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season Triple Sharing</span>
+                    <span className="policy-value">{policy.offTrippleSharing}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offMoreThanFour && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season More Than Four</span>
+                    <span className="policy-value">{policy.offMoreThanFour}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onDoubleSharingAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On Season Double Sharing Ap</span>
+                    <span className="policy-value">{policy.onDoubleSharingAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onQuadSharingAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On Season Quad Sharing Ap</span>
+                    <span className="policy-value">{policy.onQuadSharingAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onBulkBookingAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On Season Bulk Booking Ap</span>
+                    <span className="policy-value">{policy.onBulkBookingAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onTrippleSharingAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On Season Triple Sharing Ap</span>
+                    <span className="policy-value">{policy.onTrippleSharingAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onMoreThanFourAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On Season More Than Four Ap</span>
+                    <span className="policy-value">{policy.onMoreThanFourAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offDoubleSharingAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season Double Sharing Ap</span>
+                    <span className="policy-value">{policy.offDoubleSharingAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offQuadSharingAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season Quad Sharing Ap</span>
+                    <span className="policy-value">{policy.offQuadSharingAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offBulkBookingAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season Bulk Booking Ap</span>
+                    <span className="policy-value">{policy.offBulkBookingAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offTrippleSharingAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season Triple Sharing Ap</span>
+                    <span className="policy-value">{policy.offTrippleSharingAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offMoreThanFourAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season More Than Four Ap</span>
+                    <span className="policy-value">{policy.offMoreThanFourAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onDoubleSharingMAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On Season Double Sharing M.A.P</span>
+                    <span className="policy-value">{policy.onDoubleSharingMAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onQuadSharingMAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On Season Quad Sharing M.A.P</span>
+                    <span className="policy-value">{policy.onQuadSharingMAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onBulkBookingMAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On Season Bulk Booking M.A.P</span>
+                    <span className="policy-value">{policy.onBulkBookingMAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onTrippleSharingMAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On Season Triple Sharing M.A.P</span>
+                    <span className="policy-value">{policy.onTrippleSharingMAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.onMoreThanFourMAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">On More Than Four M.A.P</span>
+                    <span className="policy-value">{policy.onMoreThanFourMAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offDoubleSharingMAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season Double Sharing M.A.P</span>
+                    <span className="policy-value">{policy.offDoubleSharingMAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offQuadSharingMAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season Quad Sharing M.A.P</span>
+                    <span className="policy-value">{policy.offQuadSharingMAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offBulkBookingMAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season Bulk Booking M.A.P</span>
+                    <span className="policy-value">{policy.offBulkBookingMAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offTrippleSharingMAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season Triple Sharing M.A.P</span>
+                    <span className="policy-value">{policy.offTrippleSharingMAp}</span>
+                  </div>
+                </div>
+              )}
+              {policy.offMoreThanFourMAp && (
+                <div className="policy-item">
+                  <FaBed className="policy-icon" />
+                  <div className="policy-content">
+                    <span className="policy-key">Off Season More Than Four M.A.P</span>
+                    <span className="policy-value">{policy.offMoreThanFourMAp}</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        ))
+      ) : (
+        <p>No policies available.</p>
+      )}
       <AddFoodModal
         open={isModalOpen}
         onClose={handleCloseModal}

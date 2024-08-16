@@ -1,10 +1,16 @@
-import SvgColor from 'src/components/svg-color';
-
-// ----------------------------------------------------------------------
-
-const icon = (name) => (
-  <SvgColor src={`/assets/icons/navbar/${name}`} sx={{ width: 1, height: 1 }} />
-);
+import { FaDollarSign } from 'react-icons/fa'; // Example import for FaDollarSign from 'react-icons/fa'
+import { MdEvent, MdHotel, MdPerson, MdSettings, MdDashboard } from 'react-icons/md'; // Ensure these are correct
+import { ImBlogger } from 'react-icons/im';
+// Define icon mappings
+const icons = {
+  dashboard: <MdDashboard style={{ width: '24px', height: '24px' }} />,
+  partners: <MdPerson style={{ width: '24px', height: '24px' }} />,
+  bookings: <MdEvent style={{ width: '24px', height: '24px' }} />,
+  hotels: <MdHotel style={{ width: '24px', height: '24px' }} />,
+  blog: <ImBlogger style={{ width: '24px', height: '24px' }} />,
+  settings: <MdSettings style={{ width: '24px', height: '24px' }} />,
+  setMonthlyPrice: <FaDollarSign style={{ width: '24px', height: '24px' }} />,
+};
 
 const role = localStorage.getItem('user_role');
 
@@ -13,53 +19,54 @@ const getNavConfig = () => {
     {
       title: 'dashboard',
       path: '/dashboard',
-      icon: icon('logo.png'),
+      icon: icons.dashboard,
     },
     {
       title: 'partners',
       path: '/user',
-      icon: icon('ic_user.svg'),
+      icon: icons.partners,
     },
     {
       title: 'bookings',
-      icon: icon('ic_tag.svg'),
+      icon: icons.bookings,
       children: [
         {
           title: 'Bookings',
-          icon: icon('ic_booking.svg'),
+          icon: icons.bookings,
           path: '/all-bookings',
         },
         {
           title: 'Your Bookings',
-          icon: icon('ic_booking.svg'),
+          icon: icons.bookings,
           path: '/your-bookings',
         },
       ],
     },
     {
       title: 'Hotels',
-      icon: icon('ic_cart.svg'),
+      icon: icons.hotels,
       children: [
         {
           title: 'Hotels',
-          icon: icon('ic_hotel.svg'),
+          icon: icons.hotels,
           path: '/hotels',
         },
         {
           title: 'Your Hotel',
-          icon: icon('ic_hotel.svg'),
+          icon: icons.hotels,
           path: '/your-hotels',
         },
         {
-          title: 'Add Hotel',
-          path: '/hotels/add',
+          title: 'Set Monthly Price',
+          icon: icons.setMonthlyPrice, // Use the React Icon
+          path: '/hotels/monthly-price',
         },
       ],
     },
     {
       title: 'blog',
       path: '/blog',
-      icon: icon('ic_blog.svg'),
+      icon: icons.blog,
       children: [
         {
           title: 'All Posts',
@@ -73,34 +80,32 @@ const getNavConfig = () => {
     },
     {
       title: 'Site Settings',
-      icon: icon('settings-svgrepo-com.svg'),
+      icon: icons.settings,
       children: [
         {
           title: 'Add travel location',
           path: '/add-travel-location',
-          icon: icon('add-square-svgrepo-com.svg'),
+          icon: icons.settings,
         },
         {
           title: 'Change banner',
           path: '/change-banner',
-          icon: icon('sync-svgrepo-com.svg'),
+          icon: icons.settings,
         },
       ],
     },
   ];
 
-  // Define the titles to filter out for the admin role
   const Adminconfig = [''];
   const superAdminConfig = ['Bookings', 'partners', 'Site Settings'];
-  const AdminChildConfig = ['Your Hotel','Your Bookings']; // Define child items to filter out for the admin role
+  const AdminChildConfig = ['Your Hotel', 'Your Bookings'];
   const superAdminChildConfig = ['Hotels', 'Bookings'];
+
   if (role === 'admin') {
     return baseConfig.filter((item) => {
-      // Filter top-level config
       if (Adminconfig.includes(item.title)) {
         return false;
       }
-      // Filter children if they exist
       if (item.children) {
         item.children = item.children.filter((child) => !AdminChildConfig.includes(child.title));
       }
@@ -109,11 +114,9 @@ const getNavConfig = () => {
   }
   if (role === 'superAdmin') {
     return baseConfig.filter((item) => {
-      // Filter top-level config
       if (superAdminConfig.includes(item.title)) {
         return false;
       }
-      // Filter children if they exist
       if (item.children) {
         item.children = item.children.filter(
           (child) => !superAdminChildConfig.includes(child.title)

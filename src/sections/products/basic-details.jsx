@@ -1,5 +1,5 @@
-/* eslint-disable jsx-a11y/img-redundant-alt */
 /* eslint-disable no-nested-ternary */
+/* eslint-disable jsx-a11y/img-redundant-alt */
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
@@ -11,6 +11,8 @@ import {
   Grid,
   Modal,
   Button,
+  Select,
+  MenuItem,
   TextField,
   Typography,
   IconButton,
@@ -43,13 +45,22 @@ export default function BasicDetails({ open, onClose, hotelId }) {
   }, [hotelId]);
 
   const handleEditClick = (field, value) => {
+    if (field === 'isAccepted') {
+      setEditValue(value ? 'Accepted' : 'Not Accepted');
+    } else {
+      setEditValue(value);
+    }
     setEditField(field);
-    setEditValue(value);
   };
 
   const handleSaveClick = async () => {
     try {
-      const updatedHotel = { ...hotel, [editField]: editValue };
+      let updatedValue = editValue;
+      if (editField === 'isAccepted') {
+        updatedValue = editValue === 'Accepted';
+      }
+
+      const updatedHotel = { ...hotel, [editField]: updatedValue };
       await axios.patch(`${localUrl}/hotels/update/info/${hotelId}`, updatedHotel);
       setHotel(updatedHotel);
       toast.success('Update successful');
@@ -65,6 +76,10 @@ export default function BasicDetails({ open, onClose, hotelId }) {
     setEditValue(e.target.value);
   };
 
+  const handleSelectChange = (e) => {
+    setEditValue(e.target.value);
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       handleSaveClick();
@@ -72,6 +87,9 @@ export default function BasicDetails({ open, onClose, hotelId }) {
   };
 
   const renderField = (key, value) => {
+    if (key === 'isAccepted') {
+      return value ? 'Accepted' : 'Not Accepted';
+    }
     if (typeof value === 'object') {
       if (Array.isArray(value)) {
         return value.join(', '); // Join array values with commas
@@ -153,16 +171,40 @@ export default function BasicDetails({ open, onClose, hotelId }) {
               <Grid item xs={12} key={key} sx={{ display: 'flex', alignItems: 'center' }}>
                 <Box sx={{ flexGrow: 1 }}>
                   <Typography variant="subtitle1" component="div" sx={{ mb: 1 }}>
-                    {`${key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}:`}
+                    {`${key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}`}
                   </Typography>
                   {editField === key ? (
-                    <TextField
-                      value={editValue}
-                      onChange={handleInputChange}
-                      onKeyDown={handleKeyDown}
-                      onBlur={handleSaveClick}
-                      sx={{ width: '100%' }}
-                    />
+                    key === 'isAccepted' ? (
+                      <Select
+                        value={editValue}
+                        onChange={handleSelectChange}
+                        onBlur={handleSaveClick}
+                        onKeyDown={handleKeyDown}
+                        sx={{ width: '100%' }}
+                      >
+                        <MenuItem value="Accepted">Accepted</MenuItem>
+                        <MenuItem value="Not Accepted">Not Accepted</MenuItem>
+                      </Select>
+                    ) : key === 'localId' ? (
+                      <Select
+                        value={editValue}
+                        onChange={handleSelectChange}
+                        onBlur={handleSaveClick}
+                        onKeyDown={handleKeyDown}
+                        sx={{ width: '100%' }}
+                      >
+                        <MenuItem value="Accepted">Accepted</MenuItem>
+                        <MenuItem value="Not Accepted">Not Accepted</MenuItem>
+                      </Select>
+                    ) : (
+                      <TextField
+                        value={editValue}
+                        onChange={handleInputChange}
+                        onKeyDown={handleKeyDown}
+                        onBlur={handleSaveClick}
+                        sx={{ width: '100%' }}
+                      />
+                    )
                   ) : key === 'images' ? (
                     <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
                       {hotel.images.map((image, index) => (
@@ -185,12 +227,14 @@ export default function BasicDetails({ open, onClose, hotelId }) {
                     </Typography>
                   )}
                 </Box>
-                <IconButton
-                  onClick={() => handleEditClick(key, hotel[key])}
-                  sx={{ ml: 2, visibility: editField === key ? 'hidden' : 'visible' }}
-                >
-                  <AiOutlineEdit size={24} />
-                </IconButton>
+                {key !== 'images' && key !== "hotelId" &&  ( // Hide edit icon for images
+                  <IconButton
+                    onClick={() => handleEditClick(key, hotel[key])}
+                    sx={{ ml: 2, visibility: editField === key ? 'hidden' : 'visible' }}
+                  >
+                    <AiOutlineEdit size={24} />
+                  </IconButton>
+                )}
               </Grid>
             );
           })}
