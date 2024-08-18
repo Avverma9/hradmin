@@ -5,7 +5,6 @@ import DashboardLayout from 'src/layouts/dashboard';
 
 
 const IndexPage = lazy(() => import('src/pages/app'));
-const BlogPage = lazy(() => import('src/pages/blog'));
 const UserPage = lazy(() => import('src/pages/user'));
 const LoginPage = lazy(() => import('src/pages/login'));
 const ProductsPage = lazy(() => import('src/pages/admin/products'));
@@ -38,7 +37,6 @@ export default function Router() {
         { path: 'all-bookings', element: <BookingsView /> },
         { path: 'your-bookings', element: <SuperAdminBookingsView /> },
         { path: 'your-booking-details/:bookingId', element: <BookingDetail /> },
-        { path: 'blog', element: <BlogPage /> },
         { path: 'add-travel-location', element: <ListTravelPage /> },
         { path: 'change-banner', element: <BannerPage /> },
         { path: '*', element: <Navigate to="/404" replace /> },
