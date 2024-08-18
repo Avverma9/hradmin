@@ -1,5 +1,3 @@
-
-
 export const searchQuery = [
   { name: 'Bookings', path: '/bookings' },
   { name: 'New Hotel Requests', path: '/request' },
