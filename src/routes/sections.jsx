@@ -15,6 +15,7 @@ const HotelDetailsPage = lazy(() => import('src/pages/hotel-details-page'));
 const YourHotelsPage = lazy(() => import('src/pages/superAdmin/your-hotel-page'));
 const BookingsView = lazy(() => import('src/pages/admin/admin-bookings-page'));
 const BookingDetail = lazy(() => import('src/pages/booking-details'));
+const UserDetails = lazy(() => import('src/pages/admin/alluser-page'));
 const SuperAdminBookingsView = lazy(() => import('src/pages/superAdmin/superAdmin-bookings-page'));
 const MonthlyPricePage = lazy(() => import('src/pages/monthly-price'))
 export default function Router() {
@@ -36,6 +37,7 @@ export default function Router() {
         { path: 'view-hotel-details/:hotelId', element: <HotelDetailsPage /> },
         { path: 'all-bookings', element: <BookingsView /> },
         { path: 'your-bookings', element: <SuperAdminBookingsView /> },
+        { path: 'all-users', element: <UserDetails /> },
         { path: 'your-booking-details/:bookingId', element: <BookingDetail /> },
         { path: 'add-travel-location', element: <ListTravelPage /> },
         { path: 'change-banner', element: <BannerPage /> },

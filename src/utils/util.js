@@ -5,6 +5,6 @@ export const searchQuery = [
   { name: 'Dashboard Users', path: '/dashboard-user' },
 ];
 
-export const localUrl = 'https://hotel-backend-tge7.onrender.com';
+export const localUrl = 'http://localhost:5000';
 // localUrl = 'https://hotel-backend-tge7.onrender.com';
 // localUrl = 'http://localhost:5000';

@@ -210,7 +210,7 @@ export default function UserPage() {
         const updatedUsers = users.map((user) =>
           user._id === userId ? { ...user, status: newStatus } : user
         );
-        toast.success('Active Status Changed');
+        toast.success(`Status Changed to ${newStatus === true ? "Active" : "Inactive"}`);
         setUsers(updatedUsers);
       }
     } catch (error) {
