@@ -8,13 +8,7 @@ import { toast } from 'react-toastify';
 import { HiOutlineDocumentText } from 'react-icons/hi';
 import React, { useState, useEffect } from 'react';
 import { FaIndianRupeeSign } from 'react-icons/fa6';
-import {
-  FaBed,
-  FaReply,
-  FaUtensils,
-  FaCalendarAlt,
-  FaMoneyBillWave,
-} from 'react-icons/fa';
+import { FaBed, FaReply, FaUtensils, FaCalendarAlt, FaMoneyBillWave } from 'react-icons/fa';
 import { MdCancel, MdCheckCircle } from 'react-icons/md';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Row, Col, Button, Carousel } from 'react-bootstrap';
@@ -35,8 +29,15 @@ import './hotelDetails.css';
 import Amenities from '../manage-amenties';
 import AddRoomModal from '../manage-rooms';
 import BasicDetails from '../basic-details';
+import Reviews from './superAdmin/reviews';
 
-export default function HotelDetails({ product, onAddFood, onUpdateAmenities,onAddRoom,onBasicDetails }) {
+export default function HotelDetails({
+  product,
+  onAddFood,
+  onUpdateAmenities,
+  onAddRoom,
+  onBasicDetails,
+}) {
   const location = useLocation();
   const navigate = useNavigate();
   const [showAllAmenities, setShowAllAmenities] = useState(false);
@@ -144,26 +145,26 @@ export default function HotelDetails({ product, onAddFood, onUpdateAmenities,onA
     gap: '8px',
     marginBottom: '16px',
   });
-    const handleAddRoom = (roomData) => {
-      onAddRoom(product.hotelId, roomData); // Pass hotelId and foodData to the onAddFood function
-      handleCloseModal();
-    };
-    const handleOpenRoom = () => {
-      setRoomModalOpen(true);
-    };
-    const handleCloseRoom = () => {
-      setRoomModalOpen(false);
-    };
-    const handleBasicDetailsClose = () => {
-      setBasicDetailsOpen(false);
-    };
-    const handleBasicDetailsOpen = () => {
-      setBasicDetailsOpen(true);
-    };
- const basicDetails = (basicData) => {
-   onBasicDetails(product.hotelId, basicData);
-   handleBasicDetailsClose();
- };
+  const handleAddRoom = (roomData) => {
+    onAddRoom(product.hotelId, roomData); // Pass hotelId and foodData to the onAddFood function
+    handleCloseModal();
+  };
+  const handleOpenRoom = () => {
+    setRoomModalOpen(true);
+  };
+  const handleCloseRoom = () => {
+    setRoomModalOpen(false);
+  };
+  const handleBasicDetailsClose = () => {
+    setBasicDetailsOpen(false);
+  };
+  const handleBasicDetailsOpen = () => {
+    setBasicDetailsOpen(true);
+  };
+  const basicDetails = (basicData) => {
+    onBasicDetails(product.hotelId, basicData);
+    handleBasicDetailsClose();
+  };
   if (!hotel) {
     return (
       <Container>
@@ -184,11 +185,11 @@ export default function HotelDetails({ product, onAddFood, onUpdateAmenities,onA
         >
           {hotel?.isAccepted ? (
             <>
-              <IoTrashOutline /> Remove 
+              <IoTrashOutline /> Remove
             </>
           ) : (
             <>
-              <GrStatusGood /> Approve 
+              <GrStatusGood /> Approve
             </>
           )}
         </Button>
@@ -914,6 +915,7 @@ export default function HotelDetails({ product, onAddFood, onUpdateAmenities,onA
         hotelId={hotel.hotelId}
         onBasicDetails={basicDetails}
       />
+      <Reviews hotelId={hotel.hotelId} />
     </div>
   );
 }

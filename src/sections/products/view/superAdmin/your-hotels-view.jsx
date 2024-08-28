@@ -35,8 +35,6 @@ export default function YourHotelsView() {
     // No dependencies in the array because getAllHotels doesn't change
   }, [hotelEmail]);
 
-
-
   if (loading) {
     // Show loading indicator while fetching data
     return (

@@ -10,7 +10,7 @@ import {
 } from 'react-icons/md'; // Ensure these are correct
 import { CiImageOn } from 'react-icons/ci';
 import { BsInfoSquare } from 'react-icons/bs';
-
+import { VscFeedback } from 'react-icons/vsc';
 // Define icon mappings
 const icons = {
   dashboard: <MdDashboard style={{ width: '24px', height: '24px' }} />,
@@ -21,6 +21,7 @@ const icons = {
   settings: <MdSettings style={{ width: '24px', height: '24px' }} />,
   complaints: <BsInfoSquare style={{ width: '24px', height: '24px' }} />,
   banner: <CiImageOn style={{ width: '24px', height: '24px' }} />,
+  review: <VscFeedback style={{ width: '24px', height: '24px' }} />,
   admin: <MdOutlineAdminPanelSettings style={{ width: '24px', height: '24px' }} />,
   user: <FaRegUserCircle style={{ width: '24px', height: '24px' }} />,
   setMonthlyPrice: <FaDollarSign style={{ width: '24px', height: '24px' }} />,
@@ -77,21 +78,7 @@ const getNavConfig = () => {
         },
       ],
     },
-    // {
-    //   title: 'blog',
-    //   path: '/blog',
-    //   icon: icons.blog,
-    //   children: [
-    //     {
-    //       title: 'All Posts',
-    //       path: '/blog/all',
-    //     },
-    //     {
-    //       title: 'Add Post',
-    //       path: '/blog/add',
-    //     },
-    //   ],
-    // },
+   
 
     {
       title: 'Admin features',
@@ -101,6 +88,11 @@ const getNavConfig = () => {
           title: 'Complaints',
           path: '/complaints',
           icon: icons.complaints,
+        },
+        {
+          title: 'Reviews',
+          path: '/all-reviews',
+          icon: icons.review,
         },
         {
           title: 'Manage users',
