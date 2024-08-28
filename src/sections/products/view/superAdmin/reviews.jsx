@@ -70,7 +70,7 @@ export default function Reviews({ title, subheader,hotelId, ...other }) {
 
   return (
     <Card {...other}>
-      <CardHeader title="All User Reviews" subheader={subheader} />
+      <CardHeader title="Hotel Reviews" subheader={subheader} />
 
       <Scrollbar>
         <Stack spacing={1} sx={{ pr: 0 }}>
