@@ -417,7 +417,6 @@ export default function HotelDetails({
             style={{
               backgroundColor: 'rgb(222 124 124)', // Green button color
               color: 'white',
-              padding: '0.5rem 1rem',
             }}
             className="custom-button"
             variant="contained"

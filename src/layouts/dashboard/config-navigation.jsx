@@ -11,6 +11,7 @@ import {
 import { CiImageOn } from 'react-icons/ci';
 import { BsInfoSquare } from 'react-icons/bs';
 import { VscFeedback } from 'react-icons/vsc';
+import { RiCoupon3Line } from 'react-icons/ri';
 // Define icon mappings
 const icons = {
   dashboard: <MdDashboard style={{ width: '24px', height: '24px' }} />,
@@ -22,6 +23,7 @@ const icons = {
   complaints: <BsInfoSquare style={{ width: '24px', height: '24px' }} />,
   banner: <CiImageOn style={{ width: '24px', height: '24px' }} />,
   review: <VscFeedback style={{ width: '24px', height: '24px' }} />,
+  coupon: <RiCoupon3Line style={{ width: '24px', height: '24px' }} />,
   admin: <MdOutlineAdminPanelSettings style={{ width: '24px', height: '24px' }} />,
   user: <FaRegUserCircle style={{ width: '24px', height: '24px' }} />,
   setMonthlyPrice: <FaDollarSign style={{ width: '24px', height: '24px' }} />,
@@ -78,7 +80,6 @@ const getNavConfig = () => {
         },
       ],
     },
-   
 
     {
       title: 'Admin features',
@@ -108,6 +109,11 @@ const getNavConfig = () => {
           title: 'Change banner',
           path: '/change-banner',
           icon: icons.banner,
+        },
+        {
+          title: 'Manage Coupons',
+          path: '/apply-coupon',
+          icon: icons.coupon,
         },
       ],
     },
