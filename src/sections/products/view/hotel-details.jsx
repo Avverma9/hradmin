@@ -1,3 +1,5 @@
+/* eslint-disable react/button-has-type */
+/* eslint-disable react/no-unknown-property */
 /* eslint-disable perfectionist/sort-imports */
 /* eslint-disable no-unsafe-optional-chaining */
 /* eslint-disable react/no-unescaped-entities */
@@ -176,12 +178,13 @@ export default function HotelDetails({
   return (
     <div className="container mt-4">
       <FlexContainer>
-        <Button variant="primary" onClick={handleGoBack} sx={{ mb: 2 }}>
+        <button className="custom-button" onClick={handleGoBack} sx={{ mb: 2 }}>
           <IoReturnUpBack /> Back
-        </Button>
-        <Button
-          style={{ backgroundColor: 'black' }}
+        </button>
+        <button
+          style={{ backgroundColor: 'white' }}
           onClick={() => handleApproveHotel(hotel?.isAccepted)}
+          className="custom-button"
         >
           {hotel?.isAccepted ? (
             <>
@@ -192,11 +195,16 @@ export default function HotelDetails({
               <GrStatusGood /> Approve
             </>
           )}
-        </Button>
+        </button>
 
-        <Button variant="danger" sx={{ mb: 2 }} onClick={handleMailToHotel}>
+        <button
+          variant="danger"
+          sx={{ mb: 2 }}
+          onClick={handleMailToHotel}
+          className="custom-button"
+        >
           <IoMailOpenOutline /> Mail
-        </Button>
+        </button>
       </FlexContainer>
 
       <h4
@@ -229,16 +237,16 @@ export default function HotelDetails({
         <h3 style={{ margin: 0 }} className="heading-text">
           Basic Details
         </h3>
-        <Button
+        <button
           style={{ backgroundColor: 'rgb(222 124 124)', color: 'white', marginLeft: '1rem' }}
-          variant="contained"
+          className="custom-button"
           onClick={(e) => {
             e.stopPropagation(); // Prevent the card click event from firing
             handleBasicDetailsOpen();
           }}
         >
           Manage Details
-        </Button>
+        </button>
       </div>
       <hr />
       <div>
@@ -280,16 +288,16 @@ export default function HotelDetails({
         <h3 style={{ margin: 0 }} className="heading-text">
           Room Types
         </h3>
-        <Button
+        <button
           style={{ backgroundColor: 'rgb(222 124 124)', color: 'white', marginLeft: '1rem' }}
-          variant="contained"
+          className="custom-button"
           onClick={(e) => {
             e.stopPropagation(); // Prevent the card click event from firing
             handleOpenRoom();
           }}
         >
           Manage Rooms
-        </Button>
+        </button>
       </div>
       <br />
       <div className="room-container">
@@ -332,7 +340,7 @@ export default function HotelDetails({
         </h3>
         <Button
           style={{ backgroundColor: 'rgb(222 124 124)', color: 'white', marginLeft: '1rem' }}
-          variant="contained"
+          className="custom-button"
           onClick={() => {
             handleOpenModal();
           }}
@@ -411,6 +419,7 @@ export default function HotelDetails({
               color: 'white',
               padding: '0.5rem 1rem',
             }}
+            className="custom-button"
             variant="contained"
             onClick={() => handleOpenAmenities()}
           >

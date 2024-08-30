@@ -1,3 +1,5 @@
+/* eslint-disable react/button-has-type */
+/* eslint-disable react/no-unknown-property */
 /* eslint-disable jsx-a11y/img-redundant-alt */
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -15,8 +17,8 @@ import {
   Grid,
   Modal,
   Input,
-  Button,
   Select,
+  Button,
   MenuItem,
   useTheme,
   TextField,
@@ -29,6 +31,7 @@ import {
 import { localUrl } from 'src/utils/util';
 import { bedTypes, roomTypes } from 'src/utils/filterOptions';
 
+import './button.css';
 import {
   Header,
   RoomItem,
@@ -220,22 +223,20 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
                       </Typography>
                     </RoomDetails>
                     <RoomActions>
-                      <Button
+                      <button
+                        className="custom-button"
                         onClick={() => handleDelete(room.roomId)}
-                        color="error"
-                        size="small"
                         startIcon={<AiOutlineDelete />}
                       >
                         Delete
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         onClick={() => handleEdit(room)}
-                        color="primary"
-                        size="small"
+                        className="custom-button"
                         startIcon={<AiOutlineEdit />}
                       >
                         Update
-                      </Button>
+                      </button>
                     </RoomActions>
                   </RoomItem>
                 ))}
@@ -341,15 +342,14 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
                   resetForm();
                   onClose();
                 }}
-                color="secondary"
+                className="custom-button"
                 sx={{ mr: 1 }}
               >
                 Cancel
               </Button>
               <Button
                 onClick={currentRoomId ? handleUpdateRoom : handleAddRoom}
-                variant="contained"
-                color="primary"
+                className="custom-button"
                 disabled={loading}
               >
                 {loading ? 'Saving...' : currentRoomId ? 'Update Room' : 'Add Room'}
