@@ -2,42 +2,48 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import React, { useState, useEffect } from 'react';
 
+import TextField from '@mui/material/TextField';
+import TablePagination from '@mui/material/TablePagination';
 import {
-  Box,
-  Grid,
   Table,
   Paper,
   Button,
-  Dialog,
   TableRow,
+  Container,
   TableBody,
   TableCell,
   TableHead,
-  TextField,
-  Container,
   Typography,
-  IconButton,
-  DialogTitle,
-  DialogActions,
-  DialogContent,
   TableContainer,
 } from '@mui/material';
 
 import { localUrl } from 'src/utils/util';
 
+import RoomModal from './room-modal';
+import CouponCodeModal from './coupon-code';
+import CreateCouponModal from './create-coupon';
+import AvailableCouponsModal from './available-coupons';
+
 export default function Coupon() {
   const [hotels, setHotels] = useState([]);
+  const [coupons, setCoupons] = useState([]);
   const [couponName, setCouponName] = useState('');
   const [discountPrice, setDiscountPrice] = useState('');
   const [validity, setValidity] = useState('');
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const [openCouponModal, setOpenCouponModal] = useState(false);
+  const [openAvailableCouponsModal, setOpenAvailableCouponsModal] = useState(false);
+  const [openCreateCouponModal, setOpenCreateCouponModal] = useState(false); // Added state for CreateCouponModal
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [couponCode, setCouponCode] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchHotels();
+    fetchCoupons();
   }, []);
 
   const fetchHotels = async () => {
@@ -51,6 +57,17 @@ export default function Coupon() {
     }
   };
 
+  const fetchCoupons = async () => {
+    try {
+      const response = await fetch(`${localUrl}/coupon/get/all`);
+      const result = await response.json();
+      setCoupons(result || []);
+    } catch (error) {
+      console.error('Error fetching coupons:', error);
+      toast.error('Failed to fetch coupons');
+    }
+  };
+
   const handleCreateCoupon = async (e) => {
     e.preventDefault();
     const formattedValidity = new Date(validity).toISOString().split('T')[0];
@@ -61,28 +78,33 @@ export default function Coupon() {
         validity: formattedValidity,
       });
       if (response.status === 201) {
-        toast.success(`Note down your Coupon Code - ${response.data?.coupon?.couponCode}`);
+        toast.success(`Kindly Note down your coupon code ${response?.data?.coupon?.couponCode}`);
         setCouponName('');
         setDiscountPrice('');
         setValidity('');
+        handleCloseCreateCouponModal();
+        fetchCoupons(); // Refresh coupons after creating a new one
       }
     } catch (error) {
       toast.error('Failed to create coupon');
     }
   };
 
-  const handleApplyCoupon = async (hotelId, roomId) => {
-    try {
-      const response = await axios.patch(
-        `${localUrl}/apply/a/coupon-to-room/${couponCode}?hotelId=${hotelId}&roomId=${roomId}`
-      );
-      if (response.status === 200) {
-        toast.success('Coupon Applied Successfully');
-      }
-    } catch (error) {
-      toast.error('Failed to apply coupon');
+const handleApplyCoupon = async (hotelId, roomId) => {
+  try {
+    const response = await axios.patch(
+      `${localUrl}/apply/a/coupon-to-room/${couponCode}?hotelId=${hotelId}&roomId=${roomId}`
+    );
+    if (response.status === 200) {
+      toast.success('Coupon Applied Successfully');
     }
-  };
+  } catch (error) {
+    // Check if error response exists and if it contains a message
+    const errorMessage = error.response?.data?.message || 'Failed to apply coupon';
+    toast.error(errorMessage);
+  }
+};
+
 
   const handleOpenModal = (hotel) => {
     setSelectedHotel(hotel);
@@ -105,6 +127,22 @@ export default function Coupon() {
     setCouponCode('');
   };
 
+  const handleOpenAvailableCouponsModal = () => {
+    setOpenAvailableCouponsModal(true);
+  };
+
+  const handleCloseAvailableCouponsModal = () => {
+    setOpenAvailableCouponsModal(false);
+  };
+
+  const handleOpenCreateCouponModal = () => {
+    setOpenCreateCouponModal(true);
+  };
+
+  const handleCloseCreateCouponModal = () => {
+    setOpenCreateCouponModal(false);
+  };
+
   const handleApplyCouponToRoom = async () => {
     if (!selectedRoom || !couponCode) return;
 
@@ -116,56 +154,71 @@ export default function Coupon() {
     }
   };
 
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(
+      () => toast.success('Coupon code copied to clipboard'),
+      (err) => toast.error('Failed to copy coupon code')
+    );
+  };
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleSearch = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const filteredHotels = hotels.filter((hotel) =>
+    hotel.hotelName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const paginatedHotels = filteredHotels.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
   return (
     <Container>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h6" gutterBottom>
         Coupon Management
       </Typography>
-
-      <Box component="form" onSubmit={handleCreateCoupon} sx={{ my: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Create a New Coupon
-        </Typography>
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Coupon Name"
-              value={couponName}
-              onChange={(e) => setCouponName(e.target.value)}
-              required
-              variant="outlined"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Discount Price"
-              type="number"
-              value={discountPrice}
-              onChange={(e) => setDiscountPrice(e.target.value)}
-              required
-              variant="outlined"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Validity"
-              type="date"
-              value={validity}
-              onChange={(e) => setValidity(e.target.value)}
-              required
-              InputLabelProps={{ shrink: true }}
-              variant="outlined"
-            />
-          </Grid>
-        </Grid>
-        <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
-          Create Coupon
-        </Button>
-      </Box>
-
+      <hr />
+      <Button variant="contained" color="primary" onClick={handleOpenCreateCouponModal}>
+        Create Coupon
+      </Button>
+      <Button
+        variant="contained"
+        color="secondary"
+        onClick={handleOpenAvailableCouponsModal}
+        sx={{ ml: 2 }}
+      >
+        View Available Coupons
+      </Button>
+      <TextField
+        label="Search Hotels"
+        variant="outlined"
+        fullWidth
+        margin="normal"
+        onChange={handleSearch}
+        value={searchTerm}
+      />
+      <CreateCouponModal
+        open={openCreateCouponModal}
+        handleClose={handleCloseCreateCouponModal}
+        handleCreateCoupon={handleCreateCoupon}
+        couponName={couponName}
+        setCouponName={setCouponName}
+        discountPrice={discountPrice}
+        setDiscountPrice={setDiscountPrice}
+        validity={validity}
+        setValidity={setValidity}
+      />
+      <hr />
       <Typography variant="h5" gutterBottom>
         Available Hotels
       </Typography>
@@ -174,23 +227,32 @@ export default function Coupon() {
           <TableHead>
             <TableRow>
               <TableCell>Hotel ID</TableCell>
+              <TableCell>Image</TableCell>
               <TableCell>Hotel Name</TableCell>
               <TableCell>Owner Name</TableCell>
               <TableCell>City</TableCell>
-              <TableCell>Image</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {hotels.map((hotel) => (
+            {paginatedHotels.map((hotel) => (
               <TableRow key={hotel.hotelId}>
                 <TableCell>{hotel.hotelId}</TableCell>
+                <TableCell>
+                  <img
+                    src={hotel.images[0]}
+                    alt={hotel.hotelName}
+                    style={{
+                      width: '70px',
+                      height: '70px',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                </TableCell>
                 <TableCell>{hotel.hotelName}</TableCell>
                 <TableCell>{hotel.hotelOwnerName}</TableCell>
                 <TableCell>{hotel.city}</TableCell>
-                <TableCell>
-                  <img src={hotel.images[0]} alt={hotel.hotelName} width="100" />
-                </TableCell>
                 <TableCell>
                   <Button
                     variant="contained"
@@ -204,93 +266,38 @@ export default function Coupon() {
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredHotels.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
       </TableContainer>
 
-      {/* Rooms Modal */}
-      <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="md">
-        <DialogTitle>
-          Rooms of {selectedHotel?.hotelName}
-          <IconButton
-            edge="end"
-            color="inherit"
-            onClick={handleCloseModal}
-            aria-label="close"
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
-            X
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          {selectedHotel?.rooms && selectedHotel.rooms.length > 0 ? (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Bed Types</TableCell>
-                  <TableCell>Price</TableCell>
-                  <TableCell>Count Rooms</TableCell>
-                  <TableCell>Offer Price Less</TableCell>
-                  <TableCell>Offer Expiry</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {selectedHotel.rooms.map((room) => (
-                  <TableRow key={room.roomId}>
-                    <TableCell>{room.type}</TableCell>
-                    <TableCell>{room.bedTypes}</TableCell>
-                    <TableCell>{room.price}</TableCell>
-                    <TableCell>{room.countRooms}</TableCell>
-                    <TableCell>{room.offerPriceLess}</TableCell>
-                    <TableCell>{room.offerExp}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={() => handleOpenCouponModal(room)}
-                      >
-                        Apply
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <Typography>No rooms available</Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseModal} color="primary">
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <RoomModal
+        open={openModal}
+        handleClose={handleCloseModal}
+        selectedHotel={selectedHotel}
+        handleOpenCouponModal={handleOpenCouponModal}
+      />
 
-      {/* Coupon Code Modal */}
-      <Dialog open={openCouponModal} onClose={handleCloseCouponModal} fullWidth maxWidth="xs">
-        <DialogTitle>Enter Coupon Code</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Coupon Code"
-            type="text"
-            fullWidth
-            variant="outlined"
-            value={couponCode}
-            onChange={(e) => setCouponCode(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseCouponModal} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleApplyCouponToRoom} color="secondary">
-            Apply
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <CouponCodeModal
+        open={openCouponModal}
+        handleClose={handleCloseCouponModal}
+        couponCode={couponCode}
+        setCouponCode={setCouponCode}
+        handleApplyCouponToRoom={handleApplyCouponToRoom}
+      />
+
+      <AvailableCouponsModal
+        open={openAvailableCouponsModal}
+        handleClose={handleCloseAvailableCouponsModal}
+        coupons={coupons}
+        copyToClipboard={copyToClipboard}
+      />
     </Container>
   );
 }
