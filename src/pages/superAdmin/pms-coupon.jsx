@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-import CouponPage from 'src/sections/settings/coupon';
+import PmsCouponPage from 'src/sections/products/view/superAdmin/coupon';
 
 // ----------------------------------------------------------------------
 
@@ -11,7 +11,7 @@ export default function AllUserPages() {
         <title> Coupon | Roomsstay </title>
       </Helmet>
 
-      <CouponPage />
+      <PmsCouponPage />
     </>
   );
 }

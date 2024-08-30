@@ -130,9 +130,9 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
                 <InputLabel>Select Role (Current role is {user?.role})</InputLabel>
 
                 <Select name="role" value={formData.role} onChange={handleChange}>
-                  <MenuItem value="admin">Admin</MenuItem>
-                  <MenuItem value="superAdmin">Super Admin</MenuItem>
-                  <MenuItem value="developer">Developer</MenuItem>
+                  <MenuItem value="Admin">Admin</MenuItem>
+                  <MenuItem value="PMS">Partner Management System</MenuItem>
+                  <MenuItem value="Developer">Developer</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

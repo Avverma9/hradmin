@@ -78,6 +78,11 @@ const getNavConfig = () => {
           icon: icons.setMonthlyPrice, // Use the React Icon
           path: '/hotels/monthly-price',
         },
+        {
+          title: 'Manage Coupons',
+          path: '/apply-pms-coupon',
+          icon: icons.coupon,
+        },
       ],
     },
 
@@ -124,7 +129,7 @@ const getNavConfig = () => {
   const AdminChildConfig = ['Your Hotel', 'Your Bookings'];
   const superAdminChildConfig = ['Hotels', 'Bookings'];
 
-  if (role === 'admin') {
+  if (role === 'Admin') {
     return baseConfig.filter((item) => {
       if (Adminconfig.includes(item.title)) {
         return false;
@@ -135,7 +140,7 @@ const getNavConfig = () => {
       return true;
     });
   }
-  if (role === 'superAdmin') {
+  if (role === 'PMS') {
     return baseConfig.filter((item) => {
       if (superAdminConfig.includes(item.title)) {
         return false;
