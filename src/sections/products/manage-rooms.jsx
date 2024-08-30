@@ -1,6 +1,7 @@
-/* eslint-disable no-nested-ternary */
+/* eslint-disable jsx-a11y/img-redundant-alt */
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-nested-ternary */
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
@@ -16,7 +17,6 @@ import {
   Input,
   Button,
   Select,
-  styled,
   MenuItem,
   useTheme,
   TextField,
@@ -27,109 +27,49 @@ import {
 } from '@mui/material';
 
 import { localUrl } from 'src/utils/util';
+import { bedTypes, roomTypes } from 'src/utils/filterOptions';
 
-// Styled components
-const ModalContent = styled(Box)(({ theme }) => ({
-  position: 'relative',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: '90%',
-  maxWidth: 500,
-  maxHeight: '90vh',
-  overflowY: 'auto',
-  backgroundColor: theme.palette.background.paper,
-  padding: theme.spacing(2),
-  boxShadow: theme.shadows[5],
-  borderRadius: theme.shape.borderRadius,
-  paddingBottom: theme.spacing(10),
-}));
-
-const Header = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginBottom: theme.spacing(2),
-}));
-
-const ImagePreview = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: theme.spacing(1),
-  marginTop: theme.spacing(2),
-}));
-
-const UploadButton = styled(Button)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '100%',
-  padding: theme.spacing(1),
-  backgroundColor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText,
-  '&:hover': {
-    backgroundColor: theme.palette.primary.dark,
-  },
-}));
-
-const RoomItem = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  padding: theme.spacing(1),
-  border: `1px solid ${theme.palette.divider}`,
-  borderRadius: theme.shape.borderRadius,
-  marginBottom: theme.spacing(1),
-  backgroundColor: theme.palette.background.default,
-  position: 'relative', // Add position relative for absolute positioning of actions
-  [theme.breakpoints.down('sm')]: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    padding: theme.spacing(1),
-  },
-}));
-const RoomActions = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-end',
-  position: 'absolute',
-  bottom: theme.spacing(1),
-  right: theme.spacing(1),
-  '& > button': {
-    margin: theme.spacing(0.5),
-  },
-}));
-const RoomImage = styled('img')(({ theme }) => ({
-  width: '100px',
-  height: '100px',
-  objectFit: 'cover',
-  borderRadius: theme.shape.borderRadius,
-  [theme.breakpoints.down('sm')]: {
-    width: '80px',
-    height: '80px',
-  },
-}));
-
-const RoomDetails = styled(Box)(({ theme }) => ({
-  marginLeft: theme.spacing(1),
-  [theme.breakpoints.down('sm')]: {
-    marginLeft: 0,
-    marginTop: theme.spacing(1),
-    textAlign: 'center',
-  },
-}));
+import {
+  Header,
+  RoomItem,
+  RoomImage,
+  RoomActions,
+  RoomDetails,
+  ModalContent,
+  ImagePreview,
+  UploadButton,
+} from './view/manageRoomsCss';
 
 const AddRoomModal = ({ open, onClose, hotelId }) => {
   const [roomType, setRoomType] = useState('');
   const [roomPrice, setRoomPrice] = useState('');
-  const [bedTypes, setBedTypes] = useState('');
+  const [bedTypesValue, setBedTypesValue] = useState('');
   const [countRooms, setCountRooms] = useState('');
   const [images, setImages] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
-  const [loading, setLoading] = useState(false); // Added loading state
-  const [currentRoomId, setCurrentRoomId] = useState(null); // State to manage current room id for updates
+  const [loading, setLoading] = useState(false);
+  const [currentRoomId, setCurrentRoomId] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  useEffect(() => {
+    if (!open) {
+      // Reset state when modal is closed
+      resetForm();
+    }
+  }, [open]);
+
+  const fetchRooms = () => {
+    axios
+      .get(`${localUrl}/hotels/get-by-id/${hotelId}`)
+      .then((response) => {
+        setRooms(response.data.rooms);
+      })
+      .catch(() => {
+        toast.error('Error fetching rooms');
+      });
+  };
 
   useEffect(() => {
     if (hotelId) {
@@ -137,29 +77,18 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
     }
   }, [hotelId]);
 
-  const fetchRooms = () => {
-    axios
-      .get(`${localUrl}/hotels/get-by-id/${hotelId}`)
-      .then((response) => {
-        setRooms(response.data.rooms); // Update state with fetched rooms
-      })
-      .catch(() => {
-        toast.error('Error fetching rooms');
-      });
-  };
-
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     setImages(files);
   };
 
   const handleAddRoom = () => {
-    setLoading(true); // Set loading state to true
+    setLoading(true);
     const formData = new FormData();
     formData.append('hotelId', hotelId);
     formData.append('type', roomType);
     formData.append('price', roomPrice);
-    formData.append('bedTypes', bedTypes);
+    formData.append('bedTypes', bedTypesValue);
     formData.append('countRooms', countRooms);
 
     images.forEach((file) => {
@@ -175,26 +104,30 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
       .then(() => {
         toast.success('Room added successfully');
         fetchRooms();
+        resetForm(); // Clear form after success
       })
       .catch(() => {
         toast.error('Error adding room');
       })
       .finally(() => {
-        setLoading(false); // Set loading state to false
-        setIsAddingRoom(false); // Close the add room form
+        setLoading(false);
+        setIsAddingRoom(false);
       });
   };
+
   const handleCancel = () => {
-    // Reset form state
+    resetForm();
+    onClose();
+  };
+
+  const resetForm = () => {
     setRoomType('');
     setRoomPrice('');
-    setBedTypes('');
+    setBedTypesValue('');
     setCountRooms('');
-    setImages([]);
-
-    // Refresh the room list and close the modal
-    fetchRooms();
-    onClose();
+    setImages([]); // Clear images
+    setCurrentRoomId(null);
+    setIsAddingRoom(false);
   };
 
   const handleDelete = (roomId) => {
@@ -206,7 +139,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
       })
       .then(() => {
         toast.success('Room deleted successfully');
-        fetchRooms(); // Refresh the room list
+        fetchRooms();
       })
       .catch(() => {
         toast.error('Error deleting room');
@@ -214,12 +147,12 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
   };
 
   const handleUpdateRoom = () => {
-    setLoading(true); // Set loading state to true
+    setLoading(true);
     const formData = new FormData();
     formData.append('roomId', currentRoomId);
     formData.append('type', roomType);
     formData.append('price', roomPrice);
-    formData.append('bedTypes', bedTypes);
+    formData.append('bedTypes', bedTypesValue);
     formData.append('countRooms', countRooms);
 
     images.forEach((file) => {
@@ -234,34 +167,36 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
       })
       .then(() => {
         toast.success('Room updated successfully');
-        setImages([]);
+        fetchRooms();
+        resetForm(); // Clear form after success
       })
       .catch(() => {
         toast.error('Error updating room');
       })
       .finally(() => {
-        setLoading(false); // Set loading state to false
-        setIsAddingRoom(false); // Close the add room form
-        fetchRooms(); // Refresh the room list
+        setLoading(false);
+        setIsAddingRoom(false);
       });
   };
+
   const handleEdit = (room) => {
     setRoomType(room.type);
     setRoomPrice(room.price);
-    setBedTypes(room.bedTypes);
+    setBedTypesValue(room.bedTypes);
     setCountRooms(room.countRooms);
     setImages([]); // Optionally clear images or handle images differently
-    setCurrentRoomId(room.roomId); // Set the current room id for updates
-    setIsAddingRoom(true); // Open the form in update mode
+    setCurrentRoomId(room.roomId);
+    setIsAddingRoom(true);
   };
+
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal open={open} onClose={handleCancel}>
       <ModalContent>
         <Header>
           <Typography variant="h6">
             {isAddingRoom ? (currentRoomId ? 'Update Room' : 'Add Room') : 'Available Hotel Rooms'}
           </Typography>
-          <Button onClick={onClose} color="inherit">
+          <Button onClick={handleCancel} color="inherit">
             Close
           </Button>
         </Header>
@@ -283,22 +218,6 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
                       <Typography style={{ color: 'green' }} variant="body2">
                         Number of Rooms - {room?.countRooms}
                       </Typography>
-                      <ImagePreview>
-                        {images.length > 0 &&
-                          images.map((file, item) => (
-                            <img
-                              key={item}
-                              src={URL.createObjectURL(file)}
-                              alt={`Food ${item}`}
-                              style={{
-                                width: isMobile ? '60px' : '80px',
-                                height: isMobile ? '60px' : '80px',
-                                objectFit: 'cover',
-                                borderRadius: 4,
-                              }}
-                            />
-                          ))}
-                      </ImagePreview>
                     </RoomDetails>
                     <RoomActions>
                       <Button
@@ -336,14 +255,20 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
           <>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Type of room"
-                  variant="outlined"
-                  fullWidth
-                  margin="normal"
-                  value={roomType}
-                  onChange={(e) => setRoomType(e.target.value)}
-                />
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Room Type</InputLabel>
+                  <Select
+                    value={roomType}
+                    onChange={(e) => setRoomType(e.target.value)}
+                    label="Room Type"
+                  >
+                    {roomTypes.map((type) => (
+                      <MenuItem key={type} value={type}>
+                        {type}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -359,13 +284,15 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
                 <FormControl fullWidth margin="normal">
                   <InputLabel>Bed Type</InputLabel>
                   <Select
-                    value={bedTypes}
-                    onChange={(e) => setBedTypes(e.target.value)}
+                    value={bedTypesValue}
+                    onChange={(e) => setBedTypesValue(e.target.value)}
                     label="Bed Type"
                   >
-                    <MenuItem value="Single">Single</MenuItem>
-                    <MenuItem value="Double">Double</MenuItem>
-                    <MenuItem value="Suite">Suite</MenuItem>
+                    {bedTypes.map((type) => (
+                      <MenuItem key={type} value={type}>
+                        {type}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Grid>
@@ -411,8 +338,8 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Button
                 onClick={() => {
-                  handleCancel();
-                  setIsAddingRoom(false);
+                  resetForm();
+                  onClose();
                 }}
                 color="secondary"
                 sx={{ mr: 1 }}
