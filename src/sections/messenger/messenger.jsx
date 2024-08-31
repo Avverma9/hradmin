@@ -1,11 +1,11 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable consistent-return */
 /* eslint-disable react/button-has-type */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import axios from 'axios';
 import io from 'socket.io-client';
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-import React, { useState, useEffect, useCallback } from 'react'; // Import Socket.IO client
+import React, { useState, useEffect, useCallback } from 'react';
 
 import { localUrl } from 'src/utils/util';
 
@@ -104,9 +104,9 @@ const ChatApp = () => {
 
   const handleSendMessage = async (event) => {
     event.preventDefault();
-    const input = event.target.message.value;
+    const input = event.target.message.value.trim();
 
-    if (input.trim() && selectedContact) {
+    if (input && selectedContact) {
       const newMessage = {
         id: messages.length + 1,
         content: input,
@@ -126,21 +126,20 @@ const ChatApp = () => {
       // Prepare data to send the message
       const senderId = localStorage.getItem('user_id'); // Fetch senderId from localStorage
       const receiverId = selectedContact._id; // Use the selected contact's _id as receiverId
-      const content = input; // The message content
 
       try {
         // Call the API to send the message
         await axios.post(`${localUrl}/send-a-message/messenger`, {
           senderId,
           receiverId,
-          content,
+          content: input,
         });
 
         // Emit the message through Socket.IO
         socket.emit('sendMessage', {
           senderId,
           receiverId,
-          content,
+          content: input,
           timestamp: new Date().toISOString(),
           seen: false,
         });
@@ -162,10 +161,10 @@ const ChatApp = () => {
   const getTickIndicators = (seen) => (seen ? 'Seen ✔✔' : 'Sent ✔️✔️'); // Use different indicators based on the 'seen' status
 
   // Function to update online status
-  const updateOnlineStatus = (online) => {
+  const updateOnlineStatus = useCallback((online) => {
     const userId = localStorage.getItem('user_id');
     socket.emit('updateStatus', { userId, online });
-  };
+  }, []);
 
   useEffect(() => {
     if (selectedContact) {
@@ -175,7 +174,7 @@ const ChatApp = () => {
         updateOnlineStatus(false);
       };
     }
-  }, [selectedContact]);
+  }, [selectedContact, updateOnlineStatus]);
 
   useEffect(() => {
     // Handle incoming real-time messages
@@ -259,8 +258,8 @@ const ChatApp = () => {
                 <div className="contact-info">
                   <h3>{contact.name}</h3>
                   <span>{contact.mobile}</span>
-                  <span className={`status ${contact.online === true ? 'online' : 'offline'}`}>
-                    {contact?.online === true ? 'Online' : 'Offline'}
+                  <span className={`status ${contact.online ? 'online' : 'offline'}`}>
+                    {contact.online ? 'Online' : 'Offline'}
                   </span>
                 </div>
               </div>
