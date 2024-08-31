@@ -1,10 +1,9 @@
+/* eslint-disable no-shadow */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable consistent-return */
 /* eslint-disable react/button-has-type */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import axios from 'axios';
-import io from 'socket.io-client';
 import React, { useState, useEffect, useCallback } from 'react';
 
 import { localUrl } from 'src/utils/util';
@@ -15,8 +14,6 @@ import './ChatApp.css';
 // Default avatar URL or CSS class
 const DEFAULT_AVATAR =
   'https://t4.ftcdn.net/jpg/05/11/55/91/360_F_511559113_UTxNAE1EP40z1qZ8hIzGNrB0LwqwjruK.jpg'; // Update with the path to your default avatar
-
-const socket = io(localUrl); // Connect to the Socket.IO server
 
 const ChatApp = () => {
   const [contacts, setContacts] = useState([]);
@@ -129,9 +126,6 @@ const ChatApp = () => {
       try {
         // Call the API to send the message
         await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
-
-        // Emit the message through Socket.IO
-        socket.emit('sendMessage', newMessage);
       } catch (error) {
         console.error('Error sending message:', error);
       }
@@ -140,33 +134,15 @@ const ChatApp = () => {
     }
   };
 
-  // Function to handle incoming real-time messages
-  useEffect(() => {
-    socket.on('newMessage', (message) => {
-      if (selectedContact && message.receiverId === selectedContact._id) {
-        setMessages((prevMessages) => [...prevMessages, message]);
-        setChats((prevChats) =>
-          prevChats.map((chat) =>
-            chat._id === selectedContact._id ? { ...chat, lastMessage: message.content } : chat
-          )
-        );
-      }
-    });
-
-    return () => {
-      socket.off('newMessage');
-    };
-  }, [selectedContact, chats]);
-
-  // Function to format timestamp to a readable format
-
   // Function to get tick indicators based on seen status
   const getTickIndicators = (seen) => (seen ? 'Seen ✔✔' : 'Sent ✔️✔️'); // Use different indicators based on the 'seen' status
 
   // Function to update online status
   const updateOnlineStatus = useCallback((online) => {
     const userId = localStorage.getItem('user_id');
-    socket.emit('updateStatus', { userId, online });
+    axios
+      .post(`${localUrl}/update-status`, { userId, online })
+      .catch((error) => console.error('Error updating status:', error));
   }, []);
 
   useEffect(() => {
@@ -178,40 +154,6 @@ const ChatApp = () => {
       };
     }
   }, [selectedContact, updateOnlineStatus]);
-
-  useEffect(() => {
-    // Handle incoming real-time messages
-    socket.on('newMessage', (message) => {
-      if (selectedContact && message.receiverId === selectedContact._id) {
-        setMessages((prevMessages) => [...prevMessages, message]);
-        setChats((prevChats) =>
-          prevChats.map((chat) =>
-            chat._id === selectedContact._id ? { ...chat, lastMessage: message.content } : chat
-          )
-        );
-      }
-    });
-
-    // Handle status updates
-    socket.on('statusUpdate', (data) => {
-      setContacts((prevContacts) =>
-        prevContacts.map((contact) =>
-          contact._id === data.userId ? { ...contact, online: data.online } : contact
-        )
-      );
-
-      setChats((prevChats) =>
-        prevChats.map((chat) =>
-          chat._id === data.userId ? { ...chat, online: data.online } : chat
-        )
-      );
-    });
-
-    return () => {
-      socket.off('newMessage');
-      socket.off('statusUpdate');
-    };
-  }, [selectedContact, chats]);
 
   return (
     <div className="chat-app">
