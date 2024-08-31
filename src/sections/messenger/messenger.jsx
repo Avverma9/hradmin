@@ -102,54 +102,60 @@ const ChatApp = () => {
     [chats]
   );
 
-  const handleSendMessage = async (event) => {
-    event.preventDefault();
-    const input = event.target.message.value.trim();
+const handleSendMessage = async (event) => {
+  event.preventDefault();
+  const input = event.target.message.value;
 
-    if (input && selectedContact) {
-      const newMessage = {
-        id: messages.length + 1,
-        content: input,
-        timestamp: new Date().toISOString(),
-        type: 'sent',
-        seen: false,
-      };
-      setMessages([...messages, newMessage]);
+  if (input.trim() && selectedContact) {
+    const newMessage = {
+      senderId: localStorage.getItem('user_id'),
+      receiverId: selectedContact._id,
+      content: input,
+      timestamp: new Date().toISOString(),
+      seen: false,
+    };
 
-      // Update the last message for the contact in the chats list
-      setChats(
-        chats.map((chat) =>
-          chat._id === selectedContact._id ? { ...chat, lastMessage: input } : chat
+    setMessages([...messages, newMessage]);
+
+    // Update the last message for the contact in the chats list
+    setChats(
+      chats.map((chat) =>
+        chat._id === selectedContact._id ? { ...chat, lastMessage: input } : chat
+      )
+    );
+
+    try {
+      // Call the API to send the message
+      await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
+
+      // Emit the message through Socket.IO
+      socket.emit('sendMessage', newMessage);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+
+    event.target.reset();
+  }
+};
+
+// Function to handle incoming real-time messages
+useEffect(() => {
+  socket.on('newMessage', (message) => {
+    if (selectedContact && message.receiverId === selectedContact._id) {
+      setMessages((prevMessages) => [...prevMessages, message]);
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat._id === selectedContact._id ? { ...chat, lastMessage: message.content } : chat
         )
       );
-
-      // Prepare data to send the message
-      const senderId = localStorage.getItem('user_id'); // Fetch senderId from localStorage
-      const receiverId = selectedContact._id; // Use the selected contact's _id as receiverId
-
-      try {
-        // Call the API to send the message
-        await axios.post(`${localUrl}/send-a-message/messenger`, {
-          senderId,
-          receiverId,
-          content: input,
-        });
-
-        // Emit the message through Socket.IO
-        socket.emit('sendMessage', {
-          senderId,
-          receiverId,
-          content: input,
-          timestamp: new Date().toISOString(),
-          seen: false,
-        });
-      } catch (error) {
-        console.error('Error sending message:', error);
-      }
-
-      event.target.reset();
     }
+  });
+
+  return () => {
+    socket.off('newMessage');
   };
+}, [selectedContact, chats]);
+
 
   // Function to format timestamp to a readable format
   const formatTimestamp = (timestamp) => {
