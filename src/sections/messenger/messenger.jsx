@@ -8,11 +8,13 @@ import io from 'socket.io-client';
 import React, { useState, useEffect, useCallback } from 'react';
 
 import { localUrl } from 'src/utils/util';
+import { fDateTime } from 'src/utils/format-time';
 
 import './ChatApp.css';
 
 // Default avatar URL or CSS class
-const DEFAULT_AVATAR = 'path/to/default-avatar.png'; // Update with the path to your default avatar
+const DEFAULT_AVATAR =
+  'https://t4.ftcdn.net/jpg/05/11/55/91/360_F_511559113_UTxNAE1EP40z1qZ8hIzGNrB0LwqwjruK.jpg'; // Update with the path to your default avatar
 
 const socket = io(localUrl); // Connect to the Socket.IO server
 
@@ -102,66 +104,61 @@ const ChatApp = () => {
     [chats]
   );
 
-const handleSendMessage = async (event) => {
-  event.preventDefault();
-  const input = event.target.message.value;
+  const handleSendMessage = async (event) => {
+    event.preventDefault();
+    const input = event.target.message.value;
 
-  if (input.trim() && selectedContact) {
-    const newMessage = {
-      senderId: localStorage.getItem('user_id'),
-      receiverId: selectedContact._id,
-      content: input,
-      timestamp: new Date().toISOString(),
-      seen: false,
-    };
+    if (input.trim() && selectedContact) {
+      const newMessage = {
+        senderId: localStorage.getItem('user_id'),
+        receiverId: selectedContact._id,
+        content: input,
+        timestamp: new Date().toISOString(),
+        seen: false,
+      };
 
-    setMessages([...messages, newMessage]);
+      setMessages([...messages, newMessage]);
 
-    // Update the last message for the contact in the chats list
-    setChats(
-      chats.map((chat) =>
-        chat._id === selectedContact._id ? { ...chat, lastMessage: input } : chat
-      )
-    );
-
-    try {
-      // Call the API to send the message
-      await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
-
-      // Emit the message through Socket.IO
-      socket.emit('sendMessage', newMessage);
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-
-    event.target.reset();
-  }
-};
-
-// Function to handle incoming real-time messages
-useEffect(() => {
-  socket.on('newMessage', (message) => {
-    if (selectedContact && message.receiverId === selectedContact._id) {
-      setMessages((prevMessages) => [...prevMessages, message]);
-      setChats((prevChats) =>
-        prevChats.map((chat) =>
-          chat._id === selectedContact._id ? { ...chat, lastMessage: message.content } : chat
+      // Update the last message for the contact in the chats list
+      setChats(
+        chats.map((chat) =>
+          chat._id === selectedContact._id ? { ...chat, lastMessage: input } : chat
         )
       );
+
+      try {
+        // Call the API to send the message
+        await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
+
+        // Emit the message through Socket.IO
+        socket.emit('sendMessage', newMessage);
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
+
+      event.target.reset();
     }
-  });
-
-  return () => {
-    socket.off('newMessage');
   };
-}, [selectedContact, chats]);
 
+  // Function to handle incoming real-time messages
+  useEffect(() => {
+    socket.on('newMessage', (message) => {
+      if (selectedContact && message.receiverId === selectedContact._id) {
+        setMessages((prevMessages) => [...prevMessages, message]);
+        setChats((prevChats) =>
+          prevChats.map((chat) =>
+            chat._id === selectedContact._id ? { ...chat, lastMessage: message.content } : chat
+          )
+        );
+      }
+    });
+
+    return () => {
+      socket.off('newMessage');
+    };
+  }, [selectedContact, chats]);
 
   // Function to format timestamp to a readable format
-  const formatTimestamp = (timestamp) => {
-    const date = new Date(timestamp);
-    return `${date.getHours()}:${date.getMinutes()}`;
-  };
 
   // Function to get tick indicators based on seen status
   const getTickIndicators = (seen) => (seen ? 'Seen ✔✔' : 'Sent ✔️✔️'); // Use different indicators based on the 'seen' status
@@ -244,7 +241,7 @@ useEffect(() => {
               >
                 <img src={chat.images || DEFAULT_AVATAR} alt={chat.name} />
                 <div className="contact-info">
-                  <h3>{chat.name}</h3>
+                  <p>{chat.name}</p>
                   <p>{chat.lastMessage}</p>
                 </div>
               </div>
@@ -262,7 +259,7 @@ useEffect(() => {
               >
                 <img src={contact.images || DEFAULT_AVATAR} alt={contact.name} />
                 <div className="contact-info">
-                  <h3>{contact.name}</h3>
+                  <p>{contact.name}</p>
                   <span>{contact.mobile}</span>
                   <span className={`status ${contact.online ? 'online' : 'offline'}`}>
                     {contact.online ? 'Online' : 'Offline'}
@@ -280,24 +277,29 @@ useEffect(() => {
             <div className="header">
               <img src={selectedContact.images || DEFAULT_AVATAR} alt={selectedContact.name} />
               <div>
-                <h3>{selectedContact.name}</h3>
+                <p>{selectedContact.name}</p>
                 <span>{selectedContact.mobile}</span>
                 <span className={`status ${selectedContact.online ? 'online' : 'offline'}`}>
                   {selectedContact.online ? 'Online' : 'Offline'}
                 </span>
               </div>
             </div>
-
             <div className="messages">
               {messages.map((msg) => (
-                <div key={msg.id} className={`message ${msg.type}`}>
+                <div
+                  key={msg.timestamp}
+                  className={`message ${
+                    msg.receiver === localStorage.getItem('user_id') ? 'received' : 'sent'
+                  }`}
+                >
                   <p>{msg.content}</p>
-                  <span className="timestamp">{formatTimestamp(msg.timestamp)}</span>
-                  <span className="tick-indicators">{getTickIndicators(msg.seen)}</span>
+                  <hr />
+                  <span className="tick-indicators">
+                    {fDateTime(msg.timestamp)} {getTickIndicators(msg.seen)}
+                  </span>
                 </div>
               ))}
             </div>
-
             <form className="input-area" onSubmit={handleSendMessage}>
               <input type="text" name="message" placeholder="Type your message..." />
               <button type="submit">Send</button>
