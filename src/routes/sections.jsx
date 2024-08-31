@@ -3,7 +3,6 @@ import { Outlet, Navigate, useRoutes } from 'react-router-dom';
 
 import DashboardLayout from 'src/layouts/dashboard';
 
-
 const IndexPage = lazy(() => import('src/pages/app'));
 const UserPage = lazy(() => import('src/pages/user'));
 const LoginPage = lazy(() => import('src/pages/login'));
@@ -18,8 +17,9 @@ const BookingDetail = lazy(() => import('src/pages/booking-details'));
 const UserDetails = lazy(() => import('src/pages/admin/alluser-page'));
 const AllReviews = lazy(() => import('src/pages/admin/review-page'));
 const SuperAdminBookingsView = lazy(() => import('src/pages/superAdmin/superAdmin-bookings-page'));
-const MonthlyPricePage = lazy(() => import('src/pages/monthly-price'))
+const MonthlyPricePage = lazy(() => import('src/pages/monthly-price'));
 const CouponPage = lazy(() => import('src/pages/admin/coupon-page'));
+const MessengerPage = lazy(() => import('src/pages/messenger-app'));
 const PmsCouponPage = lazy(() => import('src/pages/superAdmin/pms-coupon'));
 export default function Router() {
   const routes = useRoutes([
@@ -33,6 +33,7 @@ export default function Router() {
       ),
       children: [
         { path: 'dashboard', element: <IndexPage /> },
+        { path: '/messenger', element: <MessengerPage /> },
         { path: 'user', element: <UserPage /> },
         { path: 'hotels', element: <ProductsPage /> },
         { path: 'hotels/monthly-price', element: <MonthlyPricePage /> },
@@ -52,6 +53,7 @@ export default function Router() {
     },
     { path: '/', element: <LoginPage /> },
     { path: '404', element: <Page404 /> },
+
     { path: '*', element: <Navigate to="/404" replace /> },
   ]);
 

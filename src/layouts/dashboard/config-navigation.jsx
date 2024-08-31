@@ -11,10 +11,11 @@ import {
 import { CiImageOn } from 'react-icons/ci';
 import { BsInfoSquare } from 'react-icons/bs';
 import { VscFeedback } from 'react-icons/vsc';
-import { RiCoupon3Line } from 'react-icons/ri';
+import { RiCoupon3Line, RiMessengerLine } from 'react-icons/ri';
 // Define icon mappings
 const icons = {
   dashboard: <MdDashboard style={{ width: '24px', height: '24px' }} />,
+  messenger: <RiMessengerLine style={{ width: '24px', height: '24px' }} />,
   partners: <MdPerson style={{ width: '24px', height: '24px' }} />,
   bookings: <MdEvent style={{ width: '24px', height: '24px' }} />,
   hotels: <MdHotel style={{ width: '24px', height: '24px' }} />,
@@ -39,6 +40,11 @@ const getNavConfig = () => {
       icon: icons.dashboard,
     },
     {
+      title: 'Messenger',
+      path: '/messenger',
+      icon: icons.messenger,
+    },
+    {
       title: 'partners',
       path: '/user',
       icon: icons.partners,
@@ -59,6 +65,7 @@ const getNavConfig = () => {
         },
       ],
     },
+
     {
       title: 'Hotels',
       icon: icons.hotels,
