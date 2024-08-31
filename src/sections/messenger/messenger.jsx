@@ -1,8 +1,11 @@
+/* eslint-disable import/no-extraneous-dependencies */
+/* eslint-disable consistent-return */
 /* eslint-disable react/button-has-type */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import axios from 'axios';
+import io from 'socket.io-client';
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Import Socket.IO client
 
 import { localUrl } from 'src/utils/util';
 
@@ -10,6 +13,8 @@ import './ChatApp.css';
 
 // Default avatar URL or CSS class
 const DEFAULT_AVATAR = 'path/to/default-avatar.png'; // Update with the path to your default avatar
+
+const socket = io(localUrl); // Connect to the Socket.IO server
 
 const ChatApp = () => {
   const [contacts, setContacts] = useState([]);
@@ -130,6 +135,15 @@ const ChatApp = () => {
           receiverId,
           content,
         });
+
+        // Emit the message through Socket.IO
+        socket.emit('sendMessage', {
+          senderId,
+          receiverId,
+          content,
+          timestamp: new Date().toISOString(),
+          seen: false,
+        });
       } catch (error) {
         console.error('Error sending message:', error);
       }
@@ -145,7 +159,58 @@ const ChatApp = () => {
   };
 
   // Function to get tick indicators based on seen status
-  const getTickIndicators = (seen) => (seen ? 'Seen ✔✔' : ' Sent ✔️✔️'); // Use different indicators based on the 'seen' status
+  const getTickIndicators = (seen) => (seen ? 'Seen ✔✔' : 'Sent ✔️✔️'); // Use different indicators based on the 'seen' status
+
+  // Function to update online status
+  const updateOnlineStatus = (online) => {
+    const userId = localStorage.getItem('user_id');
+    socket.emit('updateStatus', { userId, online });
+  };
+
+  useEffect(() => {
+    if (selectedContact) {
+      updateOnlineStatus(true);
+
+      return () => {
+        updateOnlineStatus(false);
+      };
+    }
+  }, [selectedContact]);
+
+  useEffect(() => {
+    // Handle incoming real-time messages
+    socket.on('newMessage', (message) => {
+      if (selectedContact && message.receiverId === selectedContact._id) {
+        setMessages((prevMessages) => [...prevMessages, message]);
+        setChats((prevChats) =>
+          prevChats.map((chat) =>
+            chat._id === selectedContact._id ? { ...chat, lastMessage: message.content } : chat
+          )
+        );
+      }
+    });
+
+    // Handle status updates
+    socket.on('statusUpdate', (data) => {
+      setContacts((prevContacts) =>
+        prevContacts.map((contact) =>
+          contact._id === data.userId ? { ...contact, online: data.online } : contact
+        )
+      );
+
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat._id === data.userId ? { ...chat, online: data.online } : chat
+        )
+      );
+    });
+
+    return () => {
+      socket.off('newMessage');
+      socket.off('statusUpdate');
+    };
+  }, [selectedContact, chats]);
+
   return (
     <div className="chat-app">
       <div className="sidebar">
@@ -194,6 +259,9 @@ const ChatApp = () => {
                 <div className="contact-info">
                   <h3>{contact.name}</h3>
                   <span>{contact.mobile}</span>
+                  <span className={`status ${contact.online === true ? 'online' : 'offline'}`}>
+                    {contact?.online === true ? 'Online' : 'Offline'}
+                  </span>
                 </div>
               </div>
             ))}
@@ -209,6 +277,9 @@ const ChatApp = () => {
               <div>
                 <h3>{selectedContact.name}</h3>
                 <span>{selectedContact.mobile}</span>
+                <span className={`status ${selectedContact.online ? 'online' : 'offline'}`}>
+                  {selectedContact.online ? 'Online' : 'Offline'}
+                </span>
               </div>
             </div>
 

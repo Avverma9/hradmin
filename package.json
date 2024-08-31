@@ -53,6 +53,7 @@
     "react-toastify": "^10.0.5",
     "simplebar-react": "^3.2.4",
     "slick-carousel": "^1.8.1",
+    "socket.io-client": "^4.7.5",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
