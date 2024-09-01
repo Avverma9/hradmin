@@ -79,7 +79,7 @@ const ChatApp = () => {
 
       // Fetch messages immediately and set up polling
       fetchMessages();
-      const intervalId = setInterval(fetchMessages, 1000); // Poll every 5 seconds
+      const intervalId = setInterval(fetchMessages, 5000); // Poll every 5 seconds
       setPollingInterval(intervalId); // Save the interval ID for cleanup
 
       // Cleanup function to clear the interval on unmount or path change
