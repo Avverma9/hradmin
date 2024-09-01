@@ -1,10 +1,12 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable no-shadow */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable consistent-return */
 /* eslint-disable react/button-has-type */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import axios from 'axios';
-import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 
 import { localUrl } from 'src/utils/util';
 import { fDateTime } from 'src/utils/format-time';
@@ -21,6 +23,9 @@ const ChatApp = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [activeTab, setActiveTab] = useState('chats'); // Default to 'chats' tab
   const [messages, setMessages] = useState([]);
+  const [pollingInterval, setPollingInterval] = useState(null);
+  const location = useLocation();
+  const messagesEndRef = useRef(null); // Ref to scroll to the bottom
 
   // Fetch contacts from the API when the component mounts
   useEffect(() => {
@@ -40,7 +45,7 @@ const ChatApp = () => {
 
   // Fetch messages for the selected contact
   useEffect(() => {
-    if (selectedContact) {
+    if (selectedContact && location.pathname === '/messenger') {
       const fetchMessages = async () => {
         try {
           const userId1 = localStorage.getItem('user_id'); // Fetch senderId from localStorage
@@ -72,10 +77,17 @@ const ChatApp = () => {
         }
       };
 
+      // Fetch messages immediately and set up polling
       fetchMessages();
-    }
-  }, [selectedContact]); // Fetch messages whenever the selected contact changes
+      const intervalId = setInterval(fetchMessages, 1000); // Poll every 5 seconds
+      setPollingInterval(intervalId); // Save the interval ID for cleanup
 
+      // Cleanup function to clear the interval on unmount or path change
+      return () => {
+        clearInterval(intervalId);
+      };
+    }
+  }, [selectedContact, location.pathname]);
   // Load chats from localStorage
   useEffect(() => {
     const storedChats = localStorage.getItem('chats');
@@ -154,6 +166,13 @@ const ChatApp = () => {
       };
     }
   }, [selectedContact, updateOnlineStatus]);
+
+  // Scroll to bottom whenever messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
 
   return (
     <div className="chat-app">
@@ -241,6 +260,7 @@ const ChatApp = () => {
                   </span>
                 </div>
               ))}
+              <div ref={messagesEndRef} /> {/* Dummy div to scroll into view */}
             </div>
             <form className="input-area" onSubmit={handleSendMessage}>
               <input type="text" name="message" placeholder="Type your message..." />
@@ -258,3 +278,4 @@ const ChatApp = () => {
 };
 
 export default ChatApp;
+
