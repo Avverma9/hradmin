@@ -167,13 +167,7 @@ const ChatApp = () => {
     }
   }, [selectedContact, updateOnlineStatus]);
 
-  // Scroll to bottom whenever messages change
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-
+  
   return (
     <div className="chat-app">
       <div className="sidebar">
@@ -222,8 +216,8 @@ const ChatApp = () => {
                 <div className="contact-info">
                   <p>{contact.name}</p>
                   <span>{contact.mobile}</span>
-                  <span className={`status ${contact.online ? 'online' : 'offline'}`}>
-                    {contact.online ? 'Online' : 'Offline'}
+                  <span className={`status ${contact.online ===true ? 'online' : 'offline'}`}>
+                    {contact.online ===true ? 'Online' : 'Offline'}
                   </span>
                 </div>
               </div>
@@ -240,8 +234,8 @@ const ChatApp = () => {
               <div>
                 <p>{selectedContact.name}</p>
                 <span>{selectedContact.mobile}</span>
-                <span className={`status ${selectedContact.online ? 'online' : 'offline'}`}>
-                  {selectedContact.online ? 'Online' : 'Offline'}
+                <span className={`status ${selectedContact.online === true ? 'online' : 'offline'}`}>
+                  {selectedContact.online ===true ? 'Online' : 'Offline'}
                 </span>
               </div>
             </div>
@@ -260,7 +254,6 @@ const ChatApp = () => {
                   </span>
                 </div>
               ))}
-              <div ref={messagesEndRef} /> {/* Dummy div to scroll into view */}
             </div>
             <form className="input-area" onSubmit={handleSendMessage}>
               <input type="text" name="message" placeholder="Type your message..." />
