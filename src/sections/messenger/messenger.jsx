@@ -4,9 +4,9 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable consistent-return */
 /* eslint-disable react/button-has-type */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 
 import { localUrl } from 'src/utils/util';
@@ -14,7 +14,6 @@ import { fDateTime } from 'src/utils/format-time';
 
 import './ChatApp.css';
 
-// Default avatar URL or CSS class
 const DEFAULT_AVATAR =
   'https://t4.ftcdn.net/jpg/05/11/55/91/360_F_511559113_UTxNAE1EP40z1qZ8hIzGNrB0LwqwjruK.jpg';
 
@@ -25,16 +24,16 @@ const ChatApp = () => {
   const [contacts, setContacts] = useState([]);
   const [chats, setChats] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
-  const [activeTab, setActiveTab] = useState('chats'); // Default to 'chats' tab
+  const [activeTab, setActiveTab] = useState('chats');
   const [messages, setMessages] = useState([]);
   const [pollingInterval, setPollingInterval] = useState(null);
   const location = useLocation();
-  const messagesEndRef = useRef(null); // Ref to scroll to the bottom
+  const messagesEndRef = useRef(null);
+  const hasUpdatedStatus = useRef(false); // Ref to track status updates
 
-  // Establish WebSocket connection
+  //= =============================web-socket===================================//
   const connectWebSocket = useCallback(() => {
-    const socket = new WebSocket('ws://localhost:5000'); // Replace with your WebSocket server URL
-
+    const socket = new WebSocket(`ws://localhost:5000`);
     socket.onopen = () => {
       console.log('WebSocket connected');
       const userId = localStorage.getItem('user_id');
@@ -48,7 +47,6 @@ const ChatApp = () => {
       const message = JSON.parse(event.data);
       console.log('Received message:', message);
 
-      // Handle status updates
       if (message.type === 'status') {
         setContacts((prevContacts) =>
           prevContacts.map((contact) =>
@@ -65,12 +63,11 @@ const ChatApp = () => {
 
     socket.onclose = (event) => {
       console.log('WebSocket closed', event);
-      // Try to reconnect if not manually closed and attempts are less than max
       if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
         setTimeout(() => {
           setReconnectAttempts((prev) => prev + 1);
           connectWebSocket();
-        }, 3000); // Reconnect after 3 seconds
+        }, 3000);
       }
     };
 
@@ -83,7 +80,6 @@ const ChatApp = () => {
 
   useEffect(() => {
     const socket = connectWebSocket();
-
     return () => {
       if (socket) {
         const userId = localStorage.getItem('user_id');
@@ -94,8 +90,8 @@ const ChatApp = () => {
       }
     };
   }, [connectWebSocket]);
-
-  // Fetch contacts from the API when the component mounts
+  //= =============================Fetch contacts ===================================//
+  
   useEffect(() => {
     const fetchContacts = async () => {
       try {
@@ -109,35 +105,29 @@ const ChatApp = () => {
     };
 
     fetchContacts();
-  }, []); // Empty dependency array ensures this runs only once on mount
-
-  // Fetch messages for the selected contact
+  }, []);
+  //= =============================Fetch messages ===================================//
+ 
   useEffect(() => {
     if (selectedContact && location.pathname === '/messenger') {
       const fetchMessages = async () => {
         try {
-          const userId1 = localStorage.getItem('user_id'); // Fetch senderId from localStorage
+          const userId1 = localStorage.getItem('user_id');
           const userId2 = selectedContact._id;
-
-          // Fetch messages between the current user and selected contact
           const response = await axios.get(
             `${localUrl}/get-messages/of-chat/${userId1}/${userId2}`
           );
 
           if (response.data) {
             setMessages(response.data);
-
-            // Prepare an array of promises to mark messages as seen
             const markAsSeenPromises = response.data
-              .filter((msg) => !msg.seen) // Only process messages that are not seen
+              .filter((msg) => !msg.seen)
               .map((msg) =>
-                axios.put(
-                  `${localUrl}/mark-as-seen/messages/`,
-                  { messageId: msg._id, receiverId: userId1 } // Send data in the body
-                )
+                axios.put(`${localUrl}/mark-as-seen/messages/`, {
+                  messageId: msg._id,
+                  receiverId: userId1,
+                })
               );
-
-            // Await all promises to ensure all messages are marked as seen
             await Promise.all(markAsSeenPromises);
           }
         } catch (error) {
@@ -145,19 +135,16 @@ const ChatApp = () => {
         }
       };
 
-      // Fetch messages immediately and set up polling
       fetchMessages();
-      const intervalId = setInterval(fetchMessages, 5000); // Poll every 5 seconds
-      setPollingInterval(intervalId); // Save the interval ID for cleanup
+      const intervalId = setInterval(fetchMessages, 5000);
+      setPollingInterval(intervalId);
 
-      // Cleanup function to clear the interval on unmount or path change
       return () => {
         clearInterval(intervalId);
       };
     }
   }, [selectedContact, location.pathname]);
 
-  // Load chats from localStorage
   useEffect(() => {
     const storedChats = localStorage.getItem('chats');
     if (storedChats) {
@@ -165,12 +152,11 @@ const ChatApp = () => {
     }
   }, []);
 
-  // Save chats to localStorage whenever chats change
   useEffect(() => {
     localStorage.setItem('chats', JSON.stringify(chats));
   }, [chats]);
 
-  // Function to update online status for a specific contact
+  //= =============================update online status  ===================================//
   const updateOnlineStatus = useCallback(async (userId) => {
     try {
       const response = await axios.get(`${localUrl}/update-status-of-a-user/messenger/${userId}`);
@@ -190,14 +176,15 @@ const ChatApp = () => {
     }
   }, []);
 
-  // Update online status for all contacts
   useEffect(() => {
-    contacts.forEach((contact) => {
-      updateOnlineStatus(contact._id);
-    });
+    if (!hasUpdatedStatus.current) {
+      contacts.forEach((contact) => {
+        updateOnlineStatus(contact._id);
+      });
+      hasUpdatedStatus.current = true; // Mark status as updated
+    }
   }, [contacts, updateOnlineStatus]);
 
-  // Update online status when a chat is selected
   useEffect(() => {
     if (selectedContact) {
       updateOnlineStatus(selectedContact._id);
@@ -208,7 +195,6 @@ const ChatApp = () => {
     (contact) => {
       setSelectedContact(contact);
 
-      // If the contact is not already in chats, add it
       if (!chats.find((chat) => chat._id === contact._id)) {
         setChats([...chats, { ...contact, lastMessage: '' }]);
       }
@@ -216,6 +202,7 @@ const ChatApp = () => {
     [chats]
   );
 
+  //= =============================Handle send Message ===================================//
   const handleSendMessage = async (event) => {
     event.preventDefault();
     const input = event.target.message.value;
@@ -231,7 +218,6 @@ const ChatApp = () => {
 
       setMessages([...messages, newMessage]);
 
-      // Update the last message for the contact in the chats list
       setChats(
         chats.map((chat) =>
           chat._id === selectedContact._id ? { ...chat, lastMessage: input } : chat
@@ -239,7 +225,6 @@ const ChatApp = () => {
       );
 
       try {
-        // Call the API to send the message
         await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
       } catch (error) {
         console.error('Error sending message:', error);
@@ -249,8 +234,7 @@ const ChatApp = () => {
     }
   };
 
-  // Function to get tick indicators based on seen status
-  const getTickIndicators = (seen) => (seen ? 'Seen ✔✔' : 'Sent ✔️✔️'); // Use different indicators based on the 'seen' status
+  const getTickIndicators = (seen) => (seen ? 'Seen ✔✔' : 'Sent ✔️✔️');
 
   return (
     <div className="chat-app">
@@ -328,10 +312,10 @@ const ChatApp = () => {
                 <div
                   key={msg.timestamp}
                   className={`message ${
-                    msg.receiverId === localStorage.getItem('user_id') ? 'received' : 'sent'
+                    msg.receiver === localStorage.getItem('user_id') ? 'sent' : 'received'
                   }`}
                 >
-                  <p>{msg.content}</p>
+                  <p className="message-content">{msg.content}</p>
                   <hr />
                   <span className="tick-indicators">
                     {fDateTime(msg.timestamp)} {getTickIndicators(msg.seen)}
