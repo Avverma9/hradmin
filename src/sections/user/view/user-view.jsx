@@ -97,19 +97,45 @@ export default function UserPage() {
   const handleSubmitEdit = async (updatedUser) => {
     try {
       setLoading(true);
+
+      // Create a FormData object
+      const formData = new FormData();
+
+      // Append non-file fields
+      formData.append('_id', updatedUser._id);
+      formData.append('name', updatedUser.name);
+      formData.append('email', updatedUser.email);
+      formData.append('mobile', updatedUser.mobile);
+      formData.append('address', updatedUser.address);
+      formData.append('password', updatedUser.password);
+      formData.append('role', updatedUser.role);
+      formData.append('status', updatedUser.status ? 'true' : 'false');
+
+      // Append file if available
+      if (updatedUser.images) {
+        formData.append('images', updatedUser.images);
+      }
+
+      // Make the PATCH request with FormData
       const response = await axios.patch(
         `${localUrl}/update/dashboard/updated/partner/${updatedUser._id}`,
-        updatedUser
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data', // Required for file uploads
+          },
+        }
       );
+
       if (response.status === 200) {
         toast.success('Successfully updated');
         setRefresh((prev) => !prev); // Trigger refresh
-        setLoading(false);
       }
     } catch (error) {
       console.error('Error updating user:', error);
-      toast.error('Something went wrong !', error);
-      setLoading(false);
+      toast.error('Something went wrong!');
+    } finally {
+      setLoading(false); // Ensure loading state is turned off
     }
   };
 
@@ -210,7 +236,7 @@ export default function UserPage() {
         const updatedUsers = users.map((user) =>
           user._id === userId ? { ...user, status: newStatus } : user
         );
-        toast.success(`Status Changed to ${newStatus === true ? "Active" : "Inactive"}`);
+        toast.success(`Status Changed to ${newStatus === true ? 'Active' : 'Inactive'}`);
         setUsers(updatedUsers);
       }
     } catch (error) {

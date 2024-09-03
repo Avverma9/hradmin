@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-boolean-value */
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 
@@ -25,14 +26,16 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
     address: '',
     password: '',
     role: '',
-    status: '',
+    status: '', // This will hold true or false
     images: null,
     imageUrl: '',
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Convert status value to boolean
+    const newValue = name === 'status' ? value === 'true' : value;
+    setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
 
   const handleImageChange = (e) => {
@@ -50,7 +53,8 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
     data.append('address', formData.address);
     data.append('password', formData.password);
     data.append('role', formData.role);
-    data.append('status', formData.status);
+    // Convert boolean to string for FormData
+    data.append('status', formData.status ? 'true' : 'false');
     if (formData.images) {
       data.append('images', formData.images);
     }
@@ -123,8 +127,8 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
               <FormControl fullWidth>
                 <InputLabel>Select Status</InputLabel>
                 <Select name="status" value={formData.status} onChange={handleChange}>
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="inactive">Inactive</MenuItem>
+                  <MenuItem value={true}>Active</MenuItem>
+                  <MenuItem value={false}>Inactive</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

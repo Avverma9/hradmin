@@ -18,17 +18,6 @@ import {
 } from '@mui/material';
 
 export default function EditUserModal({ open, onClose, user, onSubmit }) {
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setFormData((prev) => ({ ...prev, images: file, imageUrl: URL.createObjectURL(file) }));
-    }
-  };
   const [formData, setFormData] = useState({
     _id: '',
     name: '',
@@ -37,19 +26,44 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
     address: '',
     password: '',
     role: '',
-    status: '',
-    images: null,
-    imageUrl: '',
+    status: false,
+    images: '', // Use an empty string for URL or a placeholder
+    imageUrl: '', // Placeholder URL for preview
   });
 
   useEffect(() => {
-    // Populate formData when user prop changes (on modal open)
     if (user) {
       setFormData({
         _id: user._id,
+        name: user.name || '',
+        email: user.email || '',
+        mobile: user.mobile || '',
+        address: user.address || '',
+        password: '',
+        role: user.role || '',
+        status: user.status || false,
+        images: user.images || '', // Set to current image URL
+        imageUrl: user.images || '', // Set to current image URL for preview
       });
     }
   }, [user]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const newValue = name === 'status' ? value === 'true' : value;
+    setFormData((prev) => ({ ...prev, [name]: newValue }));
+  };
+
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFormData((prev) => ({
+        ...prev,
+        images: file, // Set file object directly here
+        imageUrl: URL.createObjectURL(file), // For preview
+      }));
+    }
+  };
 
   const handleSubmit = () => {
     const updatedUser = {
@@ -60,11 +74,12 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
       address: formData.address,
       password: formData.password,
       role: formData.role,
-      status: formData.status,
-      images: formData.images,
+      status: formData.status ? "true" : " false", // Convert to boolean
+      images: formData.images, // This should be handled separately if it's a file
     };
     onSubmit(updatedUser);
     onClose();
+    console.log('updated user data', updatedUser);
   };
 
   return (
@@ -73,10 +88,7 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
       <DialogContent>
         <Box display="flex" justifyContent="center" mb={3}>
           <Box display="flex" flexDirection="column" alignItems="center">
-            <Avatar
-              src={formData?.imageUrl ? formData.imageUrl : user.images}
-              sx={{ width: 80, height: 80, marginBottom: 1 }}
-            />
+            <Avatar src={formData.imageUrl} sx={{ width: 80, height: 80, marginBottom: 1 }} />
             <Button variant="contained" component="label" color="primary">
               Upload Photo
               <input hidden accept="image/*" type="file" onChange={handleImageChange} />
@@ -128,7 +140,6 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>Select Role (Current role is {user?.role})</InputLabel>
-
                 <Select name="role" value={formData.role} onChange={handleChange}>
                   <MenuItem value="Admin">Admin</MenuItem>
                   <MenuItem value="PMS">Partner Management System</MenuItem>
@@ -139,12 +150,15 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>
-                  Select Status (Current status is {user?.status ? 'Active' : 'In Active'})
+                  Select Status (Current status is {user?.status ? 'Active' : 'Inactive'})
                 </InputLabel>
-                <Select name="status" value={formData.status} onChange={handleChange}>
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="inactive">Inactive</MenuItem>
-                </Select>
+                <FormControl fullWidth>
+                  <InputLabel>Select Status</InputLabel>
+                  <Select name="status" value={formData.status} onChange={handleChange}>
+                    <MenuItem value>Active</MenuItem>
+                    <MenuItem value={false}>Inactive</MenuItem>
+                  </Select>
+                </FormControl>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>

@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-import AllUserPage from 'src/sections/settings/users';
+import AllUserPage from 'src/sections/settings/AllUsers';
 
 // ----------------------------------------------------------------------
 
