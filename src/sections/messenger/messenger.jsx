@@ -32,74 +32,76 @@ const ChatApp = () => {
   const hasUpdatedStatus = useRef(false); // Ref to track status updates
 
   //= =============================web-socket===================================//
-const connectWebSocket = useCallback(() => {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = `${protocol}//${new URL(localUrl).hostname}${
-    window.location.port ? `:${window.location.port}` : ''
-  }`;
+  const connectWebSocket = useCallback(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${new URL(localUrl).hostname}${
+      window.location.port ? `:${window.location.port}` : ''
+    }`;
 
-  const socket = new WebSocket(wsUrl);
+    const socket = new WebSocket(wsUrl);
 
-  socket.onopen = () => {
-    console.log('WebSocket connected');
-    const userId = localStorage.getItem('user_id');
-    if (userId) {
-      socket.send(JSON.stringify({ type: 'connect', userId }));
-    }
-    setWs(socket);
-  };
-
-  socket.onmessage = (event) => {
-    const message = JSON.parse(event.data);
-    console.log('Received message:', message);
-
-    if (message.type === 'status') {
-      setContacts((prevContacts) =>
-        prevContacts.map((contact) =>
-          contact._id === message.userId ? { ...contact, online: message.online } : contact
-        )
-      );
-      setChats((prevChats) =>
-        prevChats.map((chat) =>
-          chat._id === message.userId ? { ...chat, online: message.online } : chat
-        )
-      );
-    }
-    // Handle additional message types here if necessary
-  };
-
-  socket.onclose = (event) => {
-    console.log('WebSocket closed', event);
-    if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
-      setTimeout(() => {
-        setReconnectAttempts((prev) => prev + 1);
-        connectWebSocket();
-      }, 3000);
-    }
-  };
-
-  socket.onerror = (error) => {
-    console.error('WebSocket error:', error);
-  };
-
-  return socket;
-}, [reconnectAttempts, maxReconnectAttempts, localUrl]);
-
-useEffect(() => {
-  const socket = connectWebSocket();
-  return () => {
-    if (socket) {
+    socket.onopen = () => {
+      console.log('WebSocket connected');
       const userId = localStorage.getItem('user_id');
       if (userId) {
-        socket.send(JSON.stringify({ type: 'disconnect', userId }));
+        socket.send(JSON.stringify({ type: 'connect', userId }));
       }
-      socket.close();
-    }
-  };
-}, [connectWebSocket]);
+      setWs(socket);
+    };
 
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      console.log('Received message:', message);
+
+      if (message.type === 'status') {
+        setContacts((prevContacts) =>
+          prevContacts.map((contact) =>
+            contact._id === message.userId ? { ...contact, online: message.online } : contact
+          )
+        );
+        setChats((prevChats) =>
+          prevChats.map((chat) =>
+            chat._id === message.userId ? { ...chat, online: message.online } : chat
+          )
+        );
+      }
+      // Handle additional message types here if necessary
+    };
+
+    socket.onclose = (event) => {
+      console.log('WebSocket closed', event);
+      if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
+        setTimeout(() => {
+          setReconnectAttempts((prev) => prev + 1);
+          connectWebSocket();
+        }, 3000);
+      }
+    };
+
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    return socket;
+  }, [reconnectAttempts, maxReconnectAttempts, localUrl]);
+
+  useEffect(() => {
+    const socket = connectWebSocket();
+    return () => {
+      if (socket) {
+        const userId = localStorage.getItem('user_id');
+        if (userId) {
+          socket.send(JSON.stringify({ type: 'disconnect', userId }));
+        }
+        socket.close();
+      }
+    };
+  }, [connectWebSocket]);
+  useEffect(() => {
+    fetchChatsFromServer();
+  }, []);
   //= =============================Fetch contacts ===================================//
-  
+
   useEffect(() => {
     const fetchContacts = async () => {
       try {
@@ -115,7 +117,7 @@ useEffect(() => {
     fetchContacts();
   }, []);
   //= =============================Fetch messages ===================================//
- 
+
   useEffect(() => {
     if (selectedContact && location.pathname === '/messenger') {
       const fetchMessages = async () => {
@@ -153,17 +155,32 @@ useEffect(() => {
     }
   }, [selectedContact, location.pathname]);
 
-  useEffect(() => {
-    const storedChats = localStorage.getItem('chats');
-    if (storedChats) {
-      setChats(JSON.parse(storedChats));
+  // useEffect(() => {
+  //   const storedChats = localStorage.getItem('chats');
+  //   if (storedChats) {
+  //     setChats(JSON.parse(storedChats));
+  //   }
+  // }, []);
+
+  // useEffect(() => {
+  //   localStorage.setItem('chats', JSON.stringify(chats));
+  // }, [chats]);
+  const fetchChatsFromServer = async () => {
+    try {
+      const response = await axios.get(`${localUrl}/get/added/chats/from/messenger`);
+      setChats(response.data);
+    } catch (error) {
+      console.error('Error fetching chats:', error);
     }
-  }, []);
+  };
 
-  useEffect(() => {
-    localStorage.setItem('chats', JSON.stringify(chats));
-  }, [chats]);
-
+  const updateChatsOnServer = async (chatData) => {
+    try {
+      await axios.post(`${localUrl}/add/to/chat-messenger`, { chats: chatData });
+    } catch (error) {
+      console.error('Error updating chats on server:', error);
+    }
+  };
   //= =============================update online status  ===================================//
   const updateOnlineStatus = useCallback(async (userId) => {
     try {
@@ -232,11 +249,16 @@ useEffect(() => {
         )
       );
 
-      try {
-        await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
-      } catch (error) {
-        console.error('Error sending message:', error);
-      }
+       try {
+         await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
+         updateChatsOnServer(
+           chats.map((chat) =>
+             chat._id === selectedContact._id ? { ...chat, lastMessage: input } : chat
+           )
+         );
+       } catch (error) {
+         console.error('Error sending message:', error);
+       }
 
       event.target.reset();
     }

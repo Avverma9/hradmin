@@ -8,4 +8,4 @@ export const searchQuery = [
 export const localUrl = 'https://hotel-backend-tge7.onrender.com';
 // localUrl = 'https://hotel-backend-tge7.onrender.com';
 // localUrl = 'http://localhost:5000';
-export const hotelEmail = localStorage.getItem('user_email')
+export const hotelEmail = localStorage.getItem('user_email');
