@@ -33,7 +33,7 @@ const ChatApp = () => {
 
   //= =============================web-socket===================================//
   const connectWebSocket = useCallback(() => {
-    const socket = new WebSocket(`ws://localhost:5000`);
+    const socket = new WebSocket(`ws://hotel-backend-tge7.onrender.com`);
     socket.onopen = () => {
       console.log('WebSocket connected');
       const userId = localStorage.getItem('user_id');
