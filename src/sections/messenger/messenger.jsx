@@ -320,7 +320,7 @@ useEffect(() => {
                 <div
                   key={msg.timestamp}
                   className={`message ${
-                    msg.receiver === localStorage.getItem('user_id') ? 'sent' : 'received'
+                    msg.sender === localStorage.getItem('user_id') ? 'sent' : 'received'
                   }`}
                 >
                   <p className="message-content">{msg.content}</p>

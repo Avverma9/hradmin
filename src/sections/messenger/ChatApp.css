@@ -160,22 +160,6 @@ body {
 }
 
 .message.sent {
-  background-color: #f1f1f1;
-  color: #333;
-  align-self: flex-start;
-  text-align: left; /* Align text to the left */
-  margin-right: auto; /* Pushes message to the left */
-  border-top-left-radius: 0; /* Optional: remove corner radius for a modern look */
-  border-bottom-right-radius: 20px;
-}
-.message {
-  max-width: 40%; /* Limiting the maximum width of messages */
-  padding: 10px;
-  border-radius: 10px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: subtle shadow for better appearance */
-}
-.message.received {
   background-color: #b5d9fe;
   color: #050404;
   align-self: flex-end;
@@ -185,6 +169,22 @@ body {
   margin-left: auto; /* Pushes message to the right */
   border-top-right-radius: 0; /* Optional: remove corner radius for a modern look */
   border-bottom-left-radius: 20px;
+}
+.message {
+  max-width: 40%; /* Limiting the maximum width of messages */
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: subtle shadow for better appearance */
+}
+.message.received {
+  background-color: #f1f1f1;
+  color: #333;
+  align-self: flex-start;
+  text-align: left; /* Align text to the left */
+  margin-right: auto; /* Pushes message to the left */
+  border-top-left-radius: 0; /* Optional: remove corner radius for a modern look */
+  border-bottom-right-radius: 20px;
 }
 
 .message p {
