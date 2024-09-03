@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-shadow */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
@@ -15,9 +16,12 @@ import './ChatApp.css';
 
 // Default avatar URL or CSS class
 const DEFAULT_AVATAR =
-  'https://t4.ftcdn.net/jpg/05/11/55/91/360_F_511559113_UTxNAE1EP40z1qZ8hIzGNrB0LwqwjruK.jpg'; // Update with the path to your default avatar
+  'https://t4.ftcdn.net/jpg/05/11/55/91/360_F_511559113_UTxNAE1EP40z1qZ8hIzGNrB0LwqwjruK.jpg';
 
 const ChatApp = () => {
+  const [ws, setWs] = useState(null);
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const [maxReconnectAttempts] = useState(5);
   const [contacts, setContacts] = useState([]);
   const [chats, setChats] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
@@ -26,6 +30,70 @@ const ChatApp = () => {
   const [pollingInterval, setPollingInterval] = useState(null);
   const location = useLocation();
   const messagesEndRef = useRef(null); // Ref to scroll to the bottom
+
+  // Establish WebSocket connection
+  const connectWebSocket = useCallback(() => {
+    const socket = new WebSocket('ws://localhost:5000'); // Replace with your WebSocket server URL
+
+    socket.onopen = () => {
+      console.log('WebSocket connected');
+      const userId = localStorage.getItem('user_id');
+      if (userId) {
+        socket.send(JSON.stringify({ type: 'connect', userId }));
+      }
+      setWs(socket);
+    };
+
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      console.log('Received message:', message);
+
+      // Handle status updates
+      if (message.type === 'status') {
+        setContacts((prevContacts) =>
+          prevContacts.map((contact) =>
+            contact._id === message.userId ? { ...contact, online: message.online } : contact
+          )
+        );
+        setChats((prevChats) =>
+          prevChats.map((chat) =>
+            chat._id === message.userId ? { ...chat, online: message.online } : chat
+          )
+        );
+      }
+    };
+
+    socket.onclose = (event) => {
+      console.log('WebSocket closed', event);
+      // Try to reconnect if not manually closed and attempts are less than max
+      if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
+        setTimeout(() => {
+          setReconnectAttempts((prev) => prev + 1);
+          connectWebSocket();
+        }, 3000); // Reconnect after 3 seconds
+      }
+    };
+
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    return socket;
+  }, [reconnectAttempts, maxReconnectAttempts]);
+
+  useEffect(() => {
+    const socket = connectWebSocket();
+
+    return () => {
+      if (socket) {
+        const userId = localStorage.getItem('user_id');
+        if (userId) {
+          socket.send(JSON.stringify({ type: 'disconnect', userId }));
+        }
+        socket.close();
+      }
+    };
+  }, [connectWebSocket]);
 
   // Fetch contacts from the API when the component mounts
   useEffect(() => {
@@ -88,6 +156,7 @@ const ChatApp = () => {
       };
     }
   }, [selectedContact, location.pathname]);
+
   // Load chats from localStorage
   useEffect(() => {
     const storedChats = localStorage.getItem('chats');
@@ -100,6 +169,40 @@ const ChatApp = () => {
   useEffect(() => {
     localStorage.setItem('chats', JSON.stringify(chats));
   }, [chats]);
+
+  // Function to update online status for a specific contact
+  const updateOnlineStatus = useCallback(async (userId) => {
+    try {
+      const response = await axios.get(`${localUrl}/update-status-of-a-user/messenger/${userId}`);
+      if (response.status === 200) {
+        const onlineStatus = response.data.online;
+        setContacts((prevContacts) =>
+          prevContacts.map((contact) =>
+            contact._id === userId ? { ...contact, online: onlineStatus } : contact
+          )
+        );
+        setChats((prevChats) =>
+          prevChats.map((chat) => (chat._id === userId ? { ...chat, online: onlineStatus } : chat))
+        );
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  }, []);
+
+  // Update online status for all contacts
+  useEffect(() => {
+    contacts.forEach((contact) => {
+      updateOnlineStatus(contact._id);
+    });
+  }, [contacts, updateOnlineStatus]);
+
+  // Update online status when a chat is selected
+  useEffect(() => {
+    if (selectedContact) {
+      updateOnlineStatus(selectedContact._id);
+    }
+  }, [selectedContact, updateOnlineStatus]);
 
   const handleSelectContact = useCallback(
     (contact) => {
@@ -149,25 +252,6 @@ const ChatApp = () => {
   // Function to get tick indicators based on seen status
   const getTickIndicators = (seen) => (seen ? 'Seen ✔✔' : 'Sent ✔️✔️'); // Use different indicators based on the 'seen' status
 
-  // Function to update online status
-  const updateOnlineStatus = useCallback((online) => {
-    const userId = localStorage.getItem('user_id');
-    axios
-      .post(`${localUrl}/update-status`, { userId, online })
-      .catch((error) => console.error('Error updating status:', error));
-  }, []);
-
-  useEffect(() => {
-    if (selectedContact) {
-      updateOnlineStatus(true);
-
-      return () => {
-        updateOnlineStatus(false);
-      };
-    }
-  }, [selectedContact, updateOnlineStatus]);
-
-  
   return (
     <div className="chat-app">
       <div className="sidebar">
@@ -216,8 +300,8 @@ const ChatApp = () => {
                 <div className="contact-info">
                   <p>{contact.name}</p>
                   <span>{contact.mobile}</span>
-                  <span className={`status ${contact.online ===true ? 'online' : 'offline'}`}>
-                    {contact.online ===true ? 'Online' : 'Offline'}
+                  <span className={`status ${contact.online ? 'online' : 'offline'}`}>
+                    {contact.online ? 'Online' : 'Offline'}
                   </span>
                 </div>
               </div>
@@ -234,8 +318,8 @@ const ChatApp = () => {
               <div>
                 <p>{selectedContact.name}</p>
                 <span>{selectedContact.mobile}</span>
-                <span className={`status ${selectedContact.online === true ? 'online' : 'offline'}`}>
-                  {selectedContact.online ===true ? 'Online' : 'Offline'}
+                <span className={`status ${selectedContact.online ? 'online' : 'offline'}`}>
+                  {selectedContact.online ? 'Online' : 'Offline'}
                 </span>
               </div>
             </div>
@@ -244,7 +328,7 @@ const ChatApp = () => {
                 <div
                   key={msg.timestamp}
                   className={`message ${
-                    msg.receiver === localStorage.getItem('user_id') ? 'received' : 'sent'
+                    msg.receiverId === localStorage.getItem('user_id') ? 'received' : 'sent'
                   }`}
                 >
                   <p>{msg.content}</p>
@@ -271,4 +355,3 @@ const ChatApp = () => {
 };
 
 export default ChatApp;
-
