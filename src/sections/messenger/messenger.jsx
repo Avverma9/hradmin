@@ -32,64 +32,72 @@ const ChatApp = () => {
   const hasUpdatedStatus = useRef(false); // Ref to track status updates
 
   //= =============================web-socket===================================//
-  const connectWebSocket = useCallback(() => {
-    const socket = new WebSocket(`ws://hotel-backend-tge7.onrender.com`);
-    socket.onopen = () => {
-      console.log('WebSocket connected');
+const connectWebSocket = useCallback(() => {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${new URL(localUrl).hostname}${
+    window.location.port ? `:${window.location.port}` : ''
+  }`;
+
+  const socket = new WebSocket(wsUrl);
+
+  socket.onopen = () => {
+    console.log('WebSocket connected');
+    const userId = localStorage.getItem('user_id');
+    if (userId) {
+      socket.send(JSON.stringify({ type: 'connect', userId }));
+    }
+    setWs(socket);
+  };
+
+  socket.onmessage = (event) => {
+    const message = JSON.parse(event.data);
+    console.log('Received message:', message);
+
+    if (message.type === 'status') {
+      setContacts((prevContacts) =>
+        prevContacts.map((contact) =>
+          contact._id === message.userId ? { ...contact, online: message.online } : contact
+        )
+      );
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat._id === message.userId ? { ...chat, online: message.online } : chat
+        )
+      );
+    }
+    // Handle additional message types here if necessary
+  };
+
+  socket.onclose = (event) => {
+    console.log('WebSocket closed', event);
+    if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
+      setTimeout(() => {
+        setReconnectAttempts((prev) => prev + 1);
+        connectWebSocket();
+      }, 3000);
+    }
+  };
+
+  socket.onerror = (error) => {
+    console.error('WebSocket error:', error);
+  };
+
+  return socket;
+}, [reconnectAttempts, maxReconnectAttempts, localUrl]);
+
+useEffect(() => {
+  const socket = connectWebSocket();
+  return () => {
+    if (socket) {
       const userId = localStorage.getItem('user_id');
       if (userId) {
-        socket.send(JSON.stringify({ type: 'connect', userId }));
+        socket.send(JSON.stringify({ type: 'disconnect', userId }));
       }
-      setWs(socket);
-    };
+      socket.close();
+    }
+  };
+}, [connectWebSocket]);
 
-    socket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      console.log('Received message:', message);
-
-      if (message.type === 'status') {
-        setContacts((prevContacts) =>
-          prevContacts.map((contact) =>
-            contact._id === message.userId ? { ...contact, online: message.online } : contact
-          )
-        );
-        setChats((prevChats) =>
-          prevChats.map((chat) =>
-            chat._id === message.userId ? { ...chat, online: message.online } : chat
-          )
-        );
-      }
-    };
-
-    socket.onclose = (event) => {
-      console.log('WebSocket closed', event);
-      if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
-        setTimeout(() => {
-          setReconnectAttempts((prev) => prev + 1);
-          connectWebSocket();
-        }, 3000);
-      }
-    };
-
-    socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    return socket;
-  }, [reconnectAttempts, maxReconnectAttempts]);
-
-  useEffect(() => {
-    const socket = connectWebSocket();
-    return () => {
-      if (socket) {
-        const userId = localStorage.getItem('user_id');
-        if (userId) {
-          socket.send(JSON.stringify({ type: 'disconnect', userId }));
-        }
-        socket.close();
-      }
-    };
-  }, [connectWebSocket]);
   //= =============================Fetch contacts ===================================//
   
   useEffect(() => {
