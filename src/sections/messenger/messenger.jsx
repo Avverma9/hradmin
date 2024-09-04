@@ -32,13 +32,13 @@ const ChatApp = () => {
   const [activeTab, setActiveTab] = useState('chats');
   const [messages, setMessages] = useState([]);
   const [pollingInterval, setPollingInterval] = useState(null);
-    const [dialogOpen, setDialogOpen] = React.useState(false);
-    const [chatToDelete, setChatToDelete] = React.useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [chatToDelete, setChatToDelete] = useState(null);
   const location = useLocation();
   const messagesEndRef = useRef(null);
   const hasUpdatedStatus = useRef(false); // Ref to track status updates
 
-  //= =============================web-socket===================================//
+  //= ============================WebSocket==============================//
   const connectWebSocket = useCallback(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${new URL(localUrl).hostname}${
@@ -104,11 +104,8 @@ const ChatApp = () => {
       }
     };
   }, [connectWebSocket]);
-  useEffect(() => {
-    fetchChatsFromServer();
-  }, []);
-  //= =============================Fetch contacts ===================================//
 
+  //= ============================Fetch Contacts==============================//
   useEffect(() => {
     const fetchContacts = async () => {
       try {
@@ -123,8 +120,8 @@ const ChatApp = () => {
 
     fetchContacts();
   }, []);
-  //= =============================Fetch messages ===================================//
 
+  //= ============================Fetch Messages==============================//
   useEffect(() => {
     if (selectedContact && location.pathname === '/messenger') {
       const fetchMessages = async () => {
@@ -161,7 +158,14 @@ const ChatApp = () => {
       };
     }
   }, [selectedContact, location.pathname]);
-  //= =============================================Chats==================================
+
+  //= ============================Fetch Chats When Tab Changes==============================//
+  useEffect(() => {
+    if (activeTab === 'chats') {
+      fetchChatsFromServer();
+    }
+  }, [activeTab]);
+
   const fetchChatsFromServer = async () => {
     try {
       const response = await axios.get(`${localUrl}/get/added/chats/from/messenger`);
@@ -178,45 +182,49 @@ const ChatApp = () => {
       console.error('Error updating chats on server:', error);
     }
   };
-const handleDeleteButtonClick = (chatId) => {
-  setChatToDelete(chatId);
-  setDialogOpen(true);
-};
 
-const handleDeleteChat = async () => {
-  if (!chatToDelete) return;
+  const handleDeleteButtonClick = (chatId) => {
+    setChatToDelete(chatId);
+    setDialogOpen(true);
+  };
 
-  try {
-    const response = await axios.delete(
-      `${localUrl}/delete/added/chats/from/messenger-app/${chatToDelete}`
-    );
+ const handleDeleteChat = async () => {
+   if (!chatToDelete) return;
 
-    if (response.status === 200) {
-      const updatedChats = chats.filter((chat) => chat._id !== chatToDelete);
-      setChats(updatedChats);
-      toast.success('Chat deleted successfully');
+   try {
+     const response = await axios.delete(
+       `${localUrl}/delete/added/chats/from/messenger-app/${chatToDelete}`
+     );
 
-      if (selectedContact && selectedContact._id === chatToDelete) {
-        setSelectedContact(null);
-        setMessages([]);
-      }
-    } else {
-      toast.error('Failed to delete chat. Please try again.');
-    }
-  } catch (error) {
-    console.error('Error deleting chat:', error);
-  } finally {
+     if (response.status === 200) {
+       toast.success('Chat deleted successfully');
+
+       // Refetch chats from the server to update the list
+       fetchChatsFromServer();
+
+       if (selectedContact && selectedContact._id === chatToDelete) {
+         setSelectedContact(null);
+         setMessages([]);
+       }
+     } else {
+       toast.error('Failed to delete chat. Please try again.');
+     }
+   } catch (error) {
+     console.error('Error deleting chat:', error);
+     toast.error('An error occurred while deleting the chat. Please try again.');
+   } finally {
+     setDialogOpen(false);
+     setChatToDelete(null);
+   }
+ };
+
+
+  const handleDialogClose = () => {
     setDialogOpen(false);
     setChatToDelete(null);
-  }
-};
+  };
 
-const handleDialogClose = () => {
-  setDialogOpen(false);
-  setChatToDelete(null);
-};
-
-  //= =============================update online status  ===================================//
+  //= ============================Update Online Status==============================//
   const updateOnlineStatus = useCallback(async (userId) => {
     try {
       const response = await axios.get(`${localUrl}/update-status-of-a-user/messenger/${userId}`);
@@ -262,7 +270,7 @@ const handleDialogClose = () => {
     [chats]
   );
 
-  //= =============================Handle send Message ===================================//
+  //= ============================Handle Send Message==============================//
   const handleSendMessage = async (event) => {
     event.preventDefault();
     const input = event.target.message.value;
