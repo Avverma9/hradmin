@@ -205,7 +205,6 @@ const handleDeleteChat = async () => {
     }
   } catch (error) {
     console.error('Error deleting chat:', error);
-    toast.error('An error occurred while deleting the chat. Please try again.');
   } finally {
     setDialogOpen(false);
     setChatToDelete(null);
