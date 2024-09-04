@@ -27,9 +27,7 @@ const ChatApp = () => {
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const [maxReconnectAttempts] = useState(5);
   const [contacts, setContacts] = useState([]);
-  const [chats, setChats] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
-  const [activeTab, setActiveTab] = useState('chats');
   const [messages, setMessages] = useState([]);
   const [pollingInterval, setPollingInterval] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -64,11 +62,6 @@ const ChatApp = () => {
         setContacts((prevContacts) =>
           prevContacts.map((contact) =>
             contact._id === message.userId ? { ...contact, online: message.online } : contact
-          )
-        );
-        setChats((prevChats) =>
-          prevChats.map((chat) =>
-            chat._id === message.userId ? { ...chat, online: message.online } : chat
           )
         );
       }
@@ -159,69 +152,42 @@ const ChatApp = () => {
     }
   }, [selectedContact, location.pathname]);
 
-  //= ============================Fetch Chats When Tab Changes==============================//
-  useEffect(() => {
-    if (activeTab === 'chats') {
-      fetchChatsFromServer();
-    }
-  }, [activeTab]);
-
-  const fetchChatsFromServer = async () => {
-    try {
-      const response = await axios.get(`${localUrl}/get/added/chats/from/messenger`);
-      setChats(response.data);
-    } catch (error) {
-      console.error('Error fetching chats:', error);
-    }
+  const handleDeleteButtonClick = (receiverId) => {
+    setChatToDelete({ receiverId });
+    setDialogOpen(true);
   };
 
-  const updateChatsOnServer = async () => {
-    try {
-      await axios.post(`${localUrl}/add/to/chat-messenger`, { chats });
-    } catch (error) {
-      console.error('Error updating chats on server:', error);
+  const handleDeleteChat = async () => {
+    const { receiverId } = chatToDelete || {};
+
+    const userId = localStorage.getItem('user_id');
+    if (!userId) {
+      toast.error('User not found. Unable to delete chat.');
+      return;
     }
-  };
+    console.log('here is sender and receiver id ', userId, receiverId);
+    try {
+      const response = await axios.delete(
+        `${localUrl}/delete/added/chats/from/messenger-app/${userId}/${receiverId}`
+      );
 
-const handleDeleteButtonClick = (chatId, receiverId) => {
-  setChatToDelete({ chatId, receiverId });
-  setDialogOpen(true);
-};
-
-
-const handleDeleteChat = async () => {
-  const { chatId, receiverId } = chatToDelete || {};
-  if (!chatId || !receiverId) return;
-
-  const userId = localStorage.getItem('user_id');
-  try {
-    const response = await axios.delete(
-      `${localUrl}/delete/added/chats/from/messenger-app/${chatId}/${userId}/${receiverId}`
-    );
-
-    console.log('Delete response:', response);
-
-    if (response.status === 200) {
-      toast.success('Chat deleted successfully');
-      fetchChatsFromServer();
-
-      if (selectedContact && selectedContact._id === chatId) {
-        setSelectedContact(null);
-        setMessages([]);
+      if (response.status === 200) {
+        toast.success('Chat deleted successfully');
+        if (selectedContact && selectedContact._id === receiverId) {
+          setSelectedContact(null);
+          setMessages([]);
+        }
+      } else {
+        toast.error('Failed to delete chat. Please try again.');
       }
-    } else {
-      toast.error('Failed to delete chat. Please try again.');
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+      toast.error('An error occurred while deleting the chat. Please try again.');
+    } finally {
+      setDialogOpen(false);
+      setChatToDelete(null);
     }
-  } catch (error) {
-    console.error('Error deleting chat:', error);
-    toast.error('An error occurred while deleting the chat. Please try again.');
-  } finally {
-    setDialogOpen(false);
-    setChatToDelete(null);
-  }
-};
-
-
+  };
 
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -238,9 +204,6 @@ const handleDeleteChat = async () => {
           prevContacts.map((contact) =>
             contact._id === userId ? { ...contact, online: onlineStatus } : contact
           )
-        );
-        setChats((prevChats) =>
-          prevChats.map((chat) => (chat._id === userId ? { ...chat, online: onlineStatus } : chat))
         );
       }
     } catch (error) {
@@ -263,19 +226,9 @@ const handleDeleteChat = async () => {
     }
   }, [selectedContact, updateOnlineStatus]);
 
- const handleSelectContact = useCallback(
-   (contact) => {
-     setSelectedContact(contact);
-
-     if (!chats.find((chat) => chat._id === contact._id)) {
-       setChats([
-         ...chats,
-         { ...contact, lastMessage: '', receiverId: contact._id }, // Add receiverId here
-       ]);
-     }
-   },
-   [chats]
- );
+  const handleSelectContact = useCallback((contact) => {
+    setSelectedContact(contact);
+  }, []);
 
   //= ============================Handle Send Message==============================//
   const handleSendMessage = async (event) => {
@@ -293,19 +246,8 @@ const handleDeleteChat = async () => {
 
       setMessages([...messages, newMessage]);
 
-      setChats(
-        chats.map((chat) =>
-          chat._id === selectedContact._id ? { ...chat, lastMessage: input } : chat
-        )
-      );
-
       try {
         await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
-        updateChatsOnServer(
-          chats.map((chat) =>
-            chat._id === selectedContact._id ? { ...chat, lastMessage: input } : chat
-          )
-        );
       } catch (error) {
         console.error('Error sending message:', error);
       }
@@ -319,82 +261,54 @@ const handleDeleteChat = async () => {
   return (
     <div className="chat-app">
       <div className="sidebar">
-        <div className="tab-menu">
-          <button
-            className={activeTab === 'chats' ? 'active' : ''}
-            onClick={() => setActiveTab('chats')}
-          >
-            Chats
-          </button>
-          <button
-            className={activeTab === 'contacts' ? 'active' : ''}
-            onClick={() => setActiveTab('contacts')}
-          >
-            Contacts
-          </button>
+        <div className="tab-content">
+          {contacts.map((contact) => (
+            <div
+              key={contact._id}
+              className={`contact ${selectedContact?._id === contact._id ? 'active' : ''}`}
+              onClick={() => handleSelectContact(contact)}
+            >
+              <img src={contact.images || DEFAULT_AVATAR} alt={contact.name} />
+              <div className="contact-info">
+                <p>{contact.name}</p>
+                <span>{contact.mobile}</span>
+                <span className={`status ${contact.online ? 'online' : 'offline'}`}>
+                  {contact.online ? 'Online' : 'Offline'}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
-
-        {activeTab === 'chats' && (
-          <div className="tab-content">
-            {chats.map((chat) => (
-              <div
-                key={chat._id}
-                className={`contact ${selectedContact?._id === chat._id ? 'active' : ''}`}
-                onClick={() => handleSelectContact(chat)}
-              >
-                <img src={chat.images || DEFAULT_AVATAR} alt={chat.name} />
-                <div className="contact-info">
-                  <p>{chat.name}</p>
-                  <p>{chat.lastMessage}</p>
-                </div>
-
-                <IconButton
-                  aria-label="delete"
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent click event from bubbling up
-                    handleDeleteButtonClick(chat._id,chat.receiverId);
-                  }}
-                >
-                  <FiDelete />
-                </IconButton>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {activeTab === 'contacts' && (
-          <div className="tab-content">
-            {contacts.map((contact) => (
-              <div
-                key={contact._id}
-                className={`contact ${selectedContact?._id === contact._id ? 'active' : ''}`}
-                onClick={() => handleSelectContact(contact)}
-              >
-                <img src={contact.images || DEFAULT_AVATAR} alt={contact.name} />
-                <div className="contact-info">
-                  <p>{contact.name}</p>
-                  <span>{contact.mobile}</span>
-                  <span className={`status ${contact.online ? 'online' : 'offline'}`}>
-                    {contact.online ? 'Online' : 'Offline'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="chat-window">
         {selectedContact ? (
           <>
             <div className="header">
-              <img src={selectedContact.images || DEFAULT_AVATAR} alt={selectedContact.name} />
-              <div>
-                <p>{selectedContact.name}</p>
-                <span>{selectedContact.mobile}</span>
-                <span className={`status ${selectedContact.online ? 'online' : 'offline'}`}>
-                  {selectedContact.online ? 'Online' : 'Offline'}
-                </span>
+              <div className="header-left">
+                <img
+                  src={selectedContact.images || DEFAULT_AVATAR}
+                  alt={selectedContact.name}
+                  className="contact-avatar"
+                />
+                <div className="contact-info">
+                  <p className="contact-name">{selectedContact.name}</p>
+                  <span className="contact-mobile">{selectedContact.mobile}</span>
+                  <span className={`status ${selectedContact.online ? 'online' : 'offline'}`}>
+                    {selectedContact.online ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+              </div>
+              <div className="header-right">
+                <IconButton
+                  aria-label="delete"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent click event from bubbling up
+                    handleDeleteButtonClick(selectedContact._id);
+                  }}
+                >
+                  <FiDelete />
+                </IconButton>
               </div>
             </div>
             <div className="messages">
@@ -424,6 +338,7 @@ const handleDeleteChat = async () => {
           </div>
         )}
       </div>
+
       <AlertDialog
         open={dialogOpen}
         onClose={handleDialogClose}
