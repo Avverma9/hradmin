@@ -5,12 +5,17 @@
 /* eslint-disable consistent-return */
 /* eslint-disable react/button-has-type */
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import { FiDelete } from 'react-icons/fi';
 import { useLocation } from 'react-router-dom';
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 
+import IconButton from '@mui/material/IconButton';
+
 import { localUrl } from 'src/utils/util';
 import { fDateTime } from 'src/utils/format-time';
+import AlertDialog from 'src/utils/alertDialogue';
 
 import './ChatApp.css';
 
@@ -27,6 +32,8 @@ const ChatApp = () => {
   const [activeTab, setActiveTab] = useState('chats');
   const [messages, setMessages] = useState([]);
   const [pollingInterval, setPollingInterval] = useState(null);
+    const [dialogOpen, setDialogOpen] = React.useState(false);
+    const [chatToDelete, setChatToDelete] = React.useState(null);
   const location = useLocation();
   const messagesEndRef = useRef(null);
   const hasUpdatedStatus = useRef(false); // Ref to track status updates
@@ -154,17 +161,7 @@ const ChatApp = () => {
       };
     }
   }, [selectedContact, location.pathname]);
-
-  // useEffect(() => {
-  //   const storedChats = localStorage.getItem('chats');
-  //   if (storedChats) {
-  //     setChats(JSON.parse(storedChats));
-  //   }
-  // }, []);
-
-  // useEffect(() => {
-  //   localStorage.setItem('chats', JSON.stringify(chats));
-  // }, [chats]);
+  //= =============================================Chats==================================
   const fetchChatsFromServer = async () => {
     try {
       const response = await axios.get(`${localUrl}/get/added/chats/from/messenger`);
@@ -174,13 +171,52 @@ const ChatApp = () => {
     }
   };
 
-  const updateChatsOnServer = async (chatData) => {
+  const updateChatsOnServer = async () => {
     try {
-      await axios.post(`${localUrl}/add/to/chat-messenger`, { chats: chatData });
+      await axios.post(`${localUrl}/add/to/chat-messenger`, { chats });
     } catch (error) {
       console.error('Error updating chats on server:', error);
     }
   };
+const handleDeleteButtonClick = (chatId) => {
+  setChatToDelete(chatId);
+  setDialogOpen(true);
+};
+
+const handleDeleteChat = async () => {
+  if (!chatToDelete) return;
+
+  try {
+    const response = await axios.delete(
+      `${localUrl}/delete/added/chats/from/messenger-app/${chatToDelete}`
+    );
+
+    if (response.status === 200) {
+      const updatedChats = chats.filter((chat) => chat._id !== chatToDelete);
+      setChats(updatedChats);
+      toast.success('Chat deleted successfully');
+
+      if (selectedContact && selectedContact._id === chatToDelete) {
+        setSelectedContact(null);
+        setMessages([]);
+      }
+    } else {
+      toast.error('Failed to delete chat. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error deleting chat:', error);
+    toast.error('An error occurred while deleting the chat. Please try again.');
+  } finally {
+    setDialogOpen(false);
+    setChatToDelete(null);
+  }
+};
+
+const handleDialogClose = () => {
+  setDialogOpen(false);
+  setChatToDelete(null);
+};
+
   //= =============================update online status  ===================================//
   const updateOnlineStatus = useCallback(async (userId) => {
     try {
@@ -249,16 +285,16 @@ const ChatApp = () => {
         )
       );
 
-       try {
-         await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
-         updateChatsOnServer(
-           chats.map((chat) =>
-             chat._id === selectedContact._id ? { ...chat, lastMessage: input } : chat
-           )
-         );
-       } catch (error) {
-         console.error('Error sending message:', error);
-       }
+      try {
+        await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
+        updateChatsOnServer(
+          chats.map((chat) =>
+            chat._id === selectedContact._id ? { ...chat, lastMessage: input } : chat
+          )
+        );
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
 
       event.target.reset();
     }
@@ -297,6 +333,16 @@ const ChatApp = () => {
                   <p>{chat.name}</p>
                   <p>{chat.lastMessage}</p>
                 </div>
+
+                <IconButton
+                  aria-label="delete"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent click event from bubbling up
+                    handleDeleteButtonClick(chat._id);
+                  }}
+                >
+                  <FiDelete />
+                </IconButton>
               </div>
             ))}
           </div>
@@ -364,6 +410,13 @@ const ChatApp = () => {
           </div>
         )}
       </div>
+      <AlertDialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        onConfirm={handleDeleteChat}
+        title="Confirm Deletion"
+        message="Are you sure you want to delete this chat? This action cannot be undone."
+      />
     </div>
   );
 };
