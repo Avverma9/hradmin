@@ -188,36 +188,35 @@ const ChatApp = () => {
     setDialogOpen(true);
   };
 
- const handleDeleteChat = async () => {
-   if (!chatToDelete) return;
+  const handleDeleteChat = async () => {
+    if (!chatToDelete) return;
 
-   try {
-     const response = await axios.delete(
-       `${localUrl}/delete/added/chats/from/messenger-app/${chatToDelete}`
-     );
+    try {
+      const response = await axios.delete(
+        `${localUrl}/delete/added/chats/from/messenger-app/${chatToDelete}/${selectedContact._id}`
+      );
 
-     if (response.status === 200) {
-       toast.success('Chat deleted successfully');
+      if (response.status === 200) {
+        toast.success('Chat deleted successfully');
 
-       // Refetch chats from the server to update the list
-       fetchChatsFromServer();
+        // Refetch chats from the server to update the list
+        fetchChatsFromServer();
 
-       if (selectedContact && selectedContact._id === chatToDelete) {
-         setSelectedContact(null);
-         setMessages([]);
-       }
-     } else {
-       toast.error('Failed to delete chat. Please try again.');
-     }
-   } catch (error) {
-     console.error('Error deleting chat:', error);
-     toast.error('An error occurred while deleting the chat. Please try again.');
-   } finally {
-     setDialogOpen(false);
-     setChatToDelete(null);
-   }
- };
-
+        if (selectedContact && selectedContact._id === chatToDelete) {
+          setSelectedContact(null);
+          setMessages([]);
+        }
+      } else {
+        toast.error('Failed to delete chat. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+      toast.error('An error occurred while deleting the chat. Please try again.');
+    } finally {
+      setDialogOpen(false);
+      setChatToDelete(null);
+    }
+  };
 
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -421,8 +420,8 @@ const ChatApp = () => {
         open={dialogOpen}
         onClose={handleDialogClose}
         onConfirm={handleDeleteChat}
-        title="Confirm Deletion"
-        message="Are you sure you want to delete this chat? This action cannot be undone."
+        title="Confirm Conversation Delete"
+        message="This action will delete entire conversation between you and the other party make sure you want to delete this chat? This action cannot be undone."
       />
     </div>
   );
