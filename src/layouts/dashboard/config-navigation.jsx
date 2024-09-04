@@ -8,9 +8,9 @@ import {
   MdOutlineTravelExplore,
   MdOutlineAdminPanelSettings,
 } from 'react-icons/md'; // Ensure these are correct
-import { CiImageOn } from 'react-icons/ci';
 import { BsInfoSquare } from 'react-icons/bs';
 import { VscFeedback } from 'react-icons/vsc';
+import { CiBellOn, CiImageOn } from 'react-icons/ci';
 import { RiCoupon3Line, RiMessengerLine } from 'react-icons/ri';
 // Define icon mappings
 const icons = {
@@ -24,6 +24,7 @@ const icons = {
   complaints: <BsInfoSquare style={{ width: '24px', height: '24px' }} />,
   banner: <CiImageOn style={{ width: '24px', height: '24px' }} />,
   review: <VscFeedback style={{ width: '24px', height: '24px' }} />,
+  notification: <CiBellOn style={{ width: '24px', height: '24px' }} />,
   coupon: <RiCoupon3Line style={{ width: '24px', height: '24px' }} />,
   admin: <MdOutlineAdminPanelSettings style={{ width: '24px', height: '24px' }} />,
   user: <FaRegUserCircle style={{ width: '24px', height: '24px' }} />,
@@ -126,6 +127,11 @@ const getNavConfig = () => {
           title: 'Manage Coupons',
           path: '/apply-coupon',
           icon: icons.coupon,
+        },
+        {
+          title: 'Push notification',
+          path: '/send-notification-to-all',
+          icon: icons.notification,
         },
       ],
     },

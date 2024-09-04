@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { set, sub } from 'date-fns';
-import { faker } from '@faker-js/faker';
+import { useState, useEffect } from 'react';
+import { parseISO, formatISO } from 'date-fns';
 
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
@@ -14,110 +13,74 @@ import Popover from '@mui/material/Popover';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import ListItemText from '@mui/material/ListItemText';
-import ListSubheader from '@mui/material/ListSubheader';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemButton from '@mui/material/ListItemButton';
 
-import { fToNow } from 'src/utils/format-time';
+import { localUrl } from 'src/utils/util';
 
 import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
 
+const API_URL = `${localUrl}/push-a-new-notification-to-the-panel/dashboard/get/`;
+
 // ----------------------------------------------------------------------
 
-const NOTIFICATIONS = [
-  {
-    id: faker.string.uuid(),
-    title: 'Your order is placed',
-    description: 'waiting for shipping',
-    avatar: null,
-    type: 'order_placed',
-    createdAt: set(new Date(), { hours: 10, minutes: 30 }),
-    isUnRead: true,
-  },
-  {
-    id: faker.string.uuid(),
-    title: faker.person.fullName(),
-    description: 'answered to your comment on the Minimal',
-    avatar: '/assets/images/avatars/avatar_2.jpg',
-    type: 'friend_interactive',
-    createdAt: sub(new Date(), { hours: 3, minutes: 30 }),
-    isUnRead: true,
-  },
-  {
-    id: faker.string.uuid(),
-    title: 'You have new message',
-    description: '5 unread messages',
-    avatar: null,
-    type: 'chat_message',
-    createdAt: sub(new Date(), { days: 1, hours: 3, minutes: 30 }),
-    isUnRead: false,
-  },
-  {
-    id: faker.string.uuid(),
-    title: 'You have new mail',
-    description: 'sent from Guido Padberg',
-    avatar: null,
-    type: 'mail',
-    createdAt: sub(new Date(), { days: 2, hours: 3, minutes: 30 }),
-    isUnRead: false,
-  },
-  {
-    id: faker.string.uuid(),
-    title: 'Delivery processing',
-    description: 'Your order is being shipped',
-    avatar: null,
-    type: 'order_shipped',
-    createdAt: sub(new Date(), { days: 3, hours: 3, minutes: 30 }),
-    isUnRead: false,
-  },
-];
-
 export default function NotificationsPopover() {
-  const [notifications, setNotifications] = useState(NOTIFICATIONS);
-
-  const totalUnRead = notifications.filter((item) => item.isUnRead === true).length;
-
+  const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(null);
 
-  const handleOpen = (event) => {
-    setOpen(event.currentTarget);
-  };
+  // Assuming userId is retrieved from localStorage or some context
+  const userId = localStorage.getItem('user_id') || 'defaultUserId';
 
-  const handleClose = () => {
-    setOpen(null);
-  };
+  useEffect(() => {
+    // Fetch notifications from the API with userId
+    const fetchNotifications = async () => {
+      try {
+        const response = await fetch(`${API_URL}${userId}`);
+        const data = await response.json();
+        setNotifications(data.notifications);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
 
-  const handleMarkAllAsRead = () => {
-    setNotifications(
-      notifications.map((notification) => ({
-        ...notification,
-        isUnRead: false,
-      }))
-    );
+    fetchNotifications();
+  }, [userId]);
+
+  const totalUnRead = notifications.filter((item) => !item.seen).length;
+
+  const handleOpen = (event) => setOpen(event.currentTarget);
+  const handleClose = () => setOpen(null);
+
+  const handleMarkAllAsRead = () =>
+    setNotifications(notifications.map((notification) => ({ ...notification, seen: true })));
+
+  const handleNotificationClick = (notification) => {
+    localStorage.setItem('userId', userId); // Save userId in localStorage
+    window.location.href = notification.path; // Navigate to the path
   };
 
   return (
     <>
-      <IconButton color={open ? 'primary' : 'default'} onClick={handleOpen}>
+      <IconButton
+        color={open ? 'primary' : 'default'}
+        onClick={handleOpen}
+        aria-haspopup="true"
+        aria-controls="notifications-popover"
+      >
         <Badge badgeContent={totalUnRead} color="error">
           <Iconify width={24} icon="solar:bell-bing-bold-duotone" />
         </Badge>
       </IconButton>
 
       <Popover
-        open={!!open}
+        id="notifications-popover"
+        open={Boolean(open)}
         anchorEl={open}
         onClose={handleClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        PaperProps={{
-          sx: {
-            mt: 1.5,
-            ml: 0.75,
-            width: 360,
-          },
-        }}
+        PaperProps={{ sx: { mt: 1.5, ml: 0.75, width: 360 } }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', py: 2, px: 2.5 }}>
           <Box sx={{ flexGrow: 1 }}>
@@ -128,7 +91,7 @@ export default function NotificationsPopover() {
           </Box>
 
           {totalUnRead > 0 && (
-            <Tooltip title=" Mark all as read">
+            <Tooltip title="Mark all as read">
               <IconButton color="primary" onClick={handleMarkAllAsRead}>
                 <Iconify icon="eva:done-all-fill" />
               </IconButton>
@@ -139,29 +102,13 @@ export default function NotificationsPopover() {
         <Divider sx={{ borderStyle: 'dashed' }} />
 
         <Scrollbar sx={{ height: { xs: 340, sm: 'auto' } }}>
-          <List
-            disablePadding
-            subheader={
-              <ListSubheader disableSticky sx={{ py: 1, px: 2.5, typography: 'overline' }}>
-                New
-              </ListSubheader>
-            }
-          >
-            {notifications.slice(0, 2).map((notification) => (
-              <NotificationItem key={notification.id} notification={notification} />
-            ))}
-          </List>
-
-          <List
-            disablePadding
-            subheader={
-              <ListSubheader disableSticky sx={{ py: 1, px: 2.5, typography: 'overline' }}>
-                Before that
-              </ListSubheader>
-            }
-          >
-            {notifications.slice(2, 5).map((notification) => (
-              <NotificationItem key={notification.id} notification={notification} />
+          <List disablePadding>
+            {notifications.map((notification) => (
+              <NotificationItem
+                key={notification._id}
+                notification={notification}
+                onClick={() => handleNotificationClick(notification)}
+              />
             ))}
           </List>
         </Scrollbar>
@@ -182,17 +129,17 @@ export default function NotificationsPopover() {
 
 NotificationItem.propTypes = {
   notification: PropTypes.shape({
-    createdAt: PropTypes.instanceOf(Date),
-    id: PropTypes.string,
-    isUnRead: PropTypes.bool,
-    title: PropTypes.string,
-    description: PropTypes.string,
-    type: PropTypes.string,
-    avatar: PropTypes.any,
-  }),
+    _id: PropTypes.string.isRequired,
+    name: PropTypes.string,
+    path: PropTypes.string.isRequired,
+    message: PropTypes.string.isRequired,
+    seen: PropTypes.bool.isRequired,
+    time: PropTypes.string.isRequired,
+  }).isRequired,
+  onClick: PropTypes.func.isRequired,
 };
 
-function NotificationItem({ notification }) {
+function NotificationItem({ notification, onClick }) {
   const { avatar, title } = renderContent(notification);
 
   return (
@@ -201,10 +148,9 @@ function NotificationItem({ notification }) {
         py: 1.5,
         px: 2.5,
         mt: '1px',
-        ...(notification.isUnRead && {
-          bgcolor: 'action.selected',
-        }),
+        ...(notification.seen && { bgcolor: 'action.selected' }),
       }}
+      onClick={onClick}
     >
       <ListItemAvatar>
         <Avatar sx={{ bgcolor: 'background.neutral' }}>{avatar}</Avatar>
@@ -222,7 +168,7 @@ function NotificationItem({ notification }) {
             }}
           >
             <Iconify icon="eva:clock-outline" sx={{ mr: 0.5, width: 16, height: 16 }} />
-            {fToNow(notification.createdAt)}
+            {formatISO(parseISO(notification.time))}
           </Typography>
         }
       />
@@ -232,42 +178,25 @@ function NotificationItem({ notification }) {
 
 // ----------------------------------------------------------------------
 
+const ICONS = {
+  chat_message: '/assets/icons/ic_notification_chat.svg',
+  mail: '/assets/icons/ic_notification_mail.svg',
+};
+
 function renderContent(notification) {
   const title = (
     <Typography variant="subtitle2">
-      {notification.title}
+      {notification.name}
       <Typography component="span" variant="body2" sx={{ color: 'text.secondary' }}>
-        &nbsp; {notification.description}
+        &nbsp; {notification.message}
       </Typography>
     </Typography>
   );
 
-  if (notification.type === 'order_placed') {
-    return {
-      avatar: <img alt={notification.title} src="/assets/icons/ic_notification_package.svg" />,
-      title,
-    };
-  }
-  if (notification.type === 'order_shipped') {
-    return {
-      avatar: <img alt={notification.title} src="/assets/icons/ic_notification_shipping.svg" />,
-      title,
-    };
-  }
-  if (notification.type === 'mail') {
-    return {
-      avatar: <img alt={notification.title} src="/assets/icons/ic_notification_mail.svg" />,
-      title,
-    };
-  }
-  if (notification.type === 'chat_message') {
-    return {
-      avatar: <img alt={notification.title} src="/assets/icons/ic_notification_chat.svg" />,
-      title,
-    };
-  }
   return {
-    avatar: notification.avatar ? <img alt={notification.title} src={notification.avatar} /> : null,
+    avatar: ICONS[notification.type] ? (
+      <img alt={notification.name} src={ICONS[notification.type]} />
+    ) : null,
     title,
   };
 }

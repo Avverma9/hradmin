@@ -20,6 +20,7 @@ const SuperAdminBookingsView = lazy(() => import('src/pages/superAdmin/superAdmi
 const MonthlyPricePage = lazy(() => import('src/pages/monthly-price'));
 const CouponPage = lazy(() => import('src/pages/admin/coupon-page'));
 const MessengerPage = lazy(() => import('src/pages/messenger-app'));
+const NotificationPage = lazy(() => import('src/pages/admin/notification-page'));
 const PmsCouponPage = lazy(() => import('src/pages/superAdmin/pms-coupon'));
 export default function Router() {
   const routes = useRoutes([
@@ -33,7 +34,8 @@ export default function Router() {
       ),
       children: [
         { path: 'dashboard', element: <IndexPage /> },
-        { path: '/messenger', element: <MessengerPage /> },
+        { path: 'messenger', element: <MessengerPage /> },
+        { path: 'send-notification-to-all', element: <NotificationPage /> },
         { path: 'user', element: <UserPage /> },
         { path: 'hotels', element: <ProductsPage /> },
         { path: 'hotels/monthly-price', element: <MonthlyPricePage /> },

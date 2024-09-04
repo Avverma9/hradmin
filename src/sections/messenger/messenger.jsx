@@ -190,10 +190,10 @@ const ChatApp = () => {
 
   const handleDeleteChat = async () => {
     if (!chatToDelete) return;
-
+    const userId = localStorage.getItem('user_id');
     try {
       const response = await axios.delete(
-        `${localUrl}/delete/added/chats/from/messenger-app/${chatToDelete}/${selectedContact._id}`
+        `${localUrl}/delete/added/chats/from/messenger-app/${chatToDelete}/${userId}/${selectedContact._id}`
       );
 
       if (response.status === 200) {
