@@ -183,40 +183,45 @@ const ChatApp = () => {
     }
   };
 
-  const handleDeleteButtonClick = (chatId) => {
-    setChatToDelete(chatId);
-    setDialogOpen(true);
-  };
+const handleDeleteButtonClick = (chatId, receiverId) => {
+  setChatToDelete({ chatId, receiverId });
+  setDialogOpen(true);
+};
 
-  const handleDeleteChat = async () => {
-    if (!chatToDelete) return;
-    const userId = localStorage.getItem('user_id');
-    try {
-      const response = await axios.delete(
-        `${localUrl}/delete/added/chats/from/messenger-app/${chatToDelete}/${userId}/${selectedContact._id}`
-      );
 
-      if (response.status === 200) {
-        toast.success('Chat deleted successfully');
+const handleDeleteChat = async () => {
+  const { chatId, receiverId } = chatToDelete || {};
+  if (!chatId || !receiverId) return;
 
-        // Refetch chats from the server to update the list
-        fetchChatsFromServer();
+  const userId = localStorage.getItem('user_id');
+  try {
+    const response = await axios.delete(
+      `${localUrl}/delete/added/chats/from/messenger-app/${chatId}/${userId}/${receiverId}`
+    );
 
-        if (selectedContact && selectedContact._id === chatToDelete) {
-          setSelectedContact(null);
-          setMessages([]);
-        }
-      } else {
-        toast.error('Failed to delete chat. Please try again.');
+    console.log('Delete response:', response);
+
+    if (response.status === 200) {
+      toast.success('Chat deleted successfully');
+      fetchChatsFromServer();
+
+      if (selectedContact && selectedContact._id === chatId) {
+        setSelectedContact(null);
+        setMessages([]);
       }
-    } catch (error) {
-      console.error('Error deleting chat:', error);
-      toast.error('An error occurred while deleting the chat. Please try again.');
-    } finally {
-      setDialogOpen(false);
-      setChatToDelete(null);
+    } else {
+      toast.error('Failed to delete chat. Please try again.');
     }
-  };
+  } catch (error) {
+    console.error('Error deleting chat:', error);
+    toast.error('An error occurred while deleting the chat. Please try again.');
+  } finally {
+    setDialogOpen(false);
+    setChatToDelete(null);
+  }
+};
+
+
 
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -258,16 +263,19 @@ const ChatApp = () => {
     }
   }, [selectedContact, updateOnlineStatus]);
 
-  const handleSelectContact = useCallback(
-    (contact) => {
-      setSelectedContact(contact);
+ const handleSelectContact = useCallback(
+   (contact) => {
+     setSelectedContact(contact);
 
-      if (!chats.find((chat) => chat._id === contact._id)) {
-        setChats([...chats, { ...contact, lastMessage: '' }]);
-      }
-    },
-    [chats]
-  );
+     if (!chats.find((chat) => chat._id === contact._id)) {
+       setChats([
+         ...chats,
+         { ...contact, lastMessage: '', receiverId: contact._id }, // Add receiverId here
+       ]);
+     }
+   },
+   [chats]
+ );
 
   //= ============================Handle Send Message==============================//
   const handleSendMessage = async (event) => {
@@ -344,7 +352,7 @@ const ChatApp = () => {
                   aria-label="delete"
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent click event from bubbling up
-                    handleDeleteButtonClick(chat._id);
+                    handleDeleteButtonClick(chat._id,chat.receiverId);
                   }}
                 >
                   <FiDelete />
