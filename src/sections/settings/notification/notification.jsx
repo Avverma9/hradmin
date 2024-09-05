@@ -1,42 +1,98 @@
-/* eslint-disable no-unused-vars */
-import React, { useState } from 'react';
+import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 
 import {
+  Table,
+  Paper,
   Button,
   Dialog,
+  Divider,
+  TableRow,
   Container,
+  TableBody,
+  TableCell,
+  TableHead,
   Typography,
   DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  TableContainer,
 } from '@mui/material';
 
-// Import your modal components
-import UserNotification from './user-notification-modal'; // Adjust the path if necessary
-import GlobalNotification from './global-notification-modal'; // Adjust the path if necessary
+import { localUrl } from 'src/utils/util';
+import { fDateTime } from 'src/utils/format-time';
+
+import WhoSeen from './who-seen';
+import UserNotification from './user-notification-modal';
+import GlobalNotification from './global-notification-modal';
 
 const Notification = () => {
+  const [notifications, setNotifications] = useState({ User: [], Global: [] });
   const [openUserNotification, setOpenUserNotification] = useState(false);
   const [openGlobalNotification, setOpenGlobalNotification] = useState(false);
+  const [openWhoSeen, setOpenWhoSeen] = useState(false);
+  const [userIds, setUserIds] = useState([]);
 
-  const handleOpenUserNotification = () => {
-    setOpenUserNotification(true);
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await axios.get(`${localUrl}/find/all/by/list/of/user/for/notification`);
+        setNotifications(response.data);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
+  const handleOpenUserNotification = () => setOpenUserNotification(true);
+  const handleCloseUserNotification = () => setOpenUserNotification(false);
+  const handleOpenGlobalNotification = () => setOpenGlobalNotification(true);
+  const handleCloseGlobalNotification = () => setOpenGlobalNotification(false);
+
+  const handleOpenWhoSeen = (ids) => {
+    setUserIds(ids);
+    setOpenWhoSeen(true);
   };
 
-  const handleCloseUserNotification = () => {
-    setOpenUserNotification(false);
-  };
+  const handleCloseWhoSeen = () => setOpenWhoSeen(false);
 
-  const handleOpenGlobalNotification = () => {
-    setOpenGlobalNotification(true);
-  };
-
-  const handleCloseGlobalNotification = () => {
-    setOpenGlobalNotification(false);
-  };
+  const renderTable = (data) => (
+    <TableContainer component={Paper} sx={{ mt: 2 }}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Name</TableCell>
+            <TableCell>Message</TableCell>
+            <TableCell>Created At</TableCell>
+            <TableCell>Seen by</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {data.map((notification) => (
+            <TableRow key={notification._id}>
+              <TableCell>{notification.name}</TableCell>
+              <TableCell>{notification.message}</TableCell>
+              <TableCell>{fDateTime(notification.createdAt)}</TableCell>
+              <TableCell>
+                <Button
+                  variant="contained"
+                  color="info"
+                  onClick={() => handleOpenWhoSeen(notification.userIds)} // Ensure seenByUserIds is in the expected format
+                >
+                  View Seen By
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
 
   return (
-    <Container maxWidth="sm">
+    <Container maxWidth="lg">
       <Typography variant="h4" gutterBottom>
         Notifications
       </Typography>
@@ -46,7 +102,7 @@ const Notification = () => {
         onClick={handleOpenUserNotification}
         sx={{ mt: 2, mr: 2 }}
       >
-        Push User Notification
+        Open User Notification Modal
       </Button>
       <Button
         variant="contained"
@@ -54,10 +110,10 @@ const Notification = () => {
         onClick={handleOpenGlobalNotification}
         sx={{ mt: 2 }}
       >
-        Push User Global Notification
+        Open Global Notification Modal
       </Button>
 
-      {/* User Notification Modal */}
+      {/* Render User Notifications Modal */}
       <Dialog
         open={openUserNotification}
         onClose={handleCloseUserNotification}
@@ -75,7 +131,7 @@ const Notification = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Global Notification Modal */}
+      {/* Render Global Notifications Modal */}
       <Dialog
         open={openGlobalNotification}
         onClose={handleCloseGlobalNotification}
@@ -92,6 +148,23 @@ const Notification = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Render User Notifications Table */}
+      <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+        User Notifications
+      </Typography>
+      {renderTable(notifications.User)}
+
+      {/* Render Global Notifications Table */}
+      <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+        Global Notifications
+      </Typography>
+      {renderTable(notifications.Global)}
+
+      {/* Render Who Seen Modal */}
+      <WhoSeen open={openWhoSeen} onClose={handleCloseWhoSeen} userIds={userIds} />
+
+      <Divider sx={{ mt: 4 }} />
     </Container>
   );
 };
