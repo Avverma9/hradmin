@@ -9,3 +9,4 @@ export const localUrl = 'https://hotel-backend-tge7.onrender.com';
 // localUrl = 'https://hotel-backend-tge7.onrender.com';
 // localUrl = 'http://localhost:5000';
 export const hotelEmail = localStorage.getItem('user_email');
+export const role = localStorage.getItem("user_role")

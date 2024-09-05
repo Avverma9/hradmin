@@ -13,7 +13,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 
 import IconButton from '@mui/material/IconButton';
 
-import { localUrl } from 'src/utils/util';
+import { role, localUrl } from 'src/utils/util';
 import { fDateTime } from 'src/utils/format-time';
 import AlertDialog from 'src/utils/alertDialogue';
 
@@ -30,9 +30,11 @@ const ChatApp = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [messages, setMessages] = useState([]);
   const [pollingInterval, setPollingInterval] = useState(null);
+  const [filteredContacts, setFilteredContacts] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [chatToDelete, setChatToDelete] = useState(null);
   const location = useLocation();
+  const [searchTerm, setSearchTerm] = useState('');
   const messagesEndRef = useRef(null);
   const hasUpdatedStatus = useRef(false); // Ref to track status updates
 
@@ -104,7 +106,22 @@ const ChatApp = () => {
       try {
         const response = await axios.get(`${localUrl}/get-chat/contacts`);
         if (response.data) {
-          setContacts(response.data);
+          const allContacts = response.data;
+          const localStorageRole = localStorage.getItem('user_role'); // Get role from localStorage
+
+          let filteredContacts = allContacts; // Default to all contacts
+
+          // Filter contacts based on localStorage role
+          if (localStorageRole === 'PMS') {
+            filteredContacts = allContacts.filter((contact) => contact.role !== localStorageRole);
+
+            // Further filter if the role is not 'Developer'
+            filteredContacts = filteredContacts.filter((item) => item.role !== 'Developer');
+          }
+
+          // Set filtered contacts to state
+          setContacts(filteredContacts);
+          setFilteredContacts(filteredContacts);
         }
       } catch (error) {
         console.error('Error fetching contacts:', error);
@@ -113,6 +130,17 @@ const ChatApp = () => {
 
     fetchContacts();
   }, []);
+  //= ============================Search Contacts==============================//
+  useEffect(() => {
+    if (searchTerm) {
+      const lowercasedSearchTerm = searchTerm.toLowerCase();
+      setFilteredContacts(
+        contacts.filter((contact) => contact?.name.toLowerCase().includes(lowercasedSearchTerm))
+      );
+    } else {
+      setFilteredContacts(contacts);
+    }
+  }, [searchTerm, contacts]);
 
   //= ============================Fetch Messages==============================//
   useEffect(() => {
@@ -261,17 +289,31 @@ const ChatApp = () => {
   return (
     <div className="chat-app">
       <div className="sidebar">
+        <div className="search-contact-input">
+          {role === 'Admin' ||
+            (role === 'Developer' && (
+              <input
+                type="text"
+                placeholder="Search contacts..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            ))}
+        </div>
         <div className="tab-content">
-          {contacts.map((contact) => (
+          {filteredContacts.map((contact) => (
             <div
               key={contact._id}
               className={`contact ${selectedContact?._id === contact._id ? 'active' : ''}`}
               onClick={() => handleSelectContact(contact)}
             >
-              <img src={contact.images || DEFAULT_AVATAR} alt={contact.name} />
+              <img src={contact?.images || DEFAULT_AVATAR} alt={contact.name} />
               <div className="contact-info">
-                <p>{contact.name}</p>
-                <span>{contact.mobile}</span>
+                <p style={{ fontSize: '12px' }}>
+                  {contact?.name} ({contact?.role})
+                </p>
+                <span>{contact?.mobile}</span>
                 <span className={`status ${contact.online ? 'online' : 'offline'}`}>
                   {contact.online ? 'Online' : 'Offline'}
                 </span>
@@ -292,7 +334,9 @@ const ChatApp = () => {
                   className="contact-avatar"
                 />
                 <div className="contact-info">
-                  <p className="contact-name">{selectedContact.name}</p>
+                  <p className="contact-name" style={{ fontSize: '12px' }}>
+                    {selectedContact.name}
+                  </p>
                   <span className="contact-mobile">{selectedContact.mobile}</span>
                   <span className={`status ${selectedContact.online ? 'online' : 'offline'}`}>
                     {selectedContact.online ? 'Online' : 'Offline'}
@@ -334,7 +378,10 @@ const ChatApp = () => {
           </>
         ) : (
           <div className="no-chat-selected">
-            <h2>Select a contact to start chatting</h2>
+            <img
+              src="https://i.pinimg.com/originals/e3/1b/75/e31b752875679b64fce009922f9f0dda.gif"
+              alt=""
+            />
           </div>
         )}
       </div>
