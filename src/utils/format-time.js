@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-globals */
 import { format, getTime, formatDistanceToNow } from 'date-fns';
 
 // ----------------------------------------------------------------------
@@ -19,9 +20,11 @@ export function fTimestamp(date) {
 }
 
 export function fToNow(date) {
-  return date
-    ? formatDistanceToNow(new Date(date), {
-        addSuffix: true,
-      })
-    : '';
+  // Check if date is a valid Date object
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    console.error('Invalid date:', date);
+    return 'Invalid date'; // Return a fallback string for invalid dates
+  }
+
+  return formatDistanceToNow(date, { addSuffix: true });
 }
