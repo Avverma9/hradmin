@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import Badge from '@mui/material/Badge';
-import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
 import Tooltip from '@mui/material/Tooltip';
@@ -163,6 +162,7 @@ export default function NotificationsPopover() {
             mt: 1.5,
             ml: 0.75,
             width: 360,
+            height:"80vh"
           },
         }}
       >
@@ -211,7 +211,7 @@ export default function NotificationsPopover() {
               </ListSubheader>
             }
           >
-            {beforeThatNotifications.slice(0, 3).map((notification) => (
+            {beforeThatNotifications?.map((notification) => (
               <NotificationItem
                 key={notification._id}
                 notification={notification}
@@ -222,12 +222,6 @@ export default function NotificationsPopover() {
         </Scrollbar>
 
         <Divider sx={{ borderStyle: 'dashed' }} />
-
-        <Box sx={{ p: 1 }}>
-          <Button fullWidth disableRipple>
-            View All
-          </Button>
-        </Box>
       </Popover>
     </>
   );
@@ -300,8 +294,8 @@ function renderContent(notification) {
     </Typography>
   );
 
- return {
-   avatar: <img alt={notification.title} src="/assets/icons/ic_notification_package.svg" />,
-   title,
- };
+  return {
+    avatar: <img alt={notification.title} src="/assets/icons/ic_notification_package.svg" />,
+    title,
+  };
 }

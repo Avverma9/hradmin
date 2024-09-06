@@ -102,7 +102,7 @@ const Notification = () => {
         onClick={handleOpenUserNotification}
         sx={{ mt: 2, mr: 2 }}
       >
-        Open User Notification Modal
+        Create User Notification
       </Button>
       <Button
         variant="contained"
@@ -110,7 +110,7 @@ const Notification = () => {
         onClick={handleOpenGlobalNotification}
         sx={{ mt: 2 }}
       >
-        Open Global Notification Modal
+        Create Global Notification
       </Button>
 
       {/* Render User Notifications Modal */}
