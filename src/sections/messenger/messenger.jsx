@@ -119,9 +119,6 @@ const ChatApp = () => {
             filteredContacts = filteredContacts.filter((item) => item.role !== 'Developer');
           }
 
-          // Update online status for each contact
-          await Promise.all(filteredContacts.map((contact) => updateOnlineStatus(contact._id)));
-
           // Set filtered contacts to state
           setContacts(filteredContacts);
           setFilteredContacts(filteredContacts);
@@ -132,8 +129,7 @@ const ChatApp = () => {
     };
 
     fetchContacts();
-  }, [updateOnlineStatus]);
-
+  }, []);
   //= ============================Search Contacts==============================//
   useEffect(() => {
     if (searchTerm) {
