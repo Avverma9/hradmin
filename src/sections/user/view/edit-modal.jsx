@@ -39,7 +39,7 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
         email: user.email || '',
         mobile: user.mobile || '',
         address: user.address || '',
-        password: '',
+        password: user.password || '',
         role: user.role || '',
         status: user.status || false,
         images: user.images || '', // Set to current image URL
@@ -74,7 +74,7 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
       address: formData.address,
       password: formData.password,
       role: formData.role,
-      status: formData.status ? "true" : " false", // Convert to boolean
+      status: formData.status ? 'true' : ' false', // Convert to boolean
       images: formData.images, // This should be handled separately if it's a file
     };
     onSubmit(updatedUser);
@@ -149,9 +149,6 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel>
-                  Select Status (Current status is {user?.status ? 'Active' : 'Inactive'})
-                </InputLabel>
                 <FormControl fullWidth>
                   <InputLabel>Select Status</InputLabel>
                   <Select name="status" value={formData.status} onChange={handleChange}>
