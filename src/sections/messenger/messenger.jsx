@@ -13,6 +13,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 
 import IconButton from '@mui/material/IconButton';
 
+import LinearLoader from 'src/utils/Loading';
 import { role, localUrl } from 'src/utils/util';
 import { fDateTime } from 'src/utils/format-time';
 import AlertDialog from 'src/utils/alertDialogue';
@@ -285,7 +286,13 @@ const ChatApp = () => {
   };
 
   const getTickIndicators = (seen) => (seen ? 'Seen ✔✔' : 'Sent ✔️✔️');
-
+  if (filteredContacts?.length === 0) {
+    return (
+      <div>
+        <LinearLoader />
+      </div>
+    );
+  }
   return (
     <div className="chat-app">
       <div className="sidebar">
