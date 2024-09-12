@@ -22,6 +22,7 @@ const CouponPage = lazy(() => import('src/pages/admin/coupon-page'));
 const MessengerPage = lazy(() => import('src/pages/messenger-app'));
 const NotificationPage = lazy(() => import('src/pages/admin/notification-page'));
 const PmsCouponPage = lazy(() => import('src/pages/superAdmin/pms-coupon'));
+const ComplaintPage = lazy(() => import('src/pages/admin/complaint-page'));
 export default function Router() {
   const routes = useRoutes([
     {
@@ -45,6 +46,7 @@ export default function Router() {
         { path: 'your-bookings', element: <SuperAdminBookingsView /> },
         { path: 'all-users', element: <UserDetails /> },
         { path: 'all-reviews', element: <AllReviews /> },
+        { path: 'complaints', element: <ComplaintPage /> },
         { path: 'apply-coupon', element: <CouponPage /> },
         { path: 'apply-pms-coupon', element: <PmsCouponPage /> },
         { path: 'your-booking-details/:bookingId', element: <BookingDetail /> },
