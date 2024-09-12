@@ -1,7 +1,8 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable no-nested-ternary */
 import { toast } from 'react-toastify';
 /* eslint-disable no-shadow */
-import { FiImage } from 'react-icons/fi';
+import { FiEye, FiImage } from 'react-icons/fi';
 /* eslint-disable import/no-unresolved */
 import React, { useState, useEffect } from 'react';
 
@@ -23,6 +24,8 @@ import {
 import { localUrl } from 'src/utils/util';
 import { fDate } from 'src/utils/format-time';
 
+import FeedbackDialog from './Feedback';
+
 const StatusChip = styled(Chip)(({ theme, status }) => ({
   backgroundColor:
     status === 'Pending'
@@ -33,7 +36,38 @@ const StatusChip = styled(Chip)(({ theme, status }) => ({
   color: theme.palette.common.white,
   fontSize: '0.75rem',
 }));
+const FeedbackModalContainer = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: theme.shape.borderRadius,
+  boxShadow: theme.shadows[5],
+  maxWidth: '80%',
+  maxHeight: '80%',
+  overflowY: 'auto',
+  padding: theme.spacing(3),
+  position: 'relative',
+}));
 
+const FeedbackModalHeader = styled(Typography)(({ theme }) => ({
+  fontWeight: 'bold',
+  fontSize: '1.25rem',
+  marginBottom: theme.spacing(2),
+}));
+
+const FeedbackModalContent = styled(Typography)(({ theme }) => ({
+  fontSize: '1rem',
+  lineHeight: 1.5,
+}));
+
+const CloseButton = styled('button')(({ theme }) => ({
+  position: 'absolute',
+  top: theme.spacing(2),
+  right: theme.spacing(2),
+  border: 'none',
+  background: 'none',
+  cursor: 'pointer',
+  fontSize: '1.5rem',
+  color: theme.palette.text.primary,
+}));
 const CompactCard = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'row',
@@ -65,12 +99,21 @@ const ModalImage = styled('img')(({ theme }) => ({
   margin: 'auto',
 }));
 
+const ViewFeedbackButton = styled(MuiIconButton)(({ theme }) => ({
+  marginLeft: theme.spacing(1),
+}));
+
 const Complaint = () => {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [openModal, setOpenModal] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [currentComplaintId, setCurrentComplaintId] = useState(null);
+  const [newStatus, setNewStatus] = useState('');
+  const [feedBack, setFeedback] = useState('');
+  const [viewFeedback, setViewFeedback] = useState('');
 
   useEffect(() => {
     const fetchComplaints = async () => {
@@ -91,22 +134,36 @@ const Complaint = () => {
     fetchComplaints();
   }, []);
 
-  const handleStatusChange = async (id, newStatus) => {
+  const updateComplaintStatus = async (id, newStatus, feedBack) => {
     try {
       await fetch(`${localUrl}/approveComplaint-on-panel/by-id/${id}`, {
-        // Replace with your API endpoint
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus, feedBack }),
       });
       setComplaints((prev) =>
         prev.map((complaint) =>
-          complaint._id === id ? { ...complaint, status: newStatus } : complaint
+          complaint._id === id ? { ...complaint, status: newStatus, feedBack } : complaint
         )
       );
-      toast.success("Status Updated !")
+      toast.success('Status Updated!');
     } catch (error) {
       console.error('Error updating status:', error);
+    } finally {
+      setFeedbackOpen(false);
+      setFeedback('');
+    }
+  };
+
+  const handleStatusChange = (id, status) => {
+    setCurrentComplaintId(id);
+    setNewStatus(status); // Store the selected status
+    setFeedbackOpen(true);
+  };
+
+  const handleFeedbackSubmit = (feedBack) => {
+    if (currentComplaintId && newStatus) {
+      updateComplaintStatus(currentComplaintId, newStatus, feedBack);
     }
   };
 
@@ -117,6 +174,10 @@ const Complaint = () => {
 
   const handleCloseModal = () => {
     setOpenModal(false);
+  };
+
+  const handleViewFeedback = (feedBack) => {
+    setViewFeedback(feedBack);
   };
 
   return (
@@ -191,6 +252,12 @@ const Complaint = () => {
                       <MenuItem value="Closed">Closed</MenuItem>
                     </Select>
                   </FormControl>
+                  <ViewFeedbackButton
+                    aria-label="view-feedback"
+                    onClick={() => handleViewFeedback(complaint.feedBack)}
+                  >
+                    <FiEye />
+                  </ViewFeedbackButton>
                   <AttachmentsButton
                     aria-label="view-attachments"
                     onClick={() => handleOpenModal(complaint)}
@@ -205,6 +272,15 @@ const Complaint = () => {
           <Typography variant="body2" align="center" color="textSecondary">
             No complaints found.
           </Typography>
+        )}
+
+        {/* Feedback Dialog */}
+        {feedbackOpen && (
+          <FeedbackDialog
+            open={feedbackOpen}
+            onClose={() => setFeedbackOpen(false)}
+            onSubmit={handleFeedbackSubmit}
+          />
         )}
 
         {/* Modal for Viewing Attachments */}
@@ -238,6 +314,21 @@ const Complaint = () => {
                 <Typography>No attachments available</Typography>
               )}
             </Box>
+          </Modal>
+        )}
+
+        {/* View Feedback Modal */}
+        {viewFeedback && (
+          <Modal
+            open={!!viewFeedback}
+            onClose={() => setViewFeedback('')}
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <FeedbackModalContainer style={{width:"300px"}}>
+              <CloseButton onClick={() => setViewFeedback('')}>&times;</CloseButton>
+              <FeedbackModalHeader variant="h6">Feedback</FeedbackModalHeader>
+              <FeedbackModalContent>{viewFeedback}</FeedbackModalContent>
+            </FeedbackModalContainer>
           </Modal>
         )}
       </Box>
