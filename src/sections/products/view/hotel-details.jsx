@@ -1,3 +1,4 @@
+/* eslint-disable no-shadow */
 /* eslint-disable react/button-has-type */
 /* eslint-disable react/no-unknown-property */
 /* eslint-disable perfectionist/sort-imports */
@@ -174,7 +175,14 @@ export default function HotelDetails({
       </Container>
     );
   }
-
+  // -------------------------------------------------Delete hotel--------------------------------------//
+  const handleDeleteHotel = async (hotelId) => {
+    const response = await axios.delete(`${localUrl}/delete/hotels/by/${hotelId}`);
+    if (response.status === 200) {
+      toast.success('Selected hotel is deleted now !');
+      navigate("/hotels")
+    }
+  };
   return (
     <div className="container mt-4">
       <FlexContainer>
@@ -196,7 +204,9 @@ export default function HotelDetails({
             </>
           )}
         </button>
-
+        <button className="custom-button" onClick={()=>handleDeleteHotel(hotel?.hotelId)}>
+         X Delete
+        </button>
         <button
           variant="danger"
           sx={{ mb: 2 }}
