@@ -163,7 +163,7 @@ export default function BookingsView() {
                 Search
               </StyledButton>
             </Grid>
-            <Grid item>
+            <Grid item fullWidth>
               <TextField
                 id="filterDate"
                 label="Filter Date"
