@@ -32,10 +32,13 @@ const StatusChip = styled(Chip)(({ theme, status }) => ({
       ? theme.palette.warning.main
       : status === 'Resolved'
       ? theme.palette.success.main
+      : status === 'Working'
+      ? theme.palette.info.main // You can adjust this color as needed
       : theme.palette.error.main,
   color: theme.palette.common.white,
   fontSize: '0.75rem',
 }));
+
 const FeedbackModalContainer = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
   borderRadius: theme.shape.borderRadius,
@@ -249,6 +252,7 @@ const Complaint = () => {
                     >
                       <MenuItem value="Pending">Pending</MenuItem>
                       <MenuItem value="Resolved">Resolved</MenuItem>
+                      <MenuItem value="Working">Working</MenuItem>
                       <MenuItem value="Closed">Closed</MenuItem>
                     </Select>
                   </FormControl>
@@ -324,7 +328,7 @@ const Complaint = () => {
             onClose={() => setViewFeedback('')}
             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <FeedbackModalContainer style={{width:"300px"}}>
+            <FeedbackModalContainer style={{ width: '300px' }}>
               <CloseButton onClick={() => setViewFeedback('')}>&times;</CloseButton>
               <FeedbackModalHeader variant="h6">Feedback</FeedbackModalHeader>
               <FeedbackModalContent>{viewFeedback}</FeedbackModalContent>

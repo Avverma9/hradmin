@@ -1,18 +1,17 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable no-shadow */
-import { toast } from 'react-toastify';
 /* eslint-disable react-hooks/exhaustive-deps */
+import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
 
-import { styled } from '@mui/material/styles';
 import {
   Box,
   Grid,
   Table,
   Button,
   Select,
+  styled,
   TableRow,
   MenuItem,
   TableCell,
@@ -38,6 +37,7 @@ export default function BookingsView() {
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [openModal, setOpenModal] = useState(false);
+  const [filterDate, setFilterDate] = useState('');
   const navigate = useNavigate();
 
   const StyledButton = styled(Button)({
@@ -46,14 +46,18 @@ export default function BookingsView() {
 
   useEffect(() => {
     fetchData();
-  }, [status]);
+  }, [status, filterDate]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${localUrl}/get/all/filtered/booking/by/query?bookingStatus=${status}`
-      );
+      // Build query parameters with filter date
+      const queryParams = new URLSearchParams({
+        bookingStatus: status,
+        checkInDate: filterDate,
+      }).toString();
+
+      const response = await fetch(`${localUrl}/get/all/filtered/booking/by/query?${queryParams}`);
       if (!response.ok) {
         toast.info('No bookings found !');
       }
@@ -96,10 +100,6 @@ export default function BookingsView() {
     setOpenModal(true);
   };
 
-  const handleRefresh = () => {
-    window.location.reload();
-  };
-
   const handleSave = async (updatedData) => {
     try {
       const response = await fetch(`${localUrl}/updatebooking/${selectedBooking.bookingId}`, {
@@ -123,6 +123,10 @@ export default function BookingsView() {
     }
   };
 
+  const handleDateChange = (e) => {
+    setFilterDate(e.target.value);
+  };
+
   if (loading) {
     return (
       <Container>
@@ -137,8 +141,9 @@ export default function BookingsView() {
         Bookings
       </Typography>
 
-      <Grid container spacing={3} alignItems="center">
-        <Grid item md={4} xs={12}>
+      <Grid container spacing={2} alignItems="center">
+        {/* Booking ID Input Field */}
+        <Grid item xs={12} md={3}>
           <FormControl fullWidth>
             <TextField
               id="formBookingId"
@@ -149,34 +154,46 @@ export default function BookingsView() {
             />
           </FormControl>
         </Grid>
-        <Grid item md={2} xs={12}>
-          <StyledButton variant="contained" onClick={handleSearch}>
-            Search
-          </StyledButton>
-        </Grid>
-        <Grid item md={2} xs={12}>
-          <StyledButton variant="outlined" onClick={handleRefresh}>
-            Refresh
-          </StyledButton>
-        </Grid>
-        <Grid item md={4} xs={12}>
-          <FormControl fullWidth>
-            <InputLabel id="formStatusLabel">Filter by Status</InputLabel>
-            <Select
-              labelId="formStatusLabel"
-              id="formStatus"
-              value={status}
-              label="Filter by Status"
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              <MenuItem value="">Select Status</MenuItem>
-              <MenuItem value="Cancelled">Cancelled</MenuItem>
-              <MenuItem value="Confirmed">Confirmed</MenuItem>
-              <MenuItem value="Failed">Failed</MenuItem>
-              <MenuItem value="Checked-in">Checked-in</MenuItem>
-              <MenuItem value="Checked-out">Checked-out</MenuItem>
-            </Select>
-          </FormControl>
+
+        {/* Filters and Actions */}
+        <Grid item xs={12} md={9}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item>
+              <StyledButton variant="contained" onClick={handleSearch}>
+                Search
+              </StyledButton>
+            </Grid>
+            <Grid item>
+              <TextField
+                id="filterDate"
+                label="Filter Date"
+                type="date"
+                variant="outlined"
+                value={filterDate}
+                onChange={handleDateChange}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs>
+              <FormControl fullWidth>
+                <InputLabel id="formStatusLabel">Status</InputLabel>
+                <Select
+                  labelId="formStatusLabel"
+                  id="formStatus"
+                  value={status}
+                  label="Filter by Status"
+                  onChange={(e) => setStatus(e.target.value)}
+                >
+                  <MenuItem value="">Select Status</MenuItem>
+                  <MenuItem value="Cancelled">Cancelled</MenuItem>
+                  <MenuItem value="Confirmed">Confirmed</MenuItem>
+                  <MenuItem value="Failed">Failed</MenuItem>
+                  <MenuItem value="Checked-in">Checked-in</MenuItem>
+                  <MenuItem value="Checked-out">Checked-out</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
 

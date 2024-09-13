@@ -1,17 +1,15 @@
-/* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
-import { Container, TextField } from '@mui/material';
+import { Button, Container, TextField, ButtonGroup } from '@mui/material';
 
 import { localUrl } from 'src/utils/util';
 import LinearLoader from 'src/utils/Loading';
 
 import ProductCard from './all-hotel-card';
 import AddFoodModal from '../../manage-foods';
-// Import AddFoodModal
 
 export default function ProductsView() {
   const [data, setData] = useState([]);
@@ -19,6 +17,7 @@ export default function ProductsView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAcceptedFilter, setIsAcceptedFilter] = useState(null); // `null` means no filter applied
 
   useEffect(() => {
     getAllHotels();
@@ -50,12 +49,16 @@ export default function ProductsView() {
     setSearchQuery(event.target.value.toLowerCase());
   };
 
-  // Filter data based on search query
-  const filteredData = data.filter(
-    (hotel) =>
+  const filteredData = data.filter((hotel) => {
+    const matchesSearchQuery =
       hotel.hotelOwnerName.toLowerCase().includes(searchQuery) ||
-      hotel.hotelName.toLowerCase().includes(searchQuery)
-  );
+      hotel.hotelName.toLowerCase().includes(searchQuery);
+
+    const matchesAcceptedFilter =
+      isAcceptedFilter === null || hotel.isAccepted === isAcceptedFilter;
+
+    return matchesSearchQuery && matchesAcceptedFilter;
+  });
 
   if (loading) {
     return (
@@ -64,11 +67,12 @@ export default function ProductsView() {
       </Container>
     );
   }
+const filteredCount = filteredData.length;
 
   return (
     <Container>
       <Typography variant="h4" sx={{ mb: 5 }}>
-        Hotels
+        Hotels ({filteredCount})
       </Typography>
 
       <Stack
@@ -84,6 +88,11 @@ export default function ProductsView() {
           onChange={handleSearchChange}
           sx={{ width: 300 }}
         />
+        <ButtonGroup variant="contained" sx={{ ml: 2 }}>
+          <Button onClick={() => setIsAcceptedFilter(null)}>All</Button>
+          <Button onClick={() => setIsAcceptedFilter(true)}>Accepted</Button>
+          <Button onClick={() => setIsAcceptedFilter(false)}>Not Accepted</Button>
+        </ButtonGroup>
       </Stack>
 
       <Grid container spacing={3}>
@@ -101,7 +110,7 @@ export default function ProductsView() {
         <AddFoodModal
           open={isModalOpen}
           onClose={handleCloseModal}
-          // Additional props if needed
+          hotelId={selectedHotel._id} // Pass the selected hotel's ID or other relevant data
         />
       )}
     </Container>

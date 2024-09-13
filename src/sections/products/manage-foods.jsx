@@ -1,3 +1,5 @@
+/* eslint-disable react/button-has-type */
+/* eslint-disable react/no-unknown-property */
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable react-hooks/exhaustive-deps */
 import axios from 'axios';
@@ -26,6 +28,8 @@ import {
 } from '@mui/material';
 
 import { localUrl } from 'src/utils/util';
+
+import './button.css'
 
 // Styled components
 const ModalContent = styled(Box)(({ theme }) => ({
@@ -235,14 +239,13 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
                         {food?.about}
                       </Typography>
 
-                      <Button
+                      <button
                         onClick={() => handleDeleteFood(food.foodId)}
-                        color="error"
-                        size="small"
+                        className="custom-button"
                         startIcon={<AiOutlineDelete />}
                       >
                         Delete
-                      </Button>
+                      </button>
 
                       <ImagePreview>
                         {images?.length > 0 &&
@@ -356,7 +359,7 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
               </Grid>
             </Grid>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button
+              <button
                 onClick={() => {
                   handleCancel();
                   setIsAddingFood(false);
@@ -365,23 +368,23 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
                 sx={{ mr: 1 }}
               >
                 Cancel
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={handleAddFood}
                 variant="contained"
                 color="primary"
                 disabled={loading}
               >
                 {loading ? 'Adding...' : 'Add Food'}
-              </Button>
+              </button>
             </div>
           </>
         )}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           {!isAddingFood && (
-            <Button variant="contained" color="primary" onClick={() => setIsAddingFood(true)}>
+            <button className='custom-button' onClick={() => setIsAddingFood(true)}>
               Add Food
-            </Button>
+            </button>
           )}
         </div>
       </ModalContent>

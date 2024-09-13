@@ -45,6 +45,7 @@ const UserNotification = () => {
       try {
         const response = await axios.get(`${localUrl}/login/dashboard/get/all/user`);
         setUsers(response.data);
+
       } catch (err) {
         console.error('Error fetching users:', err);
         toast.error('Error fetching users. Please try again.');
@@ -83,6 +84,7 @@ const UserNotification = () => {
       setSelectedUserIds([]);
       setError(null);
       toast.success('You have successfully sent a notification');
+       window.location.reload();
     } catch (err) {
       console.error('Error creating notification:', err);
       toast.error('Error creating notification. Please try again.');

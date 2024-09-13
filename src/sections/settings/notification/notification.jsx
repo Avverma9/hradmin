@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import React, { useState, useEffect } from 'react';
 
 import {
@@ -17,6 +18,7 @@ import {
   DialogActions,
   DialogContent,
   TableContainer,
+  CircularProgress,
 } from '@mui/material';
 
 import { localUrl } from 'src/utils/util';
@@ -28,6 +30,7 @@ import GlobalNotification from './global-notification-modal';
 
 const Notification = () => {
   const [notifications, setNotifications] = useState({ User: [], Global: [] });
+  const [loading, setLoading] = useState(true);
   const [openUserNotification, setOpenUserNotification] = useState(false);
   const [openGlobalNotification, setOpenGlobalNotification] = useState(false);
   const [openWhoSeen, setOpenWhoSeen] = useState(false);
@@ -40,6 +43,8 @@ const Notification = () => {
         setNotifications(response.data);
       } catch (error) {
         console.error('Error fetching notifications:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -52,13 +57,52 @@ const Notification = () => {
   const handleCloseGlobalNotification = () => setOpenGlobalNotification(false);
 
   const handleOpenWhoSeen = (ids) => {
-    setUserIds(ids);
+    const seenUserIds = ids.filter((id) =>
+      notifications.User.some((notification) => notification.seenBy[id] === true)
+    );
+    setUserIds(seenUserIds);
     setOpenWhoSeen(true);
   };
 
   const handleCloseWhoSeen = () => setOpenWhoSeen(false);
 
-  const renderTable = (data) => (
+  const handleDeleteGlobalById = async (notificationId) => {
+    try {
+      const response = await axios.delete(
+        `${localUrl}/find/all/by/list/of/user/for/notification/and-delete-global/${notificationId}`
+      );
+      if (response.status === 200) {
+        toast.success('Deleted a global notification');
+        setNotifications((prev) => ({
+          ...prev,
+          Global: prev.Global.filter((notif) => notif._id !== notificationId),
+        }));
+      }
+    } catch (error) {
+      console.error('Error deleting global notification:', error);
+      toast.error('Failed to delete global notification');
+    }
+  };
+
+  const handleDeleteUserById = async (notificationId) => {
+    try {
+      const response = await axios.delete(
+        `${localUrl}/find/all/by/list/of/user/for/notification/and-delete/user/${notificationId}`
+      );
+      if (response.status === 200) {
+        toast.success('Deleted a user notification');
+        setNotifications((prev) => ({
+          ...prev,
+          User: prev.User.filter((notif) => notif._id !== notificationId),
+        }));
+      }
+    } catch (error) {
+      console.error('Error deleting user notification:', error);
+      toast.error('Failed to delete user notification');
+    }
+  };
+
+  const renderTable = (data, type) => (
     <TableContainer component={Paper} sx={{ mt: 2 }}>
       <Table>
         <TableHead>
@@ -67,25 +111,53 @@ const Notification = () => {
             <TableCell>Message</TableCell>
             <TableCell>Created At</TableCell>
             <TableCell>Seen by</TableCell>
+            <TableCell>Actions</TableCell> {/* Add Actions column */}
           </TableRow>
         </TableHead>
         <TableBody>
-          {data.map((notification) => (
-            <TableRow key={notification._id}>
-              <TableCell>{notification.name}</TableCell>
-              <TableCell>{notification.message}</TableCell>
-              <TableCell>{fDateTime(notification.createdAt)}</TableCell>
-              <TableCell>
-                <Button
-                  variant="contained"
-                  color="info"
-                  onClick={() => handleOpenWhoSeen(notification.userIds)} // Ensure seenByUserIds is in the expected format
-                >
-                  View Seen By
-                </Button>
+          {data.length > 0 ? (
+            data.map((notification) => (
+              <TableRow key={notification._id}>
+                <TableCell>{notification.name}</TableCell>
+                <TableCell>{notification.message}</TableCell>
+                <TableCell>{fDateTime(notification.createdAt)}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="contained"
+                    color="info"
+                    onClick={() => handleOpenWhoSeen(notification.userIds)}
+                  >
+                    View Seen By
+                  </Button>
+                </TableCell>
+                <TableCell>
+                  {type === 'User' ? (
+                    <Button
+                      variant="contained"
+                      color="error"
+                      onClick={() => handleDeleteUserById(notification._id)}
+                    >
+                      Delete
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      color="error"
+                      onClick={() => handleDeleteGlobalById(notification._id)}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={5} align="center">
+                No notifications available
               </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
     </TableContainer>
@@ -149,17 +221,33 @@ const Notification = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Render User Notifications Table */}
-      <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-        User Notifications
-      </Typography>
-      {renderTable(notifications.User)}
+      {/* Render Loading Spinner */}
+      {loading ? (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '60vh',
+          }}
+        >
+          <CircularProgress />
+        </div>
+      ) : (
+        <>
+          {/* Render User Notifications Table */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+            User Notifications
+          </Typography>
+          {renderTable(notifications.User, 'User')}
 
-      {/* Render Global Notifications Table */}
-      <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-        Global Notifications
-      </Typography>
-      {renderTable(notifications.Global)}
+          {/* Render Global Notifications Table */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+            Global Notifications
+          </Typography>
+          {renderTable(notifications.Global, 'Global')}
+        </>
+      )}
 
       {/* Render Who Seen Modal */}
       <WhoSeen open={openWhoSeen} onClose={handleCloseWhoSeen} userIds={userIds} />

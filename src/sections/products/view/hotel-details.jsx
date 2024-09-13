@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 /* eslint-disable no-shadow */
 /* eslint-disable react/button-has-type */
 /* eslint-disable react/no-unknown-property */
@@ -9,6 +10,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 /* eslint-disable jsx-a11y/img-redundant-alt */
 import { HiOutlineDocumentText } from 'react-icons/hi';
+import FilterIcon from '@mui/icons-material/Filter';
 import React, { useState, useEffect } from 'react';
 import { FaIndianRupeeSign } from 'react-icons/fa6';
 import { FaBed, FaReply, FaUtensils, FaCalendarAlt, FaMoneyBillWave } from 'react-icons/fa';
@@ -33,6 +35,7 @@ import Amenities from '../manage-amenties';
 import AddRoomModal from '../manage-rooms';
 import BasicDetails from '../basic-details';
 import Reviews from './superAdmin/reviews';
+import ImageUpload from '../manage-hotel-images';
 
 export default function HotelDetails({
   product,
@@ -46,6 +49,7 @@ export default function HotelDetails({
   const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [amenitiesToShow, setAmenitiesToShow] = useState([]);
   const path = location.pathname;
+  const [showImageModal, setShowImageModal] = useState(false);
   const hotelId = path.substring(path.lastIndexOf('/') + 1);
   const [isModalOpen, setModalOpen] = useState(false);
   const [hotel, setHotel] = useState(null);
@@ -140,6 +144,9 @@ export default function HotelDetails({
       toast.error(`Error updating hotel status: ${errorMessage}`);
     }
   };
+  // -------------------------------------------Update hotel image------------------------------------
+  const handleShowImageModal = () => setShowImageModal(true);
+  const handleCloseImageModal = () => setShowImageModal(false);
 
   // -------------------------------------------------------------------------------------------
   const FlexContainer = styled('div')({
@@ -180,7 +187,7 @@ export default function HotelDetails({
     const response = await axios.delete(`${localUrl}/delete/hotels/by/${hotelId}`);
     if (response.status === 200) {
       toast.success('Selected hotel is deleted now !');
-      navigate("/hotels")
+      navigate('/hotels');
     }
   };
   return (
@@ -204,8 +211,8 @@ export default function HotelDetails({
             </>
           )}
         </button>
-        <button className="custom-button" onClick={()=>handleDeleteHotel(hotel?.hotelId)}>
-         X Delete
+        <button className="custom-button" onClick={() => handleDeleteHotel(hotel?.hotelId)}>
+          X Delete
         </button>
         <button
           variant="danger"
@@ -229,17 +236,32 @@ export default function HotelDetails({
       </h4>
 
       <Carousel>
-        {hotel.images.map((image, index) => (
-          <Carousel.Item key={index}>
+        {hotel?.images?.map((image, index) => (
+          <Carousel.Item key={index} style={{ position: 'relative' }}>
             <img
               className="d-block w-100"
               src={image}
               alt={`Slide ${index + 1}`}
               style={{ height: '400px', objectFit: 'cover' }}
             />
+            <Button
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                zIndex: 10,
+                background:"transparent"
+              }}
+              onClick={handleShowImageModal}
+            >
+              <FilterIcon/>
+            </Button>
           </Carousel.Item>
         ))}
       </Carousel>
+
+      <ImageUpload open={showImageModal} onClose={handleCloseImageModal} hotelId={hotel.hotelId} />
+
       <hr />
 
       {/* ---------------------------------------basic detaisl------------------------------------- */}

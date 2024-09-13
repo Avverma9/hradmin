@@ -307,7 +307,7 @@
 }
 
 .policy-key {
-  font-weight: bold;
+  color: #727272;
   margin-bottom: 5px;
 }
 
@@ -315,14 +315,3 @@
   margin-left: 5px;
 }
 
-
-.custom-button {
-  background-color: transparent;
-  border: 1px solid #d1cdcd; /* Red border for 'error' color */
-  color: #000000; /* Red text color */
-  font-size: 0.7rem;
-  padding: 4px 8px;
-  cursor: pointer;
-  outline: none;
-  transition: background-color 0.3s, color 0.3s;
-}
