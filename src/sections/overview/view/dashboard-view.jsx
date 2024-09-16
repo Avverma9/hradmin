@@ -51,16 +51,114 @@ export default function AppView() {
   }, [loggedIn, navigate]);
 
   const handleWidgetClick = (title) => {
-    if (title === 'Bookings') {
-      navigate('/your-bookings');
-    } else if (title === 'Hotels') {
-      navigate('/your-hotels');
+    switch (title) {
+      case 'Bookings':
+        navigate('/your-bookings');
+        break;
+      case 'Hotels':
+        navigate('/your-hotels');
+        break;
+      case 'Users':
+        navigate('/all-users');
+        break;
+      case 'Reports':
+        navigate('/complaints');
+        break;
+      case 'Notifications':
+        navigate('/notifications');
+        break;
+      case 'Partners':
+        navigate('/partners');
+        break;
+      case 'Messenger':
+        navigate('/messenger');
+        break;
+      case 'Coupons':
+        navigate('/apply-pms-coupon');
+        break;
+      case 'Monthly Price':
+        navigate('/hotels/monthly-price');
+        break;
+      case 'Travel locations':
+        navigate('/add-travel-location');
+        break;
+      case 'Reviews':
+        navigate('/all-reviews');
+        break;
+      default:
+        console.warn('Unknown widget title:', title);
     }
   };
 
   if (loading) {
     return <Typography variant="h6">Loading...</Typography>; // Loading state
   }
+
+  const widgets = [
+    {
+      title: 'Bookings',
+      count: bookingCount,
+      color: 'success',
+      icon: '/assets/icons/glass/ic_glass_bag.png',
+    },
+    {
+      title: 'Users',
+      count: userCount,
+      color: 'info',
+      icon: '/assets/icons/glass/ic_glass_users.png',
+    },
+    {
+      title: 'Hotels',
+      count: hotelCount,
+      color: 'warning',
+      icon: '/assets/icons/glass/ic_glass_buy.png',
+    },
+    {
+      title: 'Reports',
+      count: 234,
+      color: 'error',
+      icon: '/assets/icons/glass/ic_glass_message.png',
+    },
+    {
+      title: 'Notifications',
+      color: 'success',
+      icon: 'https://static.vecteezy.com/system/resources/previews/009/394/760/non_2x/bell-icon-transparent-notification-free-png.png',
+    },
+    {
+      title: 'Partners',
+      color: 'info',
+      icon: 'https://www.iconpacks.net/icons/2/free-handshake-icon-3312-thumb.png',
+    },
+    {
+      title: 'Messenger',
+      color: 'warning',
+      icon: 'https://www.pngall.com/wp-content/uploads/5/Facebook-Messenger-Logo-PNG-HD-Image.png',
+    },
+    {
+      title: 'Coupons',
+
+      color: 'error',
+      icon: 'https://png.pngtree.com/png-vector/20220803/ourmid/pngtree-gift-voucher-coupon-design-png-image_6097745.png',
+    },
+    {
+      title: 'Monthly Price',
+      count: bookingCount,
+      color: 'success',
+      icon: 'https://atlas-content-cdn.pixelsquid.com/stock-images/calendar-Q9V6xnA-600.jpg',
+    },
+    {
+      title: 'Travel locations',
+      count: userCount,
+      color: 'info',
+      icon: 'https://www.freeiconspng.com/thumbs/travel-icon-png/plane-travel-flight-tourism-travel-icon-png-10.png',
+    },
+    {
+      title: 'Reviews',
+      count: hotelCount,
+      color: 'warning',
+      icon: 'https://png.pngtree.com/png-vector/20230427/ourmid/pngtree-review-us-survey-star-scale-feedback-vector-png-image_6737386.png',
+    },
+  ];
 
   return (
     <Container maxWidth="xl">
@@ -69,45 +167,17 @@ export default function AppView() {
       </Typography>
 
       <Grid container spacing={3}>
-        <Grid xs={12} sm={6} md={3}>
-          <AppWidgetSummary
-            title="Bookings"
-            total={bookingCount || 0}
-            color="success"
-            icon={<img alt="icon" src="/assets/icons/glass/ic_glass_bag.png" />}
-            onClick={() => handleWidgetClick('Bookings')}
-          />
-        </Grid>
-
-        <Grid xs={12} sm={6} md={3}>
-          <AppWidgetSummary
-            title="Users"
-            total={userCount || 0}
-            color="info"
-            icon={<img alt="icon" src="/assets/icons/glass/ic_glass_users.png" />}
-            onClick={() => handleWidgetClick('Users')}
-          />
-        </Grid>
-
-        <Grid xs={12} sm={6} md={3}>
-          <AppWidgetSummary
-            title="Hotels"
-            total={hotelCount || 0}
-            color="warning"
-            icon={<img alt="icon" src="/assets/icons/glass/ic_glass_buy.png" />}
-            onClick={() => handleWidgetClick('Hotels')}
-          />
-        </Grid>
-
-        <Grid xs={12} sm={6} md={3}>
-          <AppWidgetSummary
-            title="Reports"
-            total={234}
-            color="error"
-            icon={<img alt="icon" src="/assets/icons/glass/ic_glass_message.png" />}
-            onClick={() => handleWidgetClick('Reports')}
-          />
-        </Grid>
+        {widgets.map((widget) => (
+          <Grid xs={12} sm={6} md={3} key={widget.title}>
+            <AppWidgetSummary
+              title={widget.title}
+              total={widget.count || 0}
+              color={widget.color}
+              icon={<img alt={`${widget.title} icon`} src={widget.icon} />}
+              onClick={() => handleWidgetClick(widget.title)}
+            />
+          </Grid>
+        ))}
       </Grid>
     </Container>
   );

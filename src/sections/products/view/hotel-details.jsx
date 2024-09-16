@@ -26,7 +26,7 @@ import {
 import { GrStatusGood } from 'react-icons/gr';
 import Tooltip from '@mui/material/Tooltip';
 import { styled, Container } from '@mui/material';
-import { localUrl } from 'src/utils/util';
+import { role, localUrl } from 'src/utils/util';
 import LinearLoader from 'src/utils/Loading';
 import AddFoodModal from '../manage-foods'; // Import the AddFoodModal component
 
@@ -129,9 +129,9 @@ export default function HotelDetails({
   };
 
   // ---------------------------------------Approve hotel function -----------------------------------
-  const handleApproveHotel = async (currentAcceptanceState) => {
+  const handleApproveHotel = async () => {
     try {
-      const newAcceptanceState = !currentAcceptanceState;
+      const newAcceptanceState = !hotel.isAccepted;
       await axios.patch(`${localUrl}/hotels/update/${hotelId}`, {
         isAccepted: newAcceptanceState,
       });
@@ -142,6 +142,24 @@ export default function HotelDetails({
       const errorMessage =
         error.response?.data?.message || 'An error occurred while updating the hotel status';
       toast.error(`Error updating hotel status: ${errorMessage}`);
+    }
+  };
+
+  const handleToggleFrontPage = async () => {
+    try {
+      const onFrontPage = !hotel.onFront;
+      await axios.patch(`${localUrl}/hotels/update/${hotelId}`, {
+        onFront: onFrontPage,
+      });
+      toast.success(
+        onFrontPage ? 'Hotel is now on the front page' : 'Hotel removed from the front page'
+      );
+      const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
+      setHotel(response.data);
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || 'An error occurred while updating the front page status';
+      toast.error(`Error updating front page status: ${errorMessage}`);
     }
   };
   // -------------------------------------------Update hotel image------------------------------------
@@ -196,32 +214,49 @@ export default function HotelDetails({
         <button className="custom-button" onClick={handleGoBack} sx={{ mb: 2 }}>
           <IoReturnUpBack /> Back
         </button>
-        <button
-          style={{ backgroundColor: 'white' }}
-          onClick={() => handleApproveHotel(hotel?.isAccepted)}
-          className="custom-button"
-        >
-          {hotel?.isAccepted ? (
-            <>
-              <IoTrashOutline /> Remove
-            </>
-          ) : (
-            <>
-              <GrStatusGood /> Approve
-            </>
-          )}
-        </button>
-        <button className="custom-button" onClick={() => handleDeleteHotel(hotel?.hotelId)}>
-          X Delete
-        </button>
-        <button
-          variant="danger"
-          sx={{ mb: 2 }}
-          onClick={handleMailToHotel}
-          className="custom-button"
-        >
-          <IoMailOpenOutline /> Mail
-        </button>
+        {role === 'Admin' ||
+          (role === 'Developer' && (
+            <><button
+            style={{ backgroundColor: 'white' }}
+            onClick={() => handleToggleFrontPage(hotel?.onFront)}
+            className="custom-button"
+          >
+            {hotel?.onFront ? (
+              <>
+                <IoTrashOutline /> Remove from front page
+              </>
+            ) : (
+              <>
+                <GrStatusGood /> Add in front page
+              </>
+            )}
+          </button><button
+            style={{ backgroundColor: 'white' }}
+            onClick={() => handleApproveHotel(hotel?.isAccepted)}
+            className="custom-button"
+          >
+              {hotel?.isAccepted ? (
+                <>
+                  <IoTrashOutline /> Decline
+                </>
+              ) : (
+                <>
+                  <GrStatusGood /> Approve
+                </>
+              )}
+            </button><button className="custom-button" onClick={() => handleDeleteHotel(hotel?.hotelId)}>
+              X Delete
+            </button><button
+              variant="danger"
+              sx={{ mb: 2 }}
+              onClick={handleMailToHotel}
+              className="custom-button"
+            >
+              <IoMailOpenOutline /> Mail
+            </button></>
+          ))}
+
+        
       </FlexContainer>
 
       <h4
@@ -250,11 +285,11 @@ export default function HotelDetails({
                 top: '10px',
                 right: '10px',
                 zIndex: 10,
-                background:"transparent"
+                background: 'transparent',
               }}
               onClick={handleShowImageModal}
             >
-              <FilterIcon/>
+              <FilterIcon />
             </Button>
           </Carousel.Item>
         ))}
