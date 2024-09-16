@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FaRupeeSign } from 'react-icons/fa6';
@@ -41,9 +42,9 @@ export default function MonthlyPrice() {
   const fetchHotels = useCallback(async () => {
     try {
       let url = '';
-      if (role === 'superAdmin') {
+      if (role === 'PMS') {
         url = `${localUrl}/hotels/query/get/by?hotelEmail=${hotelEmail}`;
-      } else if (role === 'admin' || role === 'developer') {
+      } else if (role === 'Admin' || role === 'Developer') {
         url = `${localUrl}/get/all/hotels`;
       } else {
         throw new Error('Invalid user role');
@@ -53,11 +54,12 @@ export default function MonthlyPrice() {
         throw new Error('Failed to fetch hotels');
       }
       const res = await response.json();
-      setHotels(res.data);
+     console.log('coming hotels', res);
+     setHotels(res)
     } catch (error) {
       console.error('Error fetching hotels:', error);
       toast.error('Error fetching hotels', { autoClose: 3000 });
-    }
+    } 
   }, [role, hotelEmail]);
 
   const fetchMonthlyPriceData = async (hotelId) => {
@@ -130,6 +132,7 @@ export default function MonthlyPrice() {
       toast.error("It seems there's an issue!", { autoClose: 3000 });
     }
   };
+
 
   return (
     <Box

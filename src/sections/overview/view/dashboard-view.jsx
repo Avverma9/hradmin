@@ -6,7 +6,7 @@ import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 
-import { localUrl } from 'src/utils/util';
+import { role, localUrl } from 'src/utils/util';
 
 import AppWidgetSummary from '../app-widget-summary';
 
@@ -41,14 +41,7 @@ export default function AppView() {
     fetchData();
   }, [navigate]);
 
-  const loggedIn = localStorage.getItem('user_email');
   const name = localStorage.getItem('user_name');
-
-  useEffect(() => {
-    if (!loggedIn) {
-      navigate('/');
-    }
-  }, [loggedIn, navigate]);
 
   const handleWidgetClick = (title) => {
     switch (title) {
@@ -94,6 +87,7 @@ export default function AppView() {
     return <Typography variant="h6">Loading...</Typography>; // Loading state
   }
 
+  // Widgets configuration
   const widgets = [
     {
       title: 'Bookings',
@@ -136,7 +130,6 @@ export default function AppView() {
     },
     {
       title: 'Coupons',
-
       color: 'error',
       icon: 'https://png.pngtree.com/png-vector/20220803/ourmid/pngtree-gift-voucher-coupon-design-png-image_6097745.png',
     },
@@ -160,14 +153,32 @@ export default function AppView() {
     },
   ];
 
+  // Filter widgets based on role
+  const filteredWidgets =
+    role === 'Admin'
+      ? widgets
+      : widgets.filter(
+          (widget) =>
+            ![
+              'Users',
+              'Partners',
+              'Reviews',
+              'Travel locations',
+              'Notifications',
+              'Reports',
+            ].includes(widget.title)
+        );
+
   return (
     <Container maxWidth="xl">
       <Typography variant="h4" sx={{ mb: 5 }}>
         Hi, Welcome back 👋 {name}
       </Typography>
-
+      <Typography variant="h6" sx={{ mb: 5 }}>
+        Dashboard shortcuts{' '}
+      </Typography>
       <Grid container spacing={3}>
-        {widgets.map((widget) => (
+        {filteredWidgets.map((widget) => (
           <Grid xs={12} sm={6} md={3} key={widget.title}>
             <AppWidgetSummary
               title={widget.title}
