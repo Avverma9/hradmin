@@ -8,6 +8,8 @@ import Typography from '@mui/material/Typography';
 
 import { role, localUrl } from 'src/utils/util';
 
+import Rooms from 'src/sections/rooms/Rooms';
+
 import AppWidgetSummary from '../app-widget-summary';
 
 // ----------------------------------------------------------------------
@@ -190,6 +192,8 @@ export default function AppView() {
           </Grid>
         ))}
       </Grid>
+
+      <Rooms/>
     </Container>
   );
 }

@@ -54,12 +54,11 @@ export default function MonthlyPrice() {
         throw new Error('Failed to fetch hotels');
       }
       const res = await response.json();
-     console.log('coming hotels', res);
-     setHotels(res)
+      setHotels(res);
     } catch (error) {
       console.error('Error fetching hotels:', error);
       toast.error('Error fetching hotels', { autoClose: 3000 });
-    } 
+    }
   }, [role, hotelEmail]);
 
   const fetchMonthlyPriceData = async (hotelId) => {
@@ -133,7 +132,6 @@ export default function MonthlyPrice() {
     }
   };
 
-
   return (
     <Box
       sx={{
@@ -206,8 +204,7 @@ export default function MonthlyPrice() {
               <TableHead>
                 <TableRow>
                   <TableCell>
-                    <CiCalendarDate />{" "}
-                     Date
+                    <CiCalendarDate /> Date
                   </TableCell>
                   <TableCell>
                     <LiaRupeeSignSolid /> Price
