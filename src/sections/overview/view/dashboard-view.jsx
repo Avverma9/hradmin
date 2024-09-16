@@ -192,8 +192,7 @@ export default function AppView() {
           </Grid>
         ))}
       </Grid>
-
-      <Rooms/>
+      {role === 'PMS' && <Rooms />}
     </Container>
   );
 }

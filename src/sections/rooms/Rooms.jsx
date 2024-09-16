@@ -51,6 +51,9 @@ export default function Rooms() {
 
   return (
     <Box sx={{ p: 3 }}>
+      <Typography variant="h5" sx={{ mb: 3 }}>
+        Rooms
+      </Typography>
       {totalRooms > 0 ? (
         <Box sx={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
           <Box
