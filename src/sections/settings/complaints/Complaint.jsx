@@ -22,7 +22,7 @@ import {
 } from '@mui/material';
 
 import { localUrl } from 'src/utils/util';
-import { fDate } from 'src/utils/format-time';
+import { fDateTime } from 'src/utils/format-time';
 
 import FeedbackDialog from './Feedback';
 
@@ -238,8 +238,8 @@ const Complaint = () => {
                     <strong>Hotel:</strong> {complaint.hotelName} | <strong>Regarding:</strong>{' '}
                     {complaint.regarding}
                   </Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    {fDate(complaint.createdAt)}
+                  <Typography variant="caption" color="red">
+                    Status Changed on {fDateTime(complaint.updatedAt)}
                   </Typography>
                 </CompactCardContent>
                 <ButtonsContainer>
