@@ -18,7 +18,8 @@ export default function AppView() {
   const [hotelCount, setHotelCount] = useState(null);
   const [userCount, setUserCount] = useState(null);
   const [bookingCount, setBookingCount] = useState(null);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,6 +44,14 @@ export default function AppView() {
     fetchData();
   }, [navigate]);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer); // Cleanup interval on component unmount
+  }, []);
+
   const name = localStorage.getItem('user_name');
 
   const handleWidgetClick = (title) => {
@@ -57,7 +66,11 @@ export default function AppView() {
         navigate('/all-users');
         break;
       case 'Reports':
-        navigate('/complaints');
+        if (role === 'Admin') {
+          navigate('/complaints');
+        } else if (role === 'PMS') {
+          navigate('/your-complaints');
+        }
         break;
       case 'Notifications':
         navigate('/notifications');
@@ -86,8 +99,16 @@ export default function AppView() {
   };
 
   if (loading) {
-    return <Typography variant="h6">Loading...</Typography>; // Loading state
+    return <Typography variant="h6">Loading...</Typography>;
   }
+
+  const formattedTime = currentTime.toLocaleTimeString();
+  const formattedDate = currentTime.toLocaleDateString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 
   // Widgets configuration
   const widgets = [
@@ -136,20 +157,17 @@ export default function AppView() {
       icon: 'https://png.pngtree.com/png-vector/20220803/ourmid/pngtree-gift-voucher-coupon-design-png-image_6097745.png',
     },
     {
-      title: 'Monthly Price',
-      count: bookingCount,
+      title: 'Set Monthly Price',
       color: 'success',
       icon: 'https://atlas-content-cdn.pixelsquid.com/stock-images/calendar-Q9V6xnA-600.jpg',
     },
     {
       title: 'Travel locations',
-      count: userCount,
       color: 'info',
       icon: 'https://www.freeiconspng.com/thumbs/travel-icon-png/plane-travel-flight-tourism-travel-icon-png-10.png',
     },
     {
       title: 'Reviews',
-      count: hotelCount,
       color: 'warning',
       icon: 'https://png.pngtree.com/png-vector/20230427/ourmid/pngtree-review-us-survey-star-scale-feedback-vector-png-image_6737386.png',
     },
@@ -161,20 +179,16 @@ export default function AppView() {
       ? widgets
       : widgets.filter(
           (widget) =>
-            ![
-              'Users',
-              'Partners',
-              'Reviews',
-              'Travel locations',
-              'Notifications',
-              'Reports',
-            ].includes(widget.title)
+            !['Users', 'Partners', 'Reviews', 'Travel locations', 'Notifications'].includes(
+              widget.title
+            )
         );
 
   return (
     <Container maxWidth="xl">
-      <Typography variant="h4" sx={{ mb: 5 }}>
-        Hi, Welcome back 👋 {name}
+      <Typography variant="h5" sx={{ mb: 5 }}>
+        Hi👋 {name},{" "} Welcome back <br /> <hr />
+        {formattedTime} / {formattedDate}
       </Typography>
       <Typography variant="h6" sx={{ mb: 5 }}>
         Dashboard shortcuts{' '}

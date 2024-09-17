@@ -77,6 +77,11 @@ const getNavConfig = () => {
           path: '/hotels',
         },
         {
+          title: 'Complaints',
+          icon: icons.complaints,
+          path: '/your-complaints',
+        },
+        {
           title: 'Your Hotel',
           icon: icons.hotels,
           path: '/your-hotels',

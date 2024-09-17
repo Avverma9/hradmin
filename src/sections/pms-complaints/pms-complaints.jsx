@@ -28,7 +28,7 @@ import {
 import { fDateTime } from 'src/utils/format-time';
 import { localUrl, userName as name, hotelEmail as email } from 'src/utils/util';
 
-import FeedbackDialog from './Feedback';
+import FeedbackDialog from '../settings/complaints/Feedback';
 
 const StatusChip = styled(Chip)(({ theme, status }) => ({
   backgroundColor:
@@ -111,8 +111,6 @@ const ComplaintId = styled(Typography)(({ theme }) => ({
   color: theme.palette.text.primary,
   zIndex: 1, // Ensure it appears above other content
 }));
-
-
 const ModalImage = styled('img')(({ theme }) => ({
   maxWidth: '100%',
   maxHeight: '100%',
@@ -141,7 +139,15 @@ const Complaint = () => {
   useEffect(() => {
     const fetchComplaints = async () => {
       try {
-        const response = await fetch(`${localUrl}/get/all-complaint-on-admin/panel`);
+        setLoading(true);
+        const query = new URLSearchParams({
+          status: statusFilter,
+          complaintId: searchText,
+          hotelEmail: email,
+        }).toString();
+        const response = await fetch(
+          `${localUrl}/get/all-complaint-on-admin/panel/by-filter?${query}`
+        );
         if (!response.ok) {
           throw new Error('Failed to fetch complaints');
         }
@@ -155,7 +161,7 @@ const Complaint = () => {
     };
 
     fetchComplaints();
-  }, []);
+  }, [searchText, statusFilter]);
 
   const updateComplaintStatus = async (id, newStatus, feedBack) => {
     try {
@@ -170,7 +176,14 @@ const Complaint = () => {
         body: JSON.stringify({ status: newStatus, feedBack, updatedBy }),
       });
 
-      const response = await fetch(`${localUrl}/get/all-complaint-on-admin/panel`);
+      const query = new URLSearchParams({
+        status: statusFilter,
+        complaintId: searchText,
+        hotelEmail:email,
+      }).toString();
+      const response = await fetch(
+        `${localUrl}/get/all-complaint-on-admin/panel/by-filter?${query}`
+      );
       const updatedComplaints = await response.json();
       setComplaints(updatedComplaints);
 
@@ -209,22 +222,17 @@ const Complaint = () => {
     setViewFeedback(feedBack);
   };
 
-const filteredComplaints = useMemo(
-  () =>
-    complaints?.filter((complaint) => {
-      const searchTextLower = searchText.toLowerCase();
-      const matchesSearchText =
-        complaint.hotelName.toLowerCase().includes(searchTextLower) ||
-        (complaint.updatedBy?.email || '').toLowerCase().includes(searchTextLower) ||
-        complaint.complaintId.includes(searchText); // Add this line to filter by complaintId
-
-      const matchesStatus = statusFilter === '' || complaint.status === statusFilter;
-
-      return matchesSearchText && matchesStatus;
-    }),
-  [complaints, searchText, statusFilter]
-);
-
+  const filteredComplaints = useMemo(
+    () =>
+      complaints?.filter((complaint) => {
+        const matchesSearchText = complaint.complaintId
+          .toLowerCase()
+          .includes(searchText.toLowerCase());
+        const matchesStatus = statusFilter === '' || complaint.status === statusFilter;
+        return matchesSearchText && matchesStatus;
+      }),
+    [complaints, searchText, statusFilter]
+  );
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -265,7 +273,7 @@ const filteredComplaints = useMemo(
           <TextField
             fullWidth
             variant="outlined"
-            placeholder="Search by hotel name , hotel email or complaint id"
+            placeholder="Enter complaint id ..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             sx={{ mb: 2 }}
@@ -299,8 +307,7 @@ const filteredComplaints = useMemo(
           <Box>
             {filteredComplaints.map((complaint) => (
               <CompactCard key={complaint._id}>
-                <ComplaintId>{`${complaint.complaintId}`}</ComplaintId>
-                <hr />
+                <ComplaintId>{`${complaint.complaintId}`}</ComplaintId> {/* Display ID here */}
                 <StatusChip label={complaint.status} status={complaint.status} />
                 <CompactCardContent>
                   <Typography variant="body2">
