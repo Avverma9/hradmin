@@ -179,12 +179,11 @@ export default function MonthlyPrice() {
             In this monthly form, you only need to add one month's data. To set the data, select a
             start and end date, and choose an operation:
             <br />
-            - **Add** means you will add the price.
+            - Add = means you will add the price.
             <br />
-            - **Minus** means you will subtract the price.
+            - Minus = means you will subtract the price.
             <br />
-            Note: At a time, you can only create a single month's price entry; multiple entries will
-            not work.
+           
           </Typography>
         </CardContent>
       </Card>
