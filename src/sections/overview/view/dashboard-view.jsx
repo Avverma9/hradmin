@@ -57,7 +57,11 @@ export default function AppView() {
   const handleWidgetClick = (title) => {
     switch (title) {
       case 'Bookings':
-        navigate('/your-bookings');
+        if (role === 'PMS') {
+          navigate('/your-bookings');
+        } else {
+          navigate('/all-bookings');
+        }
         break;
       case 'Hotels':
         navigate('/your-hotels');
@@ -157,7 +161,7 @@ export default function AppView() {
       icon: 'https://png.pngtree.com/png-vector/20220803/ourmid/pngtree-gift-voucher-coupon-design-png-image_6097745.png',
     },
     {
-      title: 'Set Monthly Price',
+      title: 'Monthly Price',
       color: 'success',
       icon: 'https://atlas-content-cdn.pixelsquid.com/stock-images/calendar-Q9V6xnA-600.jpg',
     },
@@ -187,7 +191,7 @@ export default function AppView() {
   return (
     <Container maxWidth="xl">
       <Typography variant="h5" sx={{ mb: 5 }}>
-        Hi👋 {name},{" "} Welcome back <br /> <hr />
+        Hi👋 {name}, Welcome back <br /> <hr />
         {formattedTime} / {formattedDate}
       </Typography>
       <Typography variant="h6" sx={{ mb: 5 }}>

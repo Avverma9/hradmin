@@ -124,6 +124,11 @@ const getNavConfig = () => {
           icon: icons.travel,
         },
         {
+          title: 'Set Month',
+          path: '/hotels/monthly-price',
+          icon: icons.setMonthlyPrice,
+        },
+        {
           title: 'Change banner',
           path: '/change-banner',
           icon: icons.banner,

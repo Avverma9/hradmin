@@ -8,7 +8,7 @@ export default function LoginPage() {
   return (
     <>
       <Helmet>
-        <title> Messenger | Minimal UI </title>
+        <title> Messenger | Roomsstay </title>
       </Helmet>
 
       <ChatApp />

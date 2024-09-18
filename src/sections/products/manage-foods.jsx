@@ -29,7 +29,7 @@ import {
 
 import { localUrl } from 'src/utils/util';
 
-import './button.css'
+import './button.css';
 
 // Styled components
 const ModalContent = styled(Box)(({ theme }) => ({
@@ -364,17 +364,12 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
                   handleCancel();
                   setIsAddingFood(false);
                 }}
-                color="secondary"
+                className="custom-button"
                 sx={{ mr: 1 }}
               >
                 Cancel
               </button>
-              <button
-                onClick={handleAddFood}
-                variant="contained"
-                color="primary"
-                disabled={loading}
-              >
+              <button onClick={handleAddFood} className="custom-button" disabled={loading}>
                 {loading ? 'Adding...' : 'Add Food'}
               </button>
             </div>
@@ -382,7 +377,7 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
         )}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           {!isAddingFood && (
-            <button className='custom-button' onClick={() => setIsAddingFood(true)}>
+            <button className="custom-button" onClick={() => setIsAddingFood(true)}>
               Add Food
             </button>
           )}

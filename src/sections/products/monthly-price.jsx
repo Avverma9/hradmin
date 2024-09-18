@@ -49,12 +49,20 @@ export default function MonthlyPrice() {
       } else {
         throw new Error('Invalid user role');
       }
+
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch hotels');
       }
+
       const res = await response.json();
-      setHotels(res);
+
+      // Check the role and set hotels accordingly
+      if (role === 'Admin' || role === 'Developer') {
+        setHotels(res.data); // For Admin and Developer, use res.data
+      } else {
+        setHotels(res); // For PMS, use res directly
+      }
     } catch (error) {
       console.error('Error fetching hotels:', error);
       toast.error('Error fetching hotels', { autoClose: 3000 });
@@ -65,7 +73,7 @@ export default function MonthlyPrice() {
     if (!hotelId) return; // Avoid fetching data if no hotel is selected
     try {
       const response = await axios.get(`${localUrl}/monthly-set-room-price/get/by/${hotelId}`);
-      setData(response.data);
+      setData(response?.data);
     } catch (error) {
       toast.error("It seems there's an error fetching monthly price data", { autoClose: 3000 });
     }
@@ -156,11 +164,12 @@ export default function MonthlyPrice() {
             label="Select Hotel"
             sx={{ borderRadius: 1 }}
           >
-            {hotels?.map((hotel) => (
-              <MenuItem key={hotel.hotelId} value={hotel.hotelId}>
-                {hotel.hotelName}
-              </MenuItem>
-            ))}
+            {hotels?.length > 0 &&
+              hotels?.map((hotel) => (
+                <MenuItem key={hotel.hotelId} value={hotel.hotelId}>
+                  {hotel.hotelName}
+                </MenuItem>
+              ))}
           </Select>
         </FormControl>
 
@@ -213,7 +222,7 @@ export default function MonthlyPrice() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {data.map((item) => (
+                {data?.map((item) => (
                   <TableRow key={item._id}>
                     <TableCell>{fDate(item.monthDate)}</TableCell>
                     <TableCell>
