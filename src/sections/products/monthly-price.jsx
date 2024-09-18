@@ -131,6 +131,7 @@ export default function MonthlyPrice() {
       await axios.post(`${localUrl}/monthly-set-room-price/${selectedHotel}`, {
         startDate: formattedStartDate,
         endDate: formattedEndDate,
+        isAddition,
         monthPrice, // Pass the month price as well
       });
       toast.success('Monthly price set successfully', { autoClose: 3000 });
