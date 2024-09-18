@@ -22,6 +22,7 @@ import { localUrl } from 'src/utils/util';
 import RoomModal from './room-modal';
 import CouponCodeModal from './coupon-code';
 import CreateCouponModal from './create-coupon';
+import AppliedCouponModal from './applied-coupon';
 import AvailableCouponsModal from './available-coupons';
 
 export default function Coupon() {
@@ -35,6 +36,7 @@ export default function Coupon() {
   const [openCouponModal, setOpenCouponModal] = useState(false);
   const [openAvailableCouponsModal, setOpenAvailableCouponsModal] = useState(false);
   const [openCreateCouponModal, setOpenCreateCouponModal] = useState(false); // Added state for CreateCouponModal
+  const [viewCoupons, setViewCoupons] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [couponCode, setCouponCode] = useState('');
   const [page, setPage] = useState(0);
@@ -90,20 +92,21 @@ export default function Coupon() {
     }
   };
 
-const handleApplyCoupon = async (hotelId, roomId) => {
-  try {
-    const response = await axios.patch(
-      `${localUrl}/apply/a/coupon-to-room/${couponCode}?hotelId=${hotelId}&roomId=${roomId}`
-    );
-    if (response.status === 200) {
-      toast.success('Coupon Applied Successfully');
+  const handleApplyCoupon = async (hotelId, roomId) => {
+    try {
+      const response = await axios.patch(
+        `${localUrl}/apply/a/coupon-to-room/${couponCode}?hotelId=${hotelId}&roomId=${roomId}`
+      );
+      if (response.status === 200) {
+        toast.success('Coupon Applied Successfully');
+        window.location.reload()
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Failed to apply coupon';
+      toast.error(errorMessage);
     }
-  } catch (error) {
-    // Check if error response exists and if it contains a message
-    const errorMessage = error.response?.data?.message || 'Failed to apply coupon';
-    toast.error(errorMessage);
-  }
-};
+  };
+
 
 
   const handleOpenModal = (hotel) => {
@@ -143,6 +146,17 @@ const handleApplyCoupon = async (hotelId, roomId) => {
     setOpenCreateCouponModal(false);
   };
 
+
+// Opening the applied coupons modal
+const handleOpenViewCoupon = () => {
+
+  setViewCoupons(true);
+};
+
+  const handleCloseViewCoupon = () => {
+    setViewCoupons(false);
+  };
+
   const handleApplyCouponToRoom = async () => {
     if (!selectedRoom || !couponCode) return;
 
@@ -157,9 +171,10 @@ const handleApplyCoupon = async (hotelId, roomId) => {
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(
       () => toast.success('Coupon code copied to clipboard'),
-      (err) => toast.error('Failed to copy coupon code')
+      () => toast.error('Failed to copy coupon code')
     );
   };
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -199,6 +214,15 @@ const handleApplyCoupon = async (hotelId, roomId) => {
       >
         View Available Coupons
       </Button>
+      <Button
+        variant="contained"
+        color="secondary"
+        onClick={handleOpenViewCoupon} // Open applied coupons modal
+        sx={{ ml: 2 }}
+      >
+        View Applied Coupons
+      </Button>
+
       <TextField
         label="Search Hotels"
         variant="outlined"
@@ -218,6 +242,12 @@ const handleApplyCoupon = async (hotelId, roomId) => {
         validity={validity}
         setValidity={setValidity}
       />
+      <AppliedCouponModal
+        open={viewCoupons}
+        handleClose={handleCloseViewCoupon}
+
+      />
+
       <hr />
       <Typography variant="h5" gutterBottom>
         Available Hotels
