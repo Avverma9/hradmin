@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 /* eslint-disable react-hooks/exhaustive-deps */
 import axios from 'axios';
 import { format } from 'date-fns';
@@ -12,6 +13,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import {
   Box,
+  Card,
   Table,
   Paper,
   Button,
@@ -25,6 +27,7 @@ import {
   InputLabel,
   Typography,
   FormControl,
+  CardContent,
   TableContainer,
 } from '@mui/material';
 
@@ -36,6 +39,7 @@ export default function MonthlyPrice() {
   const [endDate, setEndDate] = useState(null);
   const [monthPrice, setMonthPrice] = useState('');
   const [data, setData] = useState([]);
+  const [isAddition, setIsAddition] = useState(true); // true for Add, false for Minus
   const [hotels, setHotels] = useState([]);
   const [selectedHotel, setSelectedHotel] = useState('');
   const hotelEmail = localStorage.getItem('user_email');
@@ -94,6 +98,9 @@ export default function MonthlyPrice() {
   const handleEndDateChange = (date) => {
     setEndDate(date);
   };
+  const handleIsAdditionChange = (event) => {
+    setIsAddition(event.target.value === 'Add');
+  };
 
   const handleMonthPriceChange = (event) => {
     setMonthPrice(event.target.value);
@@ -130,6 +137,7 @@ export default function MonthlyPrice() {
       setStartDate(null);
       setEndDate(null);
       setMonthPrice('');
+      setIsAddition(true); // Reset isAddition to default (true for Add)
       fetchMonthlyPriceData(selectedHotel); // Refresh data after submission
     } catch (error) {
       toast.error('Failed to set monthly price', { autoClose: 3000 });
@@ -161,6 +169,24 @@ export default function MonthlyPrice() {
         mx: 'auto',
       }}
     >
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            How to Use This Form
+          </Typography>
+          <Typography variant="body2">
+            In this monthly form, you only need to add one month's data. To set the data, select a
+            start and end date, and choose an operation:
+            <br />
+            - **Add** means you will add the price.
+            <br />
+            - **Minus** means you will subtract the price.
+            <br />
+            Note: At a time, you can only create a single month's price entry; multiple entries will
+            not work.
+          </Typography>
+        </CardContent>
+      </Card>
       <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
         Set Monthly Price
       </Typography>
@@ -212,6 +238,19 @@ export default function MonthlyPrice() {
           />
         </LocalizationProvider>
         <hr />
+        <FormControl fullWidth sx={{ mb: 2 }}>
+          <InputLabel id="addition-select-label">Choose Operation</InputLabel>
+          <Select
+            labelId="addition-select-label"
+            value={isAddition ? 'Add' : 'Minus'}
+            onChange={handleIsAdditionChange}
+            label="Choose Operation"
+          >
+            <MenuItem value="Add">Add</MenuItem>
+            <MenuItem value="Minus">Minus</MenuItem>
+          </Select>
+        </FormControl>
+        <hr />
         <TextField
           label="Month Price"
           type="number"
@@ -242,6 +281,9 @@ export default function MonthlyPrice() {
                     <CiCalendarDate /> End date
                   </TableCell>
                   <TableCell>
+                    <CiCalendarDate /> Choose operation
+                  </TableCell>
+                  <TableCell>
                     <LiaRupeeSignSolid /> Price
                   </TableCell>
                   <TableCell>Action</TableCell>
@@ -252,6 +294,7 @@ export default function MonthlyPrice() {
                   <TableRow key={item._id}>
                     <TableCell>{fDate(item.startDate)}</TableCell>
                     <TableCell>{fDate(item.endDate)}</TableCell>
+                    <TableCell>{item.isAddition ? 'Will be added' : 'Will be minus'}</TableCell>
                     <TableCell>
                       {item.monthPrice} <FaRupeeSign />
                     </TableCell>
