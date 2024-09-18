@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import axios from 'axios';
+import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 import { FaRupeeSign } from 'react-icons/fa6';
 import { CiCalendarDate } from 'react-icons/ci';
@@ -31,7 +32,8 @@ import { localUrl } from 'src/utils/util';
 import { fDate } from 'src/utils/format-time';
 
 export default function MonthlyPrice() {
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
   const [monthPrice, setMonthPrice] = useState('');
   const [data, setData] = useState([]);
   const [hotels, setHotels] = useState([]);
@@ -85,8 +87,12 @@ export default function MonthlyPrice() {
     fetchMonthlyPriceData(hotelId);
   };
 
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
+  const handleStartDateChange = (date) => {
+    setStartDate(date);
+  };
+
+  const handleEndDateChange = (date) => {
+    setEndDate(date);
   };
 
   const handleMonthPriceChange = (event) => {
@@ -106,19 +112,23 @@ export default function MonthlyPrice() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      if (!selectedHotel || !selectedDate || !monthPrice) {
+      if (!selectedHotel || !startDate || !endDate || !monthPrice) {
         toast.warn('Please fill all fields', { autoClose: 3000 });
         return;
       }
 
-      const formattedDate = selectedDate.toISOString().split('T')[0];
+      // Format the start and end dates correctly
+      const formattedStartDate = format(startDate, 'yyyy-MM-dd');
+      const formattedEndDate = format(endDate, 'yyyy-MM-dd');
 
       await axios.post(`${localUrl}/monthly-set-room-price/${selectedHotel}`, {
-        monthDate: formattedDate,
-        monthPrice,
+        startDate: formattedStartDate,
+        endDate: formattedEndDate,
+        monthPrice, // Pass the month price as well
       });
       toast.success('Monthly price set successfully', { autoClose: 3000 });
-      setSelectedDate(null);
+      setStartDate(null);
+      setEndDate(null);
       setMonthPrice('');
       fetchMonthlyPriceData(selectedHotel); // Refresh data after submission
     } catch (error) {
@@ -175,9 +185,22 @@ export default function MonthlyPrice() {
 
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DatePicker
-            label="Select Date"
-            value={selectedDate}
-            onChange={handleDateChange}
+            label="Start Date"
+            value={startDate}
+            onChange={handleStartDateChange}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                fullWidth
+                sx={{ mb: 2 }}
+                InputProps={{ sx: { width: '100%' } }}
+              />
+            )}
+          />
+          <DatePicker
+            label="End Date"
+            value={endDate}
+            onChange={handleEndDateChange}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -213,7 +236,10 @@ export default function MonthlyPrice() {
               <TableHead>
                 <TableRow>
                   <TableCell>
-                    <CiCalendarDate /> Date
+                    <CiCalendarDate /> Start date
+                  </TableCell>
+                  <TableCell>
+                    <CiCalendarDate /> End date
                   </TableCell>
                   <TableCell>
                     <LiaRupeeSignSolid /> Price
@@ -224,7 +250,8 @@ export default function MonthlyPrice() {
               <TableBody>
                 {data?.map((item) => (
                   <TableRow key={item._id}>
-                    <TableCell>{fDate(item.monthDate)}</TableCell>
+                    <TableCell>{fDate(item.startDate)}</TableCell>
+                    <TableCell>{fDate(item.endDate)}</TableCell>
                     <TableCell>
                       {item.monthPrice} <FaRupeeSign />
                     </TableCell>
