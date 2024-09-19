@@ -214,7 +214,7 @@ export default function HotelDetails({
         <button className="custom-button" onClick={handleGoBack} sx={{ mb: 2 }}>
           <IoReturnUpBack /> Back
         </button>
-        {/* only authorized roles will see this buttons */}
+        {/* only authorized roles will see this buttons for use */}
         {(role === 'Developer' || role === 'Admin') && ( 
           <>
             <button
