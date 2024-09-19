@@ -24,6 +24,7 @@ const NotificationPage = lazy(() => import('src/pages/admin/notification-page'))
 const PmsCouponPage = lazy(() => import('src/pages/superAdmin/pms-coupon'));
 const ComplaintPage = lazy(() => import('src/pages/admin/complaint-page'));
 const PmsComplaintsPage = lazy(() => import('src/pages/superAdmin/complaint-page'));
+const BulkOperation = lazy(() => import('src/pages/admin/bulk-page'));
 export default function Router() {
   const routes = useRoutes([
     {
@@ -40,6 +41,7 @@ export default function Router() {
         { path: 'send-notification-to-all', element: <NotificationPage /> },
         { path: 'user', element: <UserPage /> },
         { path: 'hotels', element: <ProductsPage /> },
+        { path: 'bulk-data-processing', element: <BulkOperation /> },
         { path: 'hotels/monthly-price', element: <MonthlyPricePage /> },
         { path: 'your-hotels', element: <YourHotelsPage /> },
         { path: 'view-hotel-details/:hotelId', element: <HotelDetailsPage /> },

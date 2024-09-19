@@ -119,6 +119,11 @@ const getNavConfig = () => {
           icon: icons.user,
         },
         {
+          title: 'Bulk Operation',
+          path: '/bulk-data-processing',
+          icon: icons.settings,
+        },
+        {
           title: 'Add travel location',
           path: '/add-travel-location',
           icon: icons.travel,

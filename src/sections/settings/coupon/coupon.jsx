@@ -97,17 +97,15 @@ export default function Coupon() {
       const response = await axios.patch(
         `${localUrl}/apply/a/coupon-to-room/${couponCode}?hotelId=${hotelId}&roomId=${roomId}`
       );
+      toast.success('Coupon Applied Successfully');
       if (response.status === 200) {
-        toast.success('Coupon Applied Successfully');
-        window.location.reload()
+        window.location.reload();
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to apply coupon';
       toast.error(errorMessage);
     }
   };
-
-
 
   const handleOpenModal = (hotel) => {
     setSelectedHotel(hotel);
@@ -146,12 +144,10 @@ export default function Coupon() {
     setOpenCreateCouponModal(false);
   };
 
-
-// Opening the applied coupons modal
-const handleOpenViewCoupon = () => {
-
-  setViewCoupons(true);
-};
+  // Opening the applied coupons modal
+  const handleOpenViewCoupon = () => {
+    setViewCoupons(true);
+  };
 
   const handleCloseViewCoupon = () => {
     setViewCoupons(false);
@@ -242,11 +238,7 @@ const handleOpenViewCoupon = () => {
         validity={validity}
         setValidity={setValidity}
       />
-      <AppliedCouponModal
-        open={viewCoupons}
-        handleClose={handleCloseViewCoupon}
-
-      />
+      <AppliedCouponModal open={viewCoupons} handleClose={handleCloseViewCoupon} />
 
       <hr />
       <Typography variant="h5" gutterBottom>

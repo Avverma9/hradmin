@@ -148,6 +148,7 @@ export default function HotelDetails({
   const handleToggleFrontPage = async () => {
     try {
       const onFrontPage = !hotel.onFront;
+    
       await axios.patch(`${localUrl}/hotels/update/${hotelId}`, {
         onFront: onFrontPage,
       });

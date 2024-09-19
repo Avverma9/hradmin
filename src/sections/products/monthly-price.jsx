@@ -4,7 +4,6 @@ import axios from 'axios';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 import { FaRupeeSign } from 'react-icons/fa6';
-import { CiCalendarDate } from 'react-icons/ci';
 import { LiaRupeeSignSolid } from 'react-icons/lia';
 import React, { useState, useEffect, useCallback } from 'react';
 
@@ -29,6 +28,7 @@ import {
   FormControl,
   CardContent,
   TableContainer,
+  InputAdornment,
 } from '@mui/material';
 
 import { localUrl } from 'src/utils/util';
@@ -42,6 +42,7 @@ export default function MonthlyPrice() {
   const [isAddition, setIsAddition] = useState(true); // true for Add, false for Minus
   const [hotels, setHotels] = useState([]);
   const [selectedHotel, setSelectedHotel] = useState('');
+  const [selectedRoom, setSelectedRoom] = useState(''); // New state for selected room
   const hotelEmail = localStorage.getItem('user_email');
   const role = localStorage.getItem('user_role');
 
@@ -63,11 +64,10 @@ export default function MonthlyPrice() {
 
       const res = await response.json();
 
-      // Check the role and set hotels accordingly
       if (role === 'Admin' || role === 'Developer') {
-        setHotels(res.data); // For Admin and Developer, use res.data
+        setHotels(res.data);
       } else {
-        setHotels(res); // For PMS, use res directly
+        setHotels(res);
       }
     } catch (error) {
       console.error('Error fetching hotels:', error);
@@ -76,7 +76,7 @@ export default function MonthlyPrice() {
   }, [role, hotelEmail]);
 
   const fetchMonthlyPriceData = async (hotelId) => {
-    if (!hotelId) return; // Avoid fetching data if no hotel is selected
+    if (!hotelId) return;
     try {
       const response = await axios.get(`${localUrl}/monthly-set-room-price/get/by/${hotelId}`);
       setData(response?.data);
@@ -85,10 +85,11 @@ export default function MonthlyPrice() {
     }
   };
 
-  const handleHotelChange = (event) => {
+  const handleHotelChange = async (event) => {
     const hotelId = event.target.value;
     setSelectedHotel(hotelId);
-    fetchMonthlyPriceData(hotelId);
+    setSelectedRoom(''); // Reset selected room
+    await fetchMonthlyPriceData(hotelId);
   };
 
   const handleStartDateChange = (date) => {
@@ -98,12 +99,17 @@ export default function MonthlyPrice() {
   const handleEndDateChange = (date) => {
     setEndDate(date);
   };
+
   const handleIsAdditionChange = (event) => {
     setIsAddition(event.target.value === 'Add');
   };
 
   const handleMonthPriceChange = (event) => {
     setMonthPrice(event.target.value);
+  };
+
+  const handleRoomChange = (event) => {
+    setSelectedRoom(event.target.value);
   };
 
   useEffect(() => {
@@ -119,27 +125,27 @@ export default function MonthlyPrice() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      if (!selectedHotel || !startDate || !endDate || !monthPrice) {
+      if (!selectedHotel || !selectedRoom || !startDate || !endDate || !monthPrice) {
         toast.warn('Please fill all fields', { autoClose: 3000 });
         return;
       }
 
-      // Format the start and end dates correctly
       const formattedStartDate = format(startDate, 'yyyy-MM-dd');
       const formattedEndDate = format(endDate, 'yyyy-MM-dd');
 
-      await axios.post(`${localUrl}/monthly-set-room-price/${selectedHotel}`, {
+      await axios.post(`${localUrl}/monthly-set-room-price/${selectedHotel}/${selectedRoom}`, {
         startDate: formattedStartDate,
         endDate: formattedEndDate,
         isAddition,
-        monthPrice, // Pass the month price as well
+        monthPrice,
       });
       toast.success('Monthly price set successfully', { autoClose: 3000 });
       setStartDate(null);
       setEndDate(null);
       setMonthPrice('');
-      setIsAddition(true); // Reset isAddition to default (true for Add)
-      fetchMonthlyPriceData(selectedHotel); // Refresh data after submission
+      setIsAddition(true);
+      setSelectedRoom('');
+      fetchMonthlyPriceData(selectedHotel);
     } catch (error) {
       toast.error('Failed to set monthly price', { autoClose: 3000 });
     }
@@ -152,7 +158,7 @@ export default function MonthlyPrice() {
       );
       if (response.status === 200) {
         toast.success('Successfully removed');
-        fetchMonthlyPriceData(selectedHotel); // Refresh data after deletion
+        fetchMonthlyPriceData(selectedHotel);
       }
     } catch (error) {
       toast.error("It seems there's an issue!", { autoClose: 3000 });
@@ -183,7 +189,6 @@ export default function MonthlyPrice() {
             <br />
             - Minus = means you will subtract the price.
             <br />
-           
           </Typography>
         </CardContent>
       </Card>
@@ -200,14 +205,36 @@ export default function MonthlyPrice() {
             label="Select Hotel"
             sx={{ borderRadius: 1 }}
           >
-            {hotels?.length > 0 &&
-              hotels?.map((hotel) => (
+            {hotels.length > 0 &&
+              hotels.map((hotel) => (
                 <MenuItem key={hotel.hotelId} value={hotel.hotelId}>
                   {hotel.hotelName}
                 </MenuItem>
               ))}
           </Select>
         </FormControl>
+
+        {/* Room Selection */}
+        {selectedHotel && (
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel id="room-select-label">Select Room</InputLabel>
+            <Select
+              labelId="room-select-label"
+              value={selectedRoom}
+              onChange={handleRoomChange}
+              label="Select Room"
+              sx={{ borderRadius: 1 }}
+            >
+              {hotels
+                .find((h) => h.hotelId === selectedHotel)
+                ?.rooms.map((room) => (
+                  <MenuItem key={room.roomId} value={room.roomId}>
+                    {room.type}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+        )}
 
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DatePicker
@@ -258,62 +285,51 @@ export default function MonthlyPrice() {
           onChange={handleMonthPriceChange}
           fullWidth
           sx={{ mb: 2 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <FaRupeeSign />
+              </InputAdornment>
+            ),
+          }}
         />
-
-        <Button type="submit" variant="contained" color="primary" fullWidth>
+        <Button variant="contained" type="submit" fullWidth>
           Set Monthly Price
         </Button>
       </form>
 
-      {data.length > 0 && (
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h6" gutterBottom>
-            Existing Monthly Prices
-          </Typography>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>
-                    <CiCalendarDate /> Start date
-                  </TableCell>
-                  <TableCell>
-                    <CiCalendarDate /> End date
-                  </TableCell>
-                  <TableCell>
-                    <CiCalendarDate /> Choose operation
-                  </TableCell>
-                  <TableCell>
-                    <LiaRupeeSignSolid /> Price
-                  </TableCell>
-                  <TableCell>Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {data?.map((item) => (
-                  <TableRow key={item._id}>
-                    <TableCell>{fDate(item.startDate)}</TableCell>
-                    <TableCell>{fDate(item.endDate)}</TableCell>
-                    <TableCell>{item.isAddition ? 'Will be added' : 'Will be minus'}</TableCell>
-                    <TableCell>
-                      {item.monthPrice} <FaRupeeSign />
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => handleDelete(item.hotelId)}
-                      >
-                        Remove
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      )}
+      <TableContainer component={Paper} sx={{ mt: 3 }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Hotel</TableCell>
+              <TableCell>Room</TableCell>
+              <TableCell>Start Date</TableCell>
+              <TableCell>End Date</TableCell>
+              <TableCell>Price</TableCell>
+              <TableCell>Action</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell>{item.hotelId}</TableCell>
+                <TableCell>{item.roomId}</TableCell>
+                <TableCell>{fDate(item.startDate)}</TableCell>
+                <TableCell>{fDate(item.endDate)}</TableCell>
+                <TableCell>
+                  <LiaRupeeSignSolid /> {item.monthPrice}
+                </TableCell>
+                <TableCell>
+                  <Button variant="outlined" color="error" onClick={() => handleDelete(item.hotelId)}>
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 }
