@@ -214,7 +214,8 @@ export default function HotelDetails({
         <button className="custom-button" onClick={handleGoBack} sx={{ mb: 2 }}>
           <IoReturnUpBack /> Back
         </button>
-        {(role === 'Developer' || role === 'Admin') && (
+        {/* only authorized roles will see this buttons */}
+        {(role === 'Developer' || role === 'Admin') && ( 
           <>
             <button
               style={{ backgroundColor: 'white' }}
