@@ -214,27 +214,28 @@ export default function HotelDetails({
         <button className="custom-button" onClick={handleGoBack} sx={{ mb: 2 }}>
           <IoReturnUpBack /> Back
         </button>
-        {role === 'Admin' ||
-          (role === 'Developer' && (
-            <><button
-            style={{ backgroundColor: 'white' }}
-            onClick={() => handleToggleFrontPage(hotel?.onFront)}
-            className="custom-button"
-          >
-            {hotel?.onFront ? (
-              <>
-                <IoTrashOutline /> Remove from front page
-              </>
-            ) : (
-              <>
-                <GrStatusGood /> Add in front page
-              </>
-            )}
-          </button><button
-            style={{ backgroundColor: 'white' }}
-            onClick={() => handleApproveHotel(hotel?.isAccepted)}
-            className="custom-button"
-          >
+        {(role === 'Developer' || role === 'Admin') && (
+          <>
+            <button
+              style={{ backgroundColor: 'white' }}
+              onClick={() => handleToggleFrontPage(hotel?.onFront)}
+              className="custom-button"
+            >
+              {hotel?.onFront ? (
+                <>
+                  <IoTrashOutline /> Remove from front page
+                </>
+              ) : (
+                <>
+                  <GrStatusGood /> Add to front page
+                </>
+              )}
+            </button>
+            <button
+              style={{ backgroundColor: 'white' }}
+              onClick={() => handleApproveHotel(hotel?.isAccepted)}
+              className="custom-button"
+            >
               {hotel?.isAccepted ? (
                 <>
                   <IoTrashOutline /> Decline
@@ -244,19 +245,20 @@ export default function HotelDetails({
                   <GrStatusGood /> Approve
                 </>
               )}
-            </button><button className="custom-button" onClick={() => handleDeleteHotel(hotel?.hotelId)}>
+            </button>
+            <button className="custom-button" onClick={() => handleDeleteHotel(hotel?.hotelId)}>
               X Delete
-            </button><button
+            </button>
+            <button
               variant="danger"
               sx={{ mb: 2 }}
               onClick={handleMailToHotel}
               className="custom-button"
             >
               <IoMailOpenOutline /> Mail
-            </button></>
-          ))}
-
-        
+            </button>
+          </>
+        )}
       </FlexContainer>
 
       <h4
