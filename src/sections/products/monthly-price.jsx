@@ -256,7 +256,7 @@ export default function MonthlyPrice() {
         </LocalizationProvider>
         <hr />
         <TextField
-          label={selectedHotel}
+          label="Set Price"
           type="number"
           value={monthPrice}
           onChange={handleMonthPriceChange}
