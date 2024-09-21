@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import React, { useState, useEffect } from 'react';
@@ -195,131 +196,160 @@ export default function Coupon() {
 
   return (
     <Container>
-      <Typography variant="h6" gutterBottom>
-        Coupon Management
-      </Typography>
-      <hr />
-      <Button variant="contained" color="primary" onClick={handleOpenCreateCouponModal}>
-        Create Coupon
-      </Button>
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={handleOpenAvailableCouponsModal}
-        sx={{ ml: 2 }}
-      >
-        View Available Coupons
-      </Button>
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={handleOpenViewCoupon} // Open applied coupons modal
-        sx={{ ml: 2 }}
-      >
-        View Applied Coupons
-      </Button>
+    {/* Information Section */}
+    <Typography variant="h6" gutterBottom>
+      Please Read This Before Managing Coupons
+    </Typography>
+    <Typography variant="body2" gutterBottom>
+      Follow these steps to effectively manage your coupons:
+    </Typography>
+    <Typography variant="body2" gutterBottom>
+      1. **Create a Coupon**: Click on "Create Coupon" to set up a new coupon.
+    </Typography>
+    <Typography variant="body2" gutterBottom>
+      2. **View Existing Coupons**: Use the "View Available Coupons" button to check for any existing coupons.
+    </Typography>
+    <Typography variant="body2" gutterBottom>
+      3. **Copy Coupon Code**: If you have available coupons, click the copy icon to copy the coupon code.
+    </Typography>
+    <Typography variant="body2" gutterBottom>
+      4. **Select a Hotel**: Scroll down to view the available hotels and select one.
+    </Typography>
+    <Typography variant="body2" gutterBottom>
+      5. **Apply the Coupon**: Click the "Apply" button next to the selected hotel.
+    </Typography>
+    <Typography variant="body2" gutterBottom>
+      6. **Choose Rooms**: After applying, select the desired rooms and click "Apply" again.
+    </Typography>
+    <Typography variant="body2" gutterBottom>
+      7. **Paste and Apply the Coupon Code**: Enter the copied coupon code and click "Apply."
+    </Typography>
+    <Typography variant="body2" gutterBottom>
+      8. **View Applied Coupons**: If you want to check the details of your applied coupons, click on "View Applied Coupons."
+    </Typography>
 
-      <TextField
-        label="Search Hotels"
-        variant="outlined"
-        fullWidth
-        margin="normal"
-        onChange={handleSearch}
-        value={searchTerm}
-      />
-      <CreateCouponModal
-        open={openCreateCouponModal}
-        handleClose={handleCloseCreateCouponModal}
-        handleCreateCoupon={handleCreateCoupon}
-        couponName={couponName}
-        setCouponName={setCouponName}
-        discountPrice={discountPrice}
-        setDiscountPrice={setDiscountPrice}
-        validity={validity}
-        setValidity={setValidity}
-      />
-      <AppliedCouponModal open={viewCoupons} handleClose={handleCloseViewCoupon} />
+    <hr />
+    <Button variant="contained" color="primary" onClick={handleOpenCreateCouponModal}>
+      Create Coupon
+    </Button>
+    <Button
+      variant="contained"
+      color="secondary"
+      onClick={handleOpenAvailableCouponsModal}
+      sx={{ ml: 2 }}
+    >
+      View Available Coupons
+    </Button>
+    <Button
+      variant="contained"
+      color="secondary"
+      onClick={handleOpenViewCoupon} // Open applied coupons modal
+      sx={{ ml: 2 }}
+    >
+      View Applied Coupons
+    </Button>
 
-      <hr />
-      <Typography variant="h5" gutterBottom>
-        Available Hotels
-      </Typography>
-      <TableContainer component={Paper} sx={{ mb: 4 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Hotel ID</TableCell>
-              <TableCell>Image</TableCell>
-              <TableCell>Hotel Name</TableCell>
-              <TableCell>Owner Name</TableCell>
-              <TableCell>City</TableCell>
-              <TableCell>Actions</TableCell>
+    <TextField
+      label="Search Hotels"
+      variant="outlined"
+      fullWidth
+      margin="normal"
+      onChange={handleSearch}
+      value={searchTerm}
+    />
+    <CreateCouponModal
+      open={openCreateCouponModal}
+      handleClose={handleCloseCreateCouponModal}
+      handleCreateCoupon={handleCreateCoupon}
+      couponName={couponName}
+      setCouponName={setCouponName}
+      discountPrice={discountPrice}
+      setDiscountPrice={setDiscountPrice}
+      validity={validity}
+      setValidity={setValidity}
+    />
+    <AppliedCouponModal open={viewCoupons} handleClose={handleCloseViewCoupon} />
+
+    <hr />
+    <Typography variant="h5" gutterBottom>
+      Available Hotels
+    </Typography>
+    <TableContainer component={Paper} sx={{ mb: 4 }}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Hotel ID</TableCell>
+            <TableCell>Image</TableCell>
+            <TableCell>Hotel Name</TableCell>
+            <TableCell>Owner Name</TableCell>
+            <TableCell>City</TableCell>
+            <TableCell>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {paginatedHotels.map((hotel) => (
+            <TableRow key={hotel.hotelId}>
+              <TableCell>{hotel.hotelId}</TableCell>
+              <TableCell>
+                <img
+                  src={hotel.images[0]}
+                  alt={hotel.hotelName}
+                  style={{
+                    width: '70px',
+                    height: '70px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                  }}
+                />
+              </TableCell>
+              <TableCell>{hotel.hotelName}</TableCell>
+              <TableCell>{hotel.hotelOwnerName}</TableCell>
+              <TableCell>{hotel.city}</TableCell>
+              <TableCell>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => handleOpenModal(hotel)}
+                >
+                  Apply
+                </Button>
+              </TableCell>
             </TableRow>
-          </TableHead>
-          <TableBody>
-            {paginatedHotels.map((hotel) => (
-              <TableRow key={hotel.hotelId}>
-                <TableCell>{hotel.hotelId}</TableCell>
-                <TableCell>
-                  <img
-                    src={hotel.images[0]}
-                    alt={hotel.hotelName}
-                    style={{
-                      width: '70px',
-                      height: '70px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                    }}
-                  />
-                </TableCell>
-                <TableCell>{hotel.hotelName}</TableCell>
-                <TableCell>{hotel.hotelOwnerName}</TableCell>
-                <TableCell>{hotel.city}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={() => handleOpenModal(hotel)}
-                  >
-                    Apply
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={filteredHotels.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </TableContainer>
-
-      <RoomModal
-        open={openModal}
-        handleClose={handleCloseModal}
-        selectedHotel={selectedHotel}
-        handleOpenCouponModal={handleOpenCouponModal}
+          ))}
+        </TableBody>
+      </Table>
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={filteredHotels.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
       />
+    </TableContainer>
 
-      <CouponCodeModal
-        open={openCouponModal}
-        handleClose={handleCloseCouponModal}
-        couponCode={couponCode}
-        setCouponCode={setCouponCode}
-        handleApplyCouponToRoom={handleApplyCouponToRoom}
-      />
+    <RoomModal
+      open={openModal}
+      handleClose={handleCloseModal}
+      selectedHotel={selectedHotel}
+      handleOpenCouponModal={handleOpenCouponModal}
+    />
 
-      <AvailableCouponsModal
-        open={openAvailableCouponsModal}
-        handleClose={handleCloseAvailableCouponsModal}
-        coupons={coupons}
-        copyToClipboard={copyToClipboard}
-      />
-    </Container>
+    <CouponCodeModal
+      open={openCouponModal}
+      handleClose={handleCloseCouponModal}
+      couponCode={couponCode}
+      setCouponCode={setCouponCode}
+      handleApplyCouponToRoom={handleApplyCouponToRoom}
+    />
+
+    <AvailableCouponsModal
+      open={openAvailableCouponsModal}
+      handleClose={handleCloseAvailableCouponsModal}
+      coupons={coupons}
+      copyToClipboard={copyToClipboard}
+    />
+  </Container>
   );
 }

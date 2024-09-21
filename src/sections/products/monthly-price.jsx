@@ -39,7 +39,6 @@ export default function MonthlyPrice() {
   const [endDate, setEndDate] = useState(null);
   const [monthPrice, setMonthPrice] = useState('');
   const [data, setData] = useState([]);
-  const [isAddition, setIsAddition] = useState(true); // true for Add, false for Minus
   const [hotels, setHotels] = useState([]);
   const [selectedHotel, setSelectedHotel] = useState('');
   const [selectedRoom, setSelectedRoom] = useState(''); // New state for selected room
@@ -100,9 +99,6 @@ export default function MonthlyPrice() {
     setEndDate(date);
   };
 
-  const handleIsAdditionChange = (event) => {
-    setIsAddition(event.target.value === 'Add');
-  };
 
   const handleMonthPriceChange = (event) => {
     setMonthPrice(event.target.value);
@@ -136,14 +132,12 @@ export default function MonthlyPrice() {
       await axios.post(`${localUrl}/monthly-set-room-price/${selectedHotel}/${selectedRoom}`, {
         startDate: formattedStartDate,
         endDate: formattedEndDate,
-        isAddition,
         monthPrice,
       });
       toast.success('Monthly price set successfully', { autoClose: 3000 });
       setStartDate(null);
       setEndDate(null);
       setMonthPrice('');
-      setIsAddition(true);
       setSelectedRoom('');
       fetchMonthlyPriceData(selectedHotel);
     } catch (error) {
@@ -164,7 +158,6 @@ export default function MonthlyPrice() {
       toast.error("It seems there's an issue!", { autoClose: 3000 });
     }
   };
-
   return (
     <Box
       sx={{
@@ -178,18 +171,15 @@ export default function MonthlyPrice() {
     >
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            How to Use This Form
-          </Typography>
-          <Typography variant="body2">
-            In this monthly form, you only need to add one month's data. To set the data, select a
-            start and end date, and choose an operation:
-            <br />
-            - Add = means you will add the price.
-            <br />
-            - Minus = means you will subtract the price.
-            <br />
-          </Typography>
+          <Typography variant="h6" component="h2" gutterBottom>
+      Please Read Before Filling Out This Form
+    </Typography>
+    <Typography variant="body2" gutterBottom>
+      You can set prices for a specific room in your hotel for a particular date range. Specify the price for each date, and you also have the option to remove it in advance if needed.
+    </Typography>
+    <Typography variant="body2" gutterBottom>
+      If you want to see the monthly data of a hotel, please select a hotel first to view the details.
+    </Typography>
         </CardContent>
       </Card>
       <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
@@ -265,21 +255,8 @@ export default function MonthlyPrice() {
           />
         </LocalizationProvider>
         <hr />
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="addition-select-label">Choose Operation</InputLabel>
-          <Select
-            labelId="addition-select-label"
-            value={isAddition ? 'Add' : 'Minus'}
-            onChange={handleIsAdditionChange}
-            label="Choose Operation"
-          >
-            <MenuItem value="Add">Add</MenuItem>
-            <MenuItem value="Minus">Minus</MenuItem>
-          </Select>
-        </FormControl>
-        <hr />
         <TextField
-          label="Month Price"
+          label={selectedHotel}
           type="number"
           value={monthPrice}
           onChange={handleMonthPriceChange}
@@ -311,22 +288,30 @@ export default function MonthlyPrice() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {data.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.hotelId}</TableCell>
-                <TableCell>{item.roomId}</TableCell>
-                <TableCell>{fDate(item.startDate)}</TableCell>
-                <TableCell>{fDate(item.endDate)}</TableCell>
-                <TableCell>
-                  <LiaRupeeSignSolid /> {item.monthPrice}
-                </TableCell>
-                <TableCell>
-                  <Button variant="outlined" color="error" onClick={() => handleDelete(item.hotelId)}>
-                    Delete
-                  </Button>
+          {data && data.length > 0 ? (
+              data.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.hotelId}</TableCell>
+                  <TableCell>{item.roomId}</TableCell>
+                  <TableCell>{fDate(item.startDate)}</TableCell>
+                  <TableCell>{fDate(item.endDate)}</TableCell>
+                  <TableCell>
+                    <LiaRupeeSignSolid /> {item.monthPrice}
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="outlined" color="error" onClick={() => handleDelete(item.hotelId)}>
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  No data available.
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </TableContainer>
