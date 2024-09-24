@@ -395,8 +395,9 @@ export default function HotelDetails({
                   <FaIndianRupeeSign /> {room?.price}
                 </p>
                 <p className="card-text">
-                  <strong>Number of Rooms:</strong> {room.countRooms}
+                  <strong>Total / Available Rooms:</strong> {room.totalRooms} / {room.countRooms}
                 </p>
+               
               </div>
             </div>
           ))

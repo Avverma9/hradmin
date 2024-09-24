@@ -219,7 +219,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
                         <LuBedDouble /> {room?.bedTypes}
                       </Typography>
                       <Typography style={{ color: 'green' }} variant="body2">
-                        Number of Rooms - {room?.countRooms}
+                        Available Rooms - {room?.countRooms}
                       </Typography>
                     </RoomDetails>
                     <RoomActions>

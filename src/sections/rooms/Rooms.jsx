@@ -210,7 +210,10 @@ export default function Rooms() {
                             ₹ {room.price}
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            No. of Rooms: {room.countRooms}
+                            No. of Rooms: {room.totalRooms}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            Available Rooms: {room.countRooms}
                           </Typography>
                           <IconButton
                             onClick={() => handleEdit(room)}
