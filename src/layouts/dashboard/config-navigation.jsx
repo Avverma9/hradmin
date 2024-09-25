@@ -8,6 +8,7 @@ import {
   MdOutlineTravelExplore,
   MdOutlineAdminPanelSettings,
 } from 'react-icons/md'; // Ensure these are correct
+import { SiTicktick } from "react-icons/si";
 import { BsInfoSquare } from 'react-icons/bs';
 import { VscFeedback } from 'react-icons/vsc';
 import { CiBellOn, CiImageOn } from 'react-icons/ci';
@@ -27,6 +28,7 @@ const icons = {
   notification: <CiBellOn style={{ width: '24px', height: '24px' }} />,
   coupon: <RiCoupon3Line style={{ width: '24px', height: '24px' }} />,
   admin: <MdOutlineAdminPanelSettings style={{ width: '24px', height: '24px' }} />,
+  available: <SiTicktick style={{ width: '24px', height: '24px' }} />,
   user: <FaRegUserCircle style={{ width: '24px', height: '24px' }} />,
   setMonthlyPrice: <FaDollarSign style={{ width: '24px', height: '24px' }} />,
 };
@@ -127,6 +129,11 @@ const getNavConfig = () => {
           title: 'Add travel location',
           path: '/add-travel-location',
           icon: icons.travel,
+        },
+        {
+          title: 'Availability',
+          path: '/hotels/availability',
+          icon: icons.available,
         },
         {
           title: 'Set Month',

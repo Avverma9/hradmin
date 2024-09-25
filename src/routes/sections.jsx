@@ -25,6 +25,8 @@ const PmsCouponPage = lazy(() => import('src/pages/superAdmin/pms-coupon'));
 const ComplaintPage = lazy(() => import('src/pages/admin/complaint-page'));
 const PmsComplaintsPage = lazy(() => import('src/pages/superAdmin/complaint-page'));
 const BulkOperation = lazy(() => import('src/pages/admin/bulk-page'));
+const AvailabilityPage = lazy(() => import('src/pages/admin/availability-page'));
+
 export default function Router() {
   const routes = useRoutes([
     {
@@ -50,6 +52,7 @@ export default function Router() {
         { path: 'all-users', element: <UserDetails /> },
         { path: 'all-reviews', element: <AllReviews /> },
         { path: 'complaints', element: <ComplaintPage /> },
+        { path: 'hotels/availability', element: <AvailabilityPage /> },
         { path: 'apply-coupon', element: <CouponPage /> },
         { path: 'your-complaints', element: <PmsComplaintsPage /> },
         { path: 'apply-pms-coupon', element: <PmsCouponPage /> },

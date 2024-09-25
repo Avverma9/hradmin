@@ -85,6 +85,11 @@ export default function AppView() {
       case 'Messenger':
         navigate('/messenger');
         break;
+      case 'Availability':
+        if (role === 'Admin') {
+          navigate('/hotels/availability');
+        }
+        break;
       case 'Coupons':
         navigate('/apply-pms-coupon');
         break;
@@ -161,6 +166,11 @@ export default function AppView() {
       icon: 'https://png.pngtree.com/png-vector/20220803/ourmid/pngtree-gift-voucher-coupon-design-png-image_6097745.png',
     },
     {
+      title: 'Availability',
+      color: 'error',
+      icon: 'https://www.freeiconspng.com/thumbs/check-tick-icon/tick-icon-30.png',
+    },
+    {
       title: 'Monthly Price',
       color: 'success',
       icon: 'https://atlas-content-cdn.pixelsquid.com/stock-images/calendar-Q9V6xnA-600.jpg',
@@ -183,7 +193,7 @@ export default function AppView() {
       ? widgets
       : widgets.filter(
           (widget) =>
-            !['Users', 'Partners', 'Reviews', 'Travel locations', 'Notifications'].includes(
+            !['Users', 'Partners', 'Reviews', 'Travel locations', 'Notifications','Availability'].includes(
               widget.title
             )
         );
