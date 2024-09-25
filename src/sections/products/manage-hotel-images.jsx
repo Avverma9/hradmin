@@ -66,7 +66,6 @@ const ImageUpload = ({ open, hotelId, onClose }) => {
       setImageFiles([]);
       const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
       setImages(response.data.images || []);
-      setImageFiles([]);
     } catch (error) {
       console.error('Error uploading images:', error);
       toast.error('Failed to upload images');
@@ -88,24 +87,16 @@ const ImageUpload = ({ open, hotelId, onClose }) => {
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '90%', // Adjusted width to be more flexible
-          maxWidth: 600, // Maximum width for large screens
+          width: '90%',
+          maxWidth: 600,
           bgcolor: 'background.paper',
           borderRadius: 2,
           boxShadow: 24,
-          p: 2, // Reduced padding for smaller screens
+          p: 3,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           overflow: 'auto',
-          '@media (min-width:600px)': {
-            // Medium screens and up
-            width: '80%',
-          },
-          '@media (min-width:900px)': {
-            // Large screens and up
-            width: '60%',
-          },
         }}
       >
         <IconButton
@@ -120,17 +111,18 @@ const ImageUpload = ({ open, hotelId, onClose }) => {
         <Typography id="image-upload-modal" variant="h6" component="h2" gutterBottom>
           Upload Images
         </Typography>
+        
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
             <CircularProgress />
           </Box>
         ) : (
-          <Box sx={{ width: '100%' }}>
+          <Box sx={{ width: '100%', textAlign: 'center' }}>
             <Box
               sx={{
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: 1, // Adjusted gap for smaller screens
+                gap: 1,
                 mb: 2,
                 justifyContent: 'center',
               }}
@@ -151,8 +143,9 @@ const ImageUpload = ({ open, hotelId, onClose }) => {
                         position: 'absolute',
                         top: 8,
                         right: 8,
-                        bgcolor: 'rgba(0, 0, 0, 0.5)',
+                        bgcolor: 'rgba(255, 0, 0, 0.7)',
                         color: 'white',
+                        '&:hover': { bgcolor: 'rgba(255, 0, 0, 0.9)' },
                       }}
                     >
                       <DeleteIcon />
@@ -161,12 +154,13 @@ const ImageUpload = ({ open, hotelId, onClose }) => {
                 ))
               )}
             </Box>
-            <Box sx={{ width: '100%', textAlign: 'center' }}>
+            
+            <Box sx={{ width: '100%' }}>
               <input
                 type="file"
                 multiple
                 onChange={handleFileChange}
-                style={{ marginBottom: '16px', width: '100%' }} // Full width for input
+                style={{ marginBottom: '16px', width: '100%' }} 
               />
               <Button
                 variant="contained"
@@ -175,8 +169,9 @@ const ImageUpload = ({ open, hotelId, onClose }) => {
                 onClick={handleUploadImages}
                 disabled={uploading}
                 sx={{
-                  width: '100%', // Full width for button
-                  maxWidth: 200, // Maximum width for button
+                  width: '100%',
+                  maxWidth: 200,
+                  marginTop: 2, // Added margin for better spacing
                 }}
               >
                 {uploading ? 'Uploading...' : 'Add More Images'}

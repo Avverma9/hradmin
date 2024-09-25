@@ -48,6 +48,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
   const [roomPrice, setRoomPrice] = useState('');
   const [bedTypesValue, setBedTypesValue] = useState('');
   const [countRooms, setCountRooms] = useState('');
+  const [totalRooms, setTotalRooms] = useState('');
   const [images, setImages] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
@@ -93,6 +94,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
     formData.append('price', roomPrice);
     formData.append('bedTypes', bedTypesValue);
     formData.append('countRooms', countRooms);
+    formData.append('totalRooms', totalRooms);
 
     images.forEach((file) => {
       formData.append('images', file);
@@ -128,6 +130,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
     setRoomPrice('');
     setBedTypesValue('');
     setCountRooms('');
+    setTotalRooms('');
     setImages([]); // Clear images
     setCurrentRoomId(null);
     setIsAddingRoom(false);
@@ -157,6 +160,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
     formData.append('price', roomPrice);
     formData.append('bedTypes', bedTypesValue);
     formData.append('countRooms', countRooms);
+    formData.append('totalRooms', totalRooms);
 
     images.forEach((file) => {
       formData.append('images', file);
@@ -187,6 +191,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
     setRoomPrice(room.price);
     setBedTypesValue(room.bedTypes);
     setCountRooms(room.countRooms);
+    setTotalRooms(room.totalRooms);
     setImages([]); // Optionally clear images or handle images differently
     setCurrentRoomId(room.roomId);
     setIsAddingRoom(true);
@@ -299,12 +304,22 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Number of rooms"
+                  label="Available rooms"
                   variant="outlined"
                   fullWidth
                   margin="normal"
                   value={countRooms}
                   onChange={(e) => setCountRooms(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Total rooms"
+                  variant="outlined"
+                  fullWidth
+                  margin="normal"
+                  value={totalRooms}
+                  onChange={(e) => setTotalRooms(e.target.value)}
                 />
               </Grid>
               <Grid item xs={12}>

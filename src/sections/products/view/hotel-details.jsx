@@ -10,24 +10,17 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 /* eslint-disable jsx-a11y/img-redundant-alt */
 import { HiOutlineDocumentText } from 'react-icons/hi';
-import FilterIcon from '@mui/icons-material/Filter';
 import React, { useState, useEffect } from 'react';
-import { FaIndianRupeeSign } from 'react-icons/fa6';
 import { FaBed, FaReply, FaUtensils, FaCalendarAlt, FaMoneyBillWave } from 'react-icons/fa';
 import { MdCancel, MdCheckCircle } from 'react-icons/md';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Row, Col, Button, Carousel } from 'react-bootstrap';
-import {
-  IoReturnUpBack,
-  IoTrashOutline,
-  IoFastFoodOutline,
-  IoMailOpenOutline,
-} from 'react-icons/io5';
+import { Row, Col, Button } from 'react-bootstrap';
+import { IoReturnUpBack, IoTrashOutline, IoMailOpenOutline } from 'react-icons/io5';
 import { GrStatusGood } from 'react-icons/gr';
-import Tooltip from '@mui/material/Tooltip';
-import { styled, Container } from '@mui/material';
+import { styled, Container, IconButton } from '@mui/material';
 import { role, localUrl } from 'src/utils/util';
 import LinearLoader from 'src/utils/Loading';
+import { Edit } from '@mui/icons-material';
 import AddFoodModal from '../manage-foods'; // Import the AddFoodModal component
 
 import './hotelDetails.css';
@@ -35,7 +28,9 @@ import Amenities from '../manage-amenties';
 import AddRoomModal from '../manage-rooms';
 import BasicDetails from '../basic-details';
 import Reviews from './superAdmin/reviews';
-import ImageUpload from '../manage-hotel-images';
+import RoomCarousel from '../rooms-carousel';
+import FoodCarousel from '../foods-carousel';
+import HotelCarousel from '../hotel-images';
 
 export default function HotelDetails({
   product,
@@ -49,7 +44,6 @@ export default function HotelDetails({
   const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [amenitiesToShow, setAmenitiesToShow] = useState([]);
   const path = location.pathname;
-  const [showImageModal, setShowImageModal] = useState(false);
   const hotelId = path.substring(path.lastIndexOf('/') + 1);
   const [isModalOpen, setModalOpen] = useState(false);
   const [hotel, setHotel] = useState(null);
@@ -103,8 +97,8 @@ export default function HotelDetails({
     fetchHotelDetails();
   }, [hotelId]);
 
-  const limitedFood = hotel?.foods?.slice(0, 4);
-  const limitedRoom = hotel?.rooms?.slice(0, 4);
+  const limitedFood = hotel?.foods;
+  const limitedRoom = hotel?.rooms;
   // ------------------------------------amenities flat--------------------------------------//
   useEffect(() => {
     if (hotel) {
@@ -148,7 +142,7 @@ export default function HotelDetails({
   const handleToggleFrontPage = async () => {
     try {
       const onFrontPage = !hotel.onFront;
-    
+
       await axios.patch(`${localUrl}/hotels/update/${hotelId}`, {
         onFront: onFrontPage,
       });
@@ -163,9 +157,6 @@ export default function HotelDetails({
       toast.error(`Error updating front page status: ${errorMessage}`);
     }
   };
-  // -------------------------------------------Update hotel image------------------------------------
-  const handleShowImageModal = () => setShowImageModal(true);
-  const handleCloseImageModal = () => setShowImageModal(false);
 
   // -------------------------------------------------------------------------------------------
   const FlexContainer = styled('div')({
@@ -209,6 +200,7 @@ export default function HotelDetails({
       navigate('/hotels');
     }
   };
+
   return (
     <div className="container mt-4">
       <FlexContainer>
@@ -216,7 +208,7 @@ export default function HotelDetails({
           <IoReturnUpBack /> Back
         </button>
         {/* only authorized roles will see this buttons for use */}
-        {(role === 'Developer' || role === 'Admin') && ( 
+        {(role === 'Developer' || role === 'Admin') && (
           <>
             <button
               style={{ backgroundColor: 'white' }}
@@ -274,32 +266,7 @@ export default function HotelDetails({
         {hotel.hotelName}
       </h4>
 
-      <Carousel>
-        {hotel?.images?.map((image, index) => (
-          <Carousel.Item key={index} style={{ position: 'relative' }}>
-            <img
-              className="d-block w-100"
-              src={image}
-              alt={`Slide ${index + 1}`}
-              style={{ height: '400px', objectFit: 'cover' }}
-            />
-            <Button
-              style={{
-                position: 'absolute',
-                top: '10px',
-                right: '10px',
-                zIndex: 10,
-                background: 'transparent',
-              }}
-              onClick={handleShowImageModal}
-            >
-              <FilterIcon />
-            </Button>
-          </Carousel.Item>
-        ))}
-      </Carousel>
-
-      <ImageUpload open={showImageModal} onClose={handleCloseImageModal} hotelId={hotel.hotelId} />
+      <HotelCarousel hotel={hotel} />
 
       <hr />
 
@@ -308,16 +275,21 @@ export default function HotelDetails({
         <h3 style={{ margin: 0 }} className="heading-text">
           Basic Details
         </h3>
-        <button
-          style={{ backgroundColor: 'rgb(222 124 124)', color: 'white', marginLeft: '1rem' }}
-          className="custom-button"
+        <IconButton
+          style={{
+            backgroundColor: '#007bff', // Same color as the button
+            color: 'white',
+            marginLeft: '1rem',
+            borderRadius: '50%', // Circular shape
+            padding: '10px', // Adjust padding for circular appearance
+          }}
           onClick={(e) => {
             e.stopPropagation(); // Prevent the card click event from firing
-            handleBasicDetailsOpen();
+            handleBasicDetailsOpen(); // Function to open the basic details modal
           }}
         >
-          Manage Details
-        </button>
+          <Edit />
+        </IconButton>
       </div>
       <hr />
       <div>
@@ -359,99 +331,47 @@ export default function HotelDetails({
         <h3 style={{ margin: 0 }} className="heading-text">
           Room Types
         </h3>
-        <button
-          style={{ backgroundColor: 'rgb(222 124 124)', color: 'white', marginLeft: '1rem' }}
-          className="custom-button"
+        <IconButton
+          style={{
+            backgroundColor: '#007bff',
+            color: 'white',
+            marginLeft: '1rem',
+            borderRadius: '50%', // Circular shape
+            padding: '10px', // Adjust padding for the circular appearance
+          }}
           onClick={(e) => {
             e.stopPropagation(); // Prevent the card click event from firing
             handleOpenRoom();
           }}
         >
-          Manage Rooms
-        </button>
+          <Edit />
+        </IconButton>
       </div>
       <br />
-      <div className="room-container">
-        {hotel?.rooms?.length === 0 ? (
-          <img
-            src="https://cdni.iconscout.com/illustration/premium/thumb/data-error-11521121-9404366.png?f=webp"
-            alt="No rooms available"
-            style={{ display: 'block', margin: 'auto' }}
-          />
-        ) : (
-          limitedRoom?.map((room) => (
-            <div key={room._id} className="room-card">
-              <div className="card-header">
-                <div className="room-image">
-                  <img src={room.images} alt={`${room.type} room`} />
-                </div>
-              </div>
-              <div className="card-body">
-                <p className="card-text">{room.type}</p>
-                <p className="card-text">
-                  <strong>Bed Type:</strong> {room.bedTypes}
-                </p>
-                <p style={{ color: 'red' }} className="card-text">
-                  <FaIndianRupeeSign /> {room?.price}
-                </p>
-                <p className="card-text">
-                  <strong>Total / Available Rooms:</strong> {room.totalRooms} / {room.countRooms}
-                </p>
-               
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
+      <RoomCarousel limitedRoom={limitedRoom} />
       <br />
       {/* ----------------------------------------------food details--------------------------------- */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h3 style={{ margin: 0 }} className="heading-text">
           Foods
         </h3>
-        <Button
-          style={{ backgroundColor: 'rgb(222 124 124)', color: 'white', marginLeft: '1rem' }}
-          className="custom-button"
+        <IconButton
+          style={{
+            backgroundColor: '#007bff',
+            color: 'white',
+            marginLeft: '1rem',
+            borderRadius: '50%', // Circular shape
+            padding: '10px', // Adjust padding for the circular appearance
+          }}
           onClick={() => {
-            handleOpenModal();
+            handleOpenModal(); // Function to open the modal for managing foods
           }}
         >
-          Manage Foods
-        </Button>
+          <Edit />
+        </IconButton>
       </div>
       <br />
-      <div className="food-container">
-        {hotel.foods.length === 0 ? (
-          <img
-            src="https://cdni.iconscout.com/illustration/premium/thumb/data-error-11521121-9404366.png?f=webp"
-            alt=""
-          />
-        ) : (
-          limitedFood?.map((food) => (
-            <div key={food._id} className="food-card">
-              <div className="card-header">
-                <h4 className="food-name">{food.name}</h4>
-                {food.images && (
-                  <img className="food-image" src={food.images} alt={`${food.name} image`} />
-                )}
-              </div>
-
-              <div className="card-body">
-                <p className="card-text">
-                  <IoFastFoodOutline /> {food?.foodType}
-                </p>
-                <p style={{ color: 'red' }} className="card-text">
-                  <FaIndianRupeeSign /> {food?.price}
-                </p>
-                <p style={{ color: 'green' }} className="card-text">
-                  <Tooltip title={food?.about}>{food.about}</Tooltip>
-                </p>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+      <FoodCarousel limitedFood={limitedFood} />
       <hr />
       {hotel?.foods?.length > 0 && (
         <Button
@@ -472,7 +392,16 @@ export default function HotelDetails({
       <hr />
       <br />
       {/* -----------------------------------------amenities details--------------------------------- */}
-      <div style={{ padding: '1rem' }}>
+      <div
+        style={{
+          border: '1px solid #000', // Thicker border and darker color
+          borderRadius: '8px', // Rounded corners
+          padding: '16px', // Padding inside the div
+          margin: '16px 0', // Margin outside the div
+          backgroundColor: '#fff', // Background color should contrast with the border
+          boxSizing: 'border-box', // Include padding and border in total size
+        }}
+      >
         {/* Header Section */}
         <div
           style={{
@@ -485,17 +414,18 @@ export default function HotelDetails({
           <h3 style={{ margin: 0 }} className="heading-text">
             Amenities
           </h3>
-          <Button
+          <IconButton
             style={{
-              backgroundColor: 'rgb(222 124 124)', // Green button color
+              backgroundColor: '#007bff', // Same color as the button
               color: 'white',
+              marginLeft: '1rem',
+              borderRadius: '50%', // Circular shape
+              padding: '10px', // Adjust padding for circular appearance
             }}
-            className="custom-button"
-            variant="contained"
-            onClick={() => handleOpenAmenities()}
+            onClick={() => handleOpenAmenities()} // Function to open the amenities modal
           >
-            Manage Amenities
-          </Button>
+            <Edit />
+          </IconButton>
         </div>
 
         {/* Amenities List */}
