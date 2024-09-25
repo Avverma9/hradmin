@@ -2,177 +2,261 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import axios from 'axios';
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { isBefore, isSameDay } from 'date-fns';
 
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import {
-    Grid, Table, Paper, Button, Dialog,
-    TableRow, TextField, TableBody, TableCell,
-    TableHead, Typography, DialogTitle, DialogContent, DialogActions,
-    TableContainer, CircularProgress
+  Grid,
+  Table,
+  Paper,
+  Button,
+  Dialog,
+  TableRow,
+  TextField,
+  TableBody,
+  TableCell,
+  TableHead,
+  InputBase,
+  Typography,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TableContainer,
+  TablePagination,
+  CircularProgress,
 } from '@mui/material';
 
 import { localUrl } from 'src/utils/util';
 
 const HotelAvailability = () => {
-    const [fromDate, setFromDate] = useState(null);
-    const [toDate, setToDate] = useState(null);
-    const [hotels, setHotels] = useState([]);
-    const [selectedHotel, setSelectedHotel] = useState(null);
-    const [openDialog, setOpenDialog] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [openFromPicker, setOpenFromPicker] = useState(false);
-    const [openToPicker, setOpenToPicker] = useState(false);
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
+  const [hotels, setHotels] = useState([]);
+  const [selectedHotel, setSelectedHotel] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [openFromPicker, setOpenFromPicker] = useState(false);
+  const [openToPicker, setOpenToPicker] = useState(false);
 
-    const fetchHotels = async () => {
-        if (!fromDate || !toDate) {
-            alert('Please select both from date and to date.');
-            return;
-        }
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [searchTerm, setSearchTerm] = useState('');
 
-        const from = fromDate.toISOString();
-        const to = toDate.toISOString();
+  const fetchHotels = async () => {
+    if (!fromDate || !toDate) {
+      alert('Please select both from date and to date.');
+      return;
+    }
 
-        setLoading(true);
+    const from = fromDate.toISOString();
+    const to = toDate.toISOString();
 
-        try {
-            const response = await axios.get(`${localUrl}/check/all-hotels/room-availability?fromDate=${from}&toDate=${to}`);
-            setHotels(response.data);
-        } catch (error) {
-            console.error('Error fetching hotel data', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    setLoading(true);
 
-    const handleViewMore = (hotel) => {
-        setSelectedHotel(hotel);
-        setOpenDialog(true);
-    };
+    try {
+      const response = await axios.get(
+        `${localUrl}/check/all-hotels/room-availability?fromDate=${from}&toDate=${to}`
+      );
+      setHotels(response.data);
+    } catch (error) {
+      console.error('Error fetching hotel data', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleCloseDialog = () => {
-        setOpenDialog(false);
-        setSelectedHotel(null);
-    };
+  const handleViewMore = (hotel) => {
+    setSelectedHotel(hotel);
+    setOpenDialog(true);
+  };
 
-    return (
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <Paper style={{ padding: 20 }}>
-                <Typography variant="h4" gutterBottom>
-                    Hotel Availability
-                </Typography>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-                    <div onClick={() => setOpenFromPicker(true)} style={{ flex: 1, cursor: 'pointer' }}>
-                        <DatePicker
-                            label="From Date"
-                            value={fromDate}
-                            onChange={(newValue) => setFromDate(newValue)}
-                            renderInput={(params) => <TextField {...params} />}
-                            open={openFromPicker}
-                            onAccept={() => setOpenFromPicker(false)}
-                            onClose={() => setOpenFromPicker(false)}
-                        />
-                    </div>
-                    <div onClick={() => setOpenToPicker(true)} style={{ flex: 1, cursor: 'pointer' }}>
-                        <DatePicker
-                            label="To Date"
-                            value={toDate}
-                            onChange={(newValue) => setToDate(newValue)}
-                            renderInput={(params) => <TextField {...params} />}
-                            open={openToPicker}
-                            onAccept={() => setOpenToPicker(false)}
-                            onClose={() => setOpenToPicker(false)}
-                        />
-                    </div>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={fetchHotels}
-                        disabled={loading}
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedHotel(null);
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const filteredHotels = hotels.filter(hotel => 
+    hotel.hotelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    hotel.hotelId.toString().includes(searchTerm)
+  );
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <Paper style={{ padding: 20 }}>
+        <Typography variant="h4" gutterBottom>
+          Hotel Availability
+        </Typography>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div onClick={() => setOpenFromPicker(true)} style={{ flex: 1, cursor: 'pointer' }}>
+            <DatePicker
+              label="From Date"
+              value={fromDate}
+              onChange={(newValue) => {
+                if (isBefore(newValue, new Date())) {
+                  alert("You cannot select a past date.");
+                  return;
+                }
+                setFromDate(newValue);
+                if (toDate && isSameDay(newValue, toDate)) {
+                  setToDate(null); // Reset toDate if same as fromDate
+                }
+              }}
+              renderInput={(params) => <TextField {...params} />}
+              open={openFromPicker}
+              onAccept={() => setOpenFromPicker(false)}
+              onClose={() => setOpenFromPicker(false)}
+              minDate={new Date()} // Disable past dates
+            />
+          </div>
+          <div onClick={() => setOpenToPicker(true)} style={{ flex: 1, cursor: 'pointer' }}>
+            <DatePicker
+              label="To Date"
+              value={toDate}
+              onChange={(newValue) => {
+                if (fromDate && isSameDay(fromDate, newValue)) {
+                  alert("Start date and end date cannot be the same.");
+                  return;
+                }
+                setToDate(newValue);
+              }}
+              renderInput={(params) => <TextField {...params} />}
+              open={openToPicker}
+              onAccept={() => setOpenToPicker(false)}
+              onClose={() => setOpenToPicker(false)}
+              minDate={fromDate || new Date()} // Disable dates before fromDate
+            />
+          </div>
+          <Button variant="contained" color="primary" onClick={fetchHotels} disabled={loading}>
+            {loading ? <CircularProgress size={24} color="inherit" /> : 'View Availability'}
+          </Button>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+          <InputBase
+            placeholder="Search by Hotel Name or ID"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '4px', flex: 1 }}
+          />
+        </div>
+
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Hotel Name</TableCell>
+                <TableCell>Total Rooms</TableCell>
+                <TableCell>Booked Rooms</TableCell>
+                <TableCell>Available Rooms</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredHotels.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((hotel) => (
+                <TableRow key={hotel.hotelId}>
+                  <TableCell>
+                    <Link
+                      to={`/view-hotel-details/${hotel.hotelId}`}
+                      style={{ textDecoration: 'none', color: 'inherit' }}
                     >
-                        {loading ? <CircularProgress size={24} color="inherit" /> : 'View Availability'}
+                      {hotel.hotelName}
+                    </Link>
+                  </TableCell>
+                  <TableCell>{hotel.totalRooms}</TableCell>
+                  <TableCell>{hotel.bookedRooms}</TableCell>
+                  <TableCell>{hotel.availableRooms}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      onClick={() => handleViewMore(hotel)}
+                    >
+                      View More
                     </Button>
-                </div>
-                <TableContainer component={Paper}>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Hotel Name</TableCell>
-                                <TableCell>Total Rooms</TableCell>
-                                <TableCell>Booked Rooms</TableCell>
-                                <TableCell>Available Rooms</TableCell>
-                                <TableCell>Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {hotels.map((hotel) => (
-                                <TableRow key={hotel.hotelId}>
-                                    <TableCell>{hotel.hotelName}</TableCell>
-                                    <TableCell>{hotel.totalRooms}</TableCell>
-                                    <TableCell>{hotel.bookedRooms}</TableCell>
-                                    <TableCell>{hotel.availableRooms}</TableCell>
-                                    <TableCell>
-                                        <Button variant="contained" color="secondary" onClick={() => handleViewMore(hotel)}>
-                                            View More
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-                <Dialog open={openDialog} onClose={handleCloseDialog}>
-                    <DialogTitle>{selectedHotel?.hotelName}</DialogTitle>
-                    <DialogContent>
-                        <Grid container spacing={2}>
-                            <Grid item xs={6}>
-                                <Typography variant="body1">Total Rooms:</Typography>
-                                <Typography variant="body2">{selectedHotel?.totalRooms}</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="body1">Booked Rooms:</Typography>
-                                <Typography variant="body2">{selectedHotel?.bookedRooms}</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="body1">Available Rooms:</Typography>
-                                <Typography variant="body2">{selectedHotel?.availableRooms}</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="body1">Cancelled Booking:</Typography>
-                                <Typography variant="body2">{selectedHotel?.cancelledRooms}</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="body1">Checked In Booking:</Typography>
-                                <Typography variant="body2">{selectedHotel?.checkedInRooms}</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="body1">Checked Out Booking:</Typography>
-                                <Typography variant="body2">{selectedHotel?.checkedOutRooms}</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="body1">No Show Booking:</Typography>
-                                <Typography variant="body2">{selectedHotel?.noShowRooms}</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="body1">Failed Booking:</Typography>
-                                <Typography variant="body2">{selectedHotel?.failedRooms}</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="body1">Pending Booking:</Typography>
-                                <Typography variant="body2">{selectedHotel?.pendingRooms}</Typography>
-                            </Grid>
-                        </Grid>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleCloseDialog} color="primary">
-                            Close
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-            </Paper>
-        </LocalizationProvider>
-    );
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredHotels.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
+
+        <Dialog open={openDialog} onClose={handleCloseDialog}>
+          <DialogTitle>{selectedHotel?.hotelName}</DialogTitle>
+          <DialogContent>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Typography variant="body1">Total Rooms:</Typography>
+                <Typography variant="body2">{selectedHotel?.totalRooms}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body1">Booked Rooms:</Typography>
+                <Typography variant="body2">{selectedHotel?.bookedRooms}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body1">Available Rooms:</Typography>
+                <Typography variant="body2">{selectedHotel?.availableRooms}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body1">Cancelled Booking:</Typography>
+                <Typography variant="body2">{selectedHotel?.cancelledRooms}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body1">Checked In Booking:</Typography>
+                <Typography variant="body2">{selectedHotel?.checkedInRooms}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body1">Checked Out Booking:</Typography>
+                <Typography variant="body2">{selectedHotel?.checkedOutRooms}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body1">No Show Booking:</Typography>
+                <Typography variant="body2">{selectedHotel?.noShowRooms}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body1">Failed Booking:</Typography>
+                <Typography variant="body2">{selectedHotel?.failedRooms}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body1">Pending Booking:</Typography>
+                <Typography variant="body2">{selectedHotel?.pendingRooms}</Typography>
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog} color="primary">
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Paper>
+    </LocalizationProvider>
+  );
 };
 
 export default HotelAvailability;

@@ -8,7 +8,7 @@ export default function AllUserPages() {
   return (
     <>
       <Helmet>
-        <title> Users | Roomsstay </title>
+        <title> Availability | Roomsstay </title>
       </Helmet>
 
       <Availability />
