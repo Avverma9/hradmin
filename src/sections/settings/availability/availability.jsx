@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import axios from 'axios';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -37,13 +35,11 @@ const HotelAvailability = () => {
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [openFromPicker, setOpenFromPicker] = useState(false);
-  const [openToPicker, setOpenToPicker] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Pagination state
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchHotels = async () => {
     if (!fromDate || !toDate) {
@@ -51,8 +47,16 @@ const HotelAvailability = () => {
       return;
     }
 
-    const from = fromDate.toISOString();
-    const to = toDate.toISOString();
+    // Format dates to 'yyyy-MM-dd'
+    const formatDate = (date) => {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
+
+    const from = formatDate(fromDate);
+    const to = formatDate(toDate);
 
     setLoading(true);
 
@@ -82,7 +86,7 @@ const HotelAvailability = () => {
     setSearchTerm(event.target.value);
   };
 
-  const filteredHotels = hotels.filter(hotel => 
+  const filteredHotels = hotels.filter(hotel =>
     hotel.hotelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     hotel.hotelId.toString().includes(searchTerm)
   );
@@ -103,13 +107,13 @@ const HotelAvailability = () => {
           Hotel Availability
         </Typography>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div onClick={() => setOpenFromPicker(true)} style={{ flex: 1, cursor: 'pointer' }}>
+          <div style={{ flex: 1 }}>
             <DatePicker
               label="From Date"
               value={fromDate}
               onChange={(newValue) => {
-                if (isBefore(newValue, new Date())) {
-                  alert("You cannot select a past date.");
+                if (newValue && isBefore(newValue, new Date())) {
+                  alert("You cannot select a past or current date.");
                   return;
                 }
                 setFromDate(newValue);
@@ -118,27 +122,21 @@ const HotelAvailability = () => {
                 }
               }}
               renderInput={(params) => <TextField {...params} />}
-              open={openFromPicker}
-              onAccept={() => setOpenFromPicker(false)}
-              onClose={() => setOpenFromPicker(false)}
               minDate={new Date()} // Disable past dates
             />
           </div>
-          <div onClick={() => setOpenToPicker(true)} style={{ flex: 1, cursor: 'pointer' }}>
+          <div style={{ flex: 1 }}>
             <DatePicker
               label="To Date"
               value={toDate}
               onChange={(newValue) => {
-                if (fromDate && isSameDay(fromDate, newValue)) {
+                if (newValue && fromDate && isSameDay(fromDate, newValue)) {
                   alert("Start date and end date cannot be the same.");
                   return;
                 }
                 setToDate(newValue);
               }}
               renderInput={(params) => <TextField {...params} />}
-              open={openToPicker}
-              onAccept={() => setOpenToPicker(false)}
-              onClose={() => setOpenToPicker(false)}
               minDate={fromDate || new Date()} // Disable dates before fromDate
             />
           </div>
