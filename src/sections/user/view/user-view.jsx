@@ -293,6 +293,7 @@ export default function UserPage() {
                 headLabel={[
                   { id: 'name', label: 'Name' },
                   { id: 'email', label: 'Email' },
+                  { id: 'password', label: 'Password' },
                   { id: 'status', label: 'Status' },
                   { id: '' },
                 ]}
@@ -305,6 +306,7 @@ export default function UserPage() {
                       key={row._id}
                       name={`${row.name} (${row.role})`}
                       email={row.email}
+                      password={row.password}
                       status={row?.status ? 'Active' : 'Inactive'}
                       avatarUrl={row.avatarUrl || row.images}
                       selected={selected.indexOf(row.name) !== -1}

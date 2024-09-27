@@ -30,6 +30,10 @@ export default function ViewUserModal({ open, onClose, user }) {
             <Typography>{user?.email}</Typography>
           </Grid>
           <Grid item xs={12} sm={6}>
+            <Typography variant="subtitle1">Password:</Typography>
+            <Typography>{user?.password}</Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
             <Typography variant="subtitle1">Mobile Number:</Typography>
             <Typography>{user?.mobile}</Typography>
           </Grid>

@@ -18,15 +18,17 @@ export default function UserTableRow({
   selected,
   name,
   email,
+  password,
   status,
   avatarUrl,
   handleClick,
   handleDelete,
-  handleEdit, // Receive handleEdit as prop
+  handleEdit,
   handleView,
   handleStatusChange,
 }) {
   const [open, setOpen] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleOpenMenu = (event) => {
     setOpen(event.currentTarget);
@@ -37,13 +39,25 @@ export default function UserTableRow({
   };
 
   const handleEditClick = () => {
-    handleEdit(); // Invoke handleEdit function passed as prop
-    handleCloseMenu(); // Close the menu after triggering edit action
+    handleEdit();
+    handleCloseMenu();
   };
+
   const handleViewClick = () => {
-    handleView(); // Invoke handleEdit function passed as prop
-    handleCloseMenu(); // Close the menu after triggering edit action
+    handleView();
+    handleCloseMenu();
   };
+
+  const handleCopyPassword = () => {
+    navigator.clipboard.writeText(password);
+    setShowPassword(true);
+    setTimeout(() => setShowPassword(false), 3000);
+  };
+
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText(email);
+  };
+
   return (
     <>
       <TableRow hover tabIndex={-1} role="checkbox" selected={selected}>
@@ -60,14 +74,34 @@ export default function UserTableRow({
           </Stack>
         </TableCell>
 
-        <TableCell>{email}</TableCell>
+        <TableCell>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Typography variant="body2" noWrap>
+              {email}
+            </Typography>
+            <IconButton onClick={handleCopyEmail} size="small">
+              <Iconify icon="eva:copy-fill" />
+            </IconButton>
+          </Stack>
+        </TableCell>
+
+        <TableCell>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Typography variant="body2" noWrap>
+              {showPassword ? password : '••••••••••'}
+            </Typography>
+            <IconButton onClick={handleCopyPassword} size="small">
+              <Iconify icon="eva:copy-fill" />
+            </IconButton>
+          </Stack>
+        </TableCell>
 
         <TableCell>
           <FormControlLabel
             control={
               <Switch
-                checked={status === 'Active'} // Assuming status is 'active' or 'inactive'
-                onChange={() => handleStatusChange(name)} // Pass the name or ID to identify user
+                checked={status === 'Active'}
+                onChange={() => handleStatusChange(name)}
                 color="primary"
               />
             }
@@ -118,13 +152,13 @@ export default function UserTableRow({
 UserTableRow.propTypes = {
   selected: PropTypes.bool.isRequired,
   name: PropTypes.string.isRequired,
-
   email: PropTypes.string.isRequired,
+  password: PropTypes.string.isRequired,
   status: PropTypes.string.isRequired,
   avatarUrl: PropTypes.string,
   handleClick: PropTypes.func.isRequired,
   handleDelete: PropTypes.func.isRequired,
-  handleEdit: PropTypes.func.isRequired, // Ensure handleEdit is defined as a function prop
+  handleEdit: PropTypes.func.isRequired,
   handleView: PropTypes.func.isRequired,
   handleStatusChange: PropTypes.func.isRequired,
 };
