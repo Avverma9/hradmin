@@ -106,3 +106,11 @@ export const allAmenities = [
   { name: 'Non-Smoking Throughout', id: 'nonSmokingThroughoutCheckbox' },
   { name: 'Kitchen', id: 'kitchen' },
 ];
+export const paths = [
+  { title: 'Dashboard', path: '/dashboard' },
+  { title: 'Messenger', path: '/messenger' },
+  { title: 'Your Bookings', path: '/your-bookings' },
+  { title: 'Your Hotel', path: '/your-hotels' },
+  { title: 'Set Monthly Price', path: '/hotels/monthly-price' },
+  { title: 'Manage Coupons', path: '/apply-pms-coupon' },
+];

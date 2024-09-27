@@ -20,16 +20,10 @@ import {
 } from '@mui/material';
 
 import { localUrl } from 'src/utils/util';
+import { paths } from 'src/utils/filterOptions';
 
 // Sample path configuration (replace with your actual path options)
-const paths = [
-  { title: 'Dashboard', path: '/dashboard' },
-  { title: 'Messenger', path: '/messenger' },
-  { title: 'Your Bookings', path: '/your-bookings' },
-  { title: 'Your Hotel', path: '/your-hotels' },
-  { title: 'Set Monthly Price', path: '/hotels/monthly-price' },
-  { title: 'Manage Coupons', path: '/apply-pms-coupon' },
-];
+
 
 const UserNotification = () => {
   const [name, setName] = useState('');
