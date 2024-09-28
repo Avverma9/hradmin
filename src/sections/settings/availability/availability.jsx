@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import axios from 'axios';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -86,9 +87,10 @@ const HotelAvailability = () => {
     setSearchTerm(event.target.value);
   };
 
-  const filteredHotels = hotels.filter(hotel =>
-    hotel.hotelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    hotel.hotelId.toString().includes(searchTerm)
+  const filteredHotels = hotels.filter(
+    (hotel) =>
+      hotel.hotelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      hotel.hotelId.toString().includes(searchTerm)
   );
 
   const handleChangePage = (event, newPage) => {
@@ -103,9 +105,19 @@ const HotelAvailability = () => {
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Paper style={{ padding: 20 }}>
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h5" gutterBottom>
           Hotel Availability
         </Typography>
+        <hr />
+        <Typography variant="body1" gutterBottom>
+          Please select a start date and an end date. You can only select dates starting from
+          tomorrow. <hr /> After selecting your dates, click on "View Availability" to see the list
+          of hotels. <hr /> To view more details about a specific hotel, click on the hotel name.{' '}
+          <hr />
+          further on you also can click view more button to see booked rooms and booking status of
+          particular hotels
+        </Typography>
+        <hr />
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
           <div style={{ flex: 1 }}>
             <DatePicker
@@ -113,7 +125,7 @@ const HotelAvailability = () => {
               value={fromDate}
               onChange={(newValue) => {
                 if (newValue && isBefore(newValue, new Date())) {
-                  alert("You cannot select a past or current date.");
+                  alert('You cannot select a past or current date.');
                   return;
                 }
                 setFromDate(newValue);
@@ -131,7 +143,7 @@ const HotelAvailability = () => {
               value={toDate}
               onChange={(newValue) => {
                 if (newValue && fromDate && isSameDay(fromDate, newValue)) {
-                  alert("Start date and end date cannot be the same.");
+                  alert('Start date and end date cannot be the same.');
                   return;
                 }
                 setToDate(newValue);
@@ -166,30 +178,32 @@ const HotelAvailability = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredHotels.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((hotel) => (
-                <TableRow key={hotel.hotelId}>
-                  <TableCell>
-                    <Link
-                      to={`/view-hotel-details/${hotel.hotelId}`}
-                      style={{ textDecoration: 'none', color: 'inherit' }}
-                    >
-                      {hotel.hotelName}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{hotel.totalRooms}</TableCell>
-                  <TableCell>{hotel.bookedRooms}</TableCell>
-                  <TableCell>{hotel.availableRooms}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      onClick={() => handleViewMore(hotel)}
-                    >
-                      View More
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filteredHotels
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((hotel) => (
+                  <TableRow key={hotel.hotelId}>
+                    <TableCell>
+                      <Link
+                        to={`/view-hotel-details/${hotel.hotelId}`}
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                      >
+                        {hotel.hotelName}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{hotel.totalRooms}</TableCell>
+                    <TableCell>{hotel.bookedRooms}</TableCell>
+                    <TableCell>{hotel.availableRooms}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        onClick={() => handleViewMore(hotel)}
+                      >
+                        View More
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </TableContainer>

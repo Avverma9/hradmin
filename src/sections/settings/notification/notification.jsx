@@ -165,8 +165,25 @@ const Notification = () => {
 
   return (
     <Container maxWidth="lg">
-      <Typography variant="h4" gutterBottom>
-        Notifications
+      <div
+        style={{
+          border: '1px solid #FF5733', // Change this color as needed
+          borderRadius: '4px',
+          padding: '10px',
+          display: 'inline-block', // Adjust width to text size
+          marginBottom: '20px',
+        }}
+      >
+        <Typography variant="h5" gutterBottom>
+          Notifications
+        </Typography>
+      </div>
+
+      <Typography variant="body1" gutterBottom>
+        There are two types of notification 1st user notification 2nd Global notification , <hr />
+        In User notification you can send notification to a particular partner <hr />
+        In Global notification you can send notification to all partner , <hr />
+        View seen by button is used to check who seen your notification
       </Typography>
       <Button
         variant="contained"
@@ -192,7 +209,20 @@ const Notification = () => {
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle>User Notification</DialogTitle>
+        <DialogTitle>
+          <div
+            style={{
+              border: '1px solid #FF5733', // Change this color as needed
+              borderRadius: '4px',
+              padding: '10px',
+              display: 'inline-block', // Adjust width to text size
+              marginBottom: '10px', // Optional, adjust spacing as needed
+            }}
+          >
+            User Notification
+          </div>
+        </DialogTitle>
+
         <DialogContent>
           <UserNotification />
         </DialogContent>
@@ -210,7 +240,20 @@ const Notification = () => {
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle>Global Notification</DialogTitle>
+        <DialogTitle>
+          <div
+            style={{
+              border: '1px solid #FF5733', // Change this color as needed
+              borderRadius: '4px',
+              padding: '10px',
+              display: 'inline-block', // Adjust width to text size
+              marginBottom: '10px', // Optional, adjust spacing as needed
+            }}
+          >
+            Global Notification
+          </div>
+        </DialogTitle>
+
         <DialogContent>
           <GlobalNotification />
         </DialogContent>
