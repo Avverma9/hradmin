@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
 
+import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
   Grid,
@@ -22,8 +23,9 @@ import {
   TextField,
   Typography,
   InputLabel,
+  IconButton,
   FormControl,
-} from '@mui/material';
+} from '@mui/material'; // Import the search icon
 
 import { localUrl } from 'src/utils/util';
 import LinearLoader from 'src/utils/Loading';
@@ -40,6 +42,7 @@ export default function BookingsView() {
   const [openModal, setOpenModal] = useState(false);
   const [filterDate, setFilterDate] = useState('');
   const [searchTerms, setSearchTerms] = useState({ bookingId: '', name: '', status: '' });
+  const [searchVisibility, setSearchVisibility] = useState({ bookingId: false, name: false, status: false });
   const navigate = useNavigate();
 
   const StyledButton = styled(Button)({
@@ -60,7 +63,7 @@ export default function BookingsView() {
 
       const response = await fetch(`${localUrl}/get/all/filtered/booking/by/query?${queryParams}`);
       if (!response.ok) {
-        toast.info('No bookings found !');
+        toast.info('No bookings found!');
       }
       const data = await response.json();
       setBookings(data);
@@ -71,10 +74,6 @@ export default function BookingsView() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSearch = () => {
-    fetchData(); // You can customize this further if you need specific search queries
   };
 
   const handleView = (bookingId) => {
@@ -117,6 +116,10 @@ export default function BookingsView() {
     setSearchTerms({ ...searchTerms, [field]: e.target.value });
   };
 
+  const toggleSearchVisibility = (field) => {
+    setSearchVisibility((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
+
   if (loading) {
     return (
       <Container>
@@ -125,12 +128,12 @@ export default function BookingsView() {
     );
   }
 
-  // Filter bookings based on search terms
+  // Filter bookings based on search terms, ignoring case
   const filteredBookings = bookings.filter((booking) => (
-      (searchTerms.bookingId ? booking.bookingId.includes(searchTerms.bookingId) : true) &&
-      (searchTerms.name ? booking.user?.name.includes(searchTerms.name) : true) &&
-      (searchTerms.status ? booking.bookingStatus.includes(searchTerms.status) : true)
-    ));
+    (searchTerms.bookingId ? booking.bookingId.toLowerCase().includes(searchTerms.bookingId.toLowerCase()) : true) &&
+    (searchTerms.name ? booking.user?.name.toLowerCase().includes(searchTerms.name.toLowerCase()) : true) &&
+    (searchTerms.status ? booking.bookingStatus.toLowerCase().includes(searchTerms.status.toLowerCase()) : true)
+  ));
 
   return (
     <Container sx={{ marginTop: '40px' }}>
@@ -158,7 +161,7 @@ export default function BookingsView() {
           <Grid item xs={12} md={9}>
             <Grid container spacing={2} alignItems="center">
               <Grid item>
-                <StyledButton variant="contained" onClick={handleSearch}>
+                <StyledButton variant="contained" onClick={fetchData}>
                   Search
                 </StyledButton>
               </Grid>
@@ -216,13 +219,20 @@ export default function BookingsView() {
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     {header}
                     {index < 5 && (
-                      <TextField
-                        variant="outlined"
-                        size="small"
-                        placeholder={`Search ${header}`}
-                        onChange={(e) => handleSearchTermChange(e, index === 0 ? 'bookingId' : index === 1 ? 'name' : 'status')}
-                        sx={{ marginLeft: '10px' }}
-                      />
+                      <>
+                        <IconButton onClick={() => toggleSearchVisibility(index === 0 ? 'bookingId' : index === 1 ? 'name' : 'status')}>
+                          <SearchIcon />
+                        </IconButton>
+                        {searchVisibility[index === 0 ? 'bookingId' : index === 1 ? 'name' : 'status'] && (
+                          <TextField
+                            variant="outlined"
+                            size="small"
+                            placeholder={`Search ${header}`}
+                            onChange={(e) => handleSearchTermChange(e, index === 0 ? 'bookingId' : index === 1 ? 'name' : 'status')}
+                            sx={{ marginLeft: '10px' }}
+                          />
+                        )}
+                      </>
                     )}
                   </Box>
                 </TableCell>
