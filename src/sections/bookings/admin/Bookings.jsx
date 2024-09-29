@@ -137,10 +137,12 @@ export default function BookingsView() {
 
   return (
     <Container sx={{ marginTop: '40px' }}>
-      <Typography variant="h4" gutterBottom>
-        Bookings
-      </Typography>
+    <Typography variant="h4" gutterBottom>
+      Bookings
+    </Typography>
 
+    {/* Sticky header for search and filter section */}
+    <Box sx={{ position: 'sticky', top: 0, background: 'white', zIndex: 1, padding: '16px 0', borderBottom: '1px solid #ddd' }}>
       <Grid container spacing={2} alignItems="center">
         {/* Booking ID Input Field */}
         <Grid item xs={12} md={3}>
@@ -163,7 +165,7 @@ export default function BookingsView() {
                 Search
               </StyledButton>
             </Grid>
-            <Grid item fullWidth>
+            <Grid item>
               <TextField
                 id="filterDate"
                 label="Filter Date"
@@ -196,66 +198,68 @@ export default function BookingsView() {
           </Grid>
         </Grid>
       </Grid>
+    </Box>
 
-      <Box sx={{ marginTop: '20px', overflowX: 'auto' }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Booking ID</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Check-in</TableCell>
-              <TableCell>Check-out</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {bookings.length > 0 ? (
-              bookings.map((booking) => (
-                <TableRow key={booking._id}>
-                  <TableCell>{booking.bookingId}</TableCell>
-                  <TableCell>{booking.user?.name}</TableCell>
-                  <TableCell>{booking.bookingStatus}</TableCell>
-                  <TableCell>{fDate(booking.checkInDate)}</TableCell>
-                  <TableCell>{fDate(booking.checkOutDate)}</TableCell>
-                  <TableCell>
-                    <StyledButton
-                      variant="contained"
-                      size="small"
-                      onClick={() => handleView(booking.bookingId)}
-                    >
-                      View
-                    </StyledButton>
-                    <StyledButton
-                      variant="contained"
-                      color="warning"
-                      size="small"
-                      onClick={() => handleUpdate(booking)}
-                    >
-                      Update
-                    </StyledButton>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  No bookings found
+    {/* Scrollable Table */}
+    <Box sx={{ marginTop: '20px', overflowY: 'auto', maxHeight: '60vh' }}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Booking ID</TableCell>
+            <TableCell>Name</TableCell>
+            <TableCell>Status</TableCell>
+            <TableCell>Check-in</TableCell>
+            <TableCell>Check-out</TableCell>
+            <TableCell>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {bookings.length > 0 ? (
+            bookings.map((booking) => (
+              <TableRow key={booking._id}>
+                <TableCell>{booking.bookingId}</TableCell>
+                <TableCell>{booking.user?.name}</TableCell>
+                <TableCell>{booking.bookingStatus}</TableCell>
+                <TableCell>{fDate(booking.checkInDate)}</TableCell>
+                <TableCell>{fDate(booking.checkOutDate)}</TableCell>
+                <TableCell>
+                  <StyledButton
+                    variant="contained"
+                    size="small"
+                    onClick={() => handleView(booking.bookingId)}
+                  >
+                    View
+                  </StyledButton>
+                  <StyledButton
+                    variant="contained"
+                    color="warning"
+                    size="small"
+                    onClick={() => handleUpdate(booking)}
+                  >
+                    Update
+                  </StyledButton>
                 </TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </Box>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={6} align="center">
+                No bookings found
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </Box>
 
-      {selectedBooking && (
-        <BookingUpdateModal
-          open={openModal}
-          onClose={() => setOpenModal(false)}
-          bookingData={selectedBooking}
-          onSave={handleSave}
-        />
-      )}
-    </Container>
+    {selectedBooking && (
+      <BookingUpdateModal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        bookingData={selectedBooking}
+        onSave={handleSave}
+      />
+    )}
+  </Container>
   );
 }
