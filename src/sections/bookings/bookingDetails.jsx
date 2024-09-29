@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { IoMailOpenOutline } from 'react-icons/io5';
 import { LiaRupeeSignSolid } from 'react-icons/lia';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { MdAccessTime , MdOutlineHouse } from 'react-icons/md';
+import { MdAccessTime, MdOutlineHouse } from 'react-icons/md';
 
 import { makeStyles } from '@mui/styles';
 import { Box, Grid, Paper, Button, Avatar, Divider, Container, Typography } from '@mui/material';
@@ -82,7 +82,7 @@ const BookingDetail = () => {
       <Button variant="outlined" color="primary" onClick={handleBack}>
         Back
       </Button>
-
+      <hr />
       <Paper elevation={3} className={classes.paper}>
         <Grid container spacing={3}>
           {/* Customer, Hotel and Owner Info Section */}
@@ -90,7 +90,11 @@ const BookingDetail = () => {
             <Box className={classes.section}>
               <Grid container alignItems="center" spacing={2}>
                 <Grid item>
-                  <Avatar alt="User Avatar" src={booking?.user?.profile} className={classes.avatar} />
+                  <Avatar
+                    alt="User Avatar"
+                    src={booking?.user?.profile}
+                    className={classes.avatar}
+                  />
                 </Grid>
                 <Grid item>
                   <Typography variant="h6">{booking?.user?.name}</Typography>
@@ -109,16 +113,34 @@ const BookingDetail = () => {
                 </Typography>
               </Grid>
               <Divider sx={{ margin: '16px 0' }} />
-              <Typography variant="subtitle1"><CiUser /> Customer Name</Typography>
-              <Typography variant="body2" gutterBottom>{booking?.user?.name}</Typography>
-              <Typography variant="subtitle1"><LuHotel /> Hotel Name</Typography>
-              <Typography variant="body2" gutterBottom>{booking?.hotelName}</Typography>
+              <Typography variant="subtitle1">
+                <CiUser /> Customer Name
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                {booking?.user?.name}
+              </Typography>
+              <Typography variant="subtitle1">
+                <LuHotel /> Hotel Name
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                {booking?.hotelName}
+              </Typography>
               <Typography variant="subtitle1">Hotel Owner Name:</Typography>
-              <Typography variant="body2" gutterBottom>{booking?.hotelOwnerName}</Typography>
-              <Typography variant="subtitle1"><IoMailOpenOutline /> Email</Typography>
-              <Typography variant="body2" gutterBottom>{booking?.user?.email}</Typography>
-              <Typography variant="subtitle1"><FaPhone /> Mobile</Typography>
-              <Typography variant="body2" gutterBottom>{booking?.user?.mobile}</Typography>
+              <Typography variant="body2" gutterBottom>
+                {booking?.hotelOwnerName}
+              </Typography>
+              <Typography variant="subtitle1">
+                <IoMailOpenOutline /> Email
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                {booking?.user?.email}
+              </Typography>
+              <Typography variant="subtitle1">
+                <FaPhone /> Mobile
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                {booking?.user?.mobile}
+              </Typography>
             </Box>
           </Grid>
 
@@ -137,27 +159,47 @@ const BookingDetail = () => {
               </Typography>
               <hr />
               <Typography variant="subtitle1">Booking Status:</Typography>
-              <Typography variant="body2" gutterBottom>{booking?.bookingStatus}</Typography>
-              <Typography variant="subtitle1"><MdAccessTime /> Booking time</Typography>
-              <Typography variant="body2" gutterBottom>{fDate(booking?.createdAt)}</Typography>
-              <Typography variant="subtitle1"><MdAccessTime /> Check in time</Typography>
-              <Typography variant="body2" gutterBottom>{fDateTime(booking?.checkInTime) || 'Not Checked in'}</Typography>
-              <Typography variant="subtitle1"><MdAccessTime /> Check out time</Typography>
-              <Typography variant="body2" gutterBottom>{fDateTime(booking?.checkOutTime) || 'Not Checked out'}</Typography>
+              <Typography variant="body2" gutterBottom>
+                {booking?.bookingStatus}
+              </Typography>
+              <Typography variant="subtitle1">
+                <MdAccessTime /> Booking time
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                {fDate(booking?.createdAt)}
+              </Typography>
+              <Typography variant="subtitle1">
+                <MdAccessTime /> Check in time
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                {fDateTime(booking?.checkInTime) || 'Not Checked in'}
+              </Typography>
+              <Typography variant="subtitle1">
+                <MdAccessTime /> Check out time
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                {fDateTime(booking?.checkOutTime) || 'Not Checked out'}
+              </Typography>
             </Box>
           </Grid>
 
           {/* Services Section */}
           <Grid item xs={12} md={4}>
             <Box className={classes.section}>
-              <Typography variant="h6" gutterBottom>Services</Typography>
+              <Typography variant="h6" gutterBottom>
+                Services
+              </Typography>
               <Box display="flex" flexDirection="column">
                 {/* Room Details */}
                 <Box marginBottom={2}>
                   {booking?.roomDetails?.map((room, index) => (
                     <Box key={index} marginTop={1}>
-                      <Typography variant="subtitle1"><LuHotel /> Room Details</Typography>
-                      <Typography variant="body2">Type: {room?.type} <MdOutlineHouse /></Typography>
+                      <Typography variant="subtitle1">
+                        <LuHotel /> Room Details
+                      </Typography>
+                      <Typography variant="body2">
+                        Type: {room?.type} <MdOutlineHouse />
+                      </Typography>
                       <Typography variant="body2">Bed Type: {room?.bedTypes}</Typography>
                       <Typography variant="body2">Price: {room?.price}</Typography>
                       {index !== booking.roomDetails.length - 1 && <Divider />}
