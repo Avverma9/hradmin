@@ -205,12 +205,20 @@ export default function BookingsView() {
       <Table size="small">
         <TableHead>
           <TableRow>
-            <TableCell>Booking ID</TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell>Check-in</TableCell>
-            <TableCell>Check-out</TableCell>
-            <TableCell>Actions</TableCell>
+            {['Booking ID', 'Name', 'Status', 'Check-in', 'Check-out', 'Actions'].map((header) => (
+              <TableCell
+                key={header}
+                sx={{
+                  position: 'sticky',
+                  top: 0,
+                  background: 'white',
+                  zIndex: 1,
+                  borderBottom: '2px solid #ddd',
+                }}
+              >
+                {header}
+              </TableCell>
+            ))}
           </TableRow>
         </TableHead>
         <TableBody>
