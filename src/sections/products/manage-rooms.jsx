@@ -123,6 +123,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
   const handleCancel = () => {
     resetForm();
     onClose();
+    window.location.reload()
   };
 
   const resetForm = () => {
