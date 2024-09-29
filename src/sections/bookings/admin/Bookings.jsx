@@ -1,5 +1,6 @@
-/* eslint-disable no-shadow */
 /* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-shadow */
+/* eslint-disable no-nested-ternary */
 import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 import 'react-toastify/dist/ReactToastify.css';
@@ -28,7 +29,7 @@ import { localUrl } from 'src/utils/util';
 import LinearLoader from 'src/utils/Loading';
 import { fDate } from 'src/utils/format-time';
 
-import BookingUpdateModal from '../booking-update-modal'; // Adjust path as needed
+import BookingUpdateModal from '../booking-update-modal';
 
 export default function BookingsView() {
   const [bookingId, setBookingId] = useState('');
@@ -38,6 +39,7 @@ export default function BookingsView() {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const [filterDate, setFilterDate] = useState('');
+  const [searchTerms, setSearchTerms] = useState({ bookingId: '', name: '', status: '' });
   const navigate = useNavigate();
 
   const StyledButton = styled(Button)({
@@ -51,7 +53,6 @@ export default function BookingsView() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Build query parameters with filter date
       const queryParams = new URLSearchParams({
         bookingStatus: status,
         checkInDate: filterDate,
@@ -72,23 +73,8 @@ export default function BookingsView() {
     }
   };
 
-  const handleSearch = async () => {
-    try {
-      const response = await fetch(
-        `${localUrl}/get/all/filtered/booking/by/query?bookingId=${bookingId}`
-      );
-      if (!response.ok) {
-        toast.info('No bookings found');
-        setBookings([]);
-        return;
-      }
-      const data = await response.json();
-      setBookings(data);
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Something went wrong');
-      setBookings([]);
-    }
+  const handleSearch = () => {
+    fetchData(); // You can customize this further if you need specific search queries
   };
 
   const handleView = (bookingId) => {
@@ -127,6 +113,10 @@ export default function BookingsView() {
     setFilterDate(e.target.value);
   };
 
+  const handleSearchTermChange = (e, field) => {
+    setSearchTerms({ ...searchTerms, [field]: e.target.value });
+  };
+
   if (loading) {
     return (
       <Container>
@@ -135,139 +125,157 @@ export default function BookingsView() {
     );
   }
 
+  // Filter bookings based on search terms
+  const filteredBookings = bookings.filter((booking) => (
+      (searchTerms.bookingId ? booking.bookingId.includes(searchTerms.bookingId) : true) &&
+      (searchTerms.name ? booking.user?.name.includes(searchTerms.name) : true) &&
+      (searchTerms.status ? booking.bookingStatus.includes(searchTerms.status) : true)
+    ));
+
   return (
     <Container sx={{ marginTop: '40px' }}>
-    <Typography variant="h4" gutterBottom>
-      Bookings
-    </Typography>
+      <Typography variant="h4" gutterBottom>
+        Bookings
+      </Typography>
 
-    {/* Sticky header for search and filter section */}
-    <Box sx={{ position: 'sticky', top: 0, background: 'white', zIndex: 1, padding: '16px 0', borderBottom: '1px solid #ddd' }}>
-      <Grid container spacing={2} alignItems="center">
-        {/* Booking ID Input Field */}
-        <Grid item xs={12} md={3}>
-          <FormControl fullWidth>
-            <TextField
-              id="formBookingId"
-              label="Booking ID"
-              variant="outlined"
-              value={bookingId}
-              onChange={(e) => setBookingId(e.target.value)}
-            />
-          </FormControl>
-        </Grid>
-
-        {/* Filters and Actions */}
-        <Grid item xs={12} md={9}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item>
-              <StyledButton variant="contained" onClick={handleSearch}>
-                Search
-              </StyledButton>
-            </Grid>
-            <Grid item>
+      {/* Sticky header for search and filter section */}
+      <Box sx={{ position: 'sticky', top: 0, background: 'white', zIndex: 1, padding: '16px 0', borderBottom: '1px solid #ddd' }}>
+        <Grid container spacing={2} alignItems="center">
+          {/* Booking ID Input Field */}
+          <Grid item xs={12} md={3}>
+            <FormControl fullWidth>
               <TextField
-                id="filterDate"
-                label="Filter Date"
-                type="date"
+                id="formBookingId"
+                label="Booking ID"
                 variant="outlined"
-                value={filterDate}
-                onChange={handleDateChange}
-                InputLabelProps={{ shrink: true }}
+                value={bookingId}
+                onChange={(e) => setBookingId(e.target.value)}
               />
-            </Grid>
-            <Grid item xs>
-              <FormControl fullWidth>
-                <InputLabel id="formStatusLabel">Status</InputLabel>
-                <Select
-                  labelId="formStatusLabel"
-                  id="formStatus"
-                  value={status}
-                  label="Filter by Status"
-                  onChange={(e) => setStatus(e.target.value)}
-                >
-                  <MenuItem value="">Select Status</MenuItem>
-                  <MenuItem value="Cancelled">Cancelled</MenuItem>
-                  <MenuItem value="Confirmed">Confirmed</MenuItem>
-                  <MenuItem value="Failed">Failed</MenuItem>
-                  <MenuItem value="Checked-in">Checked-in</MenuItem>
-                  <MenuItem value="Checked-out">Checked-out</MenuItem>
-                </Select>
-              </FormControl>
+            </FormControl>
+          </Grid>
+
+          {/* Filters and Actions */}
+          <Grid item xs={12} md={9}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item>
+                <StyledButton variant="contained" onClick={handleSearch}>
+                  Search
+                </StyledButton>
+              </Grid>
+              <Grid item>
+                <TextField
+                  id="filterDate"
+                  label="Filter Date"
+                  type="date"
+                  variant="outlined"
+                  value={filterDate}
+                  onChange={handleDateChange}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs>
+                <FormControl fullWidth>
+                  <InputLabel id="formStatusLabel">Status</InputLabel>
+                  <Select
+                    labelId="formStatusLabel"
+                    id="formStatus"
+                    value={status}
+                    label="Filter by Status"
+                    onChange={(e) => setStatus(e.target.value)}
+                  >
+                    <MenuItem value="">Select Status</MenuItem>
+                    <MenuItem value="Cancelled">Cancelled</MenuItem>
+                    <MenuItem value="Confirmed">Confirmed</MenuItem>
+                    <MenuItem value="Failed">Failed</MenuItem>
+                    <MenuItem value="Checked-in">Checked-in</MenuItem>
+                    <MenuItem value="Checked-out">Checked-out</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
             </Grid>
           </Grid>
         </Grid>
-      </Grid>
-    </Box>
+      </Box>
 
-    {/* Scrollable Table */}
-    <Box sx={{ marginTop: '20px', overflowY: 'auto', maxHeight: '60vh' }}>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            {['Booking ID', 'Name', 'Status', 'Check-in', 'Check-out', 'Actions'].map((header) => (
-              <TableCell
-                key={header}
-                sx={{
-                  position: 'sticky',
-                  top: 0,
-                  background: 'white',
-                  zIndex: 1,
-                  borderBottom: '2px solid #ddd',
-                }}
-              >
-                {header}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {bookings.length > 0 ? (
-            bookings.map((booking) => (
-              <TableRow key={booking._id}>
-                <TableCell>{booking.bookingId}</TableCell>
-                <TableCell>{booking.user?.name}</TableCell>
-                <TableCell>{booking.bookingStatus}</TableCell>
-                <TableCell>{fDate(booking.checkInDate)}</TableCell>
-                <TableCell>{fDate(booking.checkOutDate)}</TableCell>
-                <TableCell>
-                  <StyledButton
-                    variant="contained"
-                    size="small"
-                    onClick={() => handleView(booking.bookingId)}
-                  >
-                    View
-                  </StyledButton>
-                  <StyledButton
-                    variant="contained"
-                    color="warning"
-                    size="small"
-                    onClick={() => handleUpdate(booking)}
-                  >
-                    Update
-                  </StyledButton>
+      {/* Scrollable Table */}
+      <Box sx={{ marginTop: '20px', overflowY: 'auto', maxHeight: '60vh' }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              {['Booking ID', 'Name', 'Status', 'Check-in', 'Check-out', 'Actions'].map((header, index) => (
+                <TableCell
+                  key={header}
+                  sx={{
+                    position: 'sticky',
+                    top: 0,
+                    background: 'white',
+                    zIndex: 1,
+                    borderBottom: '2px solid #ddd',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    {header}
+                    {index < 5 && (
+                      <TextField
+                        variant="outlined"
+                        size="small"
+                        placeholder={`Search ${header}`}
+                        onChange={(e) => handleSearchTermChange(e, index === 0 ? 'bookingId' : index === 1 ? 'name' : 'status')}
+                        sx={{ marginLeft: '10px' }}
+                      />
+                    )}
+                  </Box>
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredBookings.length > 0 ? (
+              filteredBookings.map((booking) => (
+                <TableRow key={booking._id}>
+                  <TableCell>{booking.bookingId}</TableCell>
+                  <TableCell>{booking.user?.name}</TableCell>
+                  <TableCell>{booking.bookingStatus}</TableCell>
+                  <TableCell>{fDate(booking.checkInDate)}</TableCell>
+                  <TableCell>{fDate(booking.checkOutDate)}</TableCell>
+                  <TableCell>
+                    <StyledButton
+                      variant="contained"
+                      size="small"
+                      onClick={() => handleView(booking.bookingId)}
+                    >
+                      View
+                    </StyledButton>
+                    <StyledButton
+                      variant="contained"
+                      color="warning"
+                      size="small"
+                      onClick={() => handleUpdate(booking)}
+                    >
+                      Update
+                    </StyledButton>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  No bookings found
                 </TableCell>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={6} align="center">
-                No bookings found
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </Box>
+            )}
+          </TableBody>
+        </Table>
+      </Box>
 
-    {selectedBooking && (
-      <BookingUpdateModal
-        open={openModal}
-        onClose={() => setOpenModal(false)}
-        bookingData={selectedBooking}
-        onSave={handleSave}
-      />
-    )}
-  </Container>
+      {selectedBooking && (
+        <BookingUpdateModal
+          open={openModal}
+          onClose={() => setOpenModal(false)}
+          bookingData={selectedBooking}
+          onSave={handleSave}
+        />
+      )}
+    </Container>
   );
 }
