@@ -2,8 +2,6 @@ import { Helmet } from 'react-helmet-async';
 
 import { ListTravel } from 'src/sections/settings/travel';
 
-
-
 // ----------------------------------------------------------------------
 
 export default function BlogPage() {

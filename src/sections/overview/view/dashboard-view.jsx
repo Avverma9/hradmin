@@ -193,9 +193,14 @@ export default function AppView() {
       ? widgets
       : widgets.filter(
           (widget) =>
-            !['Users', 'Partners', 'Reviews', 'Travel locations', 'Notifications','Availability'].includes(
-              widget.title
-            )
+            ![
+              'Users',
+              'Partners',
+              'Reviews',
+              'Travel locations',
+              'Notifications',
+              'Availability',
+            ].includes(widget.title)
         );
 
   return (

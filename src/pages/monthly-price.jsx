@@ -8,7 +8,7 @@ export default function LoginPage() {
   return (
     <>
       <Helmet>
-        <title> Month setup | Roomsstay  </title>
+        <title> Month setup | Roomsstay </title>
       </Helmet>
 
       <MonthlyPrice />

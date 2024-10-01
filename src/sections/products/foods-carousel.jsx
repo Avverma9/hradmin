@@ -7,19 +7,16 @@ import { IoFastFoodOutline } from 'react-icons/io5';
 import Tooltip from '@mui/material/Tooltip';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import {
-  Box,
-  Grid,
-  Typography,
-  IconButton,
-} from '@mui/material';
+import { Box, Grid, Typography, IconButton } from '@mui/material';
 
 const FoodCarousel = ({ limitedFood }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const foodsPerPage = 4;
 
   const handleNext = () => {
-    setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, Math.floor(limitedFood.length / foodsPerPage)));
+    setCurrentIndex((prevIndex) =>
+      Math.min(prevIndex + 1, Math.floor(limitedFood.length / foodsPerPage))
+    );
   };
 
   const handlePrev = () => {
@@ -61,13 +58,21 @@ const FoodCarousel = ({ limitedFood }) => {
                       <img
                         src={food.images}
                         alt={`${food.name} image`}
-                        style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '10px' }}
+                        style={{
+                          width: '100%',
+                          height: '150px',
+                          objectFit: 'cover',
+                          borderRadius: '10px',
+                        }}
                       />
                     )}
                     <Typography variant="body2" sx={{ margin: '5px 0' }}>
                       <IoFastFoodOutline /> {food.foodType}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: 'red', fontSize: '18px', margin: '5px 0' }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: 'red', fontSize: '18px', margin: '5px 0' }}
+                    >
                       <FaRupeeSign /> {food.price}
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'green', margin: '5px 0' }}>
@@ -79,7 +84,14 @@ const FoodCarousel = ({ limitedFood }) => {
             ))}
           </Grid>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: '20px',
+            }}
+          >
             <IconButton
               onClick={handlePrev}
               disabled={currentIndex === 0}

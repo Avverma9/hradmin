@@ -71,7 +71,6 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
     setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
 
-
   const handleSubmit = async () => {
     const updatedUser = {
       ...formData,
@@ -83,7 +82,10 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
       const formDataToSend = new FormData();
       formDataToSend.append('image', imageFile);
       try {
-        const response = await axios.post(`${localUrl}/api/users/${user._id}/upload-image`, formDataToSend);
+        const response = await axios.post(
+          `${localUrl}/api/users/${user._id}/upload-image`,
+          formDataToSend
+        );
         updatedUser.imageUrl = response.data.imageUrl; // Assuming the response contains the image URL
       } catch (error) {
         console.error('Error uploading image:', error);
@@ -161,7 +163,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
         </IconButton>
       </DialogTitle>
       <DialogContent sx={{ backgroundColor: '#fafafa', padding: '2rem' }}>
-      <Box display="flex" justifyContent="center" mb={3}>
+        <Box display="flex" justifyContent="center" mb={3}>
           <Box display="flex" flexDirection="column" alignItems="center">
             <Avatar
               src={formData.imageUrl}
@@ -231,7 +233,6 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                 </Select>
               </FormControl>
             </Grid>
-
 
             <Grid item xs={12}>
               <FormControl fullWidth variant="outlined">

@@ -162,7 +162,7 @@ export default function NotificationsPopover() {
             mt: 1.5,
             ml: 0.75,
             width: 360,
-            height:"80vh"
+            height: '80vh',
           },
         }}
       >

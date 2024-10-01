@@ -82,7 +82,7 @@ const HotelCarousel = ({ hotel }) => {
           color: 'white',
           borderRadius: '50%',
           backgroundColor: '#007bff',
-          '&:hover': { backgroundColor: '#007b34' }
+          '&:hover': { backgroundColor: '#007b34' },
         }}
         onClick={handleShowImageModal}
       >

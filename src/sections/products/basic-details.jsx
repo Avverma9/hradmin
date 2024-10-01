@@ -227,14 +227,15 @@ export default function BasicDetails({ open, onClose, hotelId }) {
                     </Typography>
                   )}
                 </Box>
-                {key !== 'images' && key !== "hotelId" &&  ( // Hide edit icon for images
-                  <IconButton
-                    onClick={() => handleEditClick(key, hotel[key])}
-                    sx={{ ml: 2, visibility: editField === key ? 'hidden' : 'visible' }}
-                  >
-                    <AiOutlineEdit size={24} />
-                  </IconButton>
-                )}
+                {key !== 'images' &&
+                  key !== 'hotelId' && ( // Hide edit icon for images
+                    <IconButton
+                      onClick={() => handleEditClick(key, hotel[key])}
+                      sx={{ ml: 2, visibility: editField === key ? 'hidden' : 'visible' }}
+                    >
+                      <AiOutlineEdit size={24} />
+                    </IconButton>
+                  )}
               </Grid>
             );
           })}

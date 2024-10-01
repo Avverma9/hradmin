@@ -67,7 +67,7 @@ export default function ProductsView() {
       </Container>
     );
   }
-const filteredCount = filteredData.length;
+  const filteredCount = filteredData.length;
 
   return (
     <Container>

@@ -24,7 +24,7 @@ import Scrollbar from 'src/components/scrollbar';
 
 // ----------------------------------------------------------------------
 
-export default function Reviews({ title, subheader,hotelId, ...other }) {
+export default function Reviews({ title, subheader, hotelId, ...other }) {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
 

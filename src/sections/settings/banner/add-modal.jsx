@@ -35,13 +35,13 @@ const AddBannerModal = ({ open, handleClose, fetchBanners }) => {
         },
       });
       if (response.status === 201) {
-        toast.success("Added successfully")
+        toast.success('Added successfully');
         fetchBanners(); // Refresh banners list
         handleClose(); // Close modal
       }
     } catch (error) {
       console.error('Error:', error);
-      toast.error("Failed to add")
+      toast.error('Failed to add');
     }
   };
 

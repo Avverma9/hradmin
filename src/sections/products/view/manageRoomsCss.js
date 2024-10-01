@@ -1,5 +1,5 @@
 // Styled components
-import { Box, styled,Button } from '@mui/material';
+import { Box, styled, Button } from '@mui/material';
 
 export const ModalContent = styled(Box)(({ theme }) => ({
   position: 'relative',

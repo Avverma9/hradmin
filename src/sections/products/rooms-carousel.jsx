@@ -4,19 +4,16 @@ import { FaRupeeSign } from 'react-icons/fa';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import {
-  Box,
-  Grid,
-  Typography,
-  IconButton,
-} from '@mui/material';
+import { Box, Grid, Typography, IconButton } from '@mui/material';
 
 const RoomCarousel = ({ limitedRoom }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const roomsPerPage = 4;
 
   const handleNext = () => {
-    setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, Math.floor(limitedRoom.length / roomsPerPage)));
+    setCurrentIndex((prevIndex) =>
+      Math.min(prevIndex + 1, Math.floor(limitedRoom.length / roomsPerPage))
+    );
   };
 
   const handlePrev = () => {
@@ -64,11 +61,16 @@ const RoomCarousel = ({ limitedRoom }) => {
                     <Typography variant="body2" sx={{ margin: '5px 0' }}>
                       <strong>Bed Type:</strong> {room.bedTypes}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: 'red', fontSize: '18px', margin: '5px 0' }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: 'red', fontSize: '18px', margin: '5px 0' }}
+                    >
                       <FaRupeeSign /> {room.price}
                     </Typography>
                     <Typography variant="body2" sx={{ margin: '5px 0' }}>
-                      <strong>Total: {room.totalRooms} / Available Rooms: {room.countRooms}</strong>
+                      <strong>
+                        Total: {room.totalRooms} / Available Rooms: {room.countRooms}
+                      </strong>
                     </Typography>
                   </Box>
                 </Box>
@@ -76,7 +78,14 @@ const RoomCarousel = ({ limitedRoom }) => {
             ))}
           </Grid>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: '20px',
+            }}
+          >
             <IconButton
               onClick={handlePrev}
               disabled={currentIndex === 0}

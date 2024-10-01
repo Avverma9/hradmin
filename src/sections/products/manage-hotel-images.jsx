@@ -111,7 +111,7 @@ const ImageUpload = ({ open, hotelId, onClose }) => {
         <Typography id="image-upload-modal" variant="h6" component="h2" gutterBottom>
           Upload Images
         </Typography>
-        
+
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
             <CircularProgress />
@@ -154,13 +154,13 @@ const ImageUpload = ({ open, hotelId, onClose }) => {
                 ))
               )}
             </Box>
-            
+
             <Box sx={{ width: '100%' }}>
               <input
                 type="file"
                 multiple
                 onChange={handleFileChange}
-                style={{ marginBottom: '16px', width: '100%' }} 
+                style={{ marginBottom: '16px', width: '100%' }}
               />
               <Button
                 variant="contained"

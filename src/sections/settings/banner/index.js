@@ -1,1 +1,1 @@
-export {default as SiteBanner} from './banner'
+export { default as SiteBanner } from './banner';

@@ -99,7 +99,6 @@ export default function MonthlyPrice() {
     setEndDate(date);
   };
 
-
   const handleMonthPriceChange = (event) => {
     setMonthPrice(event.target.value);
   };
@@ -172,14 +171,17 @@ export default function MonthlyPrice() {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="h6" component="h2" gutterBottom>
-      Please Read Before Filling Out This Form
-    </Typography>
-    <Typography variant="body2" gutterBottom>
-      You can set prices for a specific room in your hotel for a particular date range. Specify the price for each date, and you also have the option to remove it in advance if needed.
-    </Typography>
-    <Typography variant="body2" gutterBottom>
-      If you want to see the monthly data of a hotel, please select a hotel first to view the details.
-    </Typography>
+            Please Read Before Filling Out This Form
+          </Typography>
+          <Typography variant="body2" gutterBottom>
+            You can set prices for a specific room in your hotel for a particular date range.
+            Specify the price for each date, and you also have the option to remove it in advance if
+            needed.
+          </Typography>
+          <Typography variant="body2" gutterBottom>
+            If you want to see the monthly data of a hotel, please select a hotel first to view the
+            details.
+          </Typography>
         </CardContent>
       </Card>
       <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
@@ -288,7 +290,7 @@ export default function MonthlyPrice() {
             </TableRow>
           </TableHead>
           <TableBody>
-          {data && data.length > 0 ? (
+            {data && data.length > 0 ? (
               data.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>{item.hotelId}</TableCell>
@@ -299,7 +301,11 @@ export default function MonthlyPrice() {
                     <LiaRupeeSignSolid /> {item.monthPrice}
                   </TableCell>
                   <TableCell>
-                    <Button variant="outlined" color="error" onClick={() => handleDelete(item.hotelId)}>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      onClick={() => handleDelete(item.hotelId)}
+                    >
                       Delete
                     </Button>
                   </TableCell>

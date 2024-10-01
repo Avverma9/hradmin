@@ -35,7 +35,6 @@ export const dashboardSlice = createSlice({
       state.loading = false;
       state.dashboardUsers = action.payload;
     });
-  
   },
 });
 

@@ -18,7 +18,6 @@ export default function Amenities({ open, onClose, hotelId }) {
   const [existingAmenities, setExistingAmenities] = useState([]);
   const [selectedAmenityWarning, setSelectedAmenityWarning] = useState(null);
 
-
   // Fetch amenities when the component mounts or hotelId changes
   useEffect(() => {
     const fetchAmenities = async () => {
@@ -91,7 +90,7 @@ export default function Amenities({ open, onClose, hotelId }) {
   };
 
   return (
-    <div >
+    <div>
       <Modal
         open={open}
         onClose={onClose}

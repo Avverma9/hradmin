@@ -8,7 +8,7 @@ export default function ProductsPage() {
   return (
     <>
       <Helmet>
-        <title> Hotels | Roomsstay  </title>
+        <title> Hotels | Roomsstay </title>
       </Helmet>
 
       <ProductsView />

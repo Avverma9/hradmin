@@ -2,8 +2,6 @@
 import { Helmet } from 'react-helmet-async';
 import BookingDetail from 'src/sections/bookings/bookingDetails';
 
-
-
 // ----------------------------------------------------------------------
 
 export default function ProductsPage() {

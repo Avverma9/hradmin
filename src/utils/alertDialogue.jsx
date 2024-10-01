@@ -9,24 +9,24 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 
 const AlertDialog = ({ open, onClose, onConfirm, title, message }) => (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
-    >
-      <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
-      <DialogContent>
-        <DialogContentText id="alert-dialog-description">{message}</DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Disagree</Button>
-        <Button onClick={onConfirm} autoFocus>
-          Agree
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
+  <Dialog
+    open={open}
+    onClose={onClose}
+    aria-labelledby="alert-dialog-title"
+    aria-describedby="alert-dialog-description"
+  >
+    <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
+    <DialogContent>
+      <DialogContentText id="alert-dialog-description">{message}</DialogContentText>
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={onClose}>Disagree</Button>
+      <Button onClick={onConfirm} autoFocus>
+        Agree
+      </Button>
+    </DialogActions>
+  </Dialog>
+);
 
 AlertDialog.propTypes = {
   open: PropTypes.bool.isRequired,

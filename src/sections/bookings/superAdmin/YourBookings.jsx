@@ -39,7 +39,7 @@ export default function SuperAdminBookingsView() {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const navigate = useNavigate();
- const hotelEmail = localStorage.getItem('user_email');
+  const hotelEmail = localStorage.getItem('user_email');
   const StyledButton = styled(Button)({
     marginRight: '10px',
   });

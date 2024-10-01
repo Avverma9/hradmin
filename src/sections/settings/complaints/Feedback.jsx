@@ -44,4 +44,4 @@ FeedbackDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
 };
-export default FeedbackDialog
+export default FeedbackDialog;

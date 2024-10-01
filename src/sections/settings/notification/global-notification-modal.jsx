@@ -57,7 +57,7 @@ const GlobalNotification = () => {
       setSelectedPath('');
       setError(null);
       toast.success('You have successfully sent a notification');
-      window.location.reload()
+      window.location.reload();
     } catch (err) {
       console.error('Error creating notification:', err);
       toast.error('Error creating notification. Please try again.');

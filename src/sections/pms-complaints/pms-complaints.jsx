@@ -179,7 +179,7 @@ const Complaint = () => {
       const query = new URLSearchParams({
         status: statusFilter,
         complaintId: searchText,
-        hotelEmail:email,
+        hotelEmail: email,
       }).toString();
       const response = await fetch(
         `${localUrl}/get/all-complaint-on-admin/panel/by-filter?${query}`

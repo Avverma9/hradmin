@@ -112,7 +112,6 @@ const ComplaintId = styled(Typography)(({ theme }) => ({
   zIndex: 1, // Ensure it appears above other content
 }));
 
-
 const ModalImage = styled('img')(({ theme }) => ({
   maxWidth: '100%',
   maxHeight: '100%',
@@ -209,22 +208,21 @@ const Complaint = () => {
     setViewFeedback(feedBack);
   };
 
-const filteredComplaints = useMemo(
-  () =>
-    complaints?.filter((complaint) => {
-      const searchTextLower = searchText.toLowerCase();
-      const matchesSearchText =
-        complaint.hotelName.toLowerCase().includes(searchTextLower) ||
-        (complaint.updatedBy?.email || '').toLowerCase().includes(searchTextLower) ||
-        complaint.complaintId.includes(searchText); // Add this line to filter by complaintId
+  const filteredComplaints = useMemo(
+    () =>
+      complaints?.filter((complaint) => {
+        const searchTextLower = searchText.toLowerCase();
+        const matchesSearchText =
+          complaint.hotelName.toLowerCase().includes(searchTextLower) ||
+          (complaint.updatedBy?.email || '').toLowerCase().includes(searchTextLower) ||
+          complaint.complaintId.includes(searchText); // Add this line to filter by complaintId
 
-      const matchesStatus = statusFilter === '' || complaint.status === statusFilter;
+        const matchesStatus = statusFilter === '' || complaint.status === statusFilter;
 
-      return matchesSearchText && matchesStatus;
-    }),
-  [complaints, searchText, statusFilter]
-);
-
+        return matchesSearchText && matchesStatus;
+      }),
+    [complaints, searchText, statusFilter]
+  );
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>

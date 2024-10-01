@@ -45,7 +45,7 @@ export default function AccountPopover() {
 
   const handleAuth = () => {
     navigate('/');
-    localStorage.clear()
+    localStorage.clear();
   };
   return (
     <>
