@@ -1,6 +1,8 @@
+import axios from 'axios';
 import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
 
+import { Close } from '@mui/icons-material';
 import {
   Box,
   Grid,
@@ -11,13 +13,20 @@ import {
   MenuItem,
   TextField,
   InputLabel,
+  Typography,
+  IconButton,
   FormControl,
   DialogTitle,
   DialogActions,
   DialogContent,
 } from '@mui/material';
 
+import { localUrl } from 'src/utils/util';
+import { paths } from 'src/utils/filterOptions';
+
 export default function EditUserModal({ open, onClose, user, onSubmit }) {
+  const [menuItem, setMenuItem] = useState(''); // Added state for menu item
+  const [menuItems, setMenuItems] = useState([]); // Changed to array for proper handling
   const [formData, setFormData] = useState({
     _id: '',
     name: '',
@@ -45,6 +54,7 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
         images: user.images || '', // Set to current image URL
         imageUrl: user.images || '', // Set to current image URL for preview
       });
+      setMenuItems(user.menuItems || []); // Initialize menu items from user
     }
   }, [user]);
 
@@ -67,28 +77,66 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
 
   const handleSubmit = () => {
     const updatedUser = {
-      _id: formData._id,
-      name: formData.name,
-      email: formData.email,
-      mobile: formData.mobile,
-      address: formData.address,
-      password: formData.password,
-      role: formData.role,
-      status: formData.status ? 'true' : ' false', // Convert to boolean
-      images: formData.images, // This should be handled separately if it's a file
+      ...formData,
+      status: formData.status, // Ensure status is boolean
     };
     onSubmit(updatedUser);
     onClose();
-    console.log('updated user data', updatedUser);
+    console.log('Updated user data:', updatedUser);
+  };
+
+  const handleAddMenuItem = async () => {
+    if (!menuItem) return;
+
+    try {
+      await axios.post(`${localUrl}/api/users/${user._id}/menu-items`, {
+        menuItem,
+      });
+      const updatedMenuItems = [...menuItems, menuItem]; // Append new item
+      setMenuItems(updatedMenuItems);
+      setMenuItem(''); // Reset input
+      if (onSubmit) onSubmit(updatedMenuItems); // Call onSubmit with updated menu items
+    } catch (error) {
+      console.error('Error adding menu item:', error);
+    }
+  };
+
+  const handleDeleteMenuItem = async (item) => {
+    try {
+      await axios.delete(`${localUrl}/api/users/${user._id}/menu-items`, {
+        data: { menuItem: item },
+      });
+      const updatedMenuItems = menuItems.filter((menu) => menu !== item);
+      setMenuItems(updatedMenuItems);
+      if (onSubmit) onSubmit(updatedMenuItems); // Call onSubmit with updated menu items
+    } catch (error) {
+      console.error('Error deleting menu item:', error);
+    }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>Basic Info</DialogTitle>
-      <DialogContent>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" sx={{ borderRadius: '10px' }}>
+      <DialogTitle
+        sx={{
+          fontSize: '1.8rem',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          backgroundColor: '#f5f5f5',
+          position: 'relative',
+        }}
+      >
+        Basic Info
+        <IconButton onClick={onClose} sx={{ position: 'absolute', right: 10, top: 10 }}>
+          <Close />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent sx={{ backgroundColor: '#fafafa', padding: '2rem' }}>
         <Box display="flex" justifyContent="center" mb={3}>
           <Box display="flex" flexDirection="column" alignItems="center">
-            <Avatar src={formData.imageUrl} sx={{ width: 80, height: 80, marginBottom: 1 }} />
+            <Avatar
+              src={formData.imageUrl}
+              sx={{ width: 100, height: 100, mb: 2, border: '2px solid #1976d2' }}
+            />
             <Button variant="contained" component="label" color="primary">
               Upload Photo
               <input hidden accept="image/*" type="file" onChange={handleImageChange} />
@@ -97,50 +145,45 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
         </Box>
         <Box component="form" noValidate autoComplete="off">
           <Grid container spacing={3}>
+            {['name', 'email', 'mobile', 'address', 'password'].map((field) => (
+              <Grid item xs={12} sm={6} key={field}>
+                <TextField
+                  name={field}
+                  label={field.charAt(0).toUpperCase() + field.slice(1)}
+                  placeholder={`Enter ${field}`}
+                  fullWidth
+                  value={formData[field]}
+                  onChange={handleChange}
+                  variant="outlined"
+                  InputProps={{
+                    style: { borderRadius: '8px' },
+                  }}
+                  required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#1976d2',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#1565c0',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#1976d2',
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+            ))}
             <Grid item xs={12} sm={6}>
-              <TextField
-                name="name"
-                label="Full Name"
-                placeholder={user?.name}
-                fullWidth
-                value={formData.name}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="email"
-                label="Email"
-                placeholder={user?.email}
-                fullWidth
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="mobile"
-                label="Mobile Number"
-                placeholder={user?.mobile}
-                fullWidth
-                value={formData.mobile}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="address"
-                label="Your Location"
-                placeholder={user?.address}
-                fullWidth
-                value={formData.address}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
+              <FormControl fullWidth variant="outlined">
                 <InputLabel>Select Role (Current role is {user?.role})</InputLabel>
-                <Select name="role" value={formData.role} onChange={handleChange}>
+                <Select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  sx={{ borderRadius: '8px' }}
+                >
                   <MenuItem value="Admin">Admin</MenuItem>
                   <MenuItem value="PMS">Partner Management System</MenuItem>
                   <MenuItem value="Developer">Developer</MenuItem>
@@ -148,29 +191,94 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <FormControl fullWidth>
-                  <InputLabel>Select Status</InputLabel>
-                  <Select name="status" value={formData.status} onChange={handleChange}>
-                    <MenuItem value>Active</MenuItem>
-                    <MenuItem value={false}>Inactive</MenuItem>
-                  </Select>
-                </FormControl>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Select Status</InputLabel>
+                <Select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  sx={{ borderRadius: '8px' }}
+                >
+                  <MenuItem value>Active</MenuItem>
+                  <MenuItem value={false}>Inactive</MenuItem>
+                </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                name="password"
-                label="Enter your password"
-                fullWidth
-                value={formData.password}
-                onChange={handleChange}
-              />
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Assign Menu</InputLabel>
+                <Select
+                  name="menu"
+                  value={formData.menu} // Ensure this matches your state structure
+                  onChange={(e) => setMenuItem(e.target.value)}
+                  sx={{ borderRadius: '8px' }}
+                >
+                  {paths.map((path) => (
+                    <MenuItem key={path.path} value={path.title}>
+                      {path.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <Button
+                  onClick={handleAddMenuItem}
+                  variant="contained"
+                  color="primary"
+                  sx={{ mt: 1 }}
+                >
+                  Add Menu Item
+                </Button>
+              </FormControl>
             </Grid>
+            <Box mt={3} width="100%">
+              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#1976d2' }}>
+                Current Menu Items
+              </Typography>
+              <ul style={{ listStyleType: 'none', padding: 0 }}>
+                {menuItems.length > 0 ? (
+                  menuItems.map((item, index) => (
+                    <li
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 15px',
+                        marginBottom: '8px',
+                        backgroundColor: '#f0f4f8',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                        transition: 'background-color 0.3s',
+                      }}
+                    >
+                      <Typography variant="body1" sx={{ fontWeight: '500' }}>
+                        {item}
+                      </Typography>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() => handleDeleteMenuItem(item)}
+                        sx={{
+                          ml: 1,
+                          '&:hover': {
+                            backgroundColor: '#ffebee',
+                          },
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </li>
+                  ))
+                ) : (
+                  <Typography variant="body1" sx={{ color: 'gray', fontStyle: 'italic' }}>
+                    No menu items assigned.
+                  </Typography>
+                )}
+              </ul>
+            </Box>
           </Grid>
         </Box>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ backgroundColor: '#f5f5f5', padding: '1rem' }}>
         <Button onClick={onClose} color="secondary">
           Cancel
         </Button>
