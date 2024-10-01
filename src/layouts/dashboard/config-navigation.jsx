@@ -1,4 +1,10 @@
-import { FaDollarSign, FaRegUserCircle } from 'react-icons/fa'; // Example import for FaDollarSign from 'react-icons/fa'
+import axios from 'axios';
+import { SiTicktick } from 'react-icons/si';
+import { BsInfoSquare } from 'react-icons/bs';
+import { VscFeedback } from 'react-icons/vsc';
+import { CiBellOn, CiImageOn } from 'react-icons/ci';
+import { FaDollarSign, FaRegUserCircle } from 'react-icons/fa';
+import { RiCoupon3Line, RiMessengerLine } from 'react-icons/ri';
 import {
   MdEvent,
   MdHotel,
@@ -7,13 +13,10 @@ import {
   MdDashboard,
   MdOutlineTravelExplore,
   MdOutlineAdminPanelSettings,
-} from 'react-icons/md'; // Ensure these are correct
-import { SiTicktick } from "react-icons/si";
-import { BsInfoSquare } from 'react-icons/bs';
-import { VscFeedback } from 'react-icons/vsc';
-import { CiBellOn, CiImageOn } from 'react-icons/ci';
-import { RiCoupon3Line, RiMessengerLine } from 'react-icons/ri';
-// Define icon mappings
+} from 'react-icons/md';
+
+import { userId, localUrl } from 'src/utils/util';
+
 const icons = {
   dashboard: <MdDashboard style={{ width: '24px', height: '24px' }} />,
   messenger: <RiMessengerLine style={{ width: '24px', height: '24px' }} />,
@@ -33,9 +36,14 @@ const icons = {
   setMonthlyPrice: <FaDollarSign style={{ width: '24px', height: '24px' }} />,
 };
 
-const role = localStorage.getItem('user_role');
+const menuItems = async () => {
+  const response = await axios.get(`${localUrl}/login/dashboard/get/all/user/${userId}`);
+  return response.data.menuItems.map((item) => item.toLowerCase());
+};
 
-const getNavConfig = () => {
+const getNavConfig = async () => {
+  const availableMenuItems = await menuItems();
+
   const baseConfig = [
     {
       title: 'dashboard',
@@ -68,7 +76,6 @@ const getNavConfig = () => {
         },
       ],
     },
-
     {
       title: 'Hotels',
       icon: icons.hotels,
@@ -80,8 +87,8 @@ const getNavConfig = () => {
         },
         {
           title: 'Complaints',
-          icon: icons.complaints,
           path: '/your-complaints',
+          icon: icons.complaints,
         },
         {
           title: 'Your Hotel',
@@ -90,7 +97,7 @@ const getNavConfig = () => {
         },
         {
           title: 'Set Monthly Price',
-          icon: icons.setMonthlyPrice, // Use the React Icon
+          icon: icons.setMonthlyPrice,
           path: '/hotels/monthly-price',
         },
         {
@@ -100,7 +107,6 @@ const getNavConfig = () => {
         },
       ],
     },
-
     {
       title: 'Admin features',
       icon: icons.admin,
@@ -159,39 +165,32 @@ const getNavConfig = () => {
     },
   ];
 
-  const Adminconfig = [''];
-  const superAdminConfig = ['Bookings', 'partners', 'Admin features'];
-  const AdminChildConfig = ['Your Hotel', 'Your Bookings'];
-  const superAdminChildConfig = ['Hotels', 'Bookings'];
+  const uniqueTitles = new Set();
 
-  if (role === 'Admin') {
-    return baseConfig.filter((item) => {
-      if (Adminconfig.includes(item.title)) {
-        return false;
-      }
-      if (item.children) {
-        item.children = item.children.filter((child) => !AdminChildConfig.includes(child.title));
-      }
-      return true;
-    });
-  }
-  if (role === 'PMS') {
-    return baseConfig.filter((item) => {
-      if (superAdminConfig.includes(item.title)) {
-        return false;
-      }
-      if (item.children) {
-        item.children = item.children.filter(
-          (child) => !superAdminChildConfig.includes(child.title)
-        );
-      }
-      return true;
-    });
-  }
+  return baseConfig.filter((item) => {
+    const isParentVisible = availableMenuItems.includes(item.title.toLowerCase());
 
-  return baseConfig;
+    if (isParentVisible) {
+      uniqueTitles.add(item.title.toLowerCase());
+      return true; // Show parent if it matches
+    }
+
+    // Check for children matches
+    if (item.children) {
+      const matchingChildren = item.children.filter((child) =>
+        availableMenuItems.includes(child.title.toLowerCase())
+      );
+
+      if (matchingChildren.length > 0) {
+        item.children = matchingChildren; // Keep only matching children
+        return true; // Show parent if it has any matching children
+      }
+    }
+
+    return false; // Exclude if no matches
+  });
 };
 
-const navConfig = getNavConfig();
+const navConfig = await getNavConfig(); // Await the async function to get nav config
 
 export default navConfig;

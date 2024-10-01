@@ -123,12 +123,12 @@ export default function UserTableRow({
         anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         PaperProps={{
-          sx: { width: 140 },
+          sx: { width: 180 },
         }}
       >
         <MenuItem onClick={handleEditClick}>
           <Iconify icon="eva:edit-fill" sx={{ mr: 2 }} />
-          Edit
+          Access & Update
         </MenuItem>
         <MenuItem onClick={handleViewClick}>
           <Iconify icon="eva:eye-fill" sx={{ mr: 2 }} />

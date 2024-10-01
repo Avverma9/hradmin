@@ -1,5 +1,8 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable jsx-a11y/label-has-associated-control */
 import axios from 'axios';
 import PropTypes from 'prop-types';
+import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 
 import { Close } from '@mui/icons-material';
@@ -10,13 +13,16 @@ import {
   Dialog,
   Select,
   Avatar,
+  Divider,
   MenuItem,
+  Checkbox,
   TextField,
   InputLabel,
   Typography,
   IconButton,
   FormControl,
   DialogTitle,
+  ListItemText,
   DialogActions,
   DialogContent,
 } from '@mui/material';
@@ -24,9 +30,9 @@ import {
 import { localUrl } from 'src/utils/util';
 import { paths } from 'src/utils/filterOptions';
 
-export default function EditUserModal({ open, onClose, user, onSubmit }) {
-  const [menuItem, setMenuItem] = useState(''); // Added state for menu item
-  const [menuItems, setMenuItems] = useState([]); // Changed to array for proper handling
+const EditUserModal = ({ open, onClose, user, onSubmit }) => {
+  const [selectedMenuItems, setSelectedMenuItems] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     _id: '',
     name: '',
@@ -36,9 +42,10 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
     password: '',
     role: '',
     status: false,
-    images: '', // Use an empty string for URL or a placeholder
-    imageUrl: '', // Placeholder URL for preview
+    images: '',
+    imageUrl: '',
   });
+  const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -51,10 +58,10 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
         password: user.password || '',
         role: user.role || '',
         status: user.status || false,
-        images: user.images || '', // Set to current image URL
-        imageUrl: user.images || '', // Set to current image URL for preview
+        images: user.images || '',
+        imageUrl: user.images || '',
       });
-      setMenuItems(user.menuItems || []); // Initialize menu items from user
+      setSelectedMenuItems(user.menuItems || []);
     }
   }, [user]);
 
@@ -64,6 +71,63 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
     setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
 
+
+  const handleSubmit = async () => {
+    const updatedUser = {
+      ...formData,
+      menuItems: selectedMenuItems,
+    };
+
+    // Handle image upload if a new image file is selected
+    if (imageFile) {
+      const formDataToSend = new FormData();
+      formDataToSend.append('image', imageFile);
+      try {
+        const response = await axios.post(`${localUrl}/api/users/${user._id}/upload-image`, formDataToSend);
+        updatedUser.imageUrl = response.data.imageUrl; // Assuming the response contains the image URL
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        toast.error('Failed to upload image');
+        return; // Stop further execution on error
+      }
+    }
+
+    onSubmit(updatedUser);
+    onClose();
+    console.log('Updated user data:', updatedUser);
+  };
+
+  const handleAddMenuItems = async () => {
+    if (selectedMenuItems.length === 0) return;
+
+    try {
+      await axios.post(`${localUrl}/api/users/${user._id}/menu-items`, {
+        menuItems: selectedMenuItems,
+      });
+      toast.success('Menu items added');
+    } catch (error) {
+      console.error('Error adding menu items:', error);
+      toast.error('Failed to add menu items');
+    }
+  };
+
+  const handleDeleteMenuItem = async (item) => {
+    try {
+      await axios.patch(`${localUrl}/api/users/${user._id}/menu-items`, {
+        menuItem: item,
+      });
+      const updatedMenuItems = selectedMenuItems.filter((menu) => menu !== item);
+      setSelectedMenuItems(updatedMenuItems);
+      toast.success('Deleted');
+    } catch (error) {
+      console.error('Error deleting menu item:', error);
+      toast.error('Failed to delete menu item');
+    }
+  };
+
+  const filteredMenuItems = selectedMenuItems.filter((item) =>
+    item.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -75,63 +139,29 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
     }
   };
 
-  const handleSubmit = () => {
-    const updatedUser = {
-      ...formData,
-      status: formData.status, // Ensure status is boolean
-    };
-    onSubmit(updatedUser);
-    onClose();
-    console.log('Updated user data:', updatedUser);
-  };
-
-  const handleAddMenuItem = async () => {
-    if (!menuItem) return;
-
-    try {
-      await axios.post(`${localUrl}/api/users/${user._id}/menu-items`, {
-        menuItem,
-      });
-      const updatedMenuItems = [...menuItems, menuItem]; // Append new item
-      setMenuItems(updatedMenuItems);
-      setMenuItem(''); // Reset input
-      if (onSubmit) onSubmit(updatedMenuItems); // Call onSubmit with updated menu items
-    } catch (error) {
-      console.error('Error adding menu item:', error);
-    }
-  };
-
-  const handleDeleteMenuItem = async (item) => {
-    try {
-      await axios.delete(`${localUrl}/api/users/${user._id}/menu-items`, {
-        data: { menuItem: item },
-      });
-      const updatedMenuItems = menuItems.filter((menu) => menu !== item);
-      setMenuItems(updatedMenuItems);
-      if (onSubmit) onSubmit(updatedMenuItems); // Call onSubmit with updated menu items
-    } catch (error) {
-      console.error('Error deleting menu item:', error);
-    }
-  };
-
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" sx={{ borderRadius: '10px' }}>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle
         sx={{
-          fontSize: '1.8rem',
+          fontSize: '1.5rem',
           fontWeight: 'bold',
           textAlign: 'center',
-          backgroundColor: '#f5f5f5',
+          backgroundColor: '#1976d2',
+          color: '#fff',
           position: 'relative',
+          py: 2,
         }}
       >
-        Basic Info
-        <IconButton onClick={onClose} sx={{ position: 'absolute', right: 10, top: 10 }}>
+        Edit User Information
+        <IconButton
+          onClick={onClose}
+          sx={{ position: 'absolute', right: 10, top: 10, color: '#fff' }}
+        >
           <Close />
         </IconButton>
       </DialogTitle>
       <DialogContent sx={{ backgroundColor: '#fafafa', padding: '2rem' }}>
-        <Box display="flex" justifyContent="center" mb={3}>
+      <Box display="flex" justifyContent="center" mb={3}>
           <Box display="flex" flexDirection="column" alignItems="center">
             <Avatar
               src={formData.imageUrl}
@@ -144,7 +174,7 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
           </Box>
         </Box>
         <Box component="form" noValidate autoComplete="off">
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             {['name', 'email', 'mobile', 'address', 'password'].map((field) => (
               <Grid item xs={12} sm={6} key={field}>
                 <TextField
@@ -155,9 +185,6 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
                   value={formData[field]}
                   onChange={handleChange}
                   variant="outlined"
-                  InputProps={{
-                    style: { borderRadius: '8px' },
-                  }}
                   required
                   sx={{
                     '& .MuiOutlinedInput-root': {
@@ -177,7 +204,7 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
             ))}
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth variant="outlined">
-                <InputLabel>Select Role (Current role is {user?.role})</InputLabel>
+                <InputLabel>Select Role</InputLabel>
                 <Select
                   name="role"
                   value={formData.role}
@@ -204,95 +231,136 @@ export default function EditUserModal({ open, onClose, user, onSubmit }) {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6}>
+
+
+            <Grid item xs={12}>
               <FormControl fullWidth variant="outlined">
-                <InputLabel>Assign Menu</InputLabel>
+                <InputLabel>Assign Menu Items</InputLabel>
                 <Select
-                  name="menu"
-                  value={formData.menu} // Ensure this matches your state structure
-                  onChange={(e) => setMenuItem(e.target.value)}
+                  multiple
+                  value={selectedMenuItems}
+                  onChange={(e) => setSelectedMenuItems(e.target.value)}
+                  renderValue={(selected) => selected.join(', ')}
                   sx={{ borderRadius: '8px' }}
                 >
                   {paths.map((path) => (
                     <MenuItem key={path.path} value={path.title}>
-                      {path.title}
+                      <Checkbox checked={selectedMenuItems.indexOf(path.title) > -1} />
+                      <ListItemText primary={path.title} />
                     </MenuItem>
                   ))}
                 </Select>
                 <Button
-                  onClick={handleAddMenuItem}
+                  onClick={handleAddMenuItems}
                   variant="contained"
                   color="primary"
                   sx={{ mt: 1 }}
                 >
-                  Add Menu Item
+                  Add Menu Items
                 </Button>
               </FormControl>
             </Grid>
-            <Box mt={3} width="100%">
-              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#1976d2' }}>
-                Current Menu Items
-              </Typography>
-              <ul style={{ listStyleType: 'none', padding: 0 }}>
-                {menuItems.length > 0 ? (
-                  menuItems.map((item, index) => (
-                    <li
-                      key={index}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '10px 15px',
-                        marginBottom: '8px',
-                        backgroundColor: '#f0f4f8',
-                        borderRadius: '8px',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                        transition: 'background-color 0.3s',
-                      }}
-                    >
-                      <Typography variant="body1" sx={{ fontWeight: '500' }}>
-                        {item}
-                      </Typography>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => handleDeleteMenuItem(item)}
-                        sx={{
-                          ml: 1,
-                          '&:hover': {
-                            backgroundColor: '#ffebee',
-                          },
-                        }}
-                      >
-                        Delete
-                      </Button>
-                    </li>
-                  ))
-                ) : (
-                  <Typography variant="body1" sx={{ color: 'gray', fontStyle: 'italic' }}>
-                    No menu items assigned.
-                  </Typography>
-                )}
-              </ul>
-            </Box>
           </Grid>
+          <Divider sx={{ my: 3 }} />
+          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#1976d2' }}>
+            Current Menu Items
+          </Typography>
+          <Grid item xs={12}>
+            <TextField
+              label="Search Menu Items"
+              variant="outlined"
+              fullWidth
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#1976d2',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#1565c0',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#1976d2',
+                  },
+                },
+              }}
+            />
+          </Grid>
+          <Box
+            sx={{
+              maxHeight: '200px',
+              overflowY: 'auto',
+              border: '1px solid #e0e0e0',
+              borderRadius: '8px',
+              padding: '10px',
+              backgroundColor: '#f0f4f8',
+              mt: 1,
+            }}
+          >
+            {filteredMenuItems.length > 0 ? (
+              filteredMenuItems.map((item, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    transition: 'background-color 0.3s',
+                    '&:hover': {
+                      backgroundColor: '#e0f7fa',
+                    },
+                  }}
+                >
+                  <Typography variant="body1">{item}</Typography>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={() => handleDeleteMenuItem(item)}
+                    sx={{ ml: 1 }}
+                  >
+                    Delete
+                  </Button>
+                </Box>
+              ))
+            ) : (
+              <Typography variant="body2" sx={{ color: 'gray', textAlign: 'center' }}>
+                No menu items found
+              </Typography>
+            )}
+          </Box>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ backgroundColor: '#f5f5f5', padding: '1rem' }}>
+      <DialogActions>
         <Button onClick={onClose} color="secondary">
           Cancel
         </Button>
-        <Button onClick={handleSubmit} color="primary">
+        <Button onClick={handleSubmit} variant="contained" color="primary">
           Save Changes
         </Button>
       </DialogActions>
     </Dialog>
   );
-}
+};
 
 EditUserModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  user: PropTypes.object.isRequired,
+  user: PropTypes.shape({
+    _id: PropTypes.string.isRequired,
+    name: PropTypes.string,
+    email: PropTypes.string,
+    mobile: PropTypes.string,
+    address: PropTypes.string,
+    password: PropTypes.string,
+    role: PropTypes.string,
+    status: PropTypes.bool,
+    images: PropTypes.string,
+    menuItems: PropTypes.arrayOf(PropTypes.string),
+  }).isRequired,
   onSubmit: PropTypes.func.isRequired,
 };
+
+export default EditUserModal;
