@@ -1,5 +1,14 @@
 {
   "compilerOptions": {
-    "baseUrl": "."
-  }
+    "target": "es6",                     // Specify ECMAScript target version
+    "module": "commonjs",                // Specify module code generation
+    "baseUrl": ".",                      // Base URL for resolving non-relative module names
+    "paths": {
+      "@/*": ["src/*"]                  // Example for setting up absolute imports
+    },
+    "jsx": "react",                      // Specify JSX code generation (if you're using React)
+    "strict": true                       // Enable all strict type-checking options
+  },
+  "include": ["src/**/*"],               // Specify the files to be included
+  "exclude": ["node_modules"]            // Exclude node_modules
 }
