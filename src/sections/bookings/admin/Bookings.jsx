@@ -1,5 +1,3 @@
-/* eslint-disable no-shadow */
-/* eslint-disable react-hooks/exhaustive-deps */
 import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 import 'react-toastify/dist/ReactToastify.css';

@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 
 import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
-import { Button, Container, TextField, ButtonGroup } from '@mui/material';
+import { Button, Container, TextField, ButtonGroup, Grid2 } from '@mui/material';
 
 import { localUrl } from 'src/utils/util';
 import LinearLoader from 'src/utils/Loading';
@@ -95,16 +94,16 @@ export default function ProductsView() {
         </ButtonGroup>
       </Stack>
 
-      <Grid container spacing={3}>
+      <Grid2 container spacing={3}>
         {filteredData.map((product) => (
-          <Grid key={product._id} item xs={12} sm={6} md={3}>
+          <Grid2 key={product._id} item xs={12} sm={6} md={3}>
             <ProductCard
               product={product}
               onAddFood={() => handleOpenModal(product)} // Pass handleOpenModal to ProductCard
             />
-          </Grid>
+          </Grid2>
         ))}
-      </Grid>
+      </Grid2>
 
       {selectedHotel && (
         <AddFoodModal

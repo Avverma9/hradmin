@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import Container from '@mui/material/Container';
-import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 
 import { role, localUrl } from 'src/utils/util';
@@ -11,6 +10,7 @@ import { role, localUrl } from 'src/utils/util';
 import Rooms from 'src/sections/rooms/Rooms';
 
 import AppWidgetSummary from '../app-widget-summary';
+import { Grid2 } from '@mui/material';
 
 // ----------------------------------------------------------------------
 
@@ -212,9 +212,9 @@ export default function AppView() {
       <Typography variant="h6" sx={{ mb: 5 }}>
         Dashboard shortcuts{' '}
       </Typography>
-      <Grid container spacing={3}>
+      <Grid2 container spacing={3}>
         {filteredWidgets.map((widget) => (
-          <Grid xs={12} sm={6} md={3} key={widget.title}>
+          <Grid2 xs={12} sm={6} md={3} key={widget.title}>
             <AppWidgetSummary
               title={widget.title}
               total={widget.count || 0}
@@ -222,9 +222,9 @@ export default function AppView() {
               icon={<img alt={`${widget.title} icon`} src={widget.icon} />}
               onClick={() => handleWidgetClick(widget.title)}
             />
-          </Grid>
+          </Grid2>
         ))}
-      </Grid>
+      </Grid2>
       {role === 'PMS' && <Rooms />}
     </Container>
   );
