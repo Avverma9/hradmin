@@ -17,6 +17,7 @@ import {
 
 import { userId, localUrl } from 'src/utils/util';
 
+// Define your icons
 const icons = {
   dashboard: <MdDashboard style={{ width: '24px', height: '24px' }} />,
   messenger: <RiMessengerLine style={{ width: '24px', height: '24px' }} />,
@@ -36,11 +37,13 @@ const icons = {
   setMonthlyPrice: <FaDollarSign style={{ width: '24px', height: '24px' }} />,
 };
 
+// Function to get menu items
 const menuItems = async () => {
   const response = await axios.get(`${localUrl}/login/dashboard/get/all/user/${userId}`);
   return response.data.menuItems.map((item) => item.toLowerCase());
 };
 
+// Function to get nav config
 const getNavConfig = async () => {
   const availableMenuItems = await menuItems();
 
@@ -165,13 +168,10 @@ const getNavConfig = async () => {
     },
   ];
 
-  const uniqueTitles = new Set();
-
   return baseConfig.filter((item) => {
     const isParentVisible = availableMenuItems.includes(item.title.toLowerCase());
 
     if (isParentVisible) {
-      uniqueTitles.add(item.title.toLowerCase());
       return true; // Show parent if it matches
     }
 
@@ -191,9 +191,7 @@ const getNavConfig = async () => {
   });
 };
 
-// IIFE to get the nav config
-const navConfig = await (async () => {
+// Export the function to fetch the nav config
+export const fetchNavConfig = async () => {
   return await getNavConfig();
-})();
-
-export default navConfig;
+};

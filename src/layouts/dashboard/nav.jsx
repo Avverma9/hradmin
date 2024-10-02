@@ -10,6 +10,7 @@ import { alpha } from '@mui/material/styles';
 import Collapse from '@mui/material/Collapse';
 import Typography from '@mui/material/Typography';
 import ListItemButton from '@mui/material/ListItemButton';
+import { NAV } from './config-layout';
 
 import { usePathname } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
@@ -22,8 +23,7 @@ import Logo from 'src/components/logo';
 import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
 
-import { NAV } from './config-layout';
-import navConfig from './config-navigation';
+import {fetchNavConfig} from './config-navigation';
 
 // ----------------------------------------------------------------------
 
@@ -39,9 +39,11 @@ export default function Nav({ openNav, onCloseNav }) {
     if (!string) return '';
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
+
   const displayName = capitalizeFirstLetter(
     userRole === 'superAdmin' ? 'Super Admin' : userRole || account.displayName
   );
+
   useEffect(() => {
     if (openNav) {
       onCloseNav();
@@ -73,6 +75,17 @@ export default function Nav({ openNav, onCloseNav }) {
       </Box>
     </Box>
   );
+
+  const [navConfig, setNavConfig] = useState([]);
+
+  useEffect(() => {
+    const loadNavConfig = async () => {
+      const config = await fetchNavConfig();
+      setNavConfig(config);
+    };
+
+    loadNavConfig();
+  }, []);
 
   const renderMenu = (
     <Stack component="nav" spacing={0.5} sx={{ px: 2 }}>
