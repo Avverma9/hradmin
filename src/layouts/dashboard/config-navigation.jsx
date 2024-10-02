@@ -191,6 +191,9 @@ const getNavConfig = async () => {
   });
 };
 
-const navConfig = await getNavConfig(); // Await the async function to get nav config
+// IIFE to get the nav config
+const navConfig = await (async () => {
+  return await getNavConfig();
+})();
 
 export default navConfig;
