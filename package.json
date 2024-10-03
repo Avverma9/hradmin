@@ -1,21 +1,13 @@
 {
-  "name": "@minimal/material-kit-react",
-  "author": "minimals.cc",
-  "licence": "MIT",
-  "version": "1.8.0",
-  "private": false,
+  "name": "access-panel",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
-    "start": "vite preview",
     "build": "vite build",
-    "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
-    "rm:all": "rm -rf node_modules .next out dist build",
-    "re:start": "yarn rm:all && yarn install && yarn dev",
-    "re:build": "yarn rm:all && yarn install && yarn build",
-    "re:build-npm": "npm run rm:all && npm install && npm run build",
-    "dev:host": "vite --host",
-    "vite:start": "vite",
-    "vite:build": "vite build"
+    "lint": "eslint .",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
@@ -53,6 +45,7 @@
     "simplebar-react": "^3.2.6",
     "slick-carousel": "^1.8.1",
     "xlsx": "^0.18.5"
+  
   },
   "devDependencies": {
     "@vitejs/plugin-react-swc": "^3.7.1",
