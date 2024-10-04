@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-import CouponPage from '../../settings/coupon';
+import CouponPage from 'src/sections/settings/coupon';
 
 // ----------------------------------------------------------------------
 
