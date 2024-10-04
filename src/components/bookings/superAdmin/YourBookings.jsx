@@ -23,22 +23,16 @@ import {
   LinearProgress,
 } from '@mui/material';
 
+import { localUrl } from '../../../../utils/util';
 import { fDate } from '../../../../utils/format-time';
 
 import BookingUpdateModal from '../booking-update-modal'; // Adjust path as needed
-import { fetchFilteredBookings, searchBooking, updateBooking } from 'src/redux/reducers/booking';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLoader } from '../../../../utils/loader';
 
 export default function SuperAdminBookingsView() {
   const [bookingId, setBookingId] = useState('');
-  const dispatch = useDispatch();
-  const search = useSelector((state) => state.booking.search);
-  const filtered = useSelector((state) => state.booking.filtered);
-  const [bookings, setBookings] = useState([]);
-  const { showLoader, hideLoader } = useLoader();
-
   const [status, setStatus] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const navigate = useNavigate();
@@ -51,30 +45,42 @@ export default function SuperAdminBookingsView() {
     fetchData();
   }, [status]);
 
-  const filters = `bookingStatus=${status}&hotelEmail=${hotelEmail}`;
   const fetchData = async () => {
-    showLoader();
+    setLoading(true);
     try {
-      await dispatch(fetchFilteredBookings(filters));
-    } catch (error) {
-      console.error('Error:', error);
-      setBookings([]);
-    } finally {
-      hideLoader();
-    }
-  };
-
-  const handleSearch = async () => {
-    try {
-      showLoader();
-      await dispatch(searchBooking(bookingId));
-      setBookings(search);
+      const response = await fetch(
+        `${localUrl}/get/all/filtered/booking/by/query?bookingStatus=${status}&hotelEmail=${hotelEmail}`
+      );
+      if (!response.ok) {
+        toast.info('No bookings found !');
+      }
+      const data = await response.json();
+      setBookings(data);
     } catch (error) {
       console.error('Error:', error);
       toast.error('Something went wrong');
       setBookings([]);
     } finally {
-      hideLoader();
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async () => {
+    try {
+      const response = await fetch(
+        `${localUrl}/get/all/filtered/booking/by/query?bookingId=${bookingId}`
+      );
+      if (!response.ok) {
+        toast.info('No bookings found');
+        setBookings([]);
+        return;
+      }
+      const data = await response.json();
+      setBookings(data);
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Something went wrong');
+      setBookings([]);
     }
   };
 
@@ -92,21 +98,35 @@ export default function SuperAdminBookingsView() {
   };
 
   const handleSave = async (updatedData) => {
-    showLoader();
-
     try {
-      await dispatch(updateBooking(updatedData, selectedBooking.bookingId));
+      const response = await fetch(`${localUrl}/updatebooking/${selectedBooking.bookingId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedData),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update booking');
+      }
       toast.success('Booking updated successfully');
-      await fetchData(); // Refresh the bookings list
+      fetchData(); // Refresh the bookings list
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to update booking');
     } finally {
       setOpenModal(false);
       setSelectedBooking(null);
-      hideLoader();
     }
   };
+
+  if (loading) {
+    return (
+      <Container>
+        <LinearProgress />
+      </Container>
+    );
+  }
 
   return (
     <Container sx={{ marginTop: '40px' }}>
@@ -170,8 +190,8 @@ export default function SuperAdminBookingsView() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filtered?.length > 0 ? (
-              filtered.map((booking) => (
+            {bookings.length > 0 ? (
+              bookings.map((booking) => (
                 <TableRow key={booking._id}>
                   <TableCell>{booking.bookingId}</TableCell>
                   <TableCell>{booking.user?.name}</TableCell>

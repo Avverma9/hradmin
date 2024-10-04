@@ -11,4 +11,3 @@ export const hotelEmail = localStorage.getItem('user_email');
 export const role = localStorage.getItem('user_role');
 export const userId = localStorage.getItem('user_id');
 export const userName = localStorage.getItem('user_name');
-export const token = localStorage.getItem('rs_token');

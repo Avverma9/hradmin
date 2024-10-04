@@ -15,7 +15,7 @@ import {
   MdOutlineAdminPanelSettings,
 } from 'react-icons/md';
 
-import { userId, localUrl, token } from '../../../utils/util';
+import { userId, localUrl } from '../../../utils/util';
 
 // Define your icons
 const icons = {
@@ -39,11 +39,7 @@ const icons = {
 
 // Function to get menu items
 const menuItems = async () => {
-  const response = await axios.get(`${localUrl}/login/dashboard/get/all/user/${userId}`, {
-    headers: {
-      Authorization: token,
-    },
-  });
+  const response = await axios.get(`${localUrl}/login/dashboard/get/all/user/${userId}`);
   return response.data.menuItems.map((item) => item.toLowerCase());
 };
 
