@@ -172,12 +172,6 @@ const ChatApp = () => {
       };
 
       fetchMessages();
-      const intervalId = setInterval(fetchMessages, 5000);
-      setPollingInterval(intervalId);
-
-      return () => {
-        clearInterval(intervalId);
-      };
     }
   }, [selectedContact, location.pathname]);
 
