@@ -8,6 +8,9 @@ import { TimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { Box, Grid, Modal, Button, MenuItem, TextField, Typography } from '@mui/material';
 
 import { localUrl } from '../../../utils/util';
+import { useDispatch, useSelector } from 'react-redux';
+import { updateBooking } from 'src/redux/reducers/booking';
+import { toast } from 'react-toastify';
 
 // Styles for the modal
 const modalStyle = {
@@ -37,6 +40,8 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
     guests: '',
   });
   const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const updated = useSelector((state) => state.booking.updated);
 
   // Update form data when bookingData changes
   useEffect(() => {
@@ -64,33 +69,32 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
   const handleTimeChange = (name) => (time) => {
     setFormData((prevData) => ({ ...prevData, [name]: time }));
   };
+  console.log('selected bboking', bookingData.bookingId);
 
   // Handle form submission
   const handleSave = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${localUrl}/updatebooking/${bookingData.bookingId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          checkInTime: formData.checkInTime?.toISOString() || '',
-          checkOutTime: formData.checkOutTime?.toISOString() || '',
-        }),
-      });
+      const response = await dispatch(
+        updateBooking({
+          bookingId: bookingData.bookingId, // Wrap bookingId in an object
+          updatedData: {
+            ...formData,
+            checkInTime: formData.checkInTime?.toISOString(),
+            checkOutTime: formData.checkOutTime?.toISOString(),
+          },
+        })
+      );
 
-      if (!response.ok) {
+      if (response.error) {
         throw new Error('Failed to update booking');
       }
 
-      const result = await response.json();
-      onSave(result); // Call the onSave callback with the updated booking data
+      onSave(updated); // Call the onSave callback with the updated booking data
       onClose(); // Close the modal
     } catch (error) {
       console.error('Error updating booking:', error);
-      // Optionally, show a toast notification or alert here
+      toast.error('Failed to update booking');
     } finally {
       setLoading(false);
     }

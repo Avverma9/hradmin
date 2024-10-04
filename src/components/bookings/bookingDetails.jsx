@@ -9,19 +9,34 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { MdAccessTime, MdOutlineHouse } from 'react-icons/md';
 
 import { makeStyles } from '@mui/styles';
-import { Box, Grid, Paper, Button, Avatar, Divider, Container, Typography, LinearProgress } from '@mui/material';
+import {
+  Box,
+  Grid2,
+  Paper,
+  Button,
+  Avatar,
+  Divider,
+  Container,
+  Typography,
+  LinearProgress,
+} from '@mui/material';
 
-import { localUrl } from '../../../utils/util';
 import { fDate, fDateTime } from '../../../utils/format-time';
+import { fetchFilteredBookings } from 'src/redux/reducers/booking';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLoader } from '../../../utils/loader';
 
 const BookingDetail = () => {
-  const [booking, setBooking] = useState(null);
+  const [booking, setBooking] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
+  const filtered = useSelector((state) => state.booking.filtered);
+
   const path = location.pathname;
   const segments = path.split('/');
   const bookingId = segments[segments.length - 1];
-
+  const { showLoader, hideLoader } = useLoader();
   const useStyles = makeStyles((theme) => ({
     paper: {
       padding: theme.spacing(3),
@@ -41,36 +56,34 @@ const BookingDetail = () => {
   }));
   const classes = useStyles();
 
-  const fetchBookingData = async (bookingId) => {
-    try {
-      const response = await fetch(
-        `${localUrl}/get/all/filtered/booking/by/query?bookingId=${bookingId}`
-      );
-      if (!response.ok) {
-        throw new Error('Failed to fetch data');
+  useEffect(() => {
+    const fetchBookingData = async () => {
+      showLoader();
+      try {
+        await dispatch(fetchFilteredBookings(`bookingId=${bookingId}`));
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
+      } finally {
+        hideLoader();
       }
-      const data = await response.json();
-      setBooking(data[0]);
-    } catch (error) {
-      console.error('Error fetching booking data:', error);
-      // Handle error
-    }
-  };
+    };
+
+    fetchBookingData();
+  }, [bookingId, dispatch, showLoader, hideLoader]);
 
   useEffect(() => {
-    fetchBookingData(bookingId);
-  }, [bookingId]);
-
+    if (filtered?.length > 0) {
+      setBooking(filtered[0]); // Assuming you're getting a list and want the first item
+    }
+  }, [filtered]);
   const handleBack = () => {
     navigate(-1); // Go back to the previous location
   };
 
-  if (!booking) {
-    return (
-      <Container>
-        <LinearProgress />
-      </Container>
-    );
+  if (filtered?.length < 0) {
+    showLoader();
+  } else {
+    hideLoader();
   }
 
   return (
@@ -83,34 +96,34 @@ const BookingDetail = () => {
       </Button>
       <hr />
       <Paper elevation={3} className={classes.paper}>
-        <Grid container spacing={3}>
+        <Grid2 container spacing={3}>
           {/* Customer, Hotel and Owner Info Section */}
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid2 item xs={12} sm={6} md={4}>
             <Box className={classes.section}>
-              <Grid container alignItems="center" spacing={2}>
-                <Grid item>
+              <Grid2 container alignItems="center" spacing={2}>
+                <Grid2 item>
                   <Avatar
                     alt="User Avatar"
                     src={booking?.user?.profile}
                     className={classes.avatar}
                   />
-                </Grid>
-                <Grid item>
+                </Grid2>
+                <Grid2 item>
                   <Typography variant="h6">{booking?.user?.name}</Typography>
-                </Grid>
-                <Grid item>
+                </Grid2>
+                <Grid2 item>
                   <Typography variant="h6">
                     {booking?.bookingId} ({booking?.bookingStatus})
                   </Typography>
-                </Grid>
-              </Grid>
+                </Grid2>
+              </Grid2>
 
-              <Grid item>
+              <Grid2 item>
                 <Typography variant="h6">
                   Price <LiaRupeeSignSolid />
                   {booking?.price}
                 </Typography>
-              </Grid>
+              </Grid2>
               <Divider sx={{ margin: '16px 0' }} />
               <Typography variant="subtitle1">
                 <CiUser /> Customer Name
@@ -141,10 +154,10 @@ const BookingDetail = () => {
                 {booking?.user?.mobile}
               </Typography>
             </Box>
-          </Grid>
+          </Grid2>
 
           {/* Check-in/Check-out and Booking Status Section */}
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid2 item xs={12} sm={6} md={4}>
             <Box className={classes.section}>
               <Typography variant="subtitle1">Check-In / Check-out</Typography>
               <Typography variant="body2" gutterBottom>
@@ -180,10 +193,10 @@ const BookingDetail = () => {
                 {fDateTime(booking?.checkOutTime) || 'Not Checked out'}
               </Typography>
             </Box>
-          </Grid>
+          </Grid2>
 
           {/* Services Section */}
-          <Grid item xs={12} md={4}>
+          <Grid2 item xs={12} md={4}>
             <Box className={classes.section}>
               <Typography variant="h6" gutterBottom>
                 Services
@@ -219,8 +232,8 @@ const BookingDetail = () => {
                 </Box>
               </Box>
             </Box>
-          </Grid>
-        </Grid>
+          </Grid2>
+        </Grid2>
       </Paper>
     </Box>
   );
