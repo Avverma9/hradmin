@@ -2,7 +2,9 @@ import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
-
+import { fetchFilteredBookings, searchBooking, updateBooking } from 'src/redux/reducers/booking';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLoader } from '../../../../utils/loader';
 import { styled } from '@mui/material/styles';
 import {
   Box,
@@ -33,9 +35,13 @@ export default function SuperAdminBookingsView() {
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
   const [bookings, setBookings] = useState([]);
+  const dispatch = useDispatch();
+  const search = useSelector((state) => state.booking.search);
+  const filtered = useSelector((state) => state.booking.filtered);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const navigate = useNavigate();
+  const { showLoader, hideLoader } = useLoader();
   const hotelEmail = localStorage.getItem('user_email');
   const StyledButton = styled(Button)({
     marginRight: '10px',
@@ -46,41 +52,31 @@ export default function SuperAdminBookingsView() {
   }, [status]);
 
   const fetchData = async () => {
-    setLoading(true);
+    const filters = `bookingStatus=${status}&hotelEmail=${hotelEmail}`;
+    showLoader()
     try {
-      const response = await fetch(
-        `${localUrl}/get/all/filtered/booking/by/query?bookingStatus=${status}&hotelEmail=${hotelEmail}`
-      );
-      if (!response.ok) {
-        toast.info('No bookings found !');
-      }
-      const data = await response.json();
-      setBookings(data);
+      
+      await dispatch(fetchFilteredBookings(filters));
     } catch (error) {
       console.error('Error:', error);
       toast.error('Something went wrong');
       setBookings([]);
     } finally {
-      setLoading(false);
+hideLoader()
     }
   };
 
   const handleSearch = async () => {
     try {
-      const response = await fetch(
-        `${localUrl}/get/all/filtered/booking/by/query?bookingId=${bookingId}`
-      );
-      if (!response.ok) {
-        toast.info('No bookings found');
-        setBookings([]);
-        return;
-      }
-      const data = await response.json();
-      setBookings(data);
+      showLoader();
+      await dispatch(searchBooking(bookingId));
+      setBookings(search);
     } catch (error) {
       console.error('Error:', error);
       toast.error('Something went wrong');
       setBookings([]);
+    } finally {
+      hideLoader();
     }
   };
 
@@ -98,25 +94,18 @@ export default function SuperAdminBookingsView() {
   };
 
   const handleSave = async (updatedData) => {
+    showLoader();
     try {
-      const response = await fetch(`${localUrl}/updatebooking/${selectedBooking.bookingId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedData),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to update booking');
-      }
+      await dispatch(updateBooking(updatedData, selectedBooking.bookingId));
       toast.success('Booking updated successfully');
-      fetchData(); // Refresh the bookings list
+      await fetchData(); // Refresh the bookings list
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to update booking');
     } finally {
       setOpenModal(false);
       setSelectedBooking(null);
+      hideLoader();
     }
   };
 
@@ -190,8 +179,8 @@ export default function SuperAdminBookingsView() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {bookings.length > 0 ? (
-              bookings.map((booking) => (
+          {filtered?.length > 0 ? (
+              filtered.map((booking) => (
                 <TableRow key={booking._id}>
                   <TableCell>{booking.bookingId}</TableCell>
                   <TableCell>{booking.user?.name}</TableCell>

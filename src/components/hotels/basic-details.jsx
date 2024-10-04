@@ -20,13 +20,13 @@ import {
 } from '@mui/material';
 
 import { localUrl } from '../../../utils/util';
-
+import { useLoader } from '../../../utils/loader';
 export default function BasicDetails({ open, onClose, hotelId }) {
   const [hotel, setHotel] = useState({});
   const [editField, setEditField] = useState(null);
   const [editValue, setEditValue] = useState('');
   const [loading, setLoading] = useState(true);
-
+  const { showLoader, hideLoader } = useLoader();
   useEffect(() => {
     const fetchData = async () => {
       try {

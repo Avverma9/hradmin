@@ -7,7 +7,9 @@ import { IoMailOpenOutline } from 'react-icons/io5';
 import { LiaRupeeSignSolid } from 'react-icons/lia';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MdAccessTime, MdOutlineHouse } from 'react-icons/md';
-
+import { fetchFilteredBookings } from 'src/redux/reducers/booking';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLoader } from '../../../utils/loader';
 import { makeStyles } from '@mui/styles';
 import { Box, Grid, Paper, Button, Avatar, Divider, Container, Typography, LinearProgress } from '@mui/material';
 
@@ -15,13 +17,15 @@ import { localUrl } from '../../../utils/util';
 import { fDate, fDateTime } from '../../../utils/format-time';
 
 const BookingDetail = () => {
-  const [booking, setBooking] = useState(null);
   const navigate = useNavigate();
+  const [booking, setBooking] = useState([]);
   const location = useLocation();
   const path = location.pathname;
   const segments = path.split('/');
   const bookingId = segments[segments.length - 1];
-
+  const dispatch = useDispatch();
+  const filtered = useSelector((state) => state.booking.filtered);
+  const { showLoader, hideLoader } = useLoader();
   const useStyles = makeStyles((theme) => ({
     paper: {
       padding: theme.spacing(3),
@@ -41,36 +45,33 @@ const BookingDetail = () => {
   }));
   const classes = useStyles();
 
-  const fetchBookingData = async (bookingId) => {
-    try {
-      const response = await fetch(
-        `${localUrl}/get/all/filtered/booking/by/query?bookingId=${bookingId}`
-      );
-      if (!response.ok) {
-        throw new Error('Failed to fetch data');
-      }
-      const data = await response.json();
-      setBooking(data[0]);
-    } catch (error) {
-      console.error('Error fetching booking data:', error);
-      // Handle error
-    }
-  };
-
   useEffect(() => {
-    fetchBookingData(bookingId);
-  }, [bookingId]);
+    const fetchBookingData = async () => {
+      showLoader();
+      try {
+        await dispatch(fetchFilteredBookings(`bookingId=${bookingId}`));
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
+      } finally {
+        hideLoader();
+      }}
 
+
+ fetchBookingData();
+  }, [bookingId, dispatch, showLoader, hideLoader]);
+  useEffect(() => {
+    if (filtered?.length > 0) {
+      setBooking(filtered[0]); // Assuming you're getting a list and want the first item
+    }
+  }, [filtered]);
   const handleBack = () => {
     navigate(-1); // Go back to the previous location
   };
 
-  if (!booking) {
-    return (
-      <Container>
-        <LinearProgress />
-      </Container>
-    );
+  if (filtered?.length < 0) {
+    showLoader();
+  } else {
+    hideLoader();
   }
 
   return (

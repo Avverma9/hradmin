@@ -7,10 +7,10 @@ import Typography from '@mui/material/Typography';
 
 import { role, localUrl } from '../../../../utils/util';
 
-
 import AppWidgetSummary from '../app-widget-summary';
 import { Grid2 } from '@mui/material';
 import Rooms from 'src/components/rooms/Rooms';
+import { useLoader } from '../../../../utils/loader';
 
 // ----------------------------------------------------------------------
 
@@ -21,9 +21,10 @@ export default function AppView() {
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
-
+  const { showLoader, hideLoader } = useLoader();
   useEffect(() => {
     const fetchData = async () => {
+      showLoader();
       try {
         const [bookingResponse, hotelResponse, userResponse] = await Promise.all([
           axios.get(`${localUrl}/get-all/bookings-count`),
@@ -38,6 +39,7 @@ export default function AppView() {
         console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
+        hideLoader();
       }
     };
 
@@ -110,7 +112,6 @@ export default function AppView() {
   if (loading) {
     return <Typography variant="h6">Loading...</Typography>;
   }
-
   const formattedTime = currentTime.toLocaleTimeString();
   const formattedDate = currentTime.toLocaleDateString(undefined, {
     weekday: 'long',

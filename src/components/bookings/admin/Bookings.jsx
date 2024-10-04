@@ -27,6 +27,9 @@ import { localUrl } from '../../../../utils/util';
 import { fDate } from '../../../../utils/format-time';
 
 import BookingUpdateModal from '../booking-update-modal'; // Adjust path as needed
+import { fetchFilteredBookings, searchBooking } from 'src/redux/reducers/booking';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLoader } from '../../../../utils/loader';
 
 export default function BookingsView() {
   const [bookingId, setBookingId] = useState('');
@@ -37,7 +40,10 @@ export default function BookingsView() {
   const [openModal, setOpenModal] = useState(false);
   const [filterDate, setFilterDate] = useState('');
   const navigate = useNavigate();
-
+  const dispatch = useDispatch();
+  const filtered = useSelector((state) => state.booking.filtered);
+  const search = useSelector((state) => state.booking.search);
+  const { showLoader, hideLoader } = useLoader();
   const StyledButton = styled(Button)({
     marginRight: '10px',
   });
@@ -46,8 +52,12 @@ export default function BookingsView() {
     fetchData();
   }, [status, filterDate]);
 
+  useEffect(() => {
+    setBookings(filtered);
+  }, [filtered]);
   const fetchData = async () => {
     setLoading(true);
+    showLoader();
     try {
       // Build query parameters with filter date
       const queryParams = new URLSearchParams({
@@ -61,12 +71,14 @@ export default function BookingsView() {
       }
       const data = await response.json();
       setBookings(data);
+      await dispatch(fetchFilteredBookings(queryParams));
     } catch (error) {
       console.error('Error:', error);
       toast.error('Something went wrong');
       setBookings([]);
     } finally {
       setLoading(false);
+      hideLoader();
     }
   };
 
@@ -82,6 +94,10 @@ export default function BookingsView() {
       }
       const data = await response.json();
       setBookings(data);
+      showLoader();
+      await dispatch(searchBooking(bookingId));
+      setBookings(search);
+      hideLoader();
     } catch (error) {
       console.error('Error:', error);
       toast.error('Something went wrong');
@@ -99,6 +115,7 @@ export default function BookingsView() {
   };
 
   const handleSave = async (updatedData) => {
+    showLoader();
     try {
       const response = await fetch(`${localUrl}/updatebooking/${selectedBooking.bookingId}`, {
         method: 'PUT',
@@ -112,12 +129,14 @@ export default function BookingsView() {
       }
       toast.success('Booking updated successfully');
       fetchData(); // Refresh the bookings list
+      await fetchData(); // Refresh the bookings list
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to update booking');
     } finally {
       setOpenModal(false);
       setSelectedBooking(null);
+      hideLoader();
     }
   };
 
@@ -132,7 +151,6 @@ export default function BookingsView() {
       </Container>
     );
   }
-
   return (
     <Container sx={{ marginTop: '40px' }}>
       <Typography variant="h4" gutterBottom>
@@ -232,6 +250,7 @@ export default function BookingsView() {
           </TableHead>
           <TableBody>
             {bookings.length > 0 ? (
+          
               bookings.map((booking) => (
                 <TableRow key={booking._id}>
                   <TableCell>{booking.bookingId}</TableCell>
