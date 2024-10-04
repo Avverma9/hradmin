@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-import ReviewPage from 'src/sections/settings/reviews';
+import ReviewPage from '../../settings/reviews/Reviews';
 
 // ----------------------------------------------------------------------
 
