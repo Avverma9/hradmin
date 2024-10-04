@@ -1,9 +1,7 @@
-/* eslint-disable no-shadow */
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import React, { useState, useEffect } from 'react';
-
 import {
   Card,
   Stack,
@@ -15,14 +13,10 @@ import {
   TableContainer,
   TablePagination,
 } from '@mui/material';
-
-import { localUrl } from '../../../../utils/util';
-import LinearLoader from '../../../../utils/Loading';
+import { localUrl, token } from '../../../../utils/util';
 import { exportToExcel } from '../../../../utils/exportFunction';
-
 import Iconify from '../../../components/stuff/iconify/iconify';
 import Scrollbar from '../../../components/stuff/scrollbar/scrollbar';
-
 import EditUserModal from './edit-modal';
 import TableNoData from '../table-no-data';
 import UserTableRow from '../user-table-row';
@@ -32,7 +26,15 @@ import AddUserModal from './add-partner-modal';
 import TableEmptyRows from '../table-empty-rows';
 import UserTableToolbar from '../user-table-toolbar';
 import { emptyRows, applyFilter, getComparator } from '../utils';
-
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  addPartner,
+  deletePartner,
+  getAll,
+  updatedPartner,
+  updateStatus,
+} from 'src/components/redux/reducers/partner';
+import { useLoader } from '../../../../utils/loader';
 export default function UserPage() {
   const [page, setPage] = useState(0);
   const [order, setOrder] = useState('asc');
@@ -41,7 +43,7 @@ export default function UserPage() {
   const [filterName, setFilterName] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { showLoader, hideLoader } = useLoader();
   const [error, setError] = useState(null);
   const [editUser, setEditUser] = useState(null);
   const [viewUser, setViewUser] = useState(null);
@@ -49,46 +51,50 @@ export default function UserPage() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [refresh, setRefresh] = useState(false); // State to manage refresh
+  const data = useSelector((state) => state.partner.allData);
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    setLoading(true);
-    fetchUsers(); // Fetch users on component mount and refresh
-  }, [refresh]); // Re-fetch data when refresh state changes
+    showLoader();
+    const fetchUsers = async () => {
+      try {
+        await dispatch(getAll()); // Dispatch the action to fetch users
+      } catch (error) {
+        setError(error);
+        toast.error('Error fetching users');
+      } finally {
+        hideLoader();
+      }
+    };
 
-  const fetchUsers = async () => {
-    try {
-      const response = await axios.get(`${localUrl}/login/dashboard/get/all/user`);
-      setUsers(response.data);
-      setLoading(false);
-    } catch (error) {
-      setError(error);
-      setLoading(false);
+    fetchUsers();
+  }, [dispatch, refresh]); // Make sure to include `dispatch` in the dependency array
+
+  // Handle the refresh state to fetch users again
+  useEffect(() => {
+    if (data) {
+      setUsers(data); // Set users state based on the latest data from Redux
     }
-  };
+  }, [data]);
 
   const handleEdit = (user) => {
     setEditUser(user);
     setEditModalOpen(true);
   };
-
   const handleView = (user) => {
     setViewUser(user);
     setViewModalOpen(true);
   };
-
   const handleAddModal = () => {
     setAddModalOpen(true);
   };
-
   const handleCloseAddModal = () => {
     setAddModalOpen(false);
   };
-
   const handleCloseEditModal = () => {
     setEditUser(null);
     setEditModalOpen(false);
   };
-
   const handleCloseViewModal = () => {
     setViewUser(null);
     setViewModalOpen(false);
@@ -96,12 +102,8 @@ export default function UserPage() {
 
   const handleSubmitEdit = async (updatedUser) => {
     try {
-      setLoading(true);
-
-      // Create a FormData object
+      showLoader();
       const formData = new FormData();
-
-      // Append non-file fields
       formData.append('_id', updatedUser._id);
       formData.append('name', updatedUser.name);
       formData.append('email', updatedUser.email);
@@ -110,74 +112,52 @@ export default function UserPage() {
       formData.append('password', updatedUser.password);
       formData.append('role', updatedUser.role);
       formData.append('status', updatedUser.status ? 'true' : 'false');
-
-      // Append file if available
       if (updatedUser.images) {
         formData.append('images', updatedUser.images);
       }
-
-      // Make the PATCH request with FormData
-      const response = await axios.patch(
-        `${localUrl}/update/dashboard/updated/partner/${updatedUser._id}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data', // Required for file uploads
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        toast.success('Successfully updated');
-        setRefresh((prev) => !prev); // Trigger refresh
-      }
+      await dispatch(updatedPartner({ userId: updatedUser._id, formData }));
+      setRefresh((prev) => !prev);
     } catch (error) {
       console.error('Error updating user:', error);
       toast.error('Something went wrong!');
     } finally {
-      setLoading(false); // Ensure loading state is turned off
+      hideLoader();
     }
   };
 
   const handleAdd = async (newUser) => {
+    showLoader();
     try {
-      const response = await axios.post(`${localUrl}/create/dashboard/user`, newUser);
-      if (response.status === 201) {
-        toast.success('Successfully added');
-        setRefresh((prev) => !prev); // Trigger refresh
-      }
+      await dispatch(addPartner(newUser));
+      setRefresh((prev) => !prev); // Trigger refresh
     } catch (error) {
       toast.error('Something went wrong!', error);
+    } finally {
+      hideLoader();
     }
   };
 
   const handleDelete = async (id) => {
     try {
-      const response = await axios.delete(`${localUrl}/delete/dashboard/delete/partner/${id}`);
-      if (response.status === 200) {
-        toast.success('Successfully deleted');
-        setRefresh((prev) => !prev); // Trigger refresh
-      }
+      await dispatch(deletePartner(id));
+      setRefresh((prev) => !prev); // Trigger refresh
     } catch (error) {
       toast.warning('Something went wrong!', error);
     }
   };
-
   const handleSort = (event, id) => {
     const isAsc = orderBy === id && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(id);
   };
-
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = users.map((n) => n.name);
+      const newSelecteds = users?.map((n) => n.name);
       setSelected(newSelecteds);
       return;
     }
     setSelected([]);
   };
-
   const handleClick = (event, name) => {
     const selectedIndex = selected.indexOf(name);
     let newSelected = [];
@@ -195,73 +175,53 @@ export default function UserPage() {
     }
     setSelected(newSelected);
   };
-
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
-
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
   const handleFilterByName = (event) => {
     setPage(0);
     setFilterName(event.target.value);
   };
+  console.log('hre is users', users);
 
   const dataFiltered = applyFilter({
     inputData: users,
     comparator: getComparator(order, orderBy),
     filterName,
   });
-
   const notFound = !dataFiltered.length && !!filterName;
-
   // Function to export data to Excel using the utility function
   const handleExport = () => {
     // Implement export logic here, e.g., exporting `users` data
     exportToExcel(users);
   };
-
   // Function to handle status change using API
   const handleStatusChange = async (userId, currentStatus) => {
     try {
       const newStatus = !currentStatus; // Toggle the current status
-      const response = await axios.put(`${localUrl}/update/dashboard/user-status/${userId}`, {
-        status: newStatus,
-      });
-      if (response.status === 200) {
-        // Update local users state
-        const updatedUsers = users.map((user) =>
-          user._id === userId ? { ...user, status: newStatus } : user
-        );
-        toast.success(`Status Changed to ${newStatus === true ? 'Active' : 'Inactive'}`);
-        setUsers(updatedUsers);
-      }
+      await dispatch(updateStatus({ userId, newStatus }));
+      // Update local users state
+      const updatedUsers = users?.map((user) =>
+        user._id === userId ? { ...user, status: newStatus } : user
+      );
+      setUsers(updatedUsers);
     } catch (error) {
       toast.error('Something went wrong!', error);
       console.error('Error updating status:', error);
     }
   };
 
-  if (loading) {
-    return (
-      <Container>
-        <LinearLoader />
-      </Container>
-    );
-  }
-
   if (error) {
     return <Typography>Error: {error.message}</Typography>;
   }
-
   return (
     <Container>
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
         <Typography variant="h4">Partners</Typography>
-
         <Button
           variant="contained"
           color="inherit"
@@ -271,7 +231,6 @@ export default function UserPage() {
           New User
         </Button>
       </Stack>
-
       <Card>
         <UserTableToolbar
           numSelected={selected.length}
@@ -279,7 +238,6 @@ export default function UserPage() {
           onFilterName={handleFilterByName}
           onExport={handleExport}
         />
-
         <Scrollbar>
           <TableContainer sx={{ overflow: 'unset' }}>
             <Table sx={{ minWidth: '100%' }}>
@@ -301,7 +259,7 @@ export default function UserPage() {
               <TableBody>
                 {dataFiltered
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row) => (
+                  ?.map((row) => (
                     <UserTableRow
                       key={row._id}
                       name={`${row.name} (${row.role})`}
@@ -318,18 +276,15 @@ export default function UserPage() {
                       handleStatusChange={() => handleStatusChange(row._id, row.status)} // Pass user ID and current status
                     />
                   ))}
-
                 <TableEmptyRows
                   height={17}
                   emptyRows={emptyRows(page, rowsPerPage, users.length)}
                 />
-
                 {notFound && <TableNoData query={filterName} />}
               </TableBody>
             </Table>
           </TableContainer>
         </Scrollbar>
-
         <TablePagination
           page={page}
           component="div"

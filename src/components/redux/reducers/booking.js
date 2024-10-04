@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { localUrl, token } from '../../../utils/util';
+import { localUrl, notify, token } from '../../../../utils/util';
 // Async thunk for fetching booking data
 export const fetchFilteredBookings = createAsyncThunk(
   'booking/fetchFilteredBookings',
@@ -52,6 +52,7 @@ export const updateBooking = createAsyncThunk(
           Authorization: token,
         },
       });
+      notify(response.status);
       return response.data;
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message;
@@ -60,6 +61,7 @@ export const updateBooking = createAsyncThunk(
     }
   }
 );
+
 const bookingSlice = createSlice({
   name: 'booking',
   initialState: {

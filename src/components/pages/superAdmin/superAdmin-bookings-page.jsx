@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-import SuperAdminBookingsView from '../../bookings/superAdmin/YourBookings';
+import { SuperAdminBookingsView } from '../../bookings/superAdmin/YourBookings';
 
 // ----------------------------------------------------------------------
 

@@ -27,9 +27,9 @@ import { localUrl } from '../../../../utils/util';
 import { fDate } from '../../../../utils/format-time';
 
 import BookingUpdateModal from '../booking-update-modal'; // Adjust path as needed
-import { fetchFilteredBookings, searchBooking } from 'src/redux/reducers/booking';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLoader } from '../../../../utils/loader';
+import { fetchFilteredBookings, searchBooking } from 'src/components/redux/reducers/booking';
 
 export default function BookingsView() {
   const [bookingId, setBookingId] = useState('');
@@ -59,42 +59,22 @@ export default function BookingsView() {
     setLoading(true);
     showLoader();
     try {
-      // Build query parameters with filter date
       const queryParams = new URLSearchParams({
         bookingStatus: status,
         checkInDate: filterDate,
       }).toString();
-
-      const response = await fetch(`${localUrl}/get/all/filtered/booking/by/query?${queryParams}`);
-      if (!response.ok) {
-        toast.info('No bookings found !');
-      }
-      const data = await response.json();
-      setBookings(data);
       await dispatch(fetchFilteredBookings(queryParams));
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Something went wrong');
       setBookings([]);
     } finally {
-      setLoading(false);
       hideLoader();
     }
   };
 
   const handleSearch = async () => {
+    showLoader();
     try {
-      const response = await fetch(
-        `${localUrl}/get/all/filtered/booking/by/query?bookingId=${bookingId}`
-      );
-      if (!response.ok) {
-        toast.info('No bookings found');
-        setBookings([]);
-        return;
-      }
-      const data = await response.json();
-      setBookings(data);
-      showLoader();
       await dispatch(searchBooking(bookingId));
       setBookings(search);
       hideLoader();
@@ -117,22 +97,10 @@ export default function BookingsView() {
   const handleSave = async (updatedData) => {
     showLoader();
     try {
-      const response = await fetch(`${localUrl}/updatebooking/${selectedBooking.bookingId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedData),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to update booking');
-      }
-      toast.success('Booking updated successfully');
       fetchData(); // Refresh the bookings list
       await fetchData(); // Refresh the bookings list
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Failed to update booking');
     } finally {
       setOpenModal(false);
       setSelectedBooking(null);
@@ -144,13 +112,6 @@ export default function BookingsView() {
     setFilterDate(e.target.value);
   };
 
-  if (loading) {
-    return (
-      <Container>
-        <LinearProgress />
-      </Container>
-    );
-  }
   return (
     <Container sx={{ marginTop: '40px' }}>
       <Typography variant="h4" gutterBottom>
@@ -249,9 +210,8 @@ export default function BookingsView() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {bookings.length > 0 ? (
-          
-              bookings.map((booking) => (
+            {filtered?.length > 0 ? (
+              filtered?.map((booking) => (
                 <TableRow key={booking._id}>
                   <TableCell>{booking.bookingId}</TableCell>
                   <TableCell>{booking.user?.name}</TableCell>

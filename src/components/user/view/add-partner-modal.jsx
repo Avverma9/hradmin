@@ -119,6 +119,8 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
                 <Select name="role" value={formData.role} onChange={handleChange}>
                   <MenuItem value="Admin">Admin</MenuItem>
                   <MenuItem value="PMS">Partner Management System</MenuItem>
+                  <MenuItem value="CMS">Client Management System</MenuItem>
+
                   <MenuItem value="Developer">Developer</MenuItem>
                 </Select>
               </FormControl>

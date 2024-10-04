@@ -5,10 +5,18 @@ export const searchQuery = [
   { name: 'Dashboard Users', path: '/dashboard-user' },
 ];
 
-export const localUrl = 'https://hotel-backend-tge7.onrender.com';
-// export const localUrl = 'http://localhost:5000';
+// export const localUrl = 'https://hotel-backend-tge7.onrender.com';
+export const localUrl = 'http://localhost:5000';
 export const hotelEmail = localStorage.getItem('user_email');
 export const role = localStorage.getItem('user_role');
 export const userId = localStorage.getItem('user_id');
 export const userName = localStorage.getItem('user_name');
 export const token = localStorage.getItem('rs_token');
+
+import { toast } from 'react-toastify';
+
+export const notify = (statusCode) => {
+  if (statusCode === 200 || statusCode === 201) {
+    toast.success('Done');
+  }
+};

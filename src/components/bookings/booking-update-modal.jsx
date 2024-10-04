@@ -9,8 +9,8 @@ import { Box, Grid, Modal, Button, MenuItem, TextField, Typography } from '@mui/
 
 import { localUrl } from '../../../utils/util';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateBooking } from 'src/redux/reducers/booking';
 import { toast } from 'react-toastify';
+import { updateBooking } from '../redux/reducers/booking';
 
 // Styles for the modal
 const modalStyle = {
@@ -75,7 +75,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      const response = await dispatch(
+      await dispatch(
         updateBooking({
           bookingId: bookingData.bookingId, // Wrap bookingId in an object
           updatedData: {
@@ -85,16 +85,10 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
           },
         })
       );
-
-      if (response.error) {
-        throw new Error('Failed to update booking');
-      }
-
       onSave(updated); // Call the onSave callback with the updated booking data
       onClose(); // Close the modal
     } catch (error) {
       console.error('Error updating booking:', error);
-      toast.error('Failed to update booking');
     } finally {
       setLoading(false);
     }

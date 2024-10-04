@@ -7,14 +7,24 @@ import { IoMailOpenOutline } from 'react-icons/io5';
 import { LiaRupeeSignSolid } from 'react-icons/lia';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MdAccessTime, MdOutlineHouse } from 'react-icons/md';
-import { fetchFilteredBookings } from 'src/redux/reducers/booking';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLoader } from '../../../utils/loader';
 import { makeStyles } from '@mui/styles';
-import { Box, Grid, Paper, Button, Avatar, Divider, Container, Typography, LinearProgress } from '@mui/material';
+import {
+  Box,
+  Grid,
+  Paper,
+  Button,
+  Avatar,
+  Divider,
+  Container,
+  Typography,
+  LinearProgress,
+} from '@mui/material';
 
 import { localUrl } from '../../../utils/util';
 import { fDate, fDateTime } from '../../../utils/format-time';
+import { fetchFilteredBookings } from '../redux/reducers/booking';
 
 const BookingDetail = () => {
   const navigate = useNavigate();
@@ -54,10 +64,10 @@ const BookingDetail = () => {
         console.error('Error fetching bookings:', error);
       } finally {
         hideLoader();
-      }}
+      }
+    };
 
-
- fetchBookingData();
+    fetchBookingData();
   }, [bookingId, dispatch, showLoader, hideLoader]);
   useEffect(() => {
     if (filtered?.length > 0) {
