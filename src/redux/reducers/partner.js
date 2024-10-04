@@ -3,17 +3,31 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { token, userId } from '../../../utils/util';
 
-export const getPartnerById = createAsyncThunk('', async (_, { rejectWithValue }) => {
+export const getPartnerById = createAsyncThunk(
+  'partner/gerPartnerById',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${localUrl}/login/dashboard/get/all/user/${userId}`, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const getAll = createAsyncThunk('partner/getAll', async (_, { rejectWithValue }) => {
   try {
-    const response = await axios.get(`${localUrl}/login/dashboard/get/all/user/${userId}`, {
+    const response = await axios.get(`${localUrl}/login/dashboard/get/all/user`, {
       headers: {
-        'Authorization': token,
+        Authorization: token,
       },
     });
-    if (!response.ok) {
-      toast.error('It seems an error !');
-    }
-    return data;
+
+    return response.data;
   } catch (error) {
     return rejectWithValue(error.message);
   }
@@ -22,10 +36,14 @@ export const getPartnerById = createAsyncThunk('', async (_, { rejectWithValue }
 const partnerSlice = createSlice({
   name: 'partner',
   initialState: {
-    data: null,
+    data: [],
   },
   extraReducers: (builder) => {
     builder.addCase(getPartnerById.fulfilled, (state, action) => {
+      state.data = action.payload;
+      state.loading = false;
+    });
+    builder.addCase(getAll.fulfilled, (state, action) => {
       state.data = action.payload;
       state.loading = false;
     });
