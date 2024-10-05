@@ -2,7 +2,7 @@ import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
-import { fetchFilteredBookings, searchBooking, updateBooking } from 'src/redux/reducers/booking';
+import { fetchFilteredBookings, searchBooking, updateBooking } from '../../redux/reducers/booking';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLoader } from '../../../../utils/loader';
 import { styled } from '@mui/material/styles';
@@ -53,16 +53,15 @@ export default function SuperAdminBookingsView() {
 
   const fetchData = async () => {
     const filters = `bookingStatus=${status}&hotelEmail=${hotelEmail}`;
-    showLoader()
+    showLoader();
     try {
-      
       await dispatch(fetchFilteredBookings(filters));
     } catch (error) {
       console.error('Error:', error);
       toast.error('Something went wrong');
       setBookings([]);
     } finally {
-hideLoader()
+      hideLoader();
     }
   };
 
@@ -179,7 +178,7 @@ hideLoader()
             </TableRow>
           </TableHead>
           <TableBody>
-          {filtered?.length > 0 ? (
+            {filtered?.length > 0 ? (
               filtered.map((booking) => (
                 <TableRow key={booking._id}>
                   <TableCell>{booking.bookingId}</TableCell>
