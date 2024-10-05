@@ -13,7 +13,6 @@ import {
   TableContainer,
   TablePagination,
 } from '@mui/material';
-import { localUrl, token } from '../../../../utils/util';
 import { exportToExcel } from '../../../../utils/exportFunction';
 import Iconify from '../../../components/stuff/iconify/iconify';
 import Scrollbar from '../../../components/stuff/scrollbar/scrollbar';
@@ -186,20 +185,19 @@ export default function UserPage() {
     setPage(0);
     setFilterName(event.target.value);
   };
-  console.log('hre is users', users);
 
   const dataFiltered = applyFilter({
     inputData: users,
     comparator: getComparator(order, orderBy),
     filterName,
   });
+
+
   const notFound = !dataFiltered.length && !!filterName;
-  // Function to export data to Excel using the utility function
   const handleExport = () => {
-    // Implement export logic here, e.g., exporting `users` data
     exportToExcel(users);
   };
-  // Function to handle status change using API
+
   const handleStatusChange = async (userId, currentStatus) => {
     try {
       const newStatus = !currentStatus; // Toggle the current status
@@ -215,9 +213,6 @@ export default function UserPage() {
     }
   };
 
-  if (error) {
-    return <Typography>Error: {error.message}</Typography>;
-  }
   return (
     <Container>
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>

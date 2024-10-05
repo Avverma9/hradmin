@@ -27,13 +27,22 @@ import {
   DialogContent,
 } from '@mui/material';
 
-import { localUrl } from '../../../../utils/util';
+import { localUrl, token } from '../../../../utils/util';
 
 import { paths } from '../../../../utils/filterOptions';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  addMenu,
+  deleteMenu,
+  deletePartner,
+  updatePartnerImage,
+} from 'src/components/redux/reducers/partner';
 
 const EditUserModal = ({ open, onClose, user, onSubmit }) => {
   const [selectedMenuItems, setSelectedMenuItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const dispatch = useDispatch();
+  const partnerImage = useSelector((state) => state.partner.partnerImage);
   const [formData, setFormData] = useState({
     _id: '',
     name: '',
@@ -83,31 +92,23 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
       const formDataToSend = new FormData();
       formDataToSend.append('image', imageFile);
       try {
-        const response = await axios.post(
-          `${localUrl}/api/users/${user._id}/upload-image`,
-          formDataToSend
-        );
-        updatedUser.imageUrl = response.data.imageUrl; // Assuming the response contains the image URL
+        await dispatch(updatePartnerImage({ userId: user._id, formDataToSend }));
+        updatedUser.imageUrl = partnerImage.imageUrl;
       } catch (error) {
         console.error('Error uploading image:', error);
         toast.error('Failed to upload image');
         return; // Stop further execution on error
       }
     }
-
     onSubmit(updatedUser);
     onClose();
-    console.log('Updated user data:', updatedUser);
   };
 
   const handleAddMenuItems = async () => {
     if (selectedMenuItems.length === 0) return;
 
     try {
-      await axios.post(`${localUrl}/api/users/${user._id}/menu-items`, {
-        menuItems: selectedMenuItems,
-      });
-      toast.success('Menu items added');
+      await dispatch(addMenu({ userId: user._id, selectedMenuItems }));
     } catch (error) {
       console.error('Error adding menu items:', error);
       toast.error('Failed to add menu items');
@@ -116,12 +117,9 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
 
   const handleDeleteMenuItem = async (item) => {
     try {
-      await axios.patch(`${localUrl}/api/users/${user._id}/menu-items`, {
-        menuItem: item,
-      });
+      await dispatch(deleteMenu({ userId: user._id, item }));
       const updatedMenuItems = selectedMenuItems.filter((menu) => menu !== item);
       setSelectedMenuItems(updatedMenuItems);
-      toast.success('Deleted');
     } catch (error) {
       console.error('Error deleting menu item:', error);
       toast.error('Failed to delete menu item');

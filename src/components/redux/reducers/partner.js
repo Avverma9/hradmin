@@ -125,6 +125,77 @@ export const deletePartner = createAsyncThunk(
   }
 );
 
+export const updatePartnerImage = createAsyncThunk(
+  'partner/updatePartnerImage',
+  async ({ userId, formData }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${localUrl}/api/users/${userId}/upload-image`,
+        {
+          formData,
+        },
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status);
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const addMenu = createAsyncThunk(
+  'partner/addMenu',
+  async ({ userId, selectedMenuItems }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${localUrl}/api/users/${userId}/menu-items`,
+        { menuItems: selectedMenuItems },
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status);
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const deleteMenu = createAsyncThunk(
+  'partner/deleteMenu',
+  async ({ userId, item }, { rejectWithValue }) => {
+    try {
+      const response = await axios.patch(
+        `${localUrl}/api/users/${userId}/menu-items`,
+        { menuItems: item },
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status);
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 const partnerSlice = createSlice({
   name: 'partner',
   initialState: {
@@ -154,6 +225,18 @@ const partnerSlice = createSlice({
       })
       .addCase(updateStatus.fulfilled, (state, action) => {
         state.status = action.payload;
+        state.loading = false;
+      })
+      .addCase(updatePartnerImage.fulfilled, (state, action) => {
+        state.partnerImage = action.payload;
+        state.loading = false;
+      })
+      .addCase(addMenu.fulfilled, (state, action) => {
+        state.menuAdd = action.payload;
+        state.loading = false;
+      })
+      .addCase(deleteMenu.fulfilled, (state, action) => {
+        state.menuDelete = action.payload;
         state.loading = false;
       });
   },

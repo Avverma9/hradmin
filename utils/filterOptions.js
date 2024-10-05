@@ -112,6 +112,7 @@ export const paths = [
   { title: 'Your Bookings', path: '/your-bookings' },
   { title: 'Bookings', path: '/all-bookings' },
   { title: 'Hotels', path: '/hotels' },
+  { title: 'Manage Coupons', path: '/app-coupon' },
   { title: 'Your Complaints', path: '/your-complaints' },
   { title: 'Your Hotel', path: '/your-hotels' },
   { title: 'Set Monthly Price', path: '/hotels/monthly-price' },
