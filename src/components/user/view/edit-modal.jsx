@@ -27,16 +27,9 @@ import {
   DialogContent,
 } from '@mui/material';
 
-import { localUrl, token } from '../../../../utils/util';
-
 import { paths } from '../../../../utils/filterOptions';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  addMenu,
-  deleteMenu,
-  deletePartner,
-  updatePartnerImage,
-} from 'src/components/redux/reducers/partner';
+import { addMenu, deleteMenu, updatePartnerImage } from 'src/components/redux/reducers/partner';
 
 const EditUserModal = ({ open, onClose, user, onSubmit }) => {
   const [selectedMenuItems, setSelectedMenuItems] = useState([]);
@@ -214,6 +207,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                 >
                   <MenuItem value="Admin">Admin</MenuItem>
                   <MenuItem value="PMS">Partner Management System</MenuItem>
+                  <MenuItem value="CMS">Client Management System</MenuItem>
                   <MenuItem value="Developer">Developer</MenuItem>
                 </Select>
               </FormControl>

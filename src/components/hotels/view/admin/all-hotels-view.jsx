@@ -2,31 +2,33 @@ import { useState, useEffect } from 'react';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { Button, Container, TextField, ButtonGroup, Grid, LinearProgress } from '@mui/material';
-import { localUrl } from '../../../../../utils/util';
 import ProductCard from './all-hotel-card';
 import AddFoodModal from '../../manage-foods';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllHotels } from 'src/components/redux/reducers/hotel';
+import { useLoader } from '../../../../../utils/loader';
 
 export default function ProductsView() {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { showLoader, hideLoader } = useLoader();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAcceptedFilter, setIsAcceptedFilter] = useState(null); // null means no filter applied
+  const [isAcceptedFilter, setIsAcceptedFilter] = useState(null);
+  const data = useSelector((state) => state.hotel.data);
 
   useEffect(() => {
-    getAllHotels();
+    getHotels();
   }, []);
 
-  const getAllHotels = async () => {
+  const getHotels = async () => {
+    showLoader();
     try {
-      const response = await fetch(`${localUrl}/get/all/hotels`);
-      const res = await response.json();
-      setData(res.data);
-      setLoading(false);
+      await dispatch(getAllHotels());
     } catch (error) {
       console.error('Error fetching hotels:', error);
-      setLoading(false);
+    } finally {
+      hideLoader();
     }
   };
 
@@ -44,7 +46,7 @@ export default function ProductsView() {
     setSearchQuery(event.target.value.toLowerCase());
   };
 
-  const filteredData = data.filter((hotel) => {
+  const filteredData = data?.filter((hotel) => {
     const matchesSearchQuery =
       hotel.hotelOwnerName.toLowerCase().includes(searchQuery) ||
       hotel.hotelName.toLowerCase().includes(searchQuery);
@@ -54,14 +56,6 @@ export default function ProductsView() {
 
     return matchesSearchQuery && matchesAcceptedFilter;
   });
-
-  if (loading) {
-    return (
-      <Container>
-        <LinearProgress />
-      </Container>
-    );
-  }
 
   const filteredCount = filteredData.length;
 
@@ -91,9 +85,19 @@ export default function ProductsView() {
         </ButtonGroup>
       </Stack>
 
-      <Grid container spacing={2}> {/* Decreased gap from 3 to 2 */}
+      <Grid container spacing={2}>
+        {' '}
+        {/* Decreased gap from 3 to 2 */}
         {filteredData.map((product) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={product._id} sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Grid
+            item
+            xs={12}
+            sm={6}
+            md={4}
+            lg={3}
+            key={product._id}
+            sx={{ display: 'flex', justifyContent: 'center' }}
+          >
             <ProductCard
               product={product}
               onAddFood={() => handleOpenModal(product)} // Pass handleOpenModal to ProductCard

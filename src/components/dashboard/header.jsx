@@ -9,7 +9,6 @@ import IconButton from '@mui/material/IconButton';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
-
 import Iconify from 'src/components/stuff/iconify';
 
 import Searchbar from './common/searchbar';

@@ -25,7 +25,6 @@ import {
   LinearProgress,
 } from '@mui/material';
 
-import { localUrl } from '../../../../utils/util';
 import { fDate } from '../../../../utils/format-time';
 
 import BookingUpdateModal from '../booking-update-modal'; // Adjust path as needed

@@ -66,6 +66,7 @@ const bookingSlice = createSlice({
   name: 'booking',
   initialState: {
     data: [],
+    
   },
   extraReducers: (builder) => {
     builder.addCase(fetchFilteredBookings.fulfilled, (state, action) => {
