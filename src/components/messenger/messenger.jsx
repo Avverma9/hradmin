@@ -137,7 +137,7 @@ const ChatApp = () => {
             unseenMessages.forEach((msg) => {
               socket.current.emit('messageSeen', {
                 messageId: msg._id,
-                receiverId: userId2,
+                receiverId: userId1,
               });
             });
           }
@@ -306,7 +306,7 @@ const ChatApp = () => {
                 <div
                   key={msg.timestamp}
                   className={`message ${
-                    msg.senderId === localStorage.getItem('user_id') ? 'sent' : 'received'
+                    msg.sender === localStorage.getItem('user_id') ? 'sent' : 'received'
                   }`}
                 >
                   <p className="message-content">{msg.content}</p>
