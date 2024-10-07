@@ -45,7 +45,6 @@
     "simplebar-react": "^3.2.6",
     "slick-carousel": "^1.8.1",
     "xlsx": "^0.18.5"
-  
   },
   "devDependencies": {
     "@vitejs/plugin-react-swc": "^3.7.1",

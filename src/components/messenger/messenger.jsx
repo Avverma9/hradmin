@@ -3,7 +3,6 @@ import { toast } from 'react-toastify';
 import { FiDelete } from 'react-icons/fi';
 import { useLocation } from 'react-router-dom';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { io } from 'socket.io-client';
 
 import IconButton from '@mui/material/IconButton';
 import { role, localUrl } from '../../../utils/util';
@@ -30,7 +29,7 @@ const ChatApp = () => {
 
   // WebSocket useEffect
   useEffect(() => {
-    socket.current = io('https://hotel-backend-tge7.onrender.com');
+    socket.current = window.io('https://hotel-backend-tge7.onrender.com');
 
     // Emit user status on connect
     if (senderId) {
