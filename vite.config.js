@@ -20,7 +20,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: [], // Add this line
+      external: ['socket.io-client'], // Add this line
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {

@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 import { FiDelete } from 'react-icons/fi';
 import { useLocation } from 'react-router-dom';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import socketIOClient from 'socket.io-client';
+import { io } from 'socket.io-client';
 
 import IconButton from '@mui/material/IconButton';
 import { role, localUrl } from '../../../utils/util';
@@ -25,8 +25,9 @@ const ChatApp = () => {
   const [chatToDelete, setChatToDelete] = useState(null);
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
+  const socket = useRef(null);
   const senderId = localStorage.getItem('user_id');
-  const socket = socketIOClient('https://hotel-backend-tge7.onrender.com');
+
   // WebSocket useEffect
   useEffect(() => {
     socket.current = io('https://hotel-backend-tge7.onrender.com');
