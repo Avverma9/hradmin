@@ -1,18 +1,11 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-shadow */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable consistent-return */
-/* eslint-disable react/button-has-type */
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FiDelete } from 'react-icons/fi';
 import { useLocation } from 'react-router-dom';
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { io } from 'socket.io-client';
 
 import IconButton from '@mui/material/IconButton';
-
 import { role, localUrl } from '../../../utils/util';
 import { fDateTime } from '../../../utils/format-time';
 import AlertDialog from '../../../utils/alertDialogue';
@@ -24,84 +17,54 @@ const DEFAULT_AVATAR =
   'https://t4.ftcdn.net/jpg/05/11/55/91/360_F_511559113_UTxNAE1EP40z1qZ8hIzGNrB0LwqwjruK.jpg';
 
 const ChatApp = () => {
-  const [ws, setWs] = useState(null);
-  const [reconnectAttempts, setReconnectAttempts] = useState(0);
-  const [maxReconnectAttempts] = useState(5);
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [pollingInterval, setPollingInterval] = useState(null);
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [chatToDelete, setChatToDelete] = useState(null);
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
-  const messagesEndRef = useRef(null);
-  const hasUpdatedStatus = useRef(false); // Ref to track status updates
+  const socket = useRef(null);
+  const senderId = localStorage.getItem('user_id');
 
-  //= ============================WebSocket==============================//
-  const connectWebSocket = useCallback(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${new URL(localUrl).hostname}${
-      window.location.port ? `:${window.location.port}` : ''
-    }`;
-
-    const socket = new WebSocket(wsUrl);
-
-    socket.onopen = () => {
-      console.log('WebSocket connected');
-      const userId = localStorage.getItem('user_id');
-      if (userId) {
-        socket.send(JSON.stringify({ type: 'connect', userId }));
-      }
-      setWs(socket);
-    };
-
-    socket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      console.log('Received message:', message);
-
-      if (message.type === 'status') {
-        setContacts((prevContacts) =>
-          prevContacts.map((contact) =>
-            contact._id === message.userId ? { ...contact, online: message.online } : contact
-          )
-        );
-      }
-      // Handle additional message types here if necessary
-    };
-
-    socket.onclose = (event) => {
-      console.log('WebSocket closed', event);
-      if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
-        setTimeout(() => {
-          setReconnectAttempts((prev) => prev + 1);
-          connectWebSocket();
-        }, 3000);
-      }
-    };
-
-    socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    return socket;
-  }, [reconnectAttempts, maxReconnectAttempts, localUrl]);
-
+  // WebSocket useEffect
   useEffect(() => {
-    const socket = connectWebSocket();
-    return () => {
-      if (socket) {
-        const userId = localStorage.getItem('user_id');
-        if (userId) {
-          socket.send(JSON.stringify({ type: 'disconnect', userId }));
-        }
-        socket.close();
-      }
-    };
-  }, [connectWebSocket]);
+    socket.current = io('https://hotel-backend-tge7.onrender.com');
 
-  //= ============================Fetch Contacts==============================//
+    // Emit user status on connect
+    if (senderId) {
+      socket.current.emit('registerUser', senderId);
+      socket.current.emit('userStatus', { senderId, isOnline: true });
+    }
+
+    socket.current.on('newMessage', (newMessage) => {
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+    });
+
+    socket.current.on('userStatusUpdate', ({ senderId, isOnline }) => {
+      setContacts((prevContacts) =>
+        prevContacts.map((contact) =>
+          contact._id === senderId ? { ...contact, isOnline } : contact
+        )
+      );
+    });
+
+    socket.current.on('messageSeen', ({ messageId }) => {
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) => (msg._id === messageId ? { ...msg, seen: true } : msg))
+      );
+    });
+
+    return () => {
+      if (senderId) {
+        socket.current.emit('userStatus', { senderId, isOnline: false });
+      }
+      socket.current.disconnect(); // Disconnect when component unmounts
+    };
+  }, [senderId]);
+
+  // Fetch Contacts
   useEffect(() => {
     const fetchContacts = async () => {
       try {
@@ -115,7 +78,6 @@ const ChatApp = () => {
           // Filter contacts based on localStorage role
           if (localStorageRole === 'PMS') {
             filteredContacts = allContacts.filter((contact) => contact.role !== localStorageRole);
-
             // Further filter if the role is not 'Developer'
             filteredContacts = filteredContacts.filter((item) => item.role !== 'Developer');
           }
@@ -131,7 +93,8 @@ const ChatApp = () => {
 
     fetchContacts();
   }, []);
-  //= ============================Search Contacts==============================//
+
+  // Search Contacts
   useEffect(() => {
     if (searchTerm) {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
@@ -143,36 +106,49 @@ const ChatApp = () => {
     }
   }, [searchTerm, contacts]);
 
-  //= ============================Fetch Messages==============================//
+  // Fetch Messages
   useEffect(() => {
-    if (selectedContact && location.pathname === '/messenger') {
-      const fetchMessages = async () => {
+    const fetchMessages = async () => {
+      if (selectedContact && location.pathname === '/messenger') {
         try {
           const userId1 = localStorage.getItem('user_id');
           const userId2 = selectedContact._id;
+
           const response = await axios.get(
             `${localUrl}/get-messages/of-chat/${userId1}/${userId2}`
           );
 
           if (response.data) {
             setMessages(response.data);
-            const markAsSeenPromises = response.data
-              .filter((msg) => !msg.seen)
-              .map((msg) =>
-                axios.put(`${localUrl}/mark-as-seen/messages/`, {
+
+            // Filter unseen messages
+            const unseenMessages = response.data.filter((msg) => !msg.seen);
+
+            // Mark unseen messages as seen through API
+            await Promise.all(
+              unseenMessages.map((msg) =>
+                axios.post(`${localUrl}/mark-as-seen`, {
                   messageId: msg._id,
                   receiverId: userId1,
                 })
-              );
-            await Promise.all(markAsSeenPromises);
+              )
+            );
+
+            // Emit 'messageSeen' for each unseen message through WebSocket
+            unseenMessages.forEach((msg) => {
+              socket.current.emit('messageSeen', {
+                messageId: msg._id,
+                receiverId: userId2,
+              });
+            });
           }
         } catch (error) {
           console.error('Error fetching messages:', error);
         }
-      };
+      }
+    };
 
-      fetchMessages();
-    }
+    fetchMessages();
   }, [selectedContact, location.pathname]);
 
   const handleDeleteButtonClick = (receiverId) => {
@@ -188,7 +164,7 @@ const ChatApp = () => {
       toast.error('User not found. Unable to delete chat.');
       return;
     }
-    console.log('here is sender and receiver id ', userId, receiverId);
+
     try {
       const response = await axios.delete(
         `${localUrl}/delete/added/chats/from/messenger-app/${userId}/${receiverId}`
@@ -217,43 +193,11 @@ const ChatApp = () => {
     setChatToDelete(null);
   };
 
-  //= ============================Update Online Status==============================//
-  const updateOnlineStatus = useCallback(async (userId) => {
-    try {
-      const response = await axios.get(`${localUrl}/update-status-of-a-user/messenger/${userId}`);
-      if (response.status === 200) {
-        const onlineStatus = response.data.online;
-        setContacts((prevContacts) =>
-          prevContacts.map((contact) =>
-            contact._id === userId ? { ...contact, online: onlineStatus } : contact
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Error updating status:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!hasUpdatedStatus.current) {
-      contacts.forEach((contact) => {
-        updateOnlineStatus(contact._id);
-      });
-      hasUpdatedStatus.current = true; // Mark status as updated
-    }
-  }, [contacts, updateOnlineStatus]);
-
-  useEffect(() => {
-    if (selectedContact) {
-      updateOnlineStatus(selectedContact._id);
-    }
-  }, [selectedContact, updateOnlineStatus]);
-
   const handleSelectContact = useCallback((contact) => {
     setSelectedContact(contact);
   }, []);
 
-  //= ============================Handle Send Message==============================//
+  // Handle Send Message
   const handleSendMessage = async (event) => {
     event.preventDefault();
     const input = event.target.message.value;
@@ -267,10 +211,9 @@ const ChatApp = () => {
         seen: false,
       };
 
-      setMessages([...messages, newMessage]);
-
+      // Send the message through the API first
       try {
-        await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
+        const response = await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
       } catch (error) {
         console.error('Error sending message:', error);
       }
@@ -280,6 +223,7 @@ const ChatApp = () => {
   };
 
   const getTickIndicators = (seen) => (seen ? 'Seen ✔✔' : 'Sent ✔️✔️');
+
   if (filteredContacts?.length === 0) {
     return (
       <div>
@@ -287,6 +231,8 @@ const ChatApp = () => {
       </div>
     );
   }
+  console.log('selected conta', selectedContact);
+
   return (
     <div className="chat-app">
       <div className="sidebar">
@@ -315,8 +261,8 @@ const ChatApp = () => {
                   {contact?.name} ({contact?.role})
                 </p>
                 <span>{contact?.mobile}</span>
-                <span className={`status ${contact.online ? 'online' : 'offline'}`}>
-                  {contact.online ? 'Online' : 'Offline'}
+                <span className={`status ${contact.isOnline ? 'online' : 'offline'}`}>
+                  {contact.isOnline ? 'Online' : 'Offline'}
                 </span>
               </div>
             </div>
@@ -339,8 +285,8 @@ const ChatApp = () => {
                     {selectedContact.name}
                   </p>
                   <span className="contact-mobile">{selectedContact.mobile}</span>
-                  <span className={`status ${selectedContact.online ? 'online' : 'offline'}`}>
-                    {selectedContact.online ? 'Online' : 'Offline'}
+                  <span className={`status ${selectedContact.isOnline ? 'online' : 'offline'}`}>
+                    {selectedContact.isOnline ? 'Online' : 'Offline'}
                   </span>
                 </div>
               </div>
@@ -361,7 +307,7 @@ const ChatApp = () => {
                 <div
                   key={msg.timestamp}
                   className={`message ${
-                    msg.sender === localStorage.getItem('user_id') ? 'sent' : 'received'
+                    msg.senderId === localStorage.getItem('user_id') ? 'sent' : 'received'
                   }`}
                 >
                   <p className="message-content">{msg.content}</p>
@@ -392,7 +338,7 @@ const ChatApp = () => {
         onClose={handleDialogClose}
         onConfirm={handleDeleteChat}
         title="Confirm Conversation Delete"
-        message="This action will delete entire conversation between you and the other party make sure you want to delete this chat? This action cannot be undone."
+        message="This action will delete the entire conversation between you and the other party. Are you sure you want to delete this chat? This action cannot be undone."
       />
     </div>
   );
