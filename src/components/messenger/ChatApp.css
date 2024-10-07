@@ -1,17 +1,21 @@
 /* Overall chat-app styling */
 .chat-app {
   display: flex;
-  height: 100vh;
+  max-height: 77vh;
   font-family: Arial, sans-serif;
+  position: relative; /* Allow positioning children */
 }
 
 /* Sidebar styling */
 .sidebar {
   width: 300px;
+  max-height: 77vh;
   background-color: #f4f4f4;
   border-right: 1px solid #ddd;
   display: flex;
   flex-direction: column;
+  position: sticky; /* Make the sidebar sticky */
+  top: 0; /* Position it at the top */
 }
 
 .tab-content {
@@ -78,6 +82,17 @@
   background-color: #fff;
 }
 
+/* Messages container */
+.messages {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* Enable vertical scrolling */
+  flex: 1; /* Make messages take remaining space */
+  padding: 10px;
+  border: 1px solid #ccc; /* Optional: for better visibility */
+  background-color: #f9f9f9; /* Optional: background color */
+}
+
 /* Header styling */
 .header {
   display: flex;
@@ -101,11 +116,6 @@
   margin-right: 10px;
 }
 
-.contact-info {
-  display: flex;
-  flex-direction: column;
-}
-
 .contact-name {
   font-weight: bold;
   margin: 0;
@@ -116,69 +126,9 @@
   margin: 0;
 }
 
-.status {
-  font-size: 12px;
-  color: #888;
-}
-
-.status.online {
-  color: green;
-}
-
-.status.offline {
-  color: red;
-}
-
 .header-right {
   display: flex;
   align-items: center;
-}
-
-/* Messages area */
-.messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px;
-  background-color: #f9f9f9;
-}
-
-/* Message bubbles styling */
-.message {
-  max-width: auto;
-  padding: 10px;
-  border-radius: 15px;
-  margin-bottom: 20px;
-  position: relative;
-  word-break: break-word; /* Prevents long words from breaking layout */
-}
-
-/* Align messages in the correct direction */
-.message.sent {
-  background-color: #b5d9fe;
-  color: #050404;
-  align-self: flex-end;
-  width: auto;
-  align-self: flex-end;
-  text-align: right; /* Align text to the right */
-  margin-left: auto; /* Pushes message to the right */
-  border-top-right-radius: 0; /* Optional: remove corner radius for a modern look */
-  border-bottom-left-radius: 20px;
-}
-
-.message.received {
-  background-color: #f1f1f1;
-  color: #333;
-  align-self: flex-start;
-  text-align: left; /* Align text to the left */
-  margin-right: auto; /* Pushes message to the left */
-  border-top-left-radius: 0; /* Optional: remove corner radius for a modern look */
-  border-bottom-right-radius: 20px;
-}
-
-/* Ensure messages are on separate lines */
-.message.sent,
-.message.received {
-  display: block; /* Ensure each message is on a new line */
 }
 
 /* Positioning tick indicators */
@@ -197,6 +147,9 @@
   padding: 10px;
   border-top: 1px solid #ddd;
   background-color: #f5f5f5;
+  position: sticky; /* Make the input area sticky */
+  bottom: 0; /* Position it at the bottom */
+  z-index: 10; /* Ensure it stays above other content */
 }
 
 .input-area input {
@@ -227,6 +180,7 @@
   align-items: center;
   height: 100%;
   padding: 20px;
+  flex-direction: column; /* Center content vertically */
 }
 
 .no-chat-selected h2 {
@@ -248,7 +202,9 @@
   z-index: 1000;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
 }
 
 .alert-dialog.open {
@@ -320,4 +276,21 @@
 .search-input::placeholder {
   color: #999; /* Changes the color of the placeholder text */
   font-size: 14px; /* Adjusts font size of the placeholder text */
+}
+
+.message {
+  margin: 5px 0; /* Spacing between messages */
+  padding: 10px;
+  border-radius: 10px;
+  max-width: 70%; /* Optional: limit message width */
+}
+
+.sent {
+  align-self: flex-end; /* Align sent messages to the right */
+  background-color: #dcf8c6; /* Color for sent messages */
+}
+
+.received {
+  align-self: flex-start; /* Align received messages to the left */
+  background-color: #fff; /* Color for received messages */
 }

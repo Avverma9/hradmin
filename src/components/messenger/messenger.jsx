@@ -23,7 +23,10 @@ const ChatApp = () => {
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const socket = useRef(null);
+  const messagesEndRef = useRef(null);
+
   const senderId = localStorage.getItem('user_id');
+  const selectedReceiverId = localStorage.getItem('chat_receiver');
 
   // WebSocket setup
   useEffect(() => {
@@ -45,6 +48,17 @@ const ChatApp = () => {
       socket.current.disconnect();
     };
   }, [senderId]);
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Call scrollToBottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Fetch contacts
   useEffect(() => {
@@ -74,6 +88,7 @@ const ChatApp = () => {
   useEffect(() => {
     if (selectedContact) {
       fetchMessages(selectedContact._id);
+      const recieverID = localStorage.setItem('chat_receiver', selectedContact._id);
     }
   }, [selectedContact]);
 
@@ -115,7 +130,7 @@ const ChatApp = () => {
           unseenMessages.map((msg) =>
             axios.post(`${localUrl}/mark-as-seen`, {
               messageId: msg._id,
-              receiverId: userId,
+              receiverId: selectedReceiverId,
             })
           )
         );
@@ -123,7 +138,7 @@ const ChatApp = () => {
         unseenMessages.forEach((msg) => {
           socket.current.emit('messageSeen', {
             messageId: msg._id,
-            receiverId: userId,
+            receiverId: selectedReceiverId,
           });
         });
 
@@ -135,7 +150,6 @@ const ChatApp = () => {
         );
       } catch (error) {
         console.error('Error marking messages as seen:', error);
-        toast.error('Failed to mark messages as seen.');
       }
     }
   }, []);
@@ -221,7 +235,6 @@ const ChatApp = () => {
   };
 
   const getTickIndicators = (seen) => (seen ? 'Seen ✔✔' : 'Sent ✔️');
-
   if (filteredContacts.length === 0) {
     return <LinearProgress />;
   }
@@ -308,6 +321,7 @@ const ChatApp = () => {
                   </span>
                 </div>
               ))}
+              <div ref={messagesEndRef} /> {/* Empty div for scrolling */}
             </div>
             <form className="input-area" onSubmit={handleSendMessage}>
               <input type="text" name="message" placeholder="Type your message..." />
