@@ -26,7 +26,13 @@ import CreateCouponModal from '../../../../settings/coupon/create-coupon';
 import AppliedCouponModal from '../../../../settings/coupon/applied-coupon';
 import AvailableCouponsModal from '../../../../settings/coupon/available-coupons';
 import { useDispatch, useSelector } from 'react-redux';
-import { createCoupon, getAllCoupons, getHotelByQuery } from 'src/components/redux/reducers/hotel';
+import {
+  applyCoupon,
+  createCoupon,
+  getAllCoupons,
+  getHotelByQuery,
+} from 'src/components/redux/reducers/hotel';
+import { useLoader } from '../../../../../../utils/loader';
 
 export default function Coupon() {
   const hotels = useSelector((state) => state.hotel.byQuery);
@@ -46,27 +52,33 @@ export default function Coupon() {
   const dispatch = useDispatch();
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchTerm, setSearchTerm] = useState('');
-
+  const { showLoader, hideLoader } = useLoader();
   useEffect(() => {
     fetchHotels();
     fetchCoupons();
-  }, []);
+  }, [dispatch]);
 
   const fetchHotels = async () => {
+    showLoader();
     try {
       await dispatch(getHotelByQuery(hotelEmail));
     } catch (error) {
       console.error('Error fetching hotels:', error);
       toast.error('Failed to fetch hotels');
+    } finally {
+      hideLoader();
     }
   };
 
   const fetchCoupons = async () => {
+    showLoader();
     try {
       await dispatch(getAllCoupons());
     } catch (error) {
       console.error('Error fetching coupons:', error);
       toast.error('Failed to fetch coupons');
+    } finally {
+      hideLoader();
     }
   };
 
@@ -74,15 +86,15 @@ export default function Coupon() {
     e.preventDefault();
     const formattedValidity = new Date(validity).toISOString().split('T')[0];
     const postData = { couponName, discountPrice, validity: formattedValidity };
-
+    showLoader();
     try {
       await dispatch(createCoupon(postData)).unwrap();
-      toast.success(`Kindly note down your coupon code: ${coupons.coupon.couponCode}`);
       resetCouponForm();
       fetchCoupons(); // Refresh coupons after creating a new one
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to create coupon';
-      toast.error(errorMessage);
+      toast.error(error);
+    } finally {
+      hideLoader();
     }
   };
 
@@ -93,17 +105,15 @@ export default function Coupon() {
     handleCloseCreateCouponModal();
   };
   const handleApplyCoupon = async (hotelId, roomId) => {
+    showLoader();
     try {
-      const response = await axios.patch(
-        `${localUrl}/apply/a/coupon-to-room/${couponCode}?hotelId=${hotelId}&roomId=${roomId}`
-      );
-      toast.success('Coupon Applied Successfully');
-      if (response.status === 200) {
-        window.location.reload();
-      }
+      await dispatch(applyCoupon({ couponCode, hotelId, roomId }));
+      window.location.reload();
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to apply coupon';
       toast.error(errorMessage);
+    } finally {
+      hideLoader();
     }
   };
 

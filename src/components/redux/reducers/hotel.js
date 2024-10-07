@@ -13,7 +13,25 @@ export const getAllHotels = createAsyncThunk(
         },
       });
       //   notify(response.status);
-      return response.data.data;
+      return response?.data?.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const getHotelById = createAsyncThunk(
+  'hotel/getHotelById',
+  async (hotelId, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      return response.data;
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message;
       toast.error(`Error: ${errorMessage}`);
@@ -77,7 +95,65 @@ export const createCoupon = createAsyncThunk(
           },
         }
       );
+      toast.success(`Kindly note down your coupon code: ${response?.data?.coupon.couponCode}`);
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
 
+export const applyCoupon = createAsyncThunk(
+  'hotel/applyCoupon',
+  async ({ couponCode, hotelId, roomId }, { rejectWithValue }) => {
+    try {
+      const response = await axios.patch(
+        `${localUrl}/apply/a/coupon-to-room/${couponCode}?hotelId=${hotelId}&roomId=${roomId}`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status);
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const addFood = createAsyncThunk('hotel/addFood', async (formData, { rejectWithValue }) => {
+  try {
+    const response = axios.post(`${localUrl}/add/food-to/your-hotel`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: token,
+      },
+    });
+    notify(response.status);
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.message;
+    toast.error(`Error: ${errorMessage}`);
+    return rejectWithValue(errorMessage);
+  }
+});
+
+export const deleteFood = createAsyncThunk(
+  'hotel/deleteFood',
+  async ({ hotelId, foodId }, { rejectWithValue }) => {
+    try {
+      const response = await axios.delete(`${localUrl}/delete-food/${hotelId}/${foodId}`, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      notify(response.status);
       return response.data;
     } catch (error) {
       const errorMessage = error.message;
@@ -91,24 +167,38 @@ const hotelSlice = createSlice({
   name: 'hotel',
   initialState: {
     data: [],
+    loading: false,
+    error: null,
   },
   extraReducers: (builder) => {
-    builder.addCase(getAllHotels.fulfilled, (state, action) => {
-      state.data = action.payload;
-      state.loading = false;
-    });
-    builder.addCase(getHotelByQuery.fulfilled, (state, action) => {
-      state.byQuery = action.payload;
-      state.data = false;
-    });
-    builder.addCase(getAllCoupons.fulfilled, (state, action) => {
-      state.coupon = action.payload;
-      state.data = false;
-    });
-    builder.addCase(createCoupon.fulfilled, (state, action) => {
-      state.coupon = action.payload;
-      state.data = false;
-    });
+    builder
+      .addCase(getAllHotels.fulfilled, (state, action) => {
+        state.data = action.payload;
+        state.loading = false;
+      })
+
+      .addCase(getHotelByQuery.fulfilled, (state, action) => {
+        state.byQuery = action.payload;
+      })
+      .addCase(getAllCoupons.fulfilled, (state, action) => {
+        state.coupon = action.payload;
+      })
+      .addCase(createCoupon.fulfilled, (state, action) => {
+        state.coupon.push(action.payload);
+      })
+      .addCase(applyCoupon.fulfilled, (state, action) => {
+        state.apply = action.payload;
+      })
+      .addCase(getHotelById.fulfilled, (state, action) => {
+        state.byId = action.payload;
+      })
+      .addCase(addFood.fulfilled, (state, action) => {
+        state.addFood = action.payload;
+      })
+      .addCase(deleteFood.fulfilled, (state, action) => {
+        state.addFood = action.payload;
+      });
   },
 });
+
 export default hotelSlice.reducer;

@@ -30,6 +30,9 @@ import {
 import { localUrl } from '../../../utils/util';
 
 import './button.css';
+import { addFood, deleteFood, getHotelById } from '../redux/reducers/hotel';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLoader } from '../../../utils/loader';
 
 // Styled components
 const ModalContent = styled(Box)(({ theme }) => ({
@@ -116,33 +119,40 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
   const [foodType, setFoodType] = useState('');
   const [about, setAbout] = useState('');
   const [images, setImages] = useState([]);
-  const [foods, setFoods] = useState([]);
   const [isAddingFood, setIsAddingFood] = useState(false);
   const [loading, setLoading] = useState(false); // Added loading state
-
+  const dispatch = useDispatch();
+  const foods = useSelector((state) => state.hotel.byId?.foods || []);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  // -------------------------------------------------------------------------//
+  const { showLoader, hideLoader } = useLoader();
+
   useEffect(() => {
-    if (hotelId) {
-      fetchFoods(); // Fetch foods when hotelId changes
+    const fetchFoods = async () => {
+      if (hotelId) {
+        setLoading(true); // Show loader
+        await dispatch(getHotelById(hotelId));
+        setLoading(false); // Hide loader after fetching
+      }
+    };
+
+    if (open) {
+      fetchFoods();
+    } else {
+      setLoading(false); // Hide loader if not open
     }
-  }, [hotelId]);
+  }, [open, hotelId, dispatch]);
 
-  const fetchFoods = () => {
-    axios
-      .get(`${localUrl}/hotels/get-by-id/${hotelId}`)
-      .then((response) => {
-        setFoods(response.data.foods); // Update state with fetched foods
-      })
-      .catch(() => {
-        toast.error('Error fetching foods');
-      });
-  };
+  useEffect(() => {
+    if (loading) {
+      showLoader(); // Show loader when loading
+    } else {
+      hideLoader(); // Hide loader when not loading
+    }
+  }, [loading]);
 
-  // -------------------------------------------------------------------------//
-  const handleAddFood = () => {
-    setLoading(true); // Set loading state to true
+  const handleAddFood = async () => {
+    showLoader(); // Show loader
     const formData = new FormData();
     formData.append('hotelId', hotelId);
     formData.append('name', foodName);
@@ -154,59 +164,44 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
       formData.append('images', file);
     });
 
-    axios
-      .post(`${localUrl}/add/food-to/your-hotel`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
-      .then(() => {
-        toast.success('Food added successfully');
-        fetchFoods();
-      })
-      .catch(() => {
-        toast.error('Error adding food');
-      })
-      .finally(() => {
-        setLoading(false); // Set loading state to false
-        setIsAddingFood(false); // Close the add food form
-      });
+    try {
+      await dispatch(addFood(formData));
+    } catch (error) {
+      toast.error('Error adding food');
+    } finally {
+      hideLoader(); // Hide loader
+      setIsAddingFood(false);
+      resetForm(); // Reset form fields
+    }
   };
+
+  const resetForm = () => {
+    setFoodName('');
+    setFoodPrice('');
+    setFoodType('');
+    setAbout('');
+    setImages([]);
+  };
+
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     setImages(files);
   };
-  // -------------------------------------------------------------------------//
 
   const handleDeleteFood = async (foodId) => {
     try {
-      const response = await axios.delete(`${localUrl}/delete-food/${hotelId}/${foodId}`);
-
-      if (response.status === 200) {
-        toast.success('Successfully deleted');
-        // Optionally, refresh the data here if needed
-        fetchFoods(); // Assuming `fetchRooms` is a function that refreshes the list of rooms
-      } else {
-        toast.error('Failed to delete the item');
-      }
+      await dispatch(deleteFood({ hotelId, foodId }));
+      await dispatch(getHotelById(hotelId)); // Fetch updated food list
     } catch (error) {
       console.error('Error deleting food:', error);
       toast.error('Error deleting item. Please try again.');
     }
   };
 
-  // -------------------------------------------------------------------------//
   const handleCancel = () => {
-    // Reset form state
-    setFoodName('');
-    setFoodPrice('');
-    setFoodType('');
-    setAbout('');
-    setImages([]);
-
-    // Refresh the food list and close the modal
-    fetchFoods();
-    onClose();
+    fetchFoods(); // Refresh food list
+    resetForm(); // Reset form state
+    onClose(); // Close the modal
   };
 
   return (
@@ -220,7 +215,7 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
         </Header>
         {!isAddingFood ? (
           <>
-            {foods.length > 0 ? (
+            {foods?.length > 0 ? (
               <Box>
                 {foods.map((food, index) => (
                   <FoodItem key={food.foodId}>
@@ -341,7 +336,7 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
                   <UploadButton component="span">Choose Images</UploadButton>
                 </label>
                 <ImagePreview>
-                  {images.length > 0 &&
+                  {images?.length > 0 &&
                     images.map((file, index) => (
                       <img
                         key={index}

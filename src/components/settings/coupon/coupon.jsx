@@ -25,10 +25,16 @@ import CouponCodeModal from './coupon-code';
 import CreateCouponModal from './create-coupon';
 import AppliedCouponModal from './applied-coupon';
 import AvailableCouponsModal from './available-coupons';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  applyCoupon,
+  createCoupon,
+  getAllCoupons,
+  getAllHotels,
+} from 'src/components/redux/reducers/hotel';
+import { useLoader } from '../../../../utils/loader';
 
 export default function Coupon() {
-  const [hotels, setHotels] = useState([]);
-  const [coupons, setCoupons] = useState([]);
   const [couponName, setCouponName] = useState('');
   const [discountPrice, setDiscountPrice] = useState('');
   const [validity, setValidity] = useState('');
@@ -43,68 +49,66 @@ export default function Coupon() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchTerm, setSearchTerm] = useState('');
+  const dispatch = useDispatch();
+  const coupons = useSelector((state) => state.hotel.coupon);
+  const hotels = useSelector((state) => state.hotel.data);
+  const { showLoader, hideLoader } = useLoader();
 
   useEffect(() => {
     fetchHotels();
     fetchCoupons();
-  }, []);
+  }, [dispatch]);
 
   const fetchHotels = async () => {
+    showLoader();
     try {
-      const response = await fetch(`${localUrl}/get/all/hotels`);
-      const result = await response.json();
-      setHotels(result.data || []);
+      await dispatch(getAllHotels()).unwrap();
     } catch (error) {
       console.error('Error fetching hotels:', error);
-      toast.error('Failed to fetch hotels');
+    } finally {
+      hideLoader();
     }
   };
 
   const fetchCoupons = async () => {
+    showLoader();
     try {
-      const response = await fetch(`${localUrl}/coupon/get/all`);
-      const result = await response.json();
-      setCoupons(result || []);
+      await dispatch(getAllCoupons()).unwrap();
     } catch (error) {
       console.error('Error fetching coupons:', error);
       toast.error('Failed to fetch coupons');
+    } finally {
+      hideLoader();
     }
   };
 
   const handleCreateCoupon = async (e) => {
     e.preventDefault();
     const formattedValidity = new Date(validity).toISOString().split('T')[0];
+    const postData = { couponName, discountPrice, validity: formattedValidity };
+    showLoader();
     try {
-      const response = await axios.post(`${localUrl}/coupon/create-a-new/coupon`, {
-        couponName,
-        discountPrice,
-        validity: formattedValidity,
-      });
-      if (response.status === 201) {
-        toast.success(`Kindly Note down your coupon code ${response?.data?.coupon?.couponCode}`);
-        setCouponName('');
-        setDiscountPrice('');
-        setValidity('');
-        handleCloseCreateCouponModal();
-        fetchCoupons(); // Refresh coupons after creating a new one
-      }
+      await dispatch(createCoupon(postData)).unwrap();
+      resetCouponForm();
+      fetchCoupons();
     } catch (error) {
-      toast.error('Failed to create coupon');
+      const errorMessage = error.coupons.message || 'Failed to create coupon';
+      toast.error(errorMessage);
+    } finally {
+      hideLoader();
     }
   };
 
   const handleApplyCoupon = async (hotelId, roomId) => {
+    showLoader();
     try {
-      const response = await axios.patch(
-        `${localUrl}/apply/a/coupon-to-room/${couponCode}?hotelId=${hotelId}&roomId=${roomId}`
-      );
-      toast.success('Coupon Applied Successfully');
-      if (response.status === 200) {
-        window.location.reload();
-      }
+      await dispatch(applyCoupon({ couponCode, hotelId, roomId }));
+      window.location.reload();
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to apply coupon';
       toast.error(errorMessage);
+    } finally {
+      hideLoader();
     }
   };
 
@@ -185,7 +189,7 @@ export default function Coupon() {
     setSearchTerm(event.target.value);
   };
 
-  const filteredHotels = hotels.filter((hotel) =>
+  const filteredHotels = hotels?.filter((hotel) =>
     hotel.hotelName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -324,7 +328,7 @@ export default function Coupon() {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={filteredHotels.length}
+          count={filteredHotels?.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}

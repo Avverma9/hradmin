@@ -35,7 +35,7 @@ const AvailableCouponsModal = ({ open, handleClose, coupons, copyToClipboard }) 
       </IconButton>
     </DialogTitle>
     <DialogContent>
-      {coupons.length > 0 ? (
+      {coupons?.length > 0 ? (
         <Table>
           <TableHead>
             <TableRow>
