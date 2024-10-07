@@ -5,9 +5,12 @@ import react from '@vitejs/plugin-react-swc';
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      '@': path.resolve(process.cwd(), 'src'), // Simplified alias
-    },
+    alias: [
+      {
+        find: /^src(.*)/,
+        replacement: path.resolve(process.cwd(), 'src$1'),
+      },
+    ],
   },
   server: {
     port: 3030,
@@ -17,6 +20,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      external: ['socket.io-client'], // Add this line
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {

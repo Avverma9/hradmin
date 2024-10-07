@@ -2,6 +2,7 @@ import React from 'react';
 import '../global.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useScrollToTop } from 'src/hooks/use-scroll-to-top';
 import Router from 'src/components/routes/sections';
 import ThemeProvider from '../theme';
 import { LoaderProvider } from '../utils/loader';

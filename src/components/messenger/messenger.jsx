@@ -3,7 +3,8 @@ import { toast } from 'react-toastify';
 import { FiDelete } from 'react-icons/fi';
 import { useLocation } from 'react-router-dom';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { io } from 'socket.io-client';
+import { io } from '/node_modules/socket.io-client/dist/socket.io.js';
+
 
 import IconButton from '@mui/material/IconButton';
 import { role, localUrl } from '../../../utils/util';
