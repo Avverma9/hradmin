@@ -30,6 +30,7 @@ const ChatApp = () => {
 
   // WebSocket useEffect
   useEffect(() => {
+    
     socket.current = io('https://hotel-backend-tge7.onrender.com');
 
     // Emit user status on connect
