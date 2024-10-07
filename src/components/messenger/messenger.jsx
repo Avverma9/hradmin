@@ -3,12 +3,10 @@ import { toast } from 'react-toastify';
 import { FiDelete } from 'react-icons/fi';
 import { useLocation } from 'react-router-dom';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-
 import IconButton from '@mui/material/IconButton';
 import { role, localUrl } from '../../../utils/util';
 import { fDateTime } from '../../../utils/format-time';
 import AlertDialog from '../../../utils/alertDialogue';
-
 import './ChatApp.css';
 import { LinearProgress } from '@mui/material';
 
@@ -27,128 +25,130 @@ const ChatApp = () => {
   const socket = useRef(null);
   const senderId = localStorage.getItem('user_id');
 
-  // WebSocket useEffect
+  // WebSocket setup
   useEffect(() => {
     socket.current = window.io('https://hotel-backend-tge7.onrender.com');
 
-    // Emit user status on connect
     if (senderId) {
       socket.current.emit('registerUser', senderId);
       socket.current.emit('userStatus', { senderId, isOnline: true });
     }
 
-    socket.current.on('newMessage', (newMessage) => {
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-    });
-
-    socket.current.on('userStatusUpdate', ({ senderId, isOnline }) => {
-      setContacts((prevContacts) =>
-        prevContacts.map((contact) =>
-          contact._id === senderId ? { ...contact, isOnline } : contact
-        )
-      );
-    });
-
-    socket.current.on('messageSeen', ({ messageId }) => {
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) => (msg._id === messageId ? { ...msg, seen: true } : msg))
-      );
-    });
+    socket.current.on('newMessage', handleNewMessage);
+    socket.current.on('userStatusUpdate', handleUserStatusUpdate);
+    socket.current.on('messageSeen', handleMessageSeen);
 
     return () => {
       if (senderId) {
         socket.current.emit('userStatus', { senderId, isOnline: false });
       }
-      socket.current.disconnect(); // Disconnect when component unmounts
+      socket.current.disconnect();
     };
   }, [senderId]);
 
-  // Fetch Contacts
+  // Fetch contacts
   useEffect(() => {
     const fetchContacts = async () => {
       try {
         const response = await axios.get(`${localUrl}/get-chat/contacts`);
-        if (response.data) {
-          const allContacts = response.data;
-          const localStorageRole = localStorage.getItem('user_role'); // Get role from localStorage
-
-          let filteredContacts = allContacts; // Default to all contacts
-
-          // Filter contacts based on localStorage role
-          if (localStorageRole === 'PMS') {
-            filteredContacts = allContacts.filter((contact) => contact.role !== localStorageRole);
-            // Further filter if the role is not 'Developer'
-            filteredContacts = filteredContacts.filter((item) => item.role !== 'Developer');
-          }
-
-          // Set filtered contacts to state
-          setContacts(filteredContacts);
-          setFilteredContacts(filteredContacts);
-        }
+        const filtered = filterContactsByRole(response.data);
+        setContacts(filtered);
+        setFilteredContacts(filtered);
       } catch (error) {
         console.error('Error fetching contacts:', error);
+        toast.error('Failed to fetch contacts.');
       }
     };
 
     fetchContacts();
   }, []);
 
-  // Search Contacts
+  // Filter contacts based on search term
   useEffect(() => {
-    if (searchTerm) {
-      const lowercasedSearchTerm = searchTerm.toLowerCase();
-      setFilteredContacts(
-        contacts.filter((contact) => contact?.name.toLowerCase().includes(lowercasedSearchTerm))
-      );
-    } else {
-      setFilteredContacts(contacts);
-    }
+    setFilteredContacts(
+      contacts.filter((contact) => contact?.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
   }, [searchTerm, contacts]);
 
-  // Fetch Messages
+  // Fetch messages when contact is selected
   useEffect(() => {
-    const fetchMessages = async () => {
-      if (selectedContact && location.pathname === '/messenger') {
-        try {
-          const userId1 = localStorage.getItem('user_id');
-          const userId2 = selectedContact._id;
+    if (selectedContact) {
+      fetchMessages(selectedContact._id);
+    }
+  }, [selectedContact]);
 
-          const response = await axios.get(
-            `${localUrl}/get-messages/of-chat/${userId1}/${userId2}`
-          );
+  const fetchMessages = async (receiverId) => {
+    try {
+      const userId1 = localStorage.getItem('user_id');
+      const response = await axios.get(`${localUrl}/get-messages/of-chat/${userId1}/${receiverId}`);
+      setMessages(response.data);
+      await handleSeenMessages(response.data);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      toast.error('Failed to fetch messages.');
+    }
+  };
 
-          if (response.data) {
-            setMessages(response.data);
+  const handleNewMessage = async (newMessage) => {
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+    await handleSeenMessages([...messages, newMessage]);
+  };
 
-            // Filter unseen messages
-            const unseenMessages = response.data.filter((msg) => !msg.seen);
+  const handleUserStatusUpdate = ({ senderId, isOnline }) => {
+    setContacts((prevContacts) =>
+      prevContacts.map((contact) => (contact._id === senderId ? { ...contact, isOnline } : contact))
+    );
+  };
 
-            // Mark unseen messages as seen through API
-            await Promise.all(
-              unseenMessages.map((msg) =>
-                axios.post(`${localUrl}/mark-as-seen`, {
-                  messageId: msg._id,
-                  receiverId: userId1,
-                })
-              )
-            );
+  const handleMessageSeen = ({ messageId }) => {
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) => (msg._id === messageId ? { ...msg, seen: true } : msg))
+    );
+  };
+  const handleSeenMessages = useCallback(async (messagesToMark) => {
+    const userId = localStorage.getItem('user_id');
+    const unseenMessages = messagesToMark.filter((msg) => !msg.seen);
 
-            // Emit 'messageSeen' for each unseen message through WebSocket
-            unseenMessages.forEach((msg) => {
-              socket.current.emit('messageSeen', {
-                messageId: msg._id,
-                receiverId: userId1,
-              });
-            });
-          }
-        } catch (error) {
-          console.error('Error fetching messages:', error);
-        }
+    if (unseenMessages.length > 0) {
+      try {
+        await Promise.all(
+          unseenMessages.map((msg) =>
+            axios.post(`${localUrl}/mark-as-seen`, {
+              messageId: msg._id,
+              receiverId: userId,
+            })
+          )
+        );
+
+        unseenMessages.forEach((msg) => {
+          socket.current.emit('messageSeen', {
+            messageId: msg._id,
+            receiverId: userId,
+          });
+        });
+
+        // Update state for seen messages
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            unseenMessages.some((um) => um._id === msg._id) ? { ...msg, seen: true } : msg
+          )
+        );
+      } catch (error) {
+        console.error('Error marking messages as seen:', error);
+        toast.error('Failed to mark messages as seen.');
       }
-    };
+    }
+  }, []);
 
-    fetchMessages();
-  }, [selectedContact, location.pathname]);
+  const filterContactsByRole = (contacts) => {
+    const localStorageRole = localStorage.getItem('user_role');
+    return contacts.filter((contact) => {
+      if (localStorageRole === 'PMS') {
+        return contact.role !== 'PMS' && contact.role !== 'Developer';
+      }
+      return true; // Default: no filtering
+    });
+  };
 
   const handleDeleteButtonClick = (receiverId) => {
     setChatToDelete({ receiverId });
@@ -157,8 +157,8 @@ const ChatApp = () => {
 
   const handleDeleteChat = async () => {
     const { receiverId } = chatToDelete || {};
-
     const userId = localStorage.getItem('user_id');
+
     if (!userId) {
       toast.error('User not found. Unable to delete chat.');
       return;
@@ -168,10 +168,9 @@ const ChatApp = () => {
       const response = await axios.delete(
         `${localUrl}/delete/added/chats/from/messenger-app/${userId}/${receiverId}`
       );
-
       if (response.status === 200) {
         toast.success('Chat deleted successfully');
-        if (selectedContact && selectedContact._id === receiverId) {
+        if (selectedContact?._id === receiverId) {
           setSelectedContact(null);
           setMessages([]);
         }
@@ -196,12 +195,11 @@ const ChatApp = () => {
     setSelectedContact(contact);
   }, []);
 
-  // Handle Send Message
   const handleSendMessage = async (event) => {
     event.preventDefault();
-    const input = event.target.message.value;
+    const input = event.target.message.value.trim();
 
-    if (input.trim() && selectedContact) {
+    if (input && selectedContact) {
       const newMessage = {
         senderId: localStorage.getItem('user_id'),
         receiverId: selectedContact._id,
@@ -210,42 +208,37 @@ const ChatApp = () => {
         seen: false,
       };
 
-      // Send the message through the API first
       try {
-        const response = await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
+        await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
+        socket.current.emit('newMessage', newMessage); // Emit new message to other clients
       } catch (error) {
         console.error('Error sending message:', error);
+        toast.error('Failed to send message.');
+      } finally {
+        event.target.reset();
       }
-
-      event.target.reset();
     }
   };
 
-  const getTickIndicators = (seen) => (seen ? 'Seen ✔✔' : 'Sent ✔️✔️');
+  const getTickIndicators = (seen) => (seen ? 'Seen ✔✔' : 'Sent ✔️');
 
-  if (filteredContacts?.length === 0) {
-    return (
-      <div>
-        <LinearProgress />
-      </div>
-    );
+  if (filteredContacts.length === 0) {
+    return <LinearProgress />;
   }
-  console.log('selected conta', selectedContact);
 
   return (
     <div className="chat-app">
       <div className="sidebar">
         <div className="search-contact-input">
-          {role === 'Admin' ||
-            (role === 'Developer' && (
-              <input
-                type="text"
-                placeholder="Search contacts..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
-            ))}
+          {(role === 'Admin' || role === 'Developer') && (
+            <input
+              type="text"
+              placeholder="Search contacts..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          )}
         </div>
         <div className="tab-content">
           {filteredContacts.map((contact) => (
@@ -293,7 +286,7 @@ const ChatApp = () => {
                 <IconButton
                   aria-label="delete"
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent click event from bubbling up
+                    e.stopPropagation();
                     handleDeleteButtonClick(selectedContact._id);
                   }}
                 >
@@ -301,13 +294,12 @@ const ChatApp = () => {
                 </IconButton>
               </div>
             </div>
+
             <div className="messages">
               {messages.map((msg) => (
                 <div
-                  key={msg.timestamp}
-                  className={`message ${
-                    msg.sender === localStorage.getItem('user_id') ? 'sent' : 'received'
-                  }`}
+                  key={`${msg._id}-${msg.timestamp}`} // Unique key
+                  className={`message ${msg.sender === senderId ? 'sent' : 'received'}`}
                 >
                   <p className="message-content">{msg.content}</p>
                   <hr />
