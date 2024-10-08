@@ -27,7 +27,6 @@ const ChatApp = () => {
   const messagesEndRef = useRef(null);
   const [filePreviews, setFilePreviews] = useState([]);
   const senderId = localStorage.getItem('user_id');
-  const userId = localStorage.getItem('user_id');
   const selectedReceiverId = localStorage.getItem('chat_receiver');
   const [selectedFiles, setSelectedFiles] = useState([]);
 
@@ -109,26 +108,22 @@ const ChatApp = () => {
     }
   }, [selectedContact]);
 
-  // const fetchMessages = async (receiverId) => {
-  //   try {
-  //     const userId1 = localStorage.getItem('user_id');
-  //     const response = await axios.get(`${localUrl}/get-messages/of-chat/${userId1}/${receiverId}`);
-  //     setMessages(response.data);
+  const fetchMessages = async (receiverId) => {
+    try {
+      const userId1 = localStorage.getItem('user_id');
+      const response = await axios.get(`${localUrl}/get-messages/of-chat/${userId1}/${receiverId}`);
+      setMessages(response.data);
+      await handleSeenMessages(response.data);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      toast.error('Failed to fetch messages.');
+    }
+  };
 
-  //     // Call handleSeenMessages only if userId1 does not match receiverId
-  //     if (userId1 !== selectedReceiverId) {
-  //       await handleSeenMessages(response.data);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching messages:', error);
-  //     toast.error('Failed to fetch messages.');
-  //   }
-  // };
-
-  // const handleNewMessage = async (newMessage) => {
-  //   setMessages((prevMessages) => [...prevMessages, newMessage]);
-  //   await handleSeenMessages([...messages, newMessage]);
-  // };
+  const handleNewMessage = async (newMessage) => {
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+    await handleSeenMessages([...messages, newMessage]);
+  };
 
   const handleUserStatusUpdate = ({ senderId, isOnline }) => {
     setContacts((prevContacts) =>
@@ -141,82 +136,6 @@ const ChatApp = () => {
       prevMessages.map((msg) => (msg._id === messageId ? { ...msg, seen: true } : msg))
     );
   };
-  
-  const fetchMessages = async (receiverId) => {
-    try {
-      const userId1 = localStorage.getItem('user_id');
-      const response = await axios.get(`${localUrl}/get-messages/of-chat/${userId1}/${receiverId}`);
-      setMessages(response.data);
-  
-      // Call handleSeenMessages only if userId1 does not match receiverId
-      if (userId1 !== receiverId) {
-        await handleSeenMessages(response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-      toast.error('Failed to fetch messages.');
-    }
-  };
-  
-  const handleNewMessage = async (newMessage) => {
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
-    
-    // Only call handleSeenMessages if senderId does not match selectedReceiverId
-    if (senderId !== selectedReceiverId) {
-      await handleSeenMessages([...messages, newMessage]);
-    }
-  };
-  
-  const handleSendMessage = async (event) => {
-    event.preventDefault();
-    const input = event.target.message.value.trim();
-  
-    // Check if there is content or selected files
-    if ((input || selectedFiles.length > 0) && selectedContact) {
-      const formData = new FormData();
-      formData.append('senderId', senderId);
-      formData.append('receiverId', selectedContact._id);
-      formData.append('content', input);
-      formData.append('timestamp', new Date().toISOString());
-      formData.append('seen', false);
-  
-      // Append each selected file to the FormData
-      selectedFiles.forEach((file) => {
-        formData.append('images', file); // 'images' is the key used on the server side
-      });
-  
-      try {
-        showLoader();
-        const response = await axios.post(`${localUrl}/send-a-message/messenger`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data', // Important for file uploads
-          },
-        });
-  
-        // Only call handleSeenMessages if senderId does not match selectedReceiverId
-        if (senderId !== selectedReceiverId) {
-          await handleSeenMessages(response.data);
-        }
-  
-        socket.current.emit('newMessage', {
-          content: input,
-          images: selectedFiles.map((file) => URL.createObjectURL(file)),
-        });
-      } catch (error) {
-        console.error('Error sending message:', error);
-      } finally {
-        event.target.reset();
-        setSelectedFiles([]); // Reset selected files after sending
-        setFilePreviews([]); // Clear file previews
-        hideLoader();
-      }
-    } else {
-      toast.error('Please enter a message or select a file to send.');
-    }
-  };
-  
-
-
   const handleSeenMessages = useCallback(async (messagesToMark) => {
     const userId = localStorage.getItem('user_id');
     const selectedReceiverId = localStorage.getItem('chat_receiver');
@@ -233,14 +152,13 @@ const ChatApp = () => {
             })
           )
         );
-        if (userId !== selectedReceiverId) {
-          unseenMessages.forEach((msg) => {
-            socket.current.emit('messageSeen', {
-              messageId: msg._id,
-              receiverId: selectedReceiverId,
-            });
+
+        unseenMessages.forEach((msg) => {
+          socket.current.emit('messageSeen', {
+            messageId: msg._id,
+            receiverId: selectedReceiverId,
           });
-        }
+        });
 
         // Update state for seen messages
         setMessages((prevMessages) =>
@@ -310,53 +228,51 @@ const ChatApp = () => {
     setSelectedContact(contact);
   }, []);
 
-  // const handleSendMessage = async (event) => {
-  //   event.preventDefault();
-  //   const input = event.target.message.value.trim();
+  const handleSendMessage = async (event) => {
+    event.preventDefault();
+    const input = event.target.message.value.trim();
 
-  //   // Check if there is content or selected files
-  //   if ((input || selectedFiles.length > 0) && selectedContact) {
-  //     const formData = new FormData();
-  //     formData.append('senderId', senderId);
-  //     formData.append('receiverId', selectedContact._id);
-  //     formData.append('content', input);
-  //     formData.append('timestamp', new Date().toISOString());
-  //     formData.append('seen', false);
+    // Check if there is content or selected files
+    if ((input || selectedFiles.length > 0) && selectedContact) {
+      const formData = new FormData();
+      formData.append('senderId', senderId);
+      formData.append('receiverId', selectedContact._id);
+      formData.append('content', input);
+      formData.append('timestamp', new Date().toISOString());
+      formData.append('seen', false);
 
-  //     // Append each selected file to the FormData
-  //     selectedFiles.forEach((file) => {
-  //       formData.append('images', file); // 'images' is the key used on the server side
-  //     });
+      // Append each selected file to the FormData
+      selectedFiles.forEach((file) => {
+        formData.append('images', file); // 'images' is the key used on the server side
+      });
 
-  //     try {
-  //       showLoader();
-  //       await axios.post(`${localUrl}/send-a-message/messenger`, formData, {
-  //         headers: {
-  //           'Content-Type': 'multipart/form-data', // Important for file uploads
-  //         },
-  //       });
-  //       if (senderId !== selectedReceiverId) {
-  //         await handleSeenMessages(response.data);
-  //       }
+      try {
+        showLoader();
+        await axios.post(`${localUrl}/send-a-message/messenger`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data', // Important for file uploads
+          },
+        });
 
-  //       socket.current.emit('newMessage', {
-  //         content: input,
-  //         images: selectedFiles.map((file) => URL.createObjectURL(file)),
-  //       });
-  //     } catch (error) {
-  //       console.error('Error sending message:', error);
-  //     } finally {
-  //       event.target.reset();
-  //       setSelectedFiles([]); // Reset selected files after sending
-  //       setFilePreviews([]); // Clear file previews
-  //       hideLoader();
-  //     }
-  //   } else {
-  //     toast.error('Please enter a message or select a file to send.');
-  //   }
-  // };
+        await handleSeenMessages(response.data);
+        socket.current.emit('newMessage', {
+          content: input,
+          images: selectedFiles.map((file) => URL.createObjectURL(file)),
+        });
+      } catch (error) {
+        console.error('Error sending message:', error);
+      } finally {
+        event.target.reset();
+        setSelectedFiles([]); // Reset selected files after sending
+        setFilePreviews([]); // Clear file previews
+        hideLoader();
+      }
+    } else {
+      toast.error('Please enter a message or select a file to send.');
+    }
+  };
 
-  const getTickIndicators = (seen) => (seen ? 'Seen ✔✔' : '✔️✔️');
+  const getTickIndicators = (seen) => (seen ? 'Sent' : 'Sending');
   if (filteredContacts.length === 0) {
     return <LinearProgress />;
   }
