@@ -122,6 +122,8 @@ const ChatApp = () => {
   };
   const handleSeenMessages = useCallback(async (messagesToMark) => {
     const userId = localStorage.getItem('user_id');
+    const selectedReceiverId = localStorage.getItem('chat_receiver');
+
     const unseenMessages = messagesToMark.filter((msg) => !msg.seen);
 
     if (unseenMessages.length > 0) {
@@ -170,7 +172,8 @@ const ChatApp = () => {
   };
 
   const handleDeleteChat = async () => {
-    const { receiverId } = chatToDelete || {};
+    const selectedReceiverId = localStorage.getItem('chat_receiver');
+
     const userId = localStorage.getItem('user_id');
 
     if (!userId) {
@@ -180,11 +183,11 @@ const ChatApp = () => {
 
     try {
       const response = await axios.delete(
-        `${localUrl}/delete/added/chats/from/messenger-app/${userId}/${receiverId}`
+        `${localUrl}/delete/added/chats/from/messenger-app/${userId}/${selectedReceiverId}`
       );
       if (response.status === 200) {
         toast.success('Chat deleted successfully');
-        if (selectedContact?._id === receiverId) {
+        if (selectedContact?._id === selectedReceiverId) {
           setSelectedContact(null);
           setMessages([]);
         }
