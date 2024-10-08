@@ -240,10 +240,14 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                   {paths.map((path) => (
                     <MenuItem key={path.path} value={path.title}>
                       <Checkbox checked={selectedMenuItems.indexOf(path.title) > -1} />
-                      <ListItemText primary={path.title} />
+                      <ListItemText
+                        primary={path.title}
+                        secondary={path.role ? `Role: ${path.role}` : 'No specific role'}
+                      />
                     </MenuItem>
                   ))}
                 </Select>
+
                 <Button
                   onClick={handleAddMenuItems}
                   variant="contained"
