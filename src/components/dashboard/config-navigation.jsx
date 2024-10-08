@@ -59,7 +59,9 @@ const getNavConfig = async () => {
     },
     {
       title: 'Messenger',
-      path: '/messenger',
+      // path: '/messenger',
+      path: '/messe',
+
       icon: icons.messenger,
     },
     {

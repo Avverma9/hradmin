@@ -123,10 +123,9 @@ export default function BookingsView() {
         sx={{
           position: 'sticky',
           top: 0,
-          background: 'white',
+          background: 'transparent',
           zIndex: 1,
           padding: '16px 0',
-          borderBottom: '1px solid #ddd',
         }}
       >
         <Grid container spacing={2} alignItems="center">
@@ -198,9 +197,8 @@ export default function BookingsView() {
                     sx={{
                       position: 'sticky',
                       top: 0,
-                      background: 'white',
+                      background: '#f8f9fa',
                       zIndex: 1,
-                      borderBottom: '2px solid #ddd',
                     }}
                   >
                     {header}

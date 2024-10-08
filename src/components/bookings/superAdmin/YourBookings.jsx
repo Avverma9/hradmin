@@ -26,13 +26,11 @@ import {
 } from '@mui/material';
 
 import { fDate } from '../../../../utils/format-time';
-
 import BookingUpdateModal from '../booking-update-modal'; // Adjust path as needed
 
 export default function SuperAdminBookingsView() {
   const [bookingId, setBookingId] = useState('');
   const [status, setStatus] = useState('');
-  const [loading, setLoading] = useState(true);
   const [bookings, setBookings] = useState([]);
   const dispatch = useDispatch();
   const search = useSelector((state) => state.booking.search);
@@ -58,21 +56,22 @@ export default function SuperAdminBookingsView() {
     } catch (error) {
       console.error('Error:', error);
       toast.error('Something went wrong');
-      setBookings([]);
     } finally {
       hideLoader();
     }
   };
 
+  useEffect(() => {
+    setBookings(filtered);
+  }, [filtered]);
+
   const handleSearch = async () => {
     try {
       showLoader();
       await dispatch(searchBooking(bookingId));
-      setBookings(search);
     } catch (error) {
       console.error('Error:', error);
       toast.error('Something went wrong');
-      setBookings([]);
     } finally {
       hideLoader();
     }
@@ -107,7 +106,7 @@ export default function SuperAdminBookingsView() {
     }
   };
 
-  if (loading) {
+  if (bookings.length === 0) {
     return (
       <Container>
         <LinearProgress />
@@ -121,7 +120,18 @@ export default function SuperAdminBookingsView() {
         Bookings
       </Typography>
 
-      <Grid container spacing={3} alignItems="center">
+      <Grid
+        sx={{
+          position: 'sticky',
+          top: 0,
+          background: 'transparent',
+          zIndex: 1,
+          padding: '16px 0',
+        }}
+        container
+        spacing={3}
+        alignItems="center"
+      >
         <Grid item md={4} xs={12}>
           <FormControl fullWidth>
             <TextField
@@ -168,17 +178,26 @@ export default function SuperAdminBookingsView() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Booking ID</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Check-in</TableCell>
-              <TableCell>Check-out</TableCell>
-              <TableCell>Actions</TableCell>
+              {['Booking ID', 'Name', 'Status', 'Check-in', 'Check-out', 'Actions'].map(
+                (header) => (
+                  <TableCell
+                    key={header}
+                    sx={{
+                      position: 'sticky',
+                      top: 0,
+                      background: '#f8f9fa',
+                      zIndex: 1,
+                    }}
+                  >
+                    {header}
+                  </TableCell>
+                )
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
-            {filtered?.length > 0 ? (
-              filtered.map((booking) => (
+            {bookings.length > 0 ? (
+              bookings.map((booking) => (
                 <TableRow key={booking._id}>
                   <TableCell>{booking.bookingId}</TableCell>
                   <TableCell>{booking.user?.name}</TableCell>
