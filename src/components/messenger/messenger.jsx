@@ -104,6 +104,7 @@ const ChatApp = () => {
   useEffect(() => {
     if (selectedContact) {
       fetchMessages(selectedContact._id);
+      const recieverID = localStorage.setItem('chat_receiver', selectedContact._id);
     }
   }, [selectedContact]);
 
@@ -235,7 +236,7 @@ const ChatApp = () => {
     if ((input || selectedFiles.length > 0) && selectedContact) {
       const formData = new FormData();
       formData.append('senderId', senderId);
-      formData.append('receiverId', selectedReceiverId);
+      formData.append('receiverId', selectedContact._id);
       formData.append('content', input);
       formData.append('timestamp', new Date().toISOString());
       formData.append('seen', false);
@@ -253,10 +254,6 @@ const ChatApp = () => {
           },
         });
 
-        const response = await axios.get(
-          `${localUrl}/get-messages/of-chat/${senderId}/${selectedReceiverId}`
-        );
-        setMessages(response.data);
         await handleSeenMessages(response.data);
         socket.current.emit('newMessage', {
           content: input,
@@ -264,7 +261,6 @@ const ChatApp = () => {
         });
       } catch (error) {
         console.error('Error sending message:', error);
-        toast.error('Failed to send message.');
       } finally {
         event.target.reset();
         setSelectedFiles([]); // Reset selected files after sending
