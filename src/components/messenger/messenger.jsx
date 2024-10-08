@@ -309,7 +309,7 @@ const ChatApp = () => {
                 </p>
                 <span>{contact?.mobile}</span>
                 <span className={`status ${contact.isOnline ? 'online' : 'offline'}`}>
-                  {contact.isOnline ? 'Online' : 'Offline'}
+                  {contact.isOnline ? 'Online' : `Last Seen: ${fDateTime(contact.lastSeen)}`}
                 </span>
               </div>
             </div>
@@ -333,7 +333,9 @@ const ChatApp = () => {
                   </p>
                   <span className="contact-mobile">{selectedContact.mobile}</span>
                   <span className={`status ${selectedContact.isOnline ? 'online' : 'offline'}`}>
-                    {selectedContact.isOnline ? 'Online' : fDateTime(selectedContact.lastSeen)}
+                    {selectedContact.isOnline
+                      ? 'Online'
+                      : `Last Seen: ${fDateTime(selectedContact.lastSeen)}`}
                   </span>
                 </div>
               </div>
