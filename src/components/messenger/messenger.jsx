@@ -9,7 +9,8 @@ import { fDateTime } from '../../../utils/format-time';
 import AlertDialog from '../../../utils/alertDialogue';
 import './ChatApp.css';
 import { LinearProgress } from '@mui/material';
-
+import { FiPaperclip } from 'react-icons/fi';
+import { useLoader } from '../../../utils/loader';
 const DEFAULT_AVATAR =
   'https://t4.ftcdn.net/jpg/05/11/55/91/360_F_511559113_UTxNAE1EP40z1qZ8hIzGNrB0LwqwjruK.jpg';
 
@@ -18,15 +19,30 @@ const ChatApp = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [messages, setMessages] = useState([]);
   const [filteredContacts, setFilteredContacts] = useState([]);
+  const { showLoader, hideLoader } = useLoader();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [chatToDelete, setChatToDelete] = useState(null);
-  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const socket = useRef(null);
   const messagesEndRef = useRef(null);
-
+  const [filePreviews, setFilePreviews] = useState([]);
   const senderId = localStorage.getItem('user_id');
   const selectedReceiverId = localStorage.getItem('chat_receiver');
+  const [selectedFiles, setSelectedFiles] = useState([]);
+
+  const handleFileChange = (event) => {
+    const files = Array.from(event.target.files);
+    setSelectedFiles(files);
+
+    // Create object URLs for preview
+    const previews = files.map((file) => URL.createObjectURL(file));
+    setFilePreviews(previews);
+  };
+
+  const handleRemoveFile = (index) => {
+    setSelectedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    setFilePreviews((prevPreviews) => prevPreviews.filter((_, i) => i !== index));
+  };
 
   // WebSocket setup
   useEffect(() => {
@@ -88,7 +104,6 @@ const ChatApp = () => {
   useEffect(() => {
     if (selectedContact) {
       fetchMessages(selectedContact._id);
-      const recieverID = localStorage.setItem('chat_receiver', selectedContact._id);
     }
   }, [selectedContact]);
 
@@ -216,24 +231,48 @@ const ChatApp = () => {
     event.preventDefault();
     const input = event.target.message.value.trim();
 
-    if (input && selectedContact) {
-      const newMessage = {
-        senderId: localStorage.getItem('user_id'),
-        receiverId: selectedContact._id,
-        content: input,
-        timestamp: new Date().toISOString(),
-        seen: false,
-      };
+    // Check if there is content or selected files
+    if ((input || selectedFiles.length > 0) && selectedContact) {
+      const formData = new FormData();
+      formData.append('senderId', senderId);
+      formData.append('receiverId', selectedReceiverId);
+      formData.append('content', input);
+      formData.append('timestamp', new Date().toISOString());
+      formData.append('seen', false);
+
+      // Append each selected file to the FormData
+      selectedFiles.forEach((file) => {
+        formData.append('images', file); // 'images' is the key used on the server side
+      });
 
       try {
-        await axios.post(`${localUrl}/send-a-message/messenger`, newMessage);
-        socket.current.emit('newMessage', newMessage); // Emit new message to other clients
+        showLoader();
+        await axios.post(`${localUrl}/send-a-message/messenger`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data', // Important for file uploads
+          },
+        });
+
+        const response = await axios.get(
+          `${localUrl}/get-messages/of-chat/${senderId}/${selectedReceiverId}`
+        );
+        setMessages(response.data);
+        await handleSeenMessages(response.data);
+        socket.current.emit('newMessage', {
+          content: input,
+          images: selectedFiles.map((file) => URL.createObjectURL(file)),
+        });
       } catch (error) {
         console.error('Error sending message:', error);
         toast.error('Failed to send message.');
       } finally {
         event.target.reset();
+        setSelectedFiles([]); // Reset selected files after sending
+        setFilePreviews([]); // Clear file previews
+        hideLoader();
       }
+    } else {
+      toast.error('Please enter a message or select a file to send.');
     }
   };
 
@@ -294,7 +333,7 @@ const ChatApp = () => {
                   </p>
                   <span className="contact-mobile">{selectedContact.mobile}</span>
                   <span className={`status ${selectedContact.isOnline ? 'online' : 'offline'}`}>
-                    {selectedContact.isOnline ? 'Online' : 'Offline'}
+                    {selectedContact.isOnline ? 'Online' : fDateTime(selectedContact.lastSeen)}
                   </span>
                 </div>
               </div>
@@ -314,10 +353,25 @@ const ChatApp = () => {
             <div className="messages">
               {messages.map((msg) => (
                 <div
-                  key={`${msg._id}-${msg.timestamp}`} // Unique key
+                  key={`${msg._id}-${msg.timestamp}`}
                   className={`message ${msg.sender === senderId ? 'sent' : 'received'}`}
                 >
                   <p className="message-content">{msg.content}</p>
+                  {msg.images && msg.images.length > 0 && (
+                    <div className="attachments">
+                      {msg.images.map((image, index) => (
+                        <a key={index} href={image} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={image}
+                            alt={`attachment-${index}`}
+                            className="attachment"
+                            style={{ cursor: 'pointer' }} // Change cursor to indicate clickability
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
                   <hr />
                   <span className="tick-indicators">
                     {fDateTime(msg.timestamp)} {getTickIndicators(msg.seen)}
@@ -327,8 +381,35 @@ const ChatApp = () => {
               <div ref={messagesEndRef} /> {/* Empty div for scrolling */}
             </div>
             <form className="input-area" onSubmit={handleSendMessage}>
+              <input
+                type="file"
+                multiple
+                accept="image/*,video/*"
+                style={{ display: 'none' }}
+                id="file-input"
+                onChange={handleFileChange}
+              />
+              <label htmlFor="file-input">
+                <FiPaperclip style={{ cursor: 'pointer', marginRight: '8px' }} />
+              </label>
               <input type="text" name="message" placeholder="Type your message..." />
               <button type="submit">Send</button>
+
+              {/* File preview section */}
+              <div className="file-previews">
+                {filePreviews.map((preview, index) => (
+                  <div key={index} className="file-preview">
+                    <img src={preview} alt={`preview-${index}`} className="preview-image" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFile(index)}
+                      className="remove-file-button"
+                    >
+                      &times; {/* Cross icon */}
+                    </button>
+                  </div>
+                ))}
+              </div>
             </form>
           </>
         ) : (
