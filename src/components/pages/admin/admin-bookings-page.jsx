@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-import BookingsView from '../../bookings/admin/Bookings';
+import BookingsView from '../../settings/Bookings';
 
 // ----------------------------------------------------------------------
 

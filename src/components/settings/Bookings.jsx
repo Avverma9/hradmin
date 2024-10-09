@@ -20,15 +20,12 @@ import {
   Typography,
   InputLabel,
   FormControl,
-  LinearProgress,
 } from '@mui/material';
 
-import { localUrl } from '../../../../utils/util';
-import { fDate } from '../../../../utils/format-time';
-
-import BookingUpdateModal from '../booking-update-modal'; // Adjust path as needed
+import { fDate } from '../../../utils/format-time';
+import BookingUpdateModal from '../bookings/booking-update-modal'; // Adjust path as needed
 import { useDispatch, useSelector } from 'react-redux';
-import { useLoader } from '../../../../utils/loader';
+import { useLoader } from '../../../utils/loader';
 import { fetchFilteredBookings, searchBooking } from 'src/components/redux/reducers/booking';
 
 export default function BookingsView() {
@@ -39,6 +36,7 @@ export default function BookingsView() {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const [filterDate, setFilterDate] = useState('');
+  const [bookingCount, setBookingCount] = useState(0); // State for booking count
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const filtered = useSelector((state) => state.booking.filtered);
@@ -54,19 +52,33 @@ export default function BookingsView() {
 
   useEffect(() => {
     setBookings(filtered);
+    setBookingCount(filtered.length); // Update booking count
   }, [filtered]);
+
+  useEffect(() => {
+    setBookings(search);
+    setBookingCount(search.length); // Update booking count
+  }, [search]);
+
   const fetchData = async () => {
     setLoading(true);
     showLoader();
     try {
-      const queryParams = new URLSearchParams({
-        bookingStatus: status,
-        checkInDate: filterDate,
-      }).toString();
-      await dispatch(fetchFilteredBookings(queryParams));
+      const queryParams = new URLSearchParams();
+      if (status) {
+        queryParams.append('bookingStatus', status);
+      }
+
+      // Include filterDate in query parameters
+      if (filterDate) {
+        queryParams.append('date', filterDate);
+      }
+
+      await dispatch(fetchFilteredBookings(queryParams.toString()));
     } catch (error) {
       console.error('Error:', error);
       setBookings([]);
+      setBookingCount(0); // Reset count on error
     } finally {
       hideLoader();
     }
@@ -76,13 +88,18 @@ export default function BookingsView() {
     showLoader();
     try {
       await dispatch(searchBooking(bookingId));
-      setBookings(search);
-      hideLoader();
     } catch (error) {
       console.error('Error:', error);
       toast.error('Something went wrong');
       setBookings([]);
+      setBookingCount(0); // Reset count on error
+    } finally {
+      hideLoader();
     }
+  };
+
+  const handleRefresh = () => {
+    window.location.reload();
   };
 
   const handleView = (bookingId) => {
@@ -98,7 +115,6 @@ export default function BookingsView() {
     showLoader();
     try {
       fetchData(); // Refresh the bookings list
-      await fetchData(); // Refresh the bookings list
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -115,10 +131,8 @@ export default function BookingsView() {
   return (
     <Container sx={{ marginTop: '40px' }}>
       <Typography variant="h4" gutterBottom>
-        Bookings
+        Bookings ({bookingCount})
       </Typography>
-
-      {/* Sticky header for search and filter section */}
       <Box
         sx={{
           position: 'sticky',
@@ -150,10 +164,16 @@ export default function BookingsView() {
                   Search
                 </StyledButton>
               </Grid>
+
+              <Grid item md={2} xs={12}>
+                <StyledButton variant="outlined" onClick={handleRefresh}>
+                  Refresh
+                </StyledButton>
+              </Grid>
               <Grid item>
                 <TextField
                   id="filterDate"
-                  label="Filter Date"
+                  label="In/Out or Created on"
                   type="date"
                   variant="outlined"
                   value={filterDate}
@@ -175,6 +195,7 @@ export default function BookingsView() {
                     <MenuItem value="Cancelled">Cancelled</MenuItem>
                     <MenuItem value="Confirmed">Confirmed</MenuItem>
                     <MenuItem value="Failed">Failed</MenuItem>
+                    <MenuItem value="No-show">No-Show</MenuItem>
                     <MenuItem value="Checked-in">Checked-in</MenuItem>
                     <MenuItem value="Checked-out">Checked-out</MenuItem>
                   </Select>
@@ -190,32 +211,40 @@ export default function BookingsView() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              {['Booking ID', 'Name', 'Status', 'Check-in', 'Check-out', 'Actions'].map(
-                (header) => (
-                  <TableCell
-                    key={header}
-                    sx={{
-                      position: 'sticky',
-                      top: 0,
-                      background: '#f8f9fa',
-                      zIndex: 1,
-                    }}
-                  >
-                    {header}
-                  </TableCell>
-                )
-              )}
+              {[
+                'Booking ID',
+                'Name',
+                'Status',
+                'Check-in',
+                'Check-out',
+                'Created on',
+                'Actions',
+              ].map((header) => (
+                <TableCell
+                  key={header}
+                  sx={{
+                    position: 'sticky',
+                    top: 0,
+                    background: '#f8f9fa',
+                    zIndex: 1,
+                  }}
+                >
+                  {header}
+                </TableCell>
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>
-            {filtered?.length > 0 ? (
-              filtered?.map((booking) => (
+            {bookings?.length > 0 ? (
+              bookings.map((booking) => (
                 <TableRow key={booking._id}>
                   <TableCell>{booking.bookingId}</TableCell>
                   <TableCell>{booking.user?.name}</TableCell>
                   <TableCell>{booking.bookingStatus}</TableCell>
                   <TableCell>{fDate(booking.checkInDate)}</TableCell>
                   <TableCell>{fDate(booking.checkOutDate)}</TableCell>
+                  <TableCell>{fDate(booking.createdAt)}</TableCell>
+
                   <TableCell>
                     <StyledButton
                       variant="contained"

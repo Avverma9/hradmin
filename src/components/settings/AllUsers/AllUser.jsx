@@ -51,7 +51,7 @@ const AllUser = () => {
 
   useEffect(() => {
     const results = data.filter((user) =>
-      user.userName.toLowerCase().includes(searchTerm.toLowerCase())
+      user?.userName?.toLowerCase().includes(searchTerm?.toLowerCase())
     );
     setFilteredData(results);
   }, [searchTerm, data]);

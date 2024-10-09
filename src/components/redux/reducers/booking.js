@@ -65,8 +65,8 @@ export const updateBooking = createAsyncThunk(
 const bookingSlice = createSlice({
   name: 'booking',
   initialState: {
-    data: [],
-    
+    filtered: [],
+    search: [],
   },
   extraReducers: (builder) => {
     builder.addCase(fetchFilteredBookings.fulfilled, (state, action) => {

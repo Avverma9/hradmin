@@ -48,6 +48,14 @@ export default function SuperAdminBookingsView() {
     fetchData();
   }, [status]);
 
+  useEffect(() => {
+    setBookings(search);
+  }, [search]);
+
+  useEffect(() => {
+    setBookings(filtered);
+  }, [filtered]);
+
   const fetchData = async () => {
     const filters = `bookingStatus=${status}&hotelEmail=${hotelEmail}`;
     showLoader();
@@ -106,14 +114,6 @@ export default function SuperAdminBookingsView() {
     }
   };
 
-  if (bookings.length === 0) {
-    return (
-      <Container>
-        <LinearProgress />
-      </Container>
-    );
-  }
-
   return (
     <Container sx={{ marginTop: '40px' }}>
       <Typography variant="h4" gutterBottom>
@@ -167,6 +167,7 @@ export default function SuperAdminBookingsView() {
               <MenuItem value="Cancelled">Cancelled</MenuItem>
               <MenuItem value="Confirmed">Confirmed</MenuItem>
               <MenuItem value="Failed">Failed</MenuItem>
+              <MenuItem value="No-show">No-Show</MenuItem>
               <MenuItem value="Checked-in">Checked-in</MenuItem>
               <MenuItem value="Checked-out">Checked-out</MenuItem>
             </Select>
@@ -196,8 +197,8 @@ export default function SuperAdminBookingsView() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {bookings.length > 0 ? (
-              bookings.map((booking) => (
+            {bookings?.length > 0 ? (
+              bookings?.map((booking) => (
                 <TableRow key={booking._id}>
                   <TableCell>{booking.bookingId}</TableCell>
                   <TableCell>{booking.user?.name}</TableCell>

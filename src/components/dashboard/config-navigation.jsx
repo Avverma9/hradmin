@@ -71,28 +71,12 @@ const getNavConfig = async () => {
     {
       title: 'bookings',
       icon: icons.bookings,
-      children: [
-        {
-          title: 'Bookings',
-          icon: icons.bookings,
-          path: '/all-bookings',
-        },
-        {
-          title: 'Your Bookings',
-          icon: icons.bookings,
-          path: '/your-bookings',
-        },
-      ],
+      path: '/your-bookings',
     },
     {
       title: 'Hotels',
       icon: icons.hotels,
       children: [
-        {
-          title: 'Hotels',
-          icon: icons.hotels,
-          path: '/hotels',
-        },
         {
           title: 'Complaints',
           path: '/your-complaints',
@@ -123,6 +107,16 @@ const getNavConfig = async () => {
           title: 'Complaints',
           path: '/complaints',
           icon: icons.complaints,
+        },
+        {
+          title: 'Bookings',
+          icon: icons.bookings,
+          path: '/all-bookings',
+        },
+        {
+          title: 'Hotels',
+          icon: icons.hotels,
+          path: '/hotels',
         },
         {
           title: 'Reviews',

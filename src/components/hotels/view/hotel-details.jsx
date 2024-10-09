@@ -1,14 +1,6 @@
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable no-shadow */
-/* eslint-disable react/button-has-type */
-/* eslint-disable react/no-unknown-property */
-/* eslint-disable perfectionist/sort-imports */
-/* eslint-disable no-unsafe-optional-chaining */
-/* eslint-disable react/no-unescaped-entities */
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-/* eslint-disable jsx-a11y/img-redundant-alt */
 import { HiOutlineDocumentText } from 'react-icons/hi';
 import React, { useState, useEffect } from 'react';
 import { FaBed, FaReply, FaUtensils, FaCalendarAlt, FaMoneyBillWave } from 'react-icons/fa';
@@ -30,6 +22,7 @@ import Reviews from './superAdmin/reviews';
 import RoomCarousel from '../rooms-carousel';
 import FoodCarousel from '../foods-carousel';
 import HotelCarousel from '../hotel-images';
+import { useLoader } from '../../../../utils/loader';
 
 export default function HotelDetails({
   product,
@@ -43,6 +36,7 @@ export default function HotelDetails({
   const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [amenitiesToShow, setAmenitiesToShow] = useState([]);
   const path = location.pathname;
+  const { showLoader, hideLoader } = useLoader();
   const hotelId = path.substring(path.lastIndexOf('/') + 1);
   const [isModalOpen, setModalOpen] = useState(false);
   const [hotel, setHotel] = useState(null);
@@ -52,8 +46,11 @@ export default function HotelDetails({
   // ------------------------------------Foods add -------------------------------------//
   const handleAddFood = async (foodData) => {
     onAddFood(product.hotelId, foodData); // Pass hotelId and foodData to the onAddFood function
+    showLoader();
     const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
     setHotel(response.data);
+    hideLoader();
+
     handleCloseModal();
   };
   const handleOpenModal = () => {
@@ -61,16 +58,20 @@ export default function HotelDetails({
   };
   const handleCloseModal = async () => {
     setModalOpen(false);
+    showLoader();
     const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
     setHotel(response.data);
+    hideLoader();
   };
 
   // ------------------------------------Amenities add-------------------------------------//
   const handleAddAmenities = async (amenitiesData) => {
     onUpdateAmenities(product.hotelId, amenitiesData);
+    showLoader();
     const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
     setHotel(response.data);
     handleCloseAmenitiesModal();
+    hideLoader();
   };
   const handleOpenAmenities = () => {
     setAmenitiesModalOpen(true);
@@ -84,12 +85,15 @@ export default function HotelDetails({
   useEffect(() => {
     const fetchHotelDetails = async () => {
       try {
+        showLoader();
         const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
         setHotel(response.data);
         const allAmenities = response.data.amenities.flatMap((a) => a.amenities);
         setAmenitiesToShow(allAmenities.slice(0, 10));
       } catch (error) {
         console.error('Error fetching hotel details:', error);
+      } finally {
+        hideLoader();
       }
     };
 
@@ -124,6 +128,7 @@ export default function HotelDetails({
   // ---------------------------------------Approve hotel function -----------------------------------
   const handleApproveHotel = async () => {
     try {
+      showLoader();
       const newAcceptanceState = !hotel.isAccepted;
       await axios.patch(`${localUrl}/hotels/update/${hotelId}`, {
         isAccepted: newAcceptanceState,
@@ -135,11 +140,14 @@ export default function HotelDetails({
       const errorMessage =
         error.response?.data?.message || 'An error occurred while updating the hotel status';
       toast.error(`Error updating hotel status: ${errorMessage}`);
+    } finally {
+      hideLoader();
     }
   };
 
   const handleToggleFrontPage = async () => {
     try {
+      showLoader();
       const onFrontPage = !hotel.onFront;
 
       await axios.patch(`${localUrl}/hotels/update/${hotelId}`, {
@@ -154,6 +162,8 @@ export default function HotelDetails({
       const errorMessage =
         error.response?.data?.message || 'An error occurred while updating the front page status';
       toast.error(`Error updating front page status: ${errorMessage}`);
+    } finally {
+      hideLoader();
     }
   };
 
@@ -193,10 +203,17 @@ export default function HotelDetails({
   }
   // -------------------------------------------------Delete hotel--------------------------------------//
   const handleDeleteHotel = async (hotelId) => {
-    const response = await axios.delete(`${localUrl}/delete/hotels/by/${hotelId}`);
-    if (response.status === 200) {
-      toast.success('Selected hotel is deleted now !');
-      navigate('/hotels');
+    try {
+      showLoader();
+      const response = await axios.delete(`${localUrl}/delete/hotels/by/${hotelId}`);
+      if (response.status === 200) {
+        toast.success('Selected hotel is deleted now !');
+        navigate('/hotels');
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      hideLoader();
     }
   };
 
