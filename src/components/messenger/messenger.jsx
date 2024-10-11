@@ -278,160 +278,160 @@ const ChatApp = () => {
   }
 
   return (
-    // <>
-    // <img src="https://ubiq.co/tech-blog/wp-content/uploads/2020/08/apache-500-internal-server-error.png" alt="" />
-    // </>
-    <div className="chat-app">
-      <div className="sidebar">
-        <div className="search-contact-input">
-          {(role === 'Admin' || role === 'Developer') && (
-            <input
-              type="text"
-              placeholder="Search contacts..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-          )}
-        </div>
-        <div className="tab-content">
-          {filteredContacts.map((contact) => (
-            <div
-              key={contact._id}
-              className={`contact ${selectedContact?._id === contact._id ? 'active' : ''}`}
-              onClick={() => handleSelectContact(contact)}
-            >
-              <img src={contact?.images || DEFAULT_AVATAR} alt={contact.name} />
-              <div className="contact-info">
-                <p style={{ fontSize: '12px' }}>
-                  {contact?.name} ({contact?.role})
-                </p>
-                <span>{contact?.mobile}</span>
-                <span className={`status ${contact.isOnline ? 'online' : 'offline'}`}>
-                  {contact.isOnline ? 'Online' : `Last Seen: ${fDateTime(contact.lastSeen)}`}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+    <>
+    <img src="https://ubiq.co/tech-blog/wp-content/uploads/2020/08/apache-500-internal-server-error.png" alt="" />
+    </>
+    // <div className="chat-app">
+    //   <div className="sidebar">
+    //     <div className="search-contact-input">
+    //       {(role === 'Admin' || role === 'Developer') && (
+    //         <input
+    //           type="text"
+    //           placeholder="Search contacts..."
+    //           value={searchTerm}
+    //           onChange={(e) => setSearchTerm(e.target.value)}
+    //           className="search-input"
+    //         />
+    //       )}
+    //     </div>
+    //     <div className="tab-content">
+    //       {filteredContacts.map((contact) => (
+    //         <div
+    //           key={contact._id}
+    //           className={`contact ${selectedContact?._id === contact._id ? 'active' : ''}`}
+    //           onClick={() => handleSelectContact(contact)}
+    //         >
+    //           <img src={contact?.images || DEFAULT_AVATAR} alt={contact.name} />
+    //           <div className="contact-info">
+    //             <p style={{ fontSize: '12px' }}>
+    //               {contact?.name} ({contact?.role})
+    //             </p>
+    //             <span>{contact?.mobile}</span>
+    //             <span className={`status ${contact.isOnline ? 'online' : 'offline'}`}>
+    //               {contact.isOnline ? 'Online' : `Last Seen: ${fDateTime(contact.lastSeen)}`}
+    //             </span>
+    //           </div>
+    //         </div>
+    //       ))}
+    //     </div>
+    //   </div>
 
-      <div className="chat-window">
-        {selectedContact ? (
-          <>
-            <div className="header">
-              <div className="header-left">
-                <img
-                  src={selectedContact.images || DEFAULT_AVATAR}
-                  alt={selectedContact.name}
-                  className="contact-avatar"
-                />
-                <div className="contact-info">
-                  <p className="contact-name" style={{ fontSize: '12px' }}>
-                    {selectedContact.name}
-                  </p>
-                  <span className="contact-mobile">{selectedContact.mobile}</span>
-                  <span className={`status ${selectedContact.isOnline ? 'online' : 'offline'}`}>
-                    {selectedContact.isOnline
-                      ? 'Online'
-                      : `Last Seen: ${fDateTime(selectedContact.lastSeen)}`}
-                  </span>
-                </div>
-              </div>
-              <div className="header-right">
-                <IconButton
-                  aria-label="delete"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteButtonClick(selectedContact._id);
-                  }}
-                >
-                  <FiDelete />
-                </IconButton>
-              </div>
-            </div>
+    //   <div className="chat-window">
+    //     {selectedContact ? (
+    //       <>
+    //         <div className="header">
+    //           <div className="header-left">
+    //             <img
+    //               src={selectedContact.images || DEFAULT_AVATAR}
+    //               alt={selectedContact.name}
+    //               className="contact-avatar"
+    //             />
+    //             <div className="contact-info">
+    //               <p className="contact-name" style={{ fontSize: '12px' }}>
+    //                 {selectedContact.name}
+    //               </p>
+    //               <span className="contact-mobile">{selectedContact.mobile}</span>
+    //               <span className={`status ${selectedContact.isOnline ? 'online' : 'offline'}`}>
+    //                 {selectedContact.isOnline
+    //                   ? 'Online'
+    //                   : `Last Seen: ${fDateTime(selectedContact.lastSeen)}`}
+    //               </span>
+    //             </div>
+    //           </div>
+    //           <div className="header-right">
+    //             <IconButton
+    //               aria-label="delete"
+    //               onClick={(e) => {
+    //                 e.stopPropagation();
+    //                 handleDeleteButtonClick(selectedContact._id);
+    //               }}
+    //             >
+    //               <FiDelete />
+    //             </IconButton>
+    //           </div>
+    //         </div>
 
-            <div className="messages">
-              {messages.map((msg) => (
-                <div
-                  key={`${msg._id}-${msg.timestamp}`}
-                  className={`message ${msg.sender === senderId ? 'sent' : 'received'}`}
-                  style={{ marginBottom: '25px' }} // Add margin for spacing
-                >
-                  <p className="message-content">{msg.content}</p>
-                  {msg.images && msg.images.length > 0 && (
-                    <div className="attachments">
-                      {msg.images.map((image, index) => (
-                        <a key={index} href={image} target="_blank" rel="noopener noreferrer">
-                          <img
-                            src={image}
-                            alt={`attachment-${index}`}
-                            className="attachment"
-                            style={{ cursor: 'pointer' }} // Change cursor to indicate clickability
-                          />
-                        </a>
-                      ))}
-                    </div>
-                  )}
+    //         <div className="messages">
+    //           {messages.map((msg) => (
+    //             <div
+    //               key={`${msg._id}-${msg.timestamp}`}
+    //               className={`message ${msg.sender === senderId ? 'sent' : 'received'}`}
+    //               style={{ marginBottom: '25px' }} // Add margin for spacing
+    //             >
+    //               <p className="message-content">{msg.content}</p>
+    //               {msg.images && msg.images.length > 0 && (
+    //                 <div className="attachments">
+    //                   {msg.images.map((image, index) => (
+    //                     <a key={index} href={image} target="_blank" rel="noopener noreferrer">
+    //                       <img
+    //                         src={image}
+    //                         alt={`attachment-${index}`}
+    //                         className="attachment"
+    //                         style={{ cursor: 'pointer' }} // Change cursor to indicate clickability
+    //                       />
+    //                     </a>
+    //                   ))}
+    //                 </div>
+    //               )}
 
-                  <hr />
-                  <span className="tick-indicators">
-                    {fDateTime(msg.timestamp)} {getTickIndicators(msg.seen)}
-                  </span>
-                </div>
-              ))}
-              <div ref={messagesEndRef} /> {/* Empty div for scrolling */}
-            </div>
-            <form className="input-area" onSubmit={handleSendMessage}>
-              <input
-                type="file"
-                multiple
-                accept="image/*,video/*"
-                style={{ display: 'none' }}
-                id="file-input"
-                onChange={handleFileChange}
-              />
-              <label htmlFor="file-input">
-                <FiPaperclip style={{ cursor: 'pointer', marginRight: '8px' }} />
-              </label>
-              <input type="text" name="message" placeholder="Type your message..." />
-              <button type="submit">Send</button>
+    //               <hr />
+    //               <span className="tick-indicators">
+    //                 {fDateTime(msg.timestamp)} {getTickIndicators(msg.seen)}
+    //               </span>
+    //             </div>
+    //           ))}
+    //           <div ref={messagesEndRef} /> {/* Empty div for scrolling */}
+    //         </div>
+    //         <form className="input-area" onSubmit={handleSendMessage}>
+    //           <input
+    //             type="file"
+    //             multiple
+    //             accept="image/*,video/*"
+    //             style={{ display: 'none' }}
+    //             id="file-input"
+    //             onChange={handleFileChange}
+    //           />
+    //           <label htmlFor="file-input">
+    //             <FiPaperclip style={{ cursor: 'pointer', marginRight: '8px' }} />
+    //           </label>
+    //           <input type="text" name="message" placeholder="Type your message..." />
+    //           <button type="submit">Send</button>
 
-              {/* File preview section */}
-              <div className="file-previews">
-                {filePreviews.map((preview, index) => (
-                  <div key={index} className="file-preview">
-                    <img src={preview} alt={`preview-${index}`} className="preview-image" />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveFile(index)}
-                      className="remove-file-button"
-                    >
-                      &times; {/* Cross icon */}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </form>
-          </>
-        ) : (
-          <div className="no-chat-selected">
-            <img
-              src="https://i.pinimg.com/originals/e3/1b/75/e31b752875679b64fce009922f9f0dda.gif"
-              alt=""
-            />
-          </div>
-        )}
-      </div>
+    //           {/* File preview section */}
+    //           <div className="file-previews">
+    //             {filePreviews.map((preview, index) => (
+    //               <div key={index} className="file-preview">
+    //                 <img src={preview} alt={`preview-${index}`} className="preview-image" />
+    //                 <button
+    //                   type="button"
+    //                   onClick={() => handleRemoveFile(index)}
+    //                   className="remove-file-button"
+    //                 >
+    //                   &times; {/* Cross icon */}
+    //                 </button>
+    //               </div>
+    //             ))}
+    //           </div>
+    //         </form>
+    //       </>
+    //     ) : (
+    //       <div className="no-chat-selected">
+    //         <img
+    //           src="https://i.pinimg.com/originals/e3/1b/75/e31b752875679b64fce009922f9f0dda.gif"
+    //           alt=""
+    //         />
+    //       </div>
+    //     )}
+    //   </div>
 
-      <AlertDialog
-        open={dialogOpen}
-        onClose={handleDialogClose}
-        onConfirm={handleDeleteChat}
-        title="Confirm Conversation Delete"
-        message="This action will delete the entire conversation between you and the other party. Are you sure you want to delete this chat? This action cannot be undone."
-      />
-    </div>
+    //   <AlertDialog
+    //     open={dialogOpen}
+    //     onClose={handleDialogClose}
+    //     onConfirm={handleDeleteChat}
+    //     title="Confirm Conversation Delete"
+    //     message="This action will delete the entire conversation between you and the other party. Are you sure you want to delete this chat? This action cannot be undone."
+    //   />
+    // </div>
   );
 };
 
