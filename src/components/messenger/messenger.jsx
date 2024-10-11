@@ -11,6 +11,7 @@ import './ChatApp.css';
 import { LinearProgress } from '@mui/material';
 import { FiPaperclip } from 'react-icons/fi';
 import { useLoader } from '../../../utils/loader';
+import { Button } from 'react-bootstrap';
 const DEFAULT_AVATAR =
   'https://t4.ftcdn.net/jpg/05/11/55/91/360_F_511559113_UTxNAE1EP40z1qZ8hIzGNrB0LwqwjruK.jpg';
 
@@ -110,6 +111,7 @@ const ChatApp = () => {
 
   const fetchMessages = async (receiverId) => {
     try {
+      showLoader();
       const userId1 = localStorage.getItem('user_id');
       const response = await axios.get(`${localUrl}/get-messages/of-chat/${userId1}/${receiverId}`);
       setMessages(response.data);
@@ -117,6 +119,8 @@ const ChatApp = () => {
     } catch (error) {
       console.error('Error fetching messages:', error);
       toast.error('Failed to fetch messages.');
+    } finally {
+      hideLoader();
     }
   };
 
@@ -279,7 +283,11 @@ const ChatApp = () => {
 
   return (
     <>
-    <img src="https://ubiq.co/tech-blog/wp-content/uploads/2020/08/apache-500-internal-server-error.png" alt="" />
+      <iframe
+        src="https://dreamschat.dreamstechnologies.com/html/template/chat.html"
+        frameborder="0"
+        style={{ width: '100%', height: '80vh' }}
+      ></iframe>
     </>
     // <div className="chat-app">
     //   <div className="sidebar">
@@ -402,13 +410,14 @@ const ChatApp = () => {
     //             {filePreviews.map((preview, index) => (
     //               <div key={index} className="file-preview">
     //                 <img src={preview} alt={`preview-${index}`} className="preview-image" />
-    //                 <button
+    //                 <Button
+    //                   style={{ backgroundColor: 'transparent', color: 'black' }}
     //                   type="button"
     //                   onClick={() => handleRemoveFile(index)}
     //                   className="remove-file-button"
     //                 >
     //                   &times; {/* Cross icon */}
-    //                 </button>
+    //                 </Button>
     //               </div>
     //             ))}
     //           </div>

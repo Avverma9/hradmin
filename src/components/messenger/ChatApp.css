@@ -1,7 +1,7 @@
 /* Overall chat-app styling */
 .chat-app {
   display: flex;
-  max-height: 77vh;
+  max-height: 79vh;
   font-family: Arial, sans-serif;
   position: relative;
 }
@@ -9,7 +9,7 @@
 /* Sidebar styling */
 .sidebar {
   width: 300px;
-  max-height: 77vh;
+  max-height: 79vh;
   background-color: #f4f4f4;
   border-right: 1px solid #ddd;
   display: flex;
@@ -223,8 +223,8 @@
 
 .file-preview {
   position: relative;
-  width: 150px;
-  height: 120px;
+  width: 250px;
+  height: 150px;
   overflow: hidden;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -232,7 +232,7 @@
 
 .file-previews {
   position: absolute;
-  top: -140px;
+  bottom: 100%;
   right: 16px;
   display: flex;
   gap: 10px;
