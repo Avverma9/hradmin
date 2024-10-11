@@ -93,7 +93,7 @@ const getNavConfig = async () => {
           path: '/hotels/monthly-price',
         },
         {
-          title: 'Manage Coupons',
+          title: 'Manage Your Coupons',
           path: '/apply-pms-coupon',
           icon: icons.coupon,
         },
@@ -154,7 +154,7 @@ const getNavConfig = async () => {
           icon: icons.banner,
         },
         {
-          title: 'Manage Coupons',
+          title: 'Apply Coupons',
           path: '/apply-coupon',
           icon: icons.coupon,
         },
