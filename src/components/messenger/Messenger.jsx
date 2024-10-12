@@ -228,7 +228,8 @@ const ChatApp = () => {
       );
       if (response.status === 200) {
         toast.success('Unsent');
-        await fetchMessages(selectedContact._id);
+        socket.current.emit('messageDeleted', { messageId, receiverId: selectedReceiverId });
+        await fetchMessages(selectedContact._id); // Update the message list for the sender
       } else {
         toast.error('Failed to delete chat. Please try again.');
       }

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { FiDelete, FiPaperclip, FiMoreHorizontal } from 'react-icons/fi';
 import { IconButton, Button, Menu, MenuItem } from '@mui/material';
+import { userId } from '../../../utils/util';
 
 const ChatWindow = ({
   selectedContact,
@@ -37,6 +38,7 @@ const ChatWindow = ({
 
   const handleCloseMenu = () => {
     setAnchorEl(null);
+    setSelectedMessageId(null);
   };
 
   const handleUnsendMessage = () => {
@@ -110,23 +112,32 @@ const ChatWindow = ({
                   {fDateTime(msg.timestamp)} {getTickIndicators(msg.seen)}
                 </span>
 
-                {/* Three Dots Icon for Options */}
-                <IconButton
-                  onClick={(e) => handleMenuClick(e, msg._id)}
-                  style={{ position: 'absolute', right: '10px', top: '10px' }}
-                >
-                  <FiMoreHorizontal />
-                </IconButton>
-
-                {/* Menu for Unsending */}
-                <Menu
-                  anchorEl={anchorEl}
-                  keepMounted
-                  open={Boolean(anchorEl) && selectedMessageId === msg._id}
-                  onClose={handleCloseMenu}
-                >
-                  <MenuItem onClick={handleUnsendMessage}>Unsend</MenuItem>
-                </Menu>
+                {msg.sender === senderId && (
+                  <>
+                    <IconButton
+                      aria-label="more"
+                      onClick={(event) => handleMenuClick(event, msg._id)}
+                      style={{ position: 'absolute', right: '10px', top: '10px' }}
+                    >
+                      <FiMoreHorizontal />
+                    </IconButton>
+                    <Menu
+                      anchorEl={anchorEl}
+                      keepMounted
+                      open={Boolean(anchorEl) && selectedMessageId === msg._id}
+                      onClose={handleCloseMenu}
+                    >
+                      <MenuItem
+                        onClick={() => {
+                          handleUnsendMessage();
+                          handleCloseMenu();
+                        }}
+                      >
+                        Unsend
+                      </MenuItem>
+                    </Menu>
+                  </>
+                )}
               </div>
             ))}
             <div ref={messagesEndRef} /> {/* Empty div for scrolling */}
