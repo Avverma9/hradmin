@@ -49,6 +49,10 @@ const ChatApp = () => {
     }
 
     socket.current.on('newMessage', handleNewMessage);
+    socket.current.on('messageDeleted', (data) => {
+      handleMessageDeleted(data.messageId); // Use the new handler here
+    });
+
     socket.current.on('userStatusUpdate', handleUserStatusUpdate);
     socket.current.on('messageSeen', handleMessageSeen);
 
@@ -117,6 +121,9 @@ const ChatApp = () => {
   const handleNewMessage = async (newMessage) => {
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     await handleSeenMessages([...messages, newMessage]);
+  };
+  const handleMessageDeleted = (messageId) => {
+    setMessages((prevMessages) => prevMessages.filter((msg) => msg._id !== messageId));
   };
 
   const handleUserStatusUpdate = ({ senderId, isOnline }) => {
