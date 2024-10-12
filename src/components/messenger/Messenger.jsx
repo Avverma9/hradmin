@@ -266,7 +266,7 @@ const ChatApp = () => {
     }
   };
 
-  const getTickIndicators = (seen) => (seen ? 'Sent' : 'Sent');
+  const getTickIndicators = (seen) => (seen ? '✔✔' : '✔✔');
   if (filteredContacts?.length === 0) {
     return <LinearProgress />;
   }
