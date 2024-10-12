@@ -49,9 +49,6 @@ const ChatApp = () => {
     }
 
     socket.current.on('newMessage', handleNewMessage);
-    socket.current.on('messageDeleted', (data) => {
-      handleMessageDeleted(data.messageId); // Use the new handler here
-    });
 
     socket.current.on('userStatusUpdate', handleUserStatusUpdate);
     socket.current.on('messageSeen', handleMessageSeen);
@@ -63,6 +60,14 @@ const ChatApp = () => {
       socket.current.disconnect();
     };
   }, [senderId]);
+
+  useEffect(() => {
+    socket.current.on('messageDeleted', handleMessageDeleted);
+
+    return () => {
+      socket.current.off('messageDeleted', handleMessageDeleted);
+    };
+  }, [messages]);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -122,7 +127,9 @@ const ChatApp = () => {
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     await handleSeenMessages([...messages, newMessage]);
   };
-  const handleMessageDeleted = (messageId) => {
+  const handleMessageDeleted = (data) => {
+    const { messageId } = data;
+
     setMessages((prevMessages) => prevMessages.filter((msg) => msg._id !== messageId));
   };
 
