@@ -272,45 +272,45 @@ const ChatApp = () => {
   }
 
   return (
-    // <>
-    //   <iframe
-    //     src="https://dreamschat.dreamstechnologies.com/html/template/chat.html"
-    //     frameborder="0"
-    //     style={{ width: '100%', height: '80vh' }}
-    //   ></iframe>
-    // </>
-    <div className="chat-app">
-      <Sidebar
-        role={role}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filteredContacts={filteredContacts}
-        selectedContact={selectedContact}
-        handleSelectContact={handleSelectContact}
-      />
+    <>
+      <iframe
+        src="https://dreamschat.dreamstechnologies.com/html/template/chat.html"
+        frameborder="0"
+        style={{ width: '100%', height: '80vh' }}
+      ></iframe>
+    </>
+    // <div className="chat-app">
+    //   <Sidebar
+    //     role={role}
+    //     searchTerm={searchTerm}
+    //     setSearchTerm={setSearchTerm}
+    //     filteredContacts={filteredContacts}
+    //     selectedContact={selectedContact}
+    //     handleSelectContact={handleSelectContact}
+    //   />
 
-      <ChatWindow
-        selectedContact={selectedContact}
-        messages={messages}
-        senderId={senderId}
-        handleDeleteButtonClick={handleDeleteButtonClick}
-        handleSendMessage={handleSendMessage}
-        handleFileChange={handleFileChange}
-        deleteAmessage={deleteAmessage}
-        filePreviews={filePreviews}
-        handleRemoveFile={handleRemoveFile}
-        fDateTime={fDateTime}
-        getTickIndicators={getTickIndicators}
-      />
+    //   <ChatWindow
+    //     selectedContact={selectedContact}
+    //     messages={messages}
+    //     senderId={senderId}
+    //     handleDeleteButtonClick={handleDeleteButtonClick}
+    //     handleSendMessage={handleSendMessage}
+    //     handleFileChange={handleFileChange}
+    //     deleteAmessage={deleteAmessage}
+    //     filePreviews={filePreviews}
+    //     handleRemoveFile={handleRemoveFile}
+    //     fDateTime={fDateTime}
+    //     getTickIndicators={getTickIndicators}
+    //   />
 
-      <AlertDialog
-        open={dialogOpen}
-        onClose={handleDialogClose}
-        onConfirm={handleDeleteChat}
-        title="Confirm Conversation Delete"
-        message="This action will delete the entire conversation between you and the other party. Are you sure you want to delete this chat? This action cannot be undone."
-      />
-    </div>
+    //   <AlertDialog
+    //     open={dialogOpen}
+    //     onClose={handleDialogClose}
+    //     onConfirm={handleDeleteChat}
+    //     title="Confirm Conversation Delete"
+    //     message="This action will delete the entire conversation between you and the other party. Are you sure you want to delete this chat? This action cannot be undone."
+    //   />
+    // </div>
   );
 };
 
