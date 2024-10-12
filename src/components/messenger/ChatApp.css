@@ -1,7 +1,7 @@
 /* Overall chat-app styling */
 .chat-app {
   display: flex;
-  max-height: 79vh;
+  height: 77vh;
   font-family: Arial, sans-serif;
   position: relative;
 }
@@ -9,7 +9,7 @@
 /* Sidebar styling */
 .sidebar {
   width: 300px;
-  max-height: 79vh;
+  height: 77vh;
   background-color: #f4f4f4;
   border-right: 1px solid #ddd;
   display: flex;
@@ -124,7 +124,7 @@
   padding: 10px 15px;
   margin-bottom: 10px;
   border-radius: 18px;
-  max-width: auto; 
+  max-width: 200px; 
   gap: 40px;
   min-width: 30%;
   position: relative;

@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-import ChatApp from '../messenger/messenger';
+import ChatApp from '../messenger/Messenger';
 
 // ----------------------------------------------------------------------
 

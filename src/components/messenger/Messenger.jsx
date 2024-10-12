@@ -1,19 +1,14 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { FiDelete } from 'react-icons/fi';
-import { useLocation } from 'react-router-dom';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import IconButton from '@mui/material/IconButton';
 import { role, localUrl } from '../../../utils/util';
 import { fDateTime } from '../../../utils/format-time';
 import AlertDialog from '../../../utils/alertDialogue';
 import './ChatApp.css';
 import { LinearProgress } from '@mui/material';
-import { FiPaperclip } from 'react-icons/fi';
 import { useLoader } from '../../../utils/loader';
-import { Button } from 'react-bootstrap';
-const DEFAULT_AVATAR =
-  'https://t4.ftcdn.net/jpg/05/11/55/91/360_F_511559113_UTxNAE1EP40z1qZ8hIzGNrB0LwqwjruK.jpg';
+import Sidebar from './Sidebar';
+import ChatWindow from './ChatWindow';
 
 const ChatApp = () => {
   const [contacts, setContacts] = useState([]);
@@ -28,7 +23,6 @@ const ChatApp = () => {
   const messagesEndRef = useRef(null);
   const [filePreviews, setFilePreviews] = useState([]);
   const senderId = localStorage.getItem('user_id');
-  const selectedReceiverId = localStorage.getItem('chat_receiver');
   const [selectedFiles, setSelectedFiles] = useState([]);
 
   const handleFileChange = (event) => {
@@ -41,8 +35,8 @@ const ChatApp = () => {
   };
 
   const handleRemoveFile = (index) => {
-    setSelectedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
-    setFilePreviews((prevPreviews) => prevPreviews.filter((_, i) => i !== index));
+    setSelectedFiles((prevFiles) => prevFiles?.filter((_, i) => i !== index));
+    setFilePreviews((prevPreviews) => prevPreviews?.filter((_, i) => i !== index));
   };
 
   // WebSocket setup
@@ -72,12 +66,10 @@ const ChatApp = () => {
     }
   };
 
-  // Call scrollToBottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  // Fetch contacts
   useEffect(() => {
     const fetchContacts = async () => {
       try {
@@ -94,18 +86,16 @@ const ChatApp = () => {
     fetchContacts();
   }, []);
 
-  // Filter contacts based on search term
   useEffect(() => {
     setFilteredContacts(
-      contacts.filter((contact) => contact?.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      contacts?.filter((contact) => contact?.name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [searchTerm, contacts]);
 
-  // Fetch messages when contact is selected
   useEffect(() => {
     if (selectedContact) {
       fetchMessages(selectedContact._id);
-      const recieverID = localStorage.setItem('chat_receiver', selectedContact._id);
+      localStorage.setItem('chat_receiver', selectedContact._id);
     }
   }, [selectedContact]);
 
@@ -141,12 +131,11 @@ const ChatApp = () => {
     );
   };
   const handleSeenMessages = useCallback(async (messagesToMark) => {
-    const userId = localStorage.getItem('user_id');
     const selectedReceiverId = localStorage.getItem('chat_receiver');
 
-    const unseenMessages = messagesToMark.filter((msg) => !msg.seen);
+    const unseenMessages = messagesToMark?.filter((msg) => !msg.seen);
 
-    if (unseenMessages.length > 0) {
+    if (unseenMessages?.length > 0) {
       try {
         await Promise.all(
           unseenMessages.map((msg) =>
@@ -178,7 +167,7 @@ const ChatApp = () => {
 
   const filterContactsByRole = (contacts) => {
     const localStorageRole = localStorage.getItem('user_role');
-    return contacts.filter((contact) => {
+    return contacts?.filter((contact) => {
       if (localStorageRole === 'PMS') {
         return contact.role !== 'PMS' && contact.role !== 'Developer';
       }
@@ -223,6 +212,35 @@ const ChatApp = () => {
     }
   };
 
+  const deleteAmessage = async (messageId) => {
+    const selectedReceiverId = localStorage.getItem('chat_receiver');
+
+    const userId = localStorage.getItem('user_id');
+
+    if (!userId) {
+      toast.error('User not found. Unable to delete chat.');
+      return;
+    }
+
+    try {
+      const response = await axios.delete(
+        `${localUrl}/delete/a/chat-and-message/from/messenger-app/${messageId}/${userId}/${selectedReceiverId}`
+      );
+      if (response.status === 200) {
+        toast.success('Unsent');
+        await fetchMessages(selectedContact._id);
+      } else {
+        toast.error('Failed to delete chat. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+      toast.error('An error occurred while deleting the chat. Please try again.');
+    } finally {
+      setDialogOpen(false);
+      setChatToDelete(null);
+    }
+  };
+
   const handleDialogClose = () => {
     setDialogOpen(false);
     setChatToDelete(null);
@@ -237,7 +255,7 @@ const ChatApp = () => {
     const input = event.target.message.value.trim();
 
     // Check if there is content or selected files
-    if ((input || selectedFiles.length > 0) && selectedContact) {
+    if ((input || selectedFiles?.length > 0) && selectedContact) {
       const formData = new FormData();
       formData.append('senderId', senderId);
       formData.append('receiverId', selectedContact._id);
@@ -258,7 +276,8 @@ const ChatApp = () => {
           },
         });
 
-        await handleSeenMessages(response.data);
+        await handleSeenMessages();
+        await fetchMessages(selectedContact._id);
         socket.current.emit('newMessage', {
           content: input,
           images: selectedFiles.map((file) => URL.createObjectURL(file)),
@@ -277,170 +296,50 @@ const ChatApp = () => {
   };
 
   const getTickIndicators = (seen) => (seen ? 'Sent' : 'Sending');
-  if (filteredContacts.length === 0) {
+  if (filteredContacts?.length === 0) {
     return <LinearProgress />;
   }
 
   return (
-    <>
-      <iframe
-        src="https://dreamschat.dreamstechnologies.com/html/template/chat.html"
-        frameborder="0"
-        style={{ width: '100%', height: '80vh' }}
-      ></iframe>
-    </>
-    // <div className="chat-app">
-    //   <div className="sidebar">
-    //     <div className="search-contact-input">
-    //       {(role === 'Admin' || role === 'Developer') && (
-    //         <input
-    //           type="text"
-    //           placeholder="Search contacts..."
-    //           value={searchTerm}
-    //           onChange={(e) => setSearchTerm(e.target.value)}
-    //           className="search-input"
-    //         />
-    //       )}
-    //     </div>
-    //     <div className="tab-content">
-    //       {filteredContacts.map((contact) => (
-    //         <div
-    //           key={contact._id}
-    //           className={`contact ${selectedContact?._id === contact._id ? 'active' : ''}`}
-    //           onClick={() => handleSelectContact(contact)}
-    //         >
-    //           <img src={contact?.images || DEFAULT_AVATAR} alt={contact.name} />
-    //           <div className="contact-info">
-    //             <p style={{ fontSize: '12px' }}>
-    //               {contact?.name} ({contact?.role})
-    //             </p>
-    //             <span>{contact?.mobile}</span>
-    //             <span className={`status ${contact.isOnline ? 'online' : 'offline'}`}>
-    //               {contact.isOnline ? 'Online' : `Last Seen: ${fDateTime(contact.lastSeen)}`}
-    //             </span>
-    //           </div>
-    //         </div>
-    //       ))}
-    //     </div>
-    //   </div>
+    // <>
+    //   <iframe
+    //     src="https://dreamschat.dreamstechnologies.com/html/template/chat.html"
+    //     frameborder="0"
+    //     style={{ width: '100%', height: '80vh' }}
+    //   ></iframe>
+    // </>
+    <div className="chat-app">
+      <Sidebar
+        role={role}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filteredContacts={filteredContacts}
+        selectedContact={selectedContact}
+        handleSelectContact={handleSelectContact}
+      />
 
-    //   <div className="chat-window">
-    //     {selectedContact ? (
-    //       <>
-    //         <div className="header">
-    //           <div className="header-left">
-    //             <img
-    //               src={selectedContact.images || DEFAULT_AVATAR}
-    //               alt={selectedContact.name}
-    //               className="contact-avatar"
-    //             />
-    //             <div className="contact-info">
-    //               <p className="contact-name" style={{ fontSize: '12px' }}>
-    //                 {selectedContact.name}
-    //               </p>
-    //               <span className="contact-mobile">{selectedContact.mobile}</span>
-    //               <span className={`status ${selectedContact.isOnline ? 'online' : 'offline'}`}>
-    //                 {selectedContact.isOnline
-    //                   ? 'Online'
-    //                   : `Last Seen: ${fDateTime(selectedContact.lastSeen)}`}
-    //               </span>
-    //             </div>
-    //           </div>
-    //           <div className="header-right">
-    //             <IconButton
-    //               aria-label="delete"
-    //               onClick={(e) => {
-    //                 e.stopPropagation();
-    //                 handleDeleteButtonClick(selectedContact._id);
-    //               }}
-    //             >
-    //               <FiDelete />
-    //             </IconButton>
-    //           </div>
-    //         </div>
+      <ChatWindow
+        selectedContact={selectedContact}
+        messages={messages}
+        senderId={senderId}
+        handleDeleteButtonClick={handleDeleteButtonClick}
+        handleSendMessage={handleSendMessage}
+        handleFileChange={handleFileChange}
+        deleteAmessage={deleteAmessage}
+        filePreviews={filePreviews}
+        handleRemoveFile={handleRemoveFile}
+        fDateTime={fDateTime}
+        getTickIndicators={getTickIndicators}
+      />
 
-    //         <div className="messages">
-    //           {messages.map((msg) => (
-    //             <div
-    //               key={`${msg._id}-${msg.timestamp}`}
-    //               className={`message ${msg.sender === senderId ? 'sent' : 'received'}`}
-    //               style={{ marginBottom: '25px' }} // Add margin for spacing
-    //             >
-    //               <p className="message-content">{msg.content}</p>
-    //               {msg.images && msg.images.length > 0 && (
-    //                 <div className="attachments">
-    //                   {msg.images.map((image, index) => (
-    //                     <a key={index} href={image} target="_blank" rel="noopener noreferrer">
-    //                       <img
-    //                         src={image}
-    //                         alt={`attachment-${index}`}
-    //                         className="attachment"
-    //                         style={{ cursor: 'pointer' }} // Change cursor to indicate clickability
-    //                       />
-    //                     </a>
-    //                   ))}
-    //                 </div>
-    //               )}
-
-    //               <hr />
-    //               <span className="tick-indicators">
-    //                 {fDateTime(msg.timestamp)} {getTickIndicators(msg.seen)}
-    //               </span>
-    //             </div>
-    //           ))}
-    //           <div ref={messagesEndRef} /> {/* Empty div for scrolling */}
-    //         </div>
-    //         <form className="input-area" onSubmit={handleSendMessage}>
-    //           <input
-    //             type="file"
-    //             multiple
-    //             accept="image/*,video/*"
-    //             style={{ display: 'none' }}
-    //             id="file-input"
-    //             onChange={handleFileChange}
-    //           />
-    //           <label htmlFor="file-input">
-    //             <FiPaperclip style={{ cursor: 'pointer', marginRight: '8px' }} />
-    //           </label>
-    //           <input type="text" name="message" placeholder="Type your message..." />
-    //           <button type="submit">Send</button>
-
-    //           {/* File preview section */}
-    //           <div className="file-previews">
-    //             {filePreviews.map((preview, index) => (
-    //               <div key={index} className="file-preview">
-    //                 <img src={preview} alt={`preview-${index}`} className="preview-image" />
-    //                 <Button
-    //                   style={{ backgroundColor: 'transparent', color: 'black' }}
-    //                   type="button"
-    //                   onClick={() => handleRemoveFile(index)}
-    //                   className="remove-file-button"
-    //                 >
-    //                   &times; {/* Cross icon */}
-    //                 </Button>
-    //               </div>
-    //             ))}
-    //           </div>
-    //         </form>
-    //       </>
-    //     ) : (
-    //       <div className="no-chat-selected">
-    //         <img
-    //           src="https://i.pinimg.com/originals/e3/1b/75/e31b752875679b64fce009922f9f0dda.gif"
-    //           alt=""
-    //         />
-    //       </div>
-    //     )}
-    //   </div>
-
-    //   <AlertDialog
-    //     open={dialogOpen}
-    //     onClose={handleDialogClose}
-    //     onConfirm={handleDeleteChat}
-    //     title="Confirm Conversation Delete"
-    //     message="This action will delete the entire conversation between you and the other party. Are you sure you want to delete this chat? This action cannot be undone."
-    //   />
-    // </div>
+      <AlertDialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        onConfirm={handleDeleteChat}
+        title="Confirm Conversation Delete"
+        message="This action will delete the entire conversation between you and the other party. Are you sure you want to delete this chat? This action cannot be undone."
+      />
+    </div>
   );
 };
 

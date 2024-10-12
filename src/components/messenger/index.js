@@ -1,1 +1,1 @@
-export { default as Messenger } from './messenger';
+export { default as Messenger } from './Messenger';
