@@ -114,7 +114,6 @@ const ChatApp = () => {
       const userId1 = localStorage.getItem('user_id');
       const response = await axios.get(`${localUrl}/get-messages/of-chat/${userId1}/${receiverId}`);
       setMessages(response.data);
-      await handleSeenMessages(response.data);
     } catch (error) {
       console.error('Error fetching messages:', error);
       toast.error('Failed to fetch messages.');
@@ -125,7 +124,6 @@ const ChatApp = () => {
 
   const handleNewMessage = async (newMessage) => {
     setMessages((prevMessages) => [...prevMessages, newMessage]);
-    await handleSeenMessages([...messages, newMessage]);
   };
   const handleMessageDeleted = (data) => {
     const { messageId } = data;
@@ -144,40 +142,6 @@ const ChatApp = () => {
       prevMessages.map((msg) => (msg._id === messageId ? { ...msg, seen: true } : msg))
     );
   };
-  const handleSeenMessages = useCallback(async (messagesToMark) => {
-    const selectedReceiverId = localStorage.getItem('chat_receiver');
-
-    const unseenMessages = messagesToMark?.filter((msg) => !msg.seen);
-
-    if (unseenMessages?.length > 0) {
-      try {
-        await Promise.all(
-          unseenMessages.map((msg) =>
-            axios.post(`${localUrl}/mark-as-seen`, {
-              messageId: msg._id,
-              receiverId: selectedReceiverId,
-            })
-          )
-        );
-
-        unseenMessages.forEach((msg) => {
-          socket.current.emit('messageSeen', {
-            messageId: msg._id,
-            receiverId: selectedReceiverId,
-          });
-        });
-
-        // Update state for seen messages
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            unseenMessages.some((um) => um._id === msg._id) ? { ...msg, seen: true } : msg
-          )
-        );
-      } catch (error) {
-        console.error('Error marking messages as seen:', error);
-      }
-    }
-  }, []);
 
   const filterContactsByRole = (contacts) => {
     const localStorageRole = localStorage.getItem('user_role');
@@ -291,7 +255,6 @@ const ChatApp = () => {
           },
         });
 
-        await handleSeenMessages();
         await fetchMessages(selectedContact._id);
         socket.current.emit('newMessage', {
           content: input,
@@ -310,7 +273,7 @@ const ChatApp = () => {
     }
   };
 
-  const getTickIndicators = (seen) => (seen ? 'Sent' : 'Sending');
+  const getTickIndicators = (seen) => (seen ? 'Sent' : 'Sent');
   if (filteredContacts?.length === 0) {
     return <LinearProgress />;
   }
