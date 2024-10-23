@@ -23,7 +23,6 @@ import {
 
 import { localUrl } from '../../../../utils/util';
 
-
 const WhoSeen = ({ open, onClose, userIds }) => {
   const [seenBy, setSeenBy] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +55,7 @@ const WhoSeen = ({ open, onClose, userIds }) => {
 
     fetchSeenBy();
   }, [userIds]); // Ensure that userIds is correctly updated
+  console.log('here is seen by ', seenBy.name);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">

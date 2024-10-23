@@ -19,6 +19,7 @@ import { localUrl } from '../../../../utils/util';
 import { fToNow } from '../../../../utils/format-time';
 import Iconify from 'src/components/stuff/iconify/iconify';
 import Scrollbar from 'src/components/stuff/scrollbar';
+import { useLoader } from '../../../../utils/loader';
 
 // import Iconify from './components/iconify';
 // import Scrollbar from 'src/components/scrollbar';
@@ -27,21 +28,21 @@ import Scrollbar from 'src/components/stuff/scrollbar';
 
 export default function Reviews({ title, subheader, ...other }) {
   const [list, setList] = useState([]);
-  const [loading, setLoading] = useState(false);
-
+  const { showLoader, hideLoader } = useLoader();
   useEffect(() => {
     // Fetch data when component mounts
     const fetchData = async () => {
-      setLoading(true);
+      showLoader();
       try {
         const response = await axios.get(`${localUrl}/find-all-users-hotel-review`);
         if (response.status === 200) {
-          setLoading(false);
           setList(response.data); // Assuming response.data is an array of reviews
         }
       } catch (error) {
-        setLoading(false);
         console.error('Error fetching reviews:', error);
+      }finally{
+        hideLoader();
+
       }
     };
 
@@ -60,14 +61,6 @@ export default function Reviews({ title, subheader, ...other }) {
       console.error('Error deleting review:', error);
     }
   };
-
-  if (loading) {
-    return (
-      <Container>
-        <LinearLoader />
-      </Container>
-    );
-  }
 
   return (
     <Card {...other}>

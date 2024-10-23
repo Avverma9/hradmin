@@ -58,9 +58,14 @@ const Notification = () => {
   const handleCloseGlobalNotification = () => setOpenGlobalNotification(false);
 
   const handleOpenWhoSeen = (ids) => {
-    const seenUserIds = ids.filter((id) =>
-      notifications.User.some((notification) => notification.seenBy[id] === true)
+    const seenUserIds = ids.filter(
+      (id) =>
+        notifications.User.some((notification) => notification.seenBy[id] === true) ||
+        notifications.Global.some((notification) => notification.seenBy[id])
     );
+
+    console.log('here is id ', seenUserIds);
+
     setUserIds(seenUserIds);
     setOpenWhoSeen(true);
   };
@@ -163,6 +168,7 @@ const Notification = () => {
       </Table>
     </TableContainer>
   );
+  console.log('here is userIds ', userIds);
 
   return (
     <Container maxWidth="lg">
