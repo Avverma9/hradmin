@@ -22,10 +22,10 @@ import {
   FormControl,
 } from '@mui/material';
 
-import { fDate } from '../../../utils/format-time';
-import BookingUpdateModal from '../bookings/booking-update-modal'; // Adjust path as needed
+import { fDate } from '../../../../utils/format-time';
+import BookingUpdateModal from '../booking-update-modal'; // Adjust path as needed
 import { useDispatch, useSelector } from 'react-redux';
-import { useLoader } from '../../../utils/loader';
+import { useLoader } from '../../../../utils/loader';
 import { fetchFilteredBookings, searchBooking } from 'src/components/redux/reducers/booking';
 
 export default function BookingsView() {

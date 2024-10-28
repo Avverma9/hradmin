@@ -1,3 +1,5 @@
+import { toast } from 'react-toastify';
+
 export const searchQuery = [
   { name: 'Bookings', path: '/bookings' },
   { name: 'New Hotel Requests', path: '/request' },
@@ -12,8 +14,6 @@ export const role = localStorage.getItem('user_role');
 export const userId = localStorage.getItem('user_id');
 export const userName = localStorage.getItem('user_name');
 export const token = localStorage.getItem('rs_token');
-
-import { toast } from 'react-toastify';
 
 export const notify = (statusCode) => {
   if (statusCode === 200 || statusCode === 201) {

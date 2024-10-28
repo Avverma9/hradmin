@@ -114,6 +114,11 @@ const getNavConfig = async () => {
           path: '/all-bookings',
         },
         {
+          title: 'Create Booking',
+          icon: icons.bookings,
+          path: '/booking-creation',
+        },
+        {
           title: 'Hotels',
           icon: icons.hotels,
           path: '/hotels',

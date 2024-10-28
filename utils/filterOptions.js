@@ -110,6 +110,7 @@ export const paths = [
   { title: 'Messenger', path: '/messenger', role: 'PMS' },
   { title: 'Your Bookings', path: '/your-bookings', role: 'PMS' },
   { title: 'Bookings', path: '/all-bookings', role: 'Admin' },
+  { title: 'Create Booking', path: '/booking-creation', role: 'Admin' },
   { title: 'Hotels', path: '/hotels', role: 'Admin' },
   { title: 'Manage Coupons', path: '/apply-pms-coupon', role: 'PMS' },
   { title: 'Your Complaints', path: '/your-complaints', role: 'PMS' },

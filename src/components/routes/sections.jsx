@@ -29,6 +29,7 @@ const ComplaintPage = lazy(() => import('src/components/pages/admin/complaint-pa
 const PmsComplaintsPage = lazy(() => import('src/components/pages/superAdmin/complaint-page'));
 const BulkOperation = lazy(() => import('src/components/pages/admin/bulk-page'));
 const AvailabilityPage = lazy(() => import('src/components/pages/admin/availability-page'));
+const BookingCreate = lazy(() => import('src/components/pages/admin/booking_createForm'));
 
 export default function Router() {
   const routes = useRoutes([
@@ -57,6 +58,7 @@ export default function Router() {
         { path: 'your-hotels', element: <YourHotelsPage /> },
         { path: 'view-hotel-details/:hotelId', element: <HotelDetailsPage /> },
         { path: 'all-bookings', element: <BookingsView /> },
+        { path: 'booking-creation', element: <BookingCreate /> },
         { path: 'your-bookings', element: <SuperAdminBookingsView /> },
         { path: 'all-users', element: <UserDetails /> },
         { path: 'all-reviews', element: <AllReviews /> },

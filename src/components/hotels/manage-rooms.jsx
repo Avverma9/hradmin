@@ -71,7 +71,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
         setRooms(response.data.rooms);
       })
       .catch(() => {
-        toast.error('Error fetching rooms');
+        console.error('Error fetching rooms');
       });
   };
 

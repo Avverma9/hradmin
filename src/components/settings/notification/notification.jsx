@@ -63,9 +63,6 @@ const Notification = () => {
         notifications.User.some((notification) => notification.seenBy[id] === true) ||
         notifications.Global.some((notification) => notification.seenBy[id])
     );
-
-    console.log('here is id ', seenUserIds);
-
     setUserIds(seenUserIds);
     setOpenWhoSeen(true);
   };

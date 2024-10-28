@@ -23,6 +23,25 @@ export const fetchFilteredBookings = createAsyncThunk(
     }
   }
 );
+
+export const createBooking = createAsyncThunk(
+  'booking/createBooking',
+  async (userId, hotelId, data, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${localUrl}/booking/${userId}/${hotelId}`, {
+        data,
+        headers: {
+          Authorization: token,
+        },
+      });
+      notify(response?.status);
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
 export const searchBooking = createAsyncThunk(
   'booking/searchBooking',
   async (bookingId, { rejectWithValue }) => {
