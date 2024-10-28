@@ -46,11 +46,32 @@ export default function CreateBooking() {
     setSelectedUser(userId);
   };
 
-  const handleBooking = () => {
+//   const handleBooking = () => {
+//     if (!selectedHotel || !selectedUser) {
+//       setSnackbarMessage('Please select a hotel and a user.');
+//       setSnackbarOpen(true);
+//       return;
+//     }
+
+//     const iframeSrc = `https://hotelroomsstay.com/book-hotels/${selectedHotel}`;
+//     iframeRef.current.src = iframeSrc;
+
+//     // Send a message to the iframe
+//     const messageData = {
+//       hotelId: selectedHotel,
+//       userId: localStorage.getItem('rsUserId'),
+//       userMobile: localStorage.getItem('rsUserMobile'),
+//     };
+
+//     iframeRef.current.onload = () => {
+//       iframeRef.current.contentWindow.postMessage(messageData, iframeSrc);
+//     };
+//   };
+const handleBooking = () => {
     if (!selectedHotel || !selectedUser) {
-      setSnackbarMessage('Please select a hotel and a user.');
-      setSnackbarOpen(true);
-      return;
+        setSnackbarMessage('Please select a hotel and a user.');
+        setSnackbarOpen(true);
+        return;
     }
 
     const iframeSrc = `https://hotelroomsstay.com/book-hotels/${selectedHotel}`;
@@ -58,15 +79,28 @@ export default function CreateBooking() {
 
     // Send a message to the iframe
     const messageData = {
-      hotelId: selectedHotel,
-      userId: localStorage.getItem('rsUserId'),
-      userMobile: localStorage.getItem('rsUserMobile'),
+        hotelId: selectedHotel,
+        userId: localStorage.getItem('rsUserId'),
+        userMobile: localStorage.getItem('rsUserMobile'),
     };
 
     iframeRef.current.onload = () => {
-      iframeRef.current.contentWindow.postMessage(messageData, iframeSrc);
+        iframeRef.current.contentWindow.postMessage(messageData, iframeSrc);
+
+        // Check if the iframe's URL has changed after booking
+        const originalUrl = iframeRef.current.src;
+
+        const checkIframeUrl = setInterval(() => {
+            if (iframeRef.current.src !== originalUrl) {
+                clearInterval(checkIframeUrl);
+                setSnackbarMessage('Booking successful!');
+                setSnackbarOpen(true);
+                // Optionally, reset the iframe source
+                iframeRef.current.src = "about:blank"; // Close the iframe
+            }
+        }, 1000); // Check every second
     };
-  };
+};
 
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
