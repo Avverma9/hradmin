@@ -53,19 +53,8 @@ export default function CreateBooking() {
       return;
     }
 
-    const iframeSrc = `https://hotelroomsstay.com/book-hotels/${selectedHotel}`;
+    const iframeSrc = `https://hotelroomsstay.com/book-hotels/${selectedUser}/${selectedHotel}`;
     iframeRef.current.src = iframeSrc;
-
-    // Send a message to the iframe
-    const messageData = {
-      hotelId: selectedHotel,
-      userId: localStorage.getItem('rsUserId'),
-      userMobile: localStorage.getItem('rsUserMobile'),
-    };
-
-    iframeRef.current.onload = () => {
-      iframeRef.current.contentWindow.postMessage(messageData, iframeSrc);
-    };
   };
 
   const handleCloseSnackbar = () => {
