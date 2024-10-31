@@ -59,74 +59,6 @@ export const getHotelByQuery = createAsyncThunk(
   }
 );
 
-export const getAllCoupons = createAsyncThunk(
-  'hotel/getAllCoupons',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await axios.get(`${localUrl}/coupon/get/all`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-
-      return response.data;
-    } catch (error) {
-      const errorMessage = error.message;
-      toast.error(`Error: ${errorMessage}`);
-      return rejectWithValue(errorMessage);
-    }
-  }
-);
-
-export const createCoupon = createAsyncThunk(
-  'hotel/createCoupon',
-  async (postData, { rejectWithValue }) => {
-    try {
-      const response = await axios.post(
-        `${localUrl}/coupon/create-a-new/coupon`,
-        {
-          couponName: postData.couponName,
-          discountPrice: postData.discountPrice,
-          validity: postData.validity,
-        },
-        {
-          headers: {
-            Authorization: token,
-          },
-        }
-      );
-      toast.success(`Kindly note down your coupon code: ${response?.data?.coupon.couponCode}`);
-      return response.data;
-    } catch (error) {
-      const errorMessage = error.message;
-      toast.error(`Error: ${errorMessage}`);
-      return rejectWithValue(errorMessage);
-    }
-  }
-);
-
-export const applyCoupon = createAsyncThunk(
-  'hotel/applyCoupon',
-  async ({ couponCode, hotelId, roomId }, { rejectWithValue }) => {
-    try {
-      const response = await axios.patch(
-        `${localUrl}/apply/a/coupon-to-room/${couponCode}?hotelId=${hotelId}&roomId=${roomId}`,
-        {
-          headers: {
-            Authorization: token,
-          },
-        }
-      );
-      notify(response.status);
-      return response.data;
-    } catch (error) {
-      const errorMessage = error.message;
-      toast.error(`Error: ${errorMessage}`);
-      return rejectWithValue(errorMessage);
-    }
-  }
-);
-
 export const addFood = createAsyncThunk('hotel/addFood', async (formData, { rejectWithValue }) => {
   try {
     const response = axios.post(`${localUrl}/add/food-to/your-hotel`, formData, {
@@ -167,6 +99,7 @@ const hotelSlice = createSlice({
   name: 'hotel',
   initialState: {
     data: [],
+    coupon: [],
     loading: false,
     error: null,
   },
@@ -176,18 +109,8 @@ const hotelSlice = createSlice({
         state.data = action.payload;
         state.loading = false;
       })
-
       .addCase(getHotelByQuery.fulfilled, (state, action) => {
         state.byQuery = action.payload;
-      })
-      .addCase(getAllCoupons.fulfilled, (state, action) => {
-        state.coupon = action.payload;
-      })
-      .addCase(createCoupon.fulfilled, (state, action) => {
-        state.coupon.push(action.payload);
-      })
-      .addCase(applyCoupon.fulfilled, (state, action) => {
-        state.apply = action.payload;
       })
       .addCase(getHotelById.fulfilled, (state, action) => {
         state.byId = action.payload;

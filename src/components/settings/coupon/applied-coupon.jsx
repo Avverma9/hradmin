@@ -92,8 +92,8 @@ const AppliedCouponModal = ({ open, handleClose }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {coupons.map((coupon) => (
-                <TableRow key={coupon.id}>
+              {coupons.map((coupon, index) => (
+                <TableRow key={`${coupon.id}-${index}`}>
                   <TableCell>{coupon.couponCode}</TableCell>
                   <TableCell>{coupon.discountPrice}</TableCell>
                   <TableCell>{fDateTime(coupon.validity)}</TableCell>
@@ -102,10 +102,9 @@ const AppliedCouponModal = ({ open, handleClose }) => {
                       variant="outlined"
                       color="secondary"
                       onClick={() => removeCoupon(coupon.roomId)}
-                      disabled={removingId === coupon.roomId} // Disable if this coupon is being removed
+                      disabled={removingId === coupon.roomId}
                     >
-                      {removingId === coupon.roomId ? 'Removing...' : 'Remove'}{' '}
-                      {/* Show removing state */}
+                      {removingId === coupon.roomId ? 'Removing...' : 'Remove'}
                     </Button>
                   </TableCell>
                 </TableRow>

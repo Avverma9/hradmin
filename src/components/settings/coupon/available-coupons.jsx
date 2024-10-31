@@ -79,7 +79,7 @@ AvailableCouponsModal.propTypes = {
   handleClose: PropTypes.func.isRequired,
   coupons: PropTypes.arrayOf(
     PropTypes.shape({
-      _id: PropTypes.number.isRequired,
+      _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
       couponName: PropTypes.string.isRequired,
       discountPrice: PropTypes.number.isRequired,
       validity: PropTypes.string.isRequired,

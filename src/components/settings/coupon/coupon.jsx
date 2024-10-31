@@ -26,13 +26,9 @@ import CreateCouponModal from './create-coupon';
 import AppliedCouponModal from './applied-coupon';
 import AvailableCouponsModal from './available-coupons';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  applyCoupon,
-  createCoupon,
-  getAllCoupons,
-  getAllHotels,
-} from 'src/components/redux/reducers/hotel';
+import { getAllHotels } from 'src/components/redux/reducers/hotel';
 import { useLoader } from '../../../../utils/loader';
+import { applyCoupon, createCoupon, getAllCoupons } from 'src/components/redux/reducers/coupon';
 
 export default function Coupon() {
   const [couponName, setCouponName] = useState('');
@@ -50,7 +46,7 @@ export default function Coupon() {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchTerm, setSearchTerm] = useState('');
   const dispatch = useDispatch();
-  const coupons = useSelector((state) => state.hotel.coupon);
+  const coupons = useSelector((state) => state.coupon.coupon);
   const hotels = useSelector((state) => state.hotel.data);
   const { showLoader, hideLoader } = useLoader();
 
@@ -89,11 +85,11 @@ export default function Coupon() {
     showLoader();
     try {
       await dispatch(createCoupon(postData)).unwrap();
+      handleCloseCreateCouponModal();
       resetCouponForm();
       fetchCoupons();
     } catch (error) {
-      const errorMessage = error.coupons.message || 'Failed to create coupon';
-      toast.error(errorMessage);
+      console.error(error);
     } finally {
       hideLoader();
     }

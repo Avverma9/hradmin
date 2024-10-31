@@ -35,10 +35,10 @@ const StatusChip = styled(Chip)(({ theme, status }) => ({
     status === 'Pending'
       ? theme.palette.warning.main
       : status === 'Resolved'
-      ? theme.palette.success.main
-      : status === 'Working'
-      ? theme.palette.info.main // You can adjust this color as needed
-      : theme.palette.error.main,
+        ? theme.palette.success.main
+        : status === 'Working'
+          ? theme.palette.info.main // You can adjust this color as needed
+          : theme.palette.error.main,
   color: theme.palette.common.white,
   fontSize: '0.75rem',
 }));
@@ -225,7 +225,7 @@ const Complaint = () => {
   );
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container maxWidth="auto" sx={{ py: 4 }}>
       <Box
         sx={{
           mb: 4,
@@ -270,7 +270,7 @@ const Complaint = () => {
           />
 
           <FormControl fullWidth>
-            <InputLabel>Status</InputLabel>
+            <InputLabel>Filter by Status</InputLabel>
             <Select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -314,6 +314,7 @@ const Complaint = () => {
                       title={
                         <>
                           <Typography variant="body2">
+                            <p>Last updated by</p>
                             <strong>Name:</strong> {complaint?.updatedBy?.name || 'Unknown'}
                           </Typography>
                           <Typography variant="body2">

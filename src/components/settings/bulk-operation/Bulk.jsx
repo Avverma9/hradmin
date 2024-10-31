@@ -25,6 +25,8 @@ import {
 } from '@mui/material';
 
 import { localUrl } from '../../../../utils/util';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllHotels } from 'src/components/redux/reducers/hotel';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   backgroundColor: theme.palette.secondary.light,
@@ -39,7 +41,9 @@ const StyledTableRow = styled(TableRow)(({ theme, selected }) => ({
 }));
 
 const Bulk = () => {
-  const [data, setData] = useState([]);
+  const data = useSelector((state) => state.hotel.data);
+
+  const dispatch = useDispatch();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAcceptedFilter, setIsAcceptedFilter] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,21 +52,20 @@ const Bulk = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5); // Default rows per page
 
-  const getAllHotels = async () => {
+  const getAllHotelsData = async () => {
     try {
-      const response = await fetch(`${localUrl}/get/all/hotels`);
-      const res = await response.json();
-      setData(res.data);
+      await dispatch(getAllHotels());
     } catch (error) {
       console.error('Error fetching hotels:', error);
+      toast.error('Failed to fetch hotels.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    getAllHotels();
-  }, []);
+    getAllHotelsData();
+  }, [dispatch]);
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value.toLowerCase());
