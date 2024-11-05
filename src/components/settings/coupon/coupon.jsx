@@ -46,7 +46,8 @@ export default function Coupon() {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchTerm, setSearchTerm] = useState('');
   const dispatch = useDispatch();
-  const coupons = useSelector((state) => state.coupon.coupon);
+  // const coupons = useSelector((state) => state.coupon.coupon);
+  const [coupons, setCoupons] = useState([]);
   const hotels = useSelector((state) => state.hotel.data);
   const { showLoader, hideLoader } = useLoader();
 
@@ -69,10 +70,10 @@ export default function Coupon() {
   const fetchCoupons = async () => {
     showLoader();
     try {
-      await dispatch(getAllCoupons()).unwrap();
+      const response = await dispatch(getAllCoupons()).unwrap();
+      setCoupons(response);
     } catch (error) {
       console.error('Error fetching coupons:', error);
-      toast.error('Failed to fetch coupons');
     } finally {
       hideLoader();
     }
@@ -103,6 +104,7 @@ export default function Coupon() {
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to apply coupon';
       toast.error(errorMessage);
+      alert(errorMessage);
     } finally {
       hideLoader();
     }
@@ -129,7 +131,8 @@ export default function Coupon() {
     setCouponCode('');
   };
 
-  const handleOpenAvailableCouponsModal = () => {
+  const handleOpenAvailableCouponsModal = async () => {
+    await fetchCoupons(); // Refresh coupons before opening the modal
     setOpenAvailableCouponsModal(true);
   };
 

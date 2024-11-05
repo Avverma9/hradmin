@@ -18,5 +18,9 @@ export const token = localStorage.getItem('rs_token');
 export const notify = (statusCode) => {
   if (statusCode === 200 || statusCode === 201) {
     toast.success('Done');
+  } else if (statusCode === 404) {
+    toast.info('Not Found !');
+  } else if (statusCode === 400) {
+    toast.info('Bad Request !');
   }
 };

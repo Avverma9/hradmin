@@ -1,1 +1,1 @@
-export { default as BookingForm } from './create_booking';
+export { default as BookingForm } from './userSelection';

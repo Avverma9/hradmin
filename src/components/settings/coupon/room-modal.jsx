@@ -88,7 +88,7 @@ RoomModal.propTypes = {
     hotelName: PropTypes.string,
     rooms: PropTypes.arrayOf(
       PropTypes.shape({
-        roomId: PropTypes.number.isRequired,
+        roomId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
         type: PropTypes.string,
         bedTypes: PropTypes.string,
         price: PropTypes.number,

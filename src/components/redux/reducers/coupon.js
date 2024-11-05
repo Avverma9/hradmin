@@ -73,7 +73,7 @@ export const applyCoupon = createAsyncThunk(
   async ({ couponCode, hotelId, roomId }, { rejectWithValue }) => {
     try {
       const response = await axios.patch(
-        `${localUrl}/apply/a/coupon-to-room/${couponCode}?hotelId=${hotelId}&roomId=${roomId}`,
+        `${localUrl}/apply/a/coupon-to-room?hotelId=${hotelId}&roomId=${roomId}&couponCode=${couponCode}`,
         {
           headers: {
             Authorization: token,

@@ -1,0 +1,49 @@
+.user-selection-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;  /* Increased gap between circles and image */
+}
+
+.circle {
+    width: 180px;  /* Size of the circles */
+    height: 180px;  /* Size of the circles */
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+    font-size: 18px;  /* Adjusted font size */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    padding: 10px;
+    position: relative;
+}
+
+.circle:hover {
+    background-color: #e0e0e0;
+}
+
+.selected {
+    background-color: #3f51b5;  /* Selected circle background */
+    color: white;
+}
+
+.existing {
+    background-color: #c7cef3;  /* Background color for "Existing User" */
+    color: rgb(18, 18, 18);
+}
+
+.new {
+    background-color: white;  /* Background color for "New User" */
+    color: #3f51b5;
+}
+
+.user-selection-image {
+    width: 100px;
+    height: 100px;
+    background-color: transparent;
+}
