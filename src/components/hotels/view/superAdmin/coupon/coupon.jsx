@@ -26,13 +26,10 @@ import CreateCouponModal from '../../../../settings/coupon/create-coupon';
 import AppliedCouponModal from '../../../../settings/coupon/applied-coupon';
 import AvailableCouponsModal from '../../../../settings/coupon/available-coupons';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  applyCoupon,
-  createCoupon,
-  getAllCoupons,
-  getHotelByQuery,
-} from 'src/components/redux/reducers/hotel';
+
 import { useLoader } from '../../../../../../utils/loader';
+import { applyCoupon, createCoupon, getAllCoupons } from 'src/components/redux/reducers/coupon';
+import { getHotelByQuery } from 'src/components/redux/reducers/hotel';
 
 export default function Coupon() {
   const hotels = useSelector((state) => state.hotel.byQuery);
@@ -204,7 +201,7 @@ export default function Coupon() {
   );
 
   return (
-    <Container>
+    <Container maxWidth="auto">
       {/* Information Section */}
       <Typography variant="h6" gutterBottom>
         Please Read This Before Managing Coupons

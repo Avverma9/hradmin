@@ -198,7 +198,7 @@ export default function Coupon() {
   );
 
   return (
-    <Container>
+    <Container maxWidth="auto">
       {/* Information Section */}
       <Typography variant="h6" gutterBottom>
         Please Read This Before Managing Coupons

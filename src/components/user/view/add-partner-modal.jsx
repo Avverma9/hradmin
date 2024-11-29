@@ -120,6 +120,8 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
                   <MenuItem value="Admin">Admin</MenuItem>
                   <MenuItem value="PMS">Partner Management System</MenuItem>
                   <MenuItem value="CMS">Client Management System</MenuItem>
+                  <MenuItem value="TP">Travel Partner</MenuItem>
+                  <MenuItem value="CA">Company Agent</MenuItem>
 
                   <MenuItem value="Developer">Developer</MenuItem>
                 </Select>

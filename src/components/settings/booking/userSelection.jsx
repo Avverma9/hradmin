@@ -72,7 +72,7 @@ export default function UserSelection() {
   };
 
   return (
-    <div className="user-selection-container">
+    <div className="user-selection-container" style={{ maxWidth: 'auto' }}>
       {selection === null && (
         <>
           <div
@@ -103,8 +103,7 @@ export default function UserSelection() {
       )}
 
       {selection === 'new' && (
-        
-        <Card sx={{ width: 650, margin: '0 auto', padding: 3 }} >
+        <Card sx={{ width: 650, margin: '0 auto', padding: 3 }}>
           {' '}
           {/* Increased width for the form */}
           <Button
@@ -266,19 +265,8 @@ export default function UserSelection() {
 
       {selection === 'existing' && (
         <div>
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={handleBack}
-            sx={{ margin: 2 }} // Only margin for the back button
-          >
-            Go Back
-          </Button>
-
-          {/* Wrap CreateBooking with a div to control width */}
-          <div style={{ width: '1200px' }}>
-            <CreateBooking /> {/* CreateBooking component will now have a max-width of 600px */}
-          </div>
+          <CreateBooking handleBack={handleBack} />{' '}
+          {/* CreateBooking component will now have a max-width of 600px */}
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { role, localUrl } from '../../../utils/util';
+import { role, localUrl, showSnackbar } from '../../../utils/util';
 import { fDateTime } from '../../../utils/format-time';
 import AlertDialog from '../../../utils/alertDialogue';
 import './ChatApp.css';
@@ -41,6 +41,7 @@ const ChatApp = () => {
 
   // WebSocket setup
   useEffect(() => {
+    // socket.current = window.io('http://localhost:5000');
     socket.current = window.io('https://hotel-backend-tge7.onrender.com');
 
     if (senderId) {
@@ -198,7 +199,7 @@ const ChatApp = () => {
         `${localUrl}/delete/a/chat-and-message/from/messenger-app/${messageId}/${userId}/${selectedReceiverId}`
       );
       if (response.status === 200) {
-        toast.success('Unsent');
+        showSnackbar('Unsent','success');
         socket.current.emit('messageDeleted', { messageId, receiverId: selectedReceiverId });
         await fetchMessages(selectedContact._id); // Update the message list for the sender
       } else {
@@ -272,45 +273,45 @@ const ChatApp = () => {
   }
 
   return (
-    <>
-      <iframe
-        src="https://dreamschat.dreamstechnologies.com/html/template/chat.html"
-        frameborder="0"
-        style={{ width: '100%', height: '80vh' }}
-      ></iframe>
-    </>
-    // <div className="chat-app">
-    //   <Sidebar
-    //     role={role}
-    //     searchTerm={searchTerm}
-    //     setSearchTerm={setSearchTerm}
-    //     filteredContacts={filteredContacts}
-    //     selectedContact={selectedContact}
-    //     handleSelectContact={handleSelectContact}
-    //   />
+    // <>
+    //   <iframe
+    //     src="https://dreamschat.dreamstechnologies.com/html/template/chat.html"
+    //     frameborder="0"
+    //     style={{ width: '100%', height: '80vh' }}
+    //   ></iframe>
+    // </>
+    <div className="chat-app">
+      <Sidebar
+        role={role}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filteredContacts={filteredContacts}
+        selectedContact={selectedContact}
+        handleSelectContact={handleSelectContact}
+      />
 
-    //   <ChatWindow
-    //     selectedContact={selectedContact}
-    //     messages={messages}
-    //     senderId={senderId}
-    //     handleDeleteButtonClick={handleDeleteButtonClick}
-    //     handleSendMessage={handleSendMessage}
-    //     handleFileChange={handleFileChange}
-    //     deleteAmessage={deleteAmessage}
-    //     filePreviews={filePreviews}
-    //     handleRemoveFile={handleRemoveFile}
-    //     fDateTime={fDateTime}
-    //     getTickIndicators={getTickIndicators}
-    //   />
+      <ChatWindow
+        selectedContact={selectedContact}
+        messages={messages}
+        senderId={senderId}
+        handleDeleteButtonClick={handleDeleteButtonClick}
+        handleSendMessage={handleSendMessage}
+        handleFileChange={handleFileChange}
+        deleteAmessage={deleteAmessage}
+        filePreviews={filePreviews}
+        handleRemoveFile={handleRemoveFile}
+        fDateTime={fDateTime}
+        getTickIndicators={getTickIndicators}
+      />
 
-    //   <AlertDialog
-    //     open={dialogOpen}
-    //     onClose={handleDialogClose}
-    //     onConfirm={handleDeleteChat}
-    //     title="Confirm Conversation Delete"
-    //     message="This action will delete the entire conversation between you and the other party. Are you sure you want to delete this chat? This action cannot be undone."
-    //   />
-    // </div>
+      <AlertDialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        onConfirm={handleDeleteChat}
+        title="Confirm Conversation Delete"
+        message="This action will delete the entire conversation between you and the other party. Are you sure you want to delete this chat? This action cannot be undone."
+      />
+    </div>
   );
 };
 

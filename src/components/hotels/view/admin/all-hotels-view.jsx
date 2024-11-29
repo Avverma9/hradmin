@@ -60,7 +60,7 @@ export default function ProductsView() {
   const filteredCount = filteredData.length;
 
   return (
-    <Container>
+    <Container maxWidth="auto">
       <Typography variant="h4" sx={{ mb: 5 }}>
         Hotels ({filteredCount})
       </Typography>

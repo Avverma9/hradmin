@@ -14,7 +14,7 @@ import {
 
 export default function ViewUserModal({ open, onClose, user }) {
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="auto">
       <DialogTitle>Basic Info</DialogTitle>
       <DialogContent>
         <Box display="flex" justifyContent="center" mb={3}>

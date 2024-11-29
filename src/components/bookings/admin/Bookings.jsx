@@ -129,7 +129,7 @@ export default function BookingsView() {
   };
 
   return (
-    <Container sx={{ marginTop: '40px' }}>
+    <Container maxWidth="auto"sx={{ marginTop: '40px' }}>
       <Typography variant="h4" gutterBottom>
         Bookings ({bookingCount})
       </Typography>

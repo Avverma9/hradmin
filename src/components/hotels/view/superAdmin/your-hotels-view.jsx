@@ -44,7 +44,7 @@ export default function YourHotelsView() {
   }
 
   return (
-    <Container>
+    <Container maxWidth="auto">
       <Typography variant="h4" sx={{ mb: 5 }}>
         Your Hotels
       </Typography>

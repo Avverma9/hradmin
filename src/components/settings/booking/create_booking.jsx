@@ -1,60 +1,56 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  Box,
   Button,
   FormControl,
   InputLabel,
-  MenuItem,
-  Select,
+  Input,
   Snackbar,
   IconButton,
   Container,
   Typography,
+  Card,
+  CardContent,
+  Grid,
+  Box,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { getAllHotels } from 'src/components/redux/reducers/hotel';
-import { fetchUsers } from 'src/components/redux/reducers/user';
+import { findUser } from 'src/components/redux/reducers/user';
 
-export default function CreateBooking() {
+export default function CreateBooking({ handleBack }) {
   const dispatch = useDispatch();
-  const data = useSelector((state) => state.hotel.data);
-  const userData = useSelector((state) => state.user.userData);
+  const foundUser = useSelector((state) => state.user.userData);
+  const loading = useSelector((state) => state.user.loading); // Assuming you have a loading state in your Redux store
+  const error = useSelector((state) => state.user.error); // Assuming you have an error state in your Redux store
 
-  const [selectedHotel, setSelectedHotel] = useState('');
-  const [selectedUser, setSelectedUser] = useState('');
+  const [mobile, setMobile] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const iframeRef = useRef(null);
 
-  useEffect(() => {
-    dispatch(getAllHotels());
-    dispatch(fetchUsers());
-  }, [dispatch]);
-
-  const handleHotelChange = (event) => {
-    setSelectedHotel(event.target.value);
-  };
-
-  const handleUserChange = (event) => {
-    const userId = event.target.value;
-    const user = userData.find((user) => user.userId === userId);
-    if (user) {
-      localStorage.setItem('rsUserId', userId);
-      localStorage.setItem('rsUserMobile', user.mobile);
-    }
-    setSelectedUser(userId);
-  };
-
-  const handleBooking = () => {
-    if (!selectedHotel || !selectedUser) {
-      setSnackbarMessage('Please select a hotel and a user.');
+  const handleFindUser = () => {
+    if (!mobile) {
+      setSnackbarMessage('Please enter a mobile number.');
       setSnackbarOpen(true);
       return;
     }
+    // Dispatch the findUser action and pass the mobile number
+    dispatch(findUser(mobile));
+  };
 
-    const iframeSrc = `https://hotelroomsstay.com/book-hotels/${selectedUser}/${selectedHotel}`;
-    iframeRef.current.src = iframeSrc;
+  useEffect(() => {
+    if (error) {
+      setSnackbarMessage('No user found or there was an error with the request.');
+      setSnackbarOpen(true);
+    }
+  }, [error]);
+
+  const handleCreateBooking = () => {
+    if (!foundUser || foundUser.length === 0) {
+      setSnackbarMessage('No user found. Please try again.');
+      setSnackbarOpen(true);
+      return;
+    }
+    // Continue with booking creation logic...
   };
 
   const handleCloseSnackbar = () => {
@@ -62,63 +58,92 @@ export default function CreateBooking() {
   };
 
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
+    <Container maxWidth="lg">
+      {/* Go back button */}
+      <Button variant="outlined" color="primary" onClick={handleBack} sx={{ margin: 2 }}>
+        Go Back
+      </Button>
+
+      <Typography variant="h4" gutterBottom align="center" sx={{ mb: 3 }}>
         Create Your Booking
       </Typography>
 
-      <FormControl fullWidth variant="outlined" sx={{ marginBottom: 2 }}>
-        <InputLabel id="hotel-select-label">Select Hotel</InputLabel>
-        <Select
-          labelId="hotel-select-label"
-          value={selectedHotel}
-          onChange={handleHotelChange}
-          label="Select Hotel"
+      {/* Mobile Number Input and Find User Button */}
+      <Grid container spacing={2} justifyContent="center" sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={8} md={6}>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="mobile-input-label">Enter Existing User Number</InputLabel>
+            <Input
+              type="text"
+              value={mobile}
+              onChange={(e) => setMobile(e.target.value)}
+              fullWidth
+            />
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} sm={4} md={2}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleFindUser}
+            fullWidth
+            sx={{ height: '100%' }}
+          >
+            {loading ? 'Searching...' : 'Find User'}
+          </Button>
+        </Grid>
+      </Grid>
+
+      {/* Conditionally render user details card or message */}
+      {loading ? (
+        <Box sx={{ textAlign: 'center', mt: 3 }}>
+          <Typography variant="h6" color="textSecondary">
+            Searching for user...
+          </Typography>
+        </Box>
+      ) : foundUser && foundUser.length > 0 ? (
+        <Card sx={{ mb: 3, boxShadow: 3 }}>
+          {foundUser.map((item, index) => (
+            <CardContent key={index}>
+              <Typography variant="h6" gutterBottom>
+                User Details
+              </Typography>
+              <Typography variant="body1">Name: {item?.userName}</Typography>
+              <Typography variant="body1">Email: {item?.email}</Typography>
+              <Typography variant="body1">Mobile: {item?.mobile}</Typography>
+              <Typography variant="body1">Password: {item?.password}</Typography>
+
+              <Button
+                variant="contained"
+                color="secondary"
+                sx={{ mt: 2 }}
+                onClick={handleCreateBooking}
+                fullWidth
+              >
+                Create Booking for this User
+              </Button>
+            </CardContent>
+          ))}
+        </Card>
+      ) : (
+        <Box
+          sx={{
+            textAlign: 'center',
+            mt: 3,
+            padding: 2,
+            border: '1px solid #ccc',
+            borderRadius: '8px',
+            backgroundColor: '#f9f9f9',
+          }}
         >
-          <MenuItem value="">
-            <em>None</em>
-          </MenuItem>
-          {data &&
-            data.map((item) => (
-              <MenuItem key={item.hotelId} value={item.hotelId}>
-                {item.hotelName}
-              </MenuItem>
-            ))}
-        </Select>
-      </FormControl>
+          <Typography variant="h6" color="textSecondary">
+            No data !
+          </Typography>
+        </Box>
+      )}
 
-      <FormControl fullWidth variant="outlined" sx={{ marginBottom: 2 }}>
-        <InputLabel id="user-select-label">Select User</InputLabel>
-        <Select
-          labelId="user-select-label"
-          value={selectedUser}
-          onChange={handleUserChange}
-          label="Select User"
-        >
-          <MenuItem value="">
-            <em>None</em>
-          </MenuItem>
-          {userData &&
-            userData.map((user) => (
-              <MenuItem key={user.userId} value={user.userId}>
-                {user.userName}
-              </MenuItem>
-            ))}
-        </Select>
-      </FormControl>
-
-      <Button variant="contained" color="primary" onClick={handleBooking} sx={{ marginBottom: 2 }}>
-        Proceed to Booking
-      </Button>
-
-      <Box>
-        <iframe
-          ref={iframeRef}
-          src="about:blank"
-          style={{ width: '100%', height: '600px', border: 'none' }}
-        ></iframe>
-      </Box>
-
+      {/* Snackbar for Error or Success Messages */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
@@ -129,6 +154,7 @@ export default function CreateBooking() {
             <CloseIcon fontSize="small" />
           </IconButton>
         }
+        sx={{ bottom: 80 }} // Adjust the bottom margin for better visibility
       />
     </Container>
   );

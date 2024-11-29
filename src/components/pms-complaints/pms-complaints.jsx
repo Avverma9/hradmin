@@ -235,7 +235,7 @@ const Complaint = () => {
   );
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container maxWidth="auto" sx={{ py: 4 }}>
       <Box
         sx={{
           mb: 4,

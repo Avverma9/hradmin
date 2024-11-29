@@ -77,7 +77,7 @@ const TravelLocation = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 5 }}>
+    <Container maxWidth="auto" >
       <Typography variant="h4" component="h1" gutterBottom>
         Travel Locations
       </Typography>

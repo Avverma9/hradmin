@@ -192,7 +192,6 @@ export default function UserPage() {
     filterName,
   });
 
-
   const notFound = !dataFiltered.length && !!filterName;
   const handleExport = () => {
     exportToExcel(users);
@@ -214,7 +213,7 @@ export default function UserPage() {
   };
 
   return (
-    <Container>
+    <Container maxWidth="auto">
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
         <Typography variant="h4">Partners</Typography>
         <Button
@@ -235,7 +234,7 @@ export default function UserPage() {
         />
         <Scrollbar>
           <TableContainer sx={{ overflow: 'unset' }}>
-            <Table sx={{ minWidth: '100%' }}>
+            <Table sx={{ minWidth: 'auto' }}>
               <UserTableHead
                 order={order}
                 orderBy={orderBy}
