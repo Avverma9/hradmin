@@ -72,6 +72,7 @@ export default function UserSelection() {
   };
 
   return (
+    <>
     <div className="user-selection-container" style={{ maxWidth: 'auto' }}>
       {selection === null && (
         <>
@@ -263,12 +264,13 @@ export default function UserSelection() {
         </Card>
       )}
 
-      {selection === 'existing' && (
+   
+    </div>  
+     {selection === 'existing' && (
         <div>
           <CreateBooking handleBack={handleBack} />{' '}
           {/* CreateBooking component will now have a max-width of 600px */}
         </div>
-      )}
-    </div>
+      )}</>
   );
 }

@@ -9,19 +9,24 @@ import {
   IconButton,
   Container,
   Typography,
-  Card,
-  CardContent,
-  Grid,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
   Box,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { findUser } from 'src/components/redux/reducers/user';
+import Hotel from './hotel';
 
 export default function CreateBooking({ handleBack }) {
   const dispatch = useDispatch();
   const foundUser = useSelector((state) => state.user.userData);
-  const loading = useSelector((state) => state.user.loading); // Assuming you have a loading state in your Redux store
-  const error = useSelector((state) => state.user.error); // Assuming you have an error state in your Redux store
+  const loading = useSelector((state) => state.user.loading);
+  const error = useSelector((state) => state.user.error);
 
   const [mobile, setMobile] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -33,7 +38,6 @@ export default function CreateBooking({ handleBack }) {
       setSnackbarOpen(true);
       return;
     }
-    // Dispatch the findUser action and pass the mobile number
     dispatch(findUser(mobile));
   };
 
@@ -44,13 +48,33 @@ export default function CreateBooking({ handleBack }) {
     }
   }, [error]);
 
+  // Function to store credentials (mobile and password)
+  const storeCredentials = (mobile, password) => {
+    sessionStorage.setItem('bmn', mobile);
+    sessionStorage.setItem('bp', password);
+  };
+
   const handleCreateBooking = () => {
     if (!foundUser || foundUser.length === 0) {
       setSnackbarMessage('No user found. Please try again.');
       setSnackbarOpen(true);
       return;
     }
-    // Continue with booking creation logic...
+
+    // Retrieve mobile and password for the first user found (if multiple users exist)
+    const user = foundUser[0]; // Assuming the first user is the one we want to create the booking for
+    const password = user?.password;
+
+    if (password) {
+      // Store credentials in sessionStorage
+      storeCredentials(user?.mobile, password);
+      setSnackbarMessage('Booking created successfully!');
+      setSnackbarOpen(true);
+      // Continue with booking creation logic...
+    } else {
+      setSnackbarMessage('Password is missing. Cannot create booking.');
+      setSnackbarOpen(true);
+    }
   };
 
   const handleCloseSnackbar = () => {
@@ -69,33 +93,28 @@ export default function CreateBooking({ handleBack }) {
       </Typography>
 
       {/* Mobile Number Input and Find User Button */}
-      <Grid container spacing={2} justifyContent="center" sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={8} md={6}>
-          <FormControl fullWidth variant="outlined">
-            <InputLabel id="mobile-input-label">Enter Existing User Number</InputLabel>
-            <Input
-              type="text"
-              value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
-              fullWidth
-            />
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} sm={4} md={2}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleFindUser}
+      <Box sx={{ mb: 3 }}>
+        <FormControl fullWidth variant="outlined">
+          <InputLabel id="mobile-input-label">Enter Existing User Number</InputLabel>
+          <Input
+            type="text"
+            value={mobile}
+            onChange={(e) => setMobile(e.target.value)}
             fullWidth
-            sx={{ height: '100%' }}
-          >
-            {loading ? 'Searching...' : 'Find User'}
-          </Button>
-        </Grid>
-      </Grid>
+          />
+        </FormControl>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleFindUser}
+          fullWidth
+          sx={{ mt: 2 }}
+        >
+          {loading ? 'Searching...' : 'Find User'}
+        </Button>
+      </Box>
 
-      {/* Conditionally render user details card or message */}
+      {/* Conditionally render user details table or message */}
       {loading ? (
         <Box sx={{ textAlign: 'center', mt: 3 }}>
           <Typography variant="h6" color="textSecondary">
@@ -103,29 +122,51 @@ export default function CreateBooking({ handleBack }) {
           </Typography>
         </Box>
       ) : foundUser && foundUser.length > 0 ? (
-        <Card sx={{ mb: 3, boxShadow: 3 }}>
-          {foundUser.map((item, index) => (
-            <CardContent key={index}>
-              <Typography variant="h6" gutterBottom>
-                User Details
-              </Typography>
-              <Typography variant="body1">Name: {item?.userName}</Typography>
-              <Typography variant="body1">Email: {item?.email}</Typography>
-              <Typography variant="body1">Mobile: {item?.mobile}</Typography>
-              <Typography variant="body1">Password: {item?.password}</Typography>
+        <Box sx={{ mb: 3 }}>
+          <TableContainer
+            component={Paper}
+            sx={{
+              mb: 2,
+              border: '1px solid #ccc', // Border around the table
+              borderRadius: '8px', // Optional: rounded corners for the border
+            }}
+          >
+            <Table sx={{ minWidth: 650 }} aria-label="user details table">
+              <TableHead>
+                <TableRow>
+                  <TableCell>User Name</TableCell>
+                  <TableCell align="right">Mobile</TableCell>
+                  <TableCell align="right">Email</TableCell>
+                  <TableCell align="right">Password</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {foundUser.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{item?.userName}</TableCell>
+                    <TableCell align="right">{item?.mobile}</TableCell>
+                    <TableCell align="right">{item?.email}</TableCell>
+                    <TableCell align="right">{item?.password}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
 
-              <Button
-                variant="contained"
-                color="secondary"
-                sx={{ mt: 2 }}
-                onClick={handleCreateBooking}
-                fullWidth
-              >
-                Create Booking for this User
-              </Button>
-            </CardContent>
-          ))}
-        </Card>
+          {/* Create Booking Button */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              variant="contained"
+              color="secondary"
+              sx={{ width: '40%' }} // 40% width
+              size="small" // Smaller button
+              onClick={handleCreateBooking}
+            >
+              Create Booking for this User
+            </Button>
+          </Box>
+          <Hotel/>
+        </Box>
       ) : (
         <Box
           sx={{
@@ -138,7 +179,7 @@ export default function CreateBooking({ handleBack }) {
           }}
         >
           <Typography variant="h6" color="textSecondary">
-            No data !
+            No data found!
           </Typography>
         </Box>
       )}
