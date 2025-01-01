@@ -3,6 +3,7 @@ import { Outlet, Navigate, useRoutes } from 'react-router-dom';
 
 import DashboardLayout from 'src/components/dashboard';
 import { LoaderProvider } from '../../../utils/loader';
+import BookNowPage from '../pages/superAdmin/book-now-page';
 
 const IndexPage = lazy(() => import('src/components/pages/app'));
 const UserPage = lazy(() => import('src/components/pages/user'));
@@ -30,6 +31,8 @@ const PmsComplaintsPage = lazy(() => import('src/components/pages/superAdmin/com
 const BulkOperation = lazy(() => import('src/components/pages/admin/bulk-page'));
 const AvailabilityPage = lazy(() => import('src/components/pages/admin/availability-page'));
 const BookingCreate = lazy(() => import('src/components/pages/admin/booking_createForm'));
+const BookingPage = lazy(() => import('src/components/pages/superAdmin/book-now-page'));
+
 
 export default function Router() {
   const routes = useRoutes([
@@ -62,6 +65,8 @@ export default function Router() {
         { path: 'your-bookings', element: <SuperAdminBookingsView /> },
         { path: 'all-users', element: <UserDetails /> },
         { path: 'all-reviews', element: <AllReviews /> },
+        { path: 'book-now-page/:hotelId', element: <BookNowPage /> },
+
         { path: 'complaints', element: <ComplaintPage /> },
         { path: 'hotels/availability', element: <AvailabilityPage /> },
         { path: 'apply-coupon', element: <CouponPage /> },

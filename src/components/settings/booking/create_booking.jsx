@@ -24,6 +24,7 @@ import Hotel from './hotel';
 
 export default function CreateBooking({ handleBack }) {
   const dispatch = useDispatch();
+  const [showHotel, setShowHotel] = useState(false);
   const foundUser = useSelector((state) => state.user.userData);
   const loading = useSelector((state) => state.user.loading);
   const error = useSelector((state) => state.user.error);
@@ -38,6 +39,7 @@ export default function CreateBooking({ handleBack }) {
       setSnackbarOpen(true);
       return;
     }
+    setShowHotel(false);
     dispatch(findUser(mobile));
   };
 
@@ -48,42 +50,18 @@ export default function CreateBooking({ handleBack }) {
     }
   }, [error]);
 
-  // Function to store credentials (mobile and password)
-  const storeCredentials = (mobile, password) => {
-    sessionStorage.setItem('bmn', mobile);
-    sessionStorage.setItem('bp', password);
-  };
-
-  const handleCreateBooking = () => {
-    if (!foundUser || foundUser.length === 0) {
-      setSnackbarMessage('No user found. Please try again.');
-      setSnackbarOpen(true);
-      return;
-    }
-
-    // Retrieve mobile and password for the first user found (if multiple users exist)
-    const user = foundUser[0]; // Assuming the first user is the one we want to create the booking for
-    const password = user?.password;
-
-    if (password) {
-      // Store credentials in sessionStorage
-      storeCredentials(user?.mobile, password);
-      setSnackbarMessage('Booking created successfully!');
-      setSnackbarOpen(true);
-      // Continue with booking creation logic...
-    } else {
-      setSnackbarMessage('Password is missing. Cannot create booking.');
-      setSnackbarOpen(true);
-    }
-  };
-
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
 
+  const handleSelectedUserBooking = ({ mobile, userId }) => {
+    sessionStorage.setItem("subn", mobile);
+    sessionStorage.setItem("subid", userId);
+    setShowHotel(true); // Show hotel view after making booking
+  };
+
   return (
     <Container maxWidth="lg">
-      {/* Go back button */}
       <Button variant="outlined" color="primary" onClick={handleBack} sx={{ margin: 2 }}>
         Go Back
       </Button>
@@ -92,43 +70,40 @@ export default function CreateBooking({ handleBack }) {
         Create Your Booking
       </Typography>
 
-      {/* Mobile Number Input and Find User Button */}
       <Box sx={{ mb: 3 }}>
-        <FormControl fullWidth variant="outlined">
-          <InputLabel id="mobile-input-label">Enter Existing User Number</InputLabel>
-          <Input
-            type="text"
-            value={mobile}
-            onChange={(e) => setMobile(e.target.value)}
-            fullWidth
-          />
-        </FormControl>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleFindUser}
-          fullWidth
-          sx={{ mt: 2 }}
-        >
-          {loading ? 'Searching...' : 'Find User'}
-        </Button>
+        {/* Flex container to align input and button in the same line */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <FormControl fullWidth variant="outlined" sx={{ flex: 1 }}>
+            <InputLabel id="mobile-input-label">Enter Existing User Number</InputLabel>
+            <Input
+              type="text"
+              value={mobile}
+              onChange={(e) => setMobile(e.target.value)}
+              fullWidth
+              sx={{ minWidth: 200 }} // Minimum width for the input field
+            />
+          </FormControl>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleFindUser}
+            sx={{ height: '100%', minWidth: 150 }} // Set a consistent minWidth for the button
+            disabled={loading}
+          >
+            {loading ? 'Finding...' : 'Find User'}
+          </Button>
+        </Box>
       </Box>
 
-      {/* Conditionally render user details table or message */}
-      {loading ? (
-        <Box sx={{ textAlign: 'center', mt: 3 }}>
-          <Typography variant="h6" color="textSecondary">
-            Searching for user...
-          </Typography>
-        </Box>
-      ) : foundUser && foundUser.length > 0 ? (
+      {/* Display found user details and booking options */}
+      {foundUser && Array.isArray(foundUser) && foundUser.length > 0 && !showHotel ? (
         <Box sx={{ mb: 3 }}>
           <TableContainer
             component={Paper}
             sx={{
               mb: 2,
-              border: '1px solid #ccc', // Border around the table
-              borderRadius: '8px', // Optional: rounded corners for the border
+              border: '1px solid #ccc',
+              borderRadius: '8px',
             }}
           >
             <Table sx={{ minWidth: 650 }} aria-label="user details table">
@@ -138,6 +113,7 @@ export default function CreateBooking({ handleBack }) {
                   <TableCell align="right">Mobile</TableCell>
                   <TableCell align="right">Email</TableCell>
                   <TableCell align="right">Password</TableCell>
+                  <TableCell align="right">Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -147,27 +123,27 @@ export default function CreateBooking({ handleBack }) {
                     <TableCell align="right">{item?.mobile}</TableCell>
                     <TableCell align="right">{item?.email}</TableCell>
                     <TableCell align="right">{item?.password}</TableCell>
+                    <TableCell align="right">
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        onClick={() => handleSelectedUserBooking(item)}
+                      >
+                        Make booking
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
-
-          {/* Create Booking Button */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant="contained"
-              color="secondary"
-              sx={{ width: '40%' }} // 40% width
-              size="small" // Smaller button
-              onClick={handleCreateBooking}
-            >
-              Create Booking for this User
-            </Button>
-          </Box>
-          <Hotel/>
         </Box>
-      ) : (
+      ) : null}
+
+      {showHotel && <Hotel />} {/* Show the Hotel component only after booking is selected */}
+
+      {/* If no data found and not loading */}
+      {(!foundUser || foundUser.length === 0) && !loading && !showHotel && (
         <Box
           sx={{
             textAlign: 'center',
@@ -184,7 +160,7 @@ export default function CreateBooking({ handleBack }) {
         </Box>
       )}
 
-      {/* Snackbar for Error or Success Messages */}
+      {/* Snackbar for error/success messages */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
@@ -195,7 +171,7 @@ export default function CreateBooking({ handleBack }) {
             <CloseIcon fontSize="small" />
           </IconButton>
         }
-        sx={{ bottom: 80 }} // Adjust the bottom margin for better visibility
+        sx={{ bottom: 80 }}
       />
     </Container>
   );
