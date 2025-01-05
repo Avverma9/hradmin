@@ -5,8 +5,8 @@ import { Carousel } from "react-bootstrap";
 import { getHotelById } from "src/components/redux/reducers/hotel";
 import BookingDetails from "./bookingDetails";
 import Food from "./foods";
-import Rooms from "./rooms"; // Import Rooms component
-import "./BookNow.css"; // Import the CSS file for styling
+import Rooms from "./rooms";
+import "./BookNow.css";
 import { Typography } from "@mui/material";
 
 const BookNow = () => {
@@ -30,17 +30,29 @@ const BookNow = () => {
 
   useEffect(() => {
     if (hotelById && hotelById.rooms && hotelById.rooms.length > 0) {
+      // Set first room as default selection
+      if (selectedRooms.length === 0) {
+        setSelectedRooms([hotelById.rooms[0]]);
+      }
+
       const roomPrice = hotelById.rooms[0]?.price || 0;
       let updatedPrice = roomPrice * numRooms;
 
-      // Add price for selected foods
       selectedFoods.forEach((food) => {
         updatedPrice += food.price * food.quantity;
       });
 
       setTotalPrice(updatedPrice);
     }
-  }, [hotelById, numRooms, selectedFoods]);
+  }, [hotelById, numRooms, selectedFoods, selectedRooms]);
+
+  useEffect(() => {
+    // If no room is selected, pick a random room
+    if (selectedRooms.length === 0 && hotelById?.rooms?.length > 0) {
+      const randomRoom = hotelById.rooms[Math.floor(Math.random() * hotelById.rooms.length)];
+      setSelectedRooms([randomRoom]);
+    }
+  }, [hotelById, selectedRooms]);
 
   const handleDateChange = (e) => {
     const { name, value } = e.target;
@@ -56,27 +68,28 @@ const BookNow = () => {
     setGuests(Number(e.target.value));
   };
 
-  const handleRoomSelect = (room) => {
-    if (!selectedRooms.includes(room)) {
-      setSelectedRooms([...selectedRooms, room]);
-    } else {
-      setSelectedRooms(selectedRooms.filter((r) => r !== room));
-    }
-  };
-
   const handleFoodSelect = (food) => {
     if (!selectedFoods.some((item) => item.name === food.name)) {
-      setSelectedFoods([...selectedFoods, { ...food, quantity: 1 }]);
+        setSelectedFoods([...selectedFoods, { ...food, quantity: 1 }]);
     } else {
-      setSelectedFoods(
-        selectedFoods.map((item) =>
-          item.name === food.name
-            ? { ...item, quantity: item.quantity + 1 }
-            : item,
-        ),
-      );
+        setSelectedFoods(
+            selectedFoods.map((item) =>
+                item.name === food.name
+                    ? { ...item, quantity: item.quantity + 1 }
+                    : item,
+            ),
+        );
     }
-  };
+};
+
+const handleRoomSelect = (room) => {
+    if (!selectedRooms.some((r) => r.type === room.type)) {
+        setSelectedRooms([...selectedRooms, room]);
+    } else {
+        setSelectedRooms(selectedRooms.filter((r) => r.type !== room.type));
+    }
+};
+
 
   const handleFoodQuantityChange = (food, quantity) => {
     const updatedFoods = selectedFoods.map((item) =>
@@ -168,8 +181,8 @@ const BookNow = () => {
             checkOutDate={checkOutDate}
             guests={guests}
             numRooms={numRooms}
-            selectedRooms={selectedRooms}
-            selectedFoods={selectedFoods}
+            room={selectedRooms}
+            food={selectedFoods}
             totalPrice={totalPrice}
             onBooking={handleBooking}
           />
@@ -178,17 +191,17 @@ const BookNow = () => {
       <div className="food-cards">
         <Typography
           style={{
-            background: "linear-gradient(45deg, #6a11cb, #2575fc)", // Gradient background
-            padding: "10px 20px", // Increased padding for a smoother feel
-            borderRadius: "12px", // Softer rounded corners
-            fontSize: "14px", // Larger font size
-            color: "#fff", // White text for contrast
-            textAlign: "center", // Centered text
-            fontFamily: "Helvetica, Arial, sans-serif", // Clean and modern font
-            boxShadow: "0 6px 12px rgba(0, 0, 0, 0.1)", // More prominent shadow
-            letterSpacing: "1px", // Slight letter spacing for a cleaner look
-            fontWeight: "bold", // Bolder text for emphasis
-            transition: "all 0.3s ease-in-out", // Smooth transition for hover effects
+            background: "linear-gradient(45deg, #6a11cb, #2575fc)",
+            padding: "10px 20px",
+            borderRadius: "12px",
+            fontSize: "14px",
+            color: "#fff",
+            textAlign: "center",
+            fontFamily: "Helvetica, Arial, sans-serif",
+            boxShadow: "0 6px 12px rgba(0, 0, 0, 0.1)",
+            letterSpacing: "1px",
+            fontWeight: "bold",
+            transition: "all 0.3s ease-in-out",
           }}
         >
           Select Foods
@@ -200,17 +213,17 @@ const BookNow = () => {
       <div className="room-cards">
         <Typography
           style={{
-            background: "linear-gradient(45deg, #6a11cb, #2575fc)", // Gradient background
-            padding: "10px 20px", // Increased padding for a smoother feel
-            borderRadius: "12px", // Softer rounded corners
-            fontSize: "14px", // Larger font size
-            color: "#fff", // White text for contrast
-            textAlign: "center", // Centered text
-            fontFamily: "Helvetica, Arial, sans-serif", // Clean and modern font
-            boxShadow: "0 6px 12px rgba(0, 0, 0, 0.1)", // More prominent shadow
-            letterSpacing: "1px", // Slight letter spacing for a cleaner look
-            fontWeight: "bold", // Bolder text for emphasis
-            transition: "all 0.3s ease-in-out", // Smooth transition for hover effects
+            background: "linear-gradient(45deg, #6a11cb, #2575fc)",
+            padding: "10px 20px",
+            borderRadius: "12px",
+            fontSize: "14px",
+            color: "#fff",
+            textAlign: "center",
+            fontFamily: "Helvetica, Arial, sans-serif",
+            boxShadow: "0 6px 12px rgba(0, 0, 0, 0.1)",
+            letterSpacing: "1px",
+            fontWeight: "bold",
+            transition: "all 0.3s ease-in-out",
           }}
         >
           Select Rooms
@@ -219,7 +232,6 @@ const BookNow = () => {
         <Rooms
           rooms={hotelById?.rooms}
           onRoomSelect={handleRoomSelect}
-          selectedRooms={selectedRooms}
         />
       </div>
     </div>

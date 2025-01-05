@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import "./Hotel.css"; 
+import "./hotel.css"; 
 import { useDispatch, useSelector } from "react-redux";
 import { getAllHotels } from "src/components/redux/reducers/hotel";
 import { Typography } from "@mui/material";
