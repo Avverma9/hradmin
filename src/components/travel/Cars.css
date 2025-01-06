@@ -1,0 +1,276 @@
+/* General Page Styling */
+.cars-page {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f4f7f6;
+    padding: 30px;
+    box-sizing: border-box;
+    color: #333;
+}
+
+/* Header Styling */
+.cars-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.cars-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.cars-header p {
+    font-size: 16px;
+    color: #7f8c8d;
+}
+
+/* General Container */
+.cars-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* Individual Car Card */
+.car-card {
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Softer shadow for depth */
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
+    width: 100%; /* Ensure it takes up the full available space */
+}
+
+.car-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Header Section Inside Car Card */
+.car-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.car-safety {
+    color: #4caf50;
+    font-weight: 600;
+}
+
+.car-recommended-badge {
+    background-color: #ff9800;
+    color: white;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 8px;
+}
+
+/* Content Section Inside Car Card */
+.car-content {
+    display: flex;
+    gap: 25px;
+    align-items: center;
+}
+
+.car-image {
+    width: 150px;
+    height: 100px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.car-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex-grow: 1;
+}
+
+.car-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+}
+
+.fuel-type {
+    font-size: 14px;
+    color: #757575;
+}
+
+.seats-and-luggage {
+    font-size: 14px;
+    color: #555;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.car-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.car-badge {
+    background: #e8f5e9;
+    color: #4caf50;
+    padding: 7px 12px;
+    border-radius: 18px;
+    font-size: 13px;
+}
+
+/* Footer Section Inside Car Card */
+.car-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+.car-price {
+    font-size: 20px;
+    font-weight: 700;
+    color: #000;
+}
+
+.book-now {
+    background-color: #ff5722;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.book-now:hover {
+    background-color: #e64a19;
+}
+
+/* Upper header search ui  */
+
+.car-upper-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    background: #00aaff;
+    color: #fff;
+}
+
+.car-radio-buttons label {
+    margin-right: 15px;
+    font-size: 14px;
+}
+
+.car-radio-buttons input {
+    margin-right: 5px;
+}
+
+.car-header-left .car-dropdowns select {
+    margin-right: 10px;
+    padding: 5px;
+    font-size: 14px;
+}
+
+.car-header-right input {
+    margin-right: 10px;
+    padding: 5px;
+}
+
+.car-header-right button {
+    background: #ff5722;
+    color: #fff;
+    padding: 8px 12px;
+    border: none;
+    cursor: pointer;
+}
+
+/* Main Layout */
+.car-layout {
+    display: flex;
+    padding: 20px;
+    gap: 20px;
+}
+
+/* Upper header search ui finished */
+
+/* Sidebar */
+.car-sidebar {
+    width: 260px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.car-filter {
+    margin-bottom: 25px;
+}
+
+.car-filter h3 {
+    font-size: 18px;
+    margin-bottom: 12px;
+    font-weight: 700;
+    color: #333;
+}
+
+.car-filter label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 7px;
+}
+
+/* Cars Section */
+.cars-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* Ensure car cards are displayed vertically in one column */
+.car-card {
+    width: 100%; /* Makes sure it stretches across the full available width */
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .cars-header h1 {
+        font-size: 28px;
+    }
+
+    .cars-header p {
+        font-size: 14px;
+    }
+
+    .car-layout {
+        flex-direction: column;
+    }
+
+    .car-sidebar {
+        width: 100%;
+        margin-bottom: 30px;
+    }
+
+    .car-image {
+        width: 150px;
+    }
+
+    .cars-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+}

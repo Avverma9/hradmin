@@ -1,9 +1,20 @@
 import React from 'react';
 import { Card, CardContent, CardMedia, Typography, Button, Grid, Box } from '@mui/material';
 
-export default function Rooms({ rooms = [], onRoomSelect }) {
+export default function Rooms({ rooms = [], onRoomSelect, divRef, selectedRooms }) {
+    const handleRoomClick = (room) => {
+        // Check if the room is already selected
+        if (selectedRooms.some((r) => r.roomId === room.roomId)) {
+            // Remove the room if it's selected
+            onRoomSelect(room, true); // true indicates removal
+        } else {
+            // Add the room if it's not selected
+            onRoomSelect(room, false); // false indicates addition
+        }
+    };
+
     return (
-        <Box sx={{ padding: 1 }}>
+        <Box sx={{ padding: 1 }} ref={divRef}>
             {rooms.length === 0 ? (
                 <Typography variant="h6">No rooms available</Typography>
             ) : (
@@ -45,12 +56,10 @@ export default function Rooms({ rooms = [], onRoomSelect }) {
                                     variant="contained"
                                     color="primary"
                                     size="small"
-                                    onClick={() => {
-                                        onRoomSelect(room);
-                                    }}
+                                    onClick={() => handleRoomClick(room)}
                                     sx={{ margin: '0 4px 8px', alignSelf: 'center' }}
                                 >
-                                    Select
+                                    {selectedRooms.some((r) => r.roomId === room.roomId) ? 'Remove' : 'Select'}
                                 </Button>
                             </Card>
                         </Grid>

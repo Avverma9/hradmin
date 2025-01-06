@@ -1,33 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import './BookingDetails.css';
 
-const BookingDetails = ({ food, room }) => {
-    const [startDate, setStartDate] = useState(new Date());
-    const [endDate, setEndDate] = useState(new Date());
+const BookingDetails = ({ food, room, hotelName, hotelEmail, hotelOwnerName, destination }) => {
+    const [checkInDate, setCheckInDate] = useState(new Date());
+    const [checkOutDate, setCheckOutDate] = useState(new Date());
+    const [numRooms, setNumRooms] = useState(1);
+    const [guests, setGuests] = useState(1);
+    const [totalPrice, setTotalPrice] = useState(0);
     const [showDatePickers, setShowDatePickers] = useState(false);
     const [showRoomGuestPicker, setShowRoomGuestPicker] = useState(false);
-    const [roomCount, setRoomCount] = useState(1);
-    const [guestCount, setGuestCount] = useState(1);
 
     // Ensure food and room are arrays, and get the latest item
     const foodItems = Array.isArray(food) ? food[food.length - 1] : food;
     const roomItems = Array.isArray(room) ? room[room.length - 1] : room;
 
-    const handleStartDateChange = (date) => {
-        setStartDate(date);
-        if (date > endDate) setEndDate(date);
-    };
-
-    const handleEndDateChange = (date) => {
-        setEndDate(date);
-    };
-
+    // Calculate total price based on room and food
     const calculateTotalPrice = () => {
         const foodPrice = parseFloat(foodItems?.price || 0);
         const roomPrice = parseFloat(roomItems?.price || 0);
-        return foodPrice + roomPrice;
+        return (foodPrice + roomPrice) * numRooms * guests; // Assuming the price is multiplied by rooms and guests
+    };
+
+    const handleBooking = () => {
+        const foodDetails = {
+            name: foodItems?.name,
+            price: foodItems?.price,
+            quantity: foodItems?.quantity,
+        };
+
+        const roomDetails = {
+            type: roomItems?.type,
+            bedTypes: roomItems?.bedTypes,
+            price: roomItems?.price,
+        };
+
+        const bookingData = {
+            checkInDate,
+            checkOutDate,
+            guests,
+            numRooms,
+            foodDetails,
+            roomDetails,
+            price: totalPrice,
+            hotelName,
+            hotelEmail,
+            hotelOwnerName,
+            destination,
+        };
+
+        console.log(bookingData);
+    };
+
+    const handleStartDateChange = (date) => {
+        setCheckInDate(date);
+        if (date > checkOutDate) setCheckOutDate(date);
+    };
+
+    const handleEndDateChange = (date) => {
+        setCheckOutDate(date);
     };
 
     return (
@@ -35,7 +67,6 @@ const BookingDetails = ({ food, room }) => {
             <div className="login-banner">
                 <span className="login-text">Booking Summary</span>
             </div>
-
             <div className="price-summary">
                 <div className="price-header">
                     <span className="final-price">₹{roomItems?.price}</span>
@@ -47,8 +78,8 @@ const BookingDetails = ({ food, room }) => {
                 <div className="booking-info">
                     <div className="date-display" onClick={() => setShowDatePickers(true)}>
                         <span className="date-text">
-                            {startDate
-                                ? startDate.toLocaleDateString('en-IN', {
+                            {checkInDate
+                                ? checkInDate.toLocaleDateString('en-IN', {
                                       weekday: 'short',
                                       day: 'numeric',
                                       month: 'short',
@@ -57,8 +88,8 @@ const BookingDetails = ({ food, room }) => {
                         </span>
                         <span> - </span>
                         <span className="date-text">
-                            {endDate
-                                ? endDate.toLocaleDateString('en-IN', {
+                            {checkOutDate
+                                ? checkOutDate.toLocaleDateString('en-IN', {
                                       weekday: 'short',
                                       day: 'numeric',
                                       month: 'short',
@@ -68,18 +99,16 @@ const BookingDetails = ({ food, room }) => {
                     </div>
 
                     <div className="room-guest-display" onClick={() => setShowRoomGuestPicker(!showRoomGuestPicker)}>
-                        <span className="room-guest-text">{`${roomCount} Room${roomCount > 1 ? 's' : ''}, ${guestCount} Guest${guestCount > 1 ? 's' : ''}`}</span>
+                        <span className="room-guest-text">{`${numRooms} Room${numRooms > 1 ? 's' : ''}, ${guests} Guest${guests > 1 ? 's' : ''}`}</span>
                     </div>
                 </div>
 
                 <div className="room-type">
                     <span>{roomItems?.type}</span>
-                    <button className="edit-button">✎</button>
                 </div>
                 {foodItems && (
                     <div className="food-type">
-                        <span>{foodItems?.foodType}</span>
-                        <button className="edit-button">✎</button>
+                        <span>{foodItems?.name}</span>
                     </div>
                 )}
 
@@ -93,7 +122,6 @@ const BookingDetails = ({ food, room }) => {
 
                 <span className="wizard-benefits">Get additional benefits up to ₹1000</span>
             </div>
-
             <div className="price-breakdown">
                 <div className="savings">
                     <span>Your Savings</span>
@@ -112,8 +140,7 @@ const BookingDetails = ({ food, room }) => {
                 </div>
                 <span className="taxes-info">Including taxes & fees</span>
             </div>
-
-            <button className="continue-button">Continue to Book</button>
+            <button className="continue-button" onClick={handleBooking}>Continue to Book</button>
 
             {showDatePickers && (
                 <div className="date-pickers-overlay">
@@ -125,11 +152,11 @@ const BookingDetails = ({ food, room }) => {
                         <div className="date-picker-wrapper">
                             <label>Check-in</label>
                             <DatePicker
-                                selected={startDate}
+                                selected={checkInDate}
                                 onChange={handleStartDateChange}
                                 selectsStart
-                                startDate={startDate}
-                                endDate={endDate}
+                                startDate={checkInDate}
+                                endDate={checkOutDate}
                                 minDate={new Date()}
                                 inline
                             />
@@ -137,12 +164,12 @@ const BookingDetails = ({ food, room }) => {
                         <div className="date-picker-wrapper">
                             <label>Check-out</label>
                             <DatePicker
-                                selected={endDate}
+                                selected={checkOutDate}
                                 onChange={handleEndDateChange}
                                 selectsEnd
-                                startDate={startDate}
-                                endDate={endDate}
-                                minDate={startDate}
+                                startDate={checkInDate}
+                                endDate={checkOutDate}
+                                minDate={checkInDate}
                                 inline
                             />
                         </div>
@@ -155,18 +182,18 @@ const BookingDetails = ({ food, room }) => {
                     <div className="picker-header">
                         <span>Rooms</span>
                         <div className="counter">
-                            <button onClick={() => setRoomCount(Math.max(1, roomCount - 1))}>-</button>
-                            <span>{roomCount}</span>
-                            <button onClick={() => setRoomCount(roomCount + 1)}>+</button>
+                            <button onClick={() => setNumRooms(Math.max(1, numRooms - 1))}>-</button>
+                            <span>{numRooms}</span>
+                            <button onClick={() => setNumRooms(numRooms + 1)}>+</button>
                         </div>
                     </div>
 
                     <div className="picker-header">
                         <span>Guests</span>
                         <div className="counter">
-                            <button onClick={() => setGuestCount(Math.max(1, guestCount - 1))}>-</button>
-                            <span>{guestCount}</span>
-                            <button onClick={() => setGuestCount(guestCount + 1)}>+</button>
+                            <button onClick={() => setGuests(Math.max(1, guests - 1))}>-</button>
+                            <span>{guests}</span>
+                            <button onClick={() => setGuests(guests + 1)}>+</button>
                         </div>
                     </div>
 

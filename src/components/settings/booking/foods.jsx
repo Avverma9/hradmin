@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardMedia, Button, Typography, Grid, Box } from '@mui/material';
 
-export default function Food({ foodData, onFoodSelect }) {
+export default function Food({ foodData, onFoodSelect, selectedFoods }) {
     const foodItems = Array.isArray(foodData) && foodData.length > 0 ? foodData : [];
 
     return (
@@ -46,7 +46,7 @@ export default function Food({ foodData, onFoodSelect }) {
                                     }}
                                     sx={{ margin: '0 4px 8px', alignSelf: 'center' }}
                                 >
-                                    Select
+                                    {selectedFoods.some((r) => r.foodId === foodItem.foodId) ? 'Remove' : 'Select'}
                                 </Button>
                             </Card>
                         </Grid>
