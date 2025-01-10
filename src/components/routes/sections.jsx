@@ -30,6 +30,9 @@ const BulkOperation = lazy(() => import('src/components/pages/admin/bulk-page'))
 const AvailabilityPage = lazy(() => import('src/components/pages/admin/availability-page'));
 const BookingCreate = lazy(() => import('src/components/pages/admin/booking_createForm'));
 const CarsPage = lazy(() => import('src/components/pages/travel/cars-page'));
+const CarFormPage = lazy(() => import('src/components/pages/travel/cars-form'));
+const CarOwnerFormPage = lazy(() => import('src/components/pages/travel/car-owner-form'));
+// const CarFormPage = lazy(() => import('src/components/pages/travel/cars-page'));
 
 export default function Router() {
     const routes = useRoutes([
@@ -64,7 +67,9 @@ export default function Router() {
                 { path: 'all-reviews', element: <AllReviews /> },
                 { path: 'book-now-page/:hotelId', element: <BookNowPage /> },
                 { path: 'your-cars', element: <CarsPage /> },
-
+                // { path: 'cars-owner', element: <CarsPage /> },
+                { path: 'add-an-car-owner', element: <CarOwnerFormPage /> },
+                { path: 'add-a-car', element: <CarFormPage /> },
                 { path: 'complaints', element: <ComplaintPage /> },
                 { path: 'hotels/availability', element: <AvailabilityPage /> },
                 { path: 'apply-coupon', element: <CouponPage /> },

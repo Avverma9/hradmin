@@ -99,7 +99,10 @@ export const allAmenities = [
 export const paths = [
     { title: 'Dashboard', path: '/dashboard', role: 'PMS' },
     { title: 'Messenger', path: '/messenger', role: 'PMS' },
-    { title: 'Cars', path: '/your-cars', role: 'Developer' },
+    { title: 'Cars', path: '/your-cars', role: 'TMS' },
+    { title: 'Car Owner', path: '/cars-owner', role: 'TMS' },
+    { title: 'Add Car', path: '/add-a-car', role: 'TMS' },
+    { title: 'Add Owner', path: '/add-an-car-owner', role: 'TMS' },
     { title: 'Your Bookings', path: '/your-bookings', role: 'PMS' },
     { title: 'Bookings', path: '/all-bookings', role: 'Admin' },
     { title: 'Create Booking', path: '/booking-creation', role: 'Admin' },

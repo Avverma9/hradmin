@@ -58,6 +58,21 @@ const getNavConfig = async () => {
                     path: '/your-cars',
                     icon: icons.travel,
                 },
+                {
+                    title: 'Car Owner',
+                    path: '/cars-owner',
+                    icon: icons.travel,
+                },
+                {
+                    title: 'Add Car',
+                    path: '/add-a-car',
+                    icon: icons.travel,
+                },
+                {
+                    title: 'Add Owner',
+                    path: '/add-an-car-owner',
+                    icon: icons.travel,
+                },
             ],
         },
         {
