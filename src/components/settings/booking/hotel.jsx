@@ -18,7 +18,7 @@ const Hotel = () => {
     };
 
     const handleBookNow = (hotelId) => {
-        localStorage.setItem(hotelId, 'subhotelId');
+        localStorage.setItem('subhotelId', hotelId);
         window.location.href = `/book-now-page/${hotelId}`;
     };
 

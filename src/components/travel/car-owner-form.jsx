@@ -1,37 +1,92 @@
 import React, { useState } from 'react';
-import { Person, AddCircle, Phone, Email, Home, Lock, PhotoCamera } from '@mui/icons-material';
+import { Person, Phone, Email, Home, Lock, PhotoCamera } from '@mui/icons-material';
 import { TextField, Button, Card, CardContent, Typography, Box, InputAdornment } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { addCarOwner } from '../redux/reducers/travel/carOwner';
+
 export default function CarOwner() {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        mobile: '',
+        email: '',
+        dl: '',
+        dlImage: null,
+        city: '',
+        state: '',
+        address: '',
+        pinCode: '',
+        images: null,
+    });
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prevData) => ({
+            ...prevData,
+            [name]: value,
+        }));
+    };
+
+    const handleImage = (e) => {
+        const file = e.target.files[0];
+        setFormData((prevData) => ({
+            ...prevData,
+            images: file,
+        }));
+    };
+
+    const handleDlImage = (e) => {
+        const file = e.target.files[0];
+        setFormData((prevData) => ({
+            ...prevData,
+            dlImage: file,
+        }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        try {
+            const data = new FormData();
+            for (const [key, value] of Object.entries(formData)) {
+                if (value !== null) {
+                    data.append(key, value);
+                }
+            }
+            setLoading(true);
+
+            dispatch(addCarOwner(data));
+            setLoading(false);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     const handleBack = () => {
         navigate(-1);
     };
+
     return (
         <Card sx={{ width: 650, margin: '0 auto', padding: 3 }}>
-            {' '}
-            {/* Increased width for the form */}
-            <Button
-                variant="outlined"
-                color="primary"
-                onClick={handleBack}
-                sx={{ margin: 2 }} // Only margin for the back button
-            >
+            <Button variant="outlined" color="primary" onClick={handleBack} sx={{ margin: 2 }}>
                 Go Back
             </Button>
             <CardContent>
                 <Typography variant="h5" gutterBottom textAlign="center">
                     Add new owner
                 </Typography>
-                <form onSubmit={createUser}>
+                <form onSubmit={handleSubmit}>
                     <TextField
                         label="User Name"
                         variant="outlined"
                         fullWidth
-                        name="userName"
+                        name="name"
                         value={formData.name}
                         onChange={handleInputChange}
                         margin="normal"
+                        required
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
@@ -46,9 +101,10 @@ export default function CarOwner() {
                         fullWidth
                         name="mobile"
                         value={formData.mobile}
-                        onChange={handleMobileChange}
+                        onChange={handleInputChange}
                         margin="normal"
                         inputProps={{ maxLength: 10 }}
+                        required
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
@@ -63,6 +119,7 @@ export default function CarOwner() {
                         label="Email"
                         variant="outlined"
                         fullWidth
+                        required
                         name="email"
                         value={formData.email}
                         onChange={handleInputChange}
@@ -78,12 +135,12 @@ export default function CarOwner() {
                         error={!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(formData.email)}
                     />
                     <TextField
-                        label="Password"
-                        type="password"
+                        label="Driver's License Number"
                         variant="outlined"
                         fullWidth
-                        name="password"
-                        value={formData.password}
+                        required
+                        name="dl"
+                        value={formData.dl}
                         onChange={handleInputChange}
                         margin="normal"
                         InputProps={{
@@ -93,8 +150,53 @@ export default function CarOwner() {
                                 </InputAdornment>
                             ),
                         }}
-                        helperText="Password must be at least 8 characters"
-                        error={formData.password.length < 8}
+                        helperText="Driver's license number"
+                    />
+                    <Box sx={{ marginBottom: 2 }}>
+                        <input type="file" id="dlImage" required accept="image/*" onChange={handleDlImage} style={{ display: 'none' }} />
+                        <label htmlFor="dlImage">
+                            <Button
+                                variant="outlined"
+                                color="primary"
+                                component="span"
+                                fullWidth
+                                sx={{ padding: '10px', textAlign: 'center' }}
+                            >
+                                {formData.dlImage ? "Change Driver's License Image" : "Select Driver's License Image"}
+                            </Button>
+                        </label>
+                        {formData.dlImage && (
+                            <Box sx={{ marginTop: 2, textAlign: 'center' }}>
+                                <img
+                                    src={URL.createObjectURL(formData.dlImage)}
+                                    alt="Driver's License Preview"
+                                    style={{
+                                        width: '100px',
+                                        height: '100px',
+                                        objectFit: 'cover',
+                                        borderRadius: '8px',
+                                    }}
+                                />
+                            </Box>
+                        )}
+                    </Box>
+                    <TextField
+                        label="City"
+                        variant="outlined"
+                        fullWidth
+                        name="city"
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        margin="normal"
+                    />
+                    <TextField
+                        label="State"
+                        variant="outlined"
+                        fullWidth
+                        name="state"
+                        value={formData.state}
+                        onChange={handleInputChange}
+                        margin="normal"
                     />
                     <TextField
                         label="Address"
@@ -112,8 +214,24 @@ export default function CarOwner() {
                             ),
                         }}
                     />
+                    <TextField
+                        label="Pin Code"
+                        variant="outlined"
+                        fullWidth
+                        name="pinCode"
+                        value={formData.pinCode}
+                        onChange={handleInputChange}
+                        margin="normal"
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <Home />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
                     <Box sx={{ marginBottom: 2 }}>
-                        <input type="file" id="profileImage" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                        <input type="file" id="profileImage" accept="image/*" onChange={handleImage} style={{ display: 'none' }} />
                         <label htmlFor="profileImage">
                             <Button
                                 variant="outlined"
@@ -148,14 +266,16 @@ export default function CarOwner() {
                         fullWidth
                         sx={{ marginTop: 2, padding: '10px' }}
                         disabled={
-                            !formData.userName ||
+                            !formData.name ||
                             formData.mobile.length !== 10 ||
                             !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(formData.email) ||
-                            formData.password.length < 8 ||
-                            !formData.address
+                            formData.dl.length < 8 ||
+                            !formData.address ||
+                            !formData.city ||
+                            !formData.state
                         }
                     >
-                        Create User
+                        {loading ? 'Submitting...' : 'Submit'}
                     </Button>
                 </form>
             </CardContent>

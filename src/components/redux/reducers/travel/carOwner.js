@@ -3,9 +3,9 @@ import axios from 'axios';
 import { localUrl, notify, token } from '../../../../../utils/util';
 import { toast } from 'react-toastify';
 
-export const addCar = createAsyncThunk('car/addCar', async (data, { rejectWithValue }) => {
+export const addCarOwner = createAsyncThunk('owner/addCarOwner', async (data, { rejectWithValue }) => {
     try {
-        const response = await axios.post(`${localUrl}/travel/add-a-car`, data, {
+        const response = await axios.post(`${localUrl}/travel/add-an-owner`, data, {
             headers: {
                 Authorization: token,
             },
@@ -19,9 +19,9 @@ export const addCar = createAsyncThunk('car/addCar', async (data, { rejectWithVa
     }
 });
 
-export const getCarById = createAsyncThunk('car/getCarById', async (id, { rejectWithValue }) => {
+export const getCarOwnerById = createAsyncThunk('owner/getCarOwnerById', async (id, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`${localUrl}/travel/get-a-car/${id}`, {
+        const response = await axios.get(`${localUrl}/travel/get-an-owner/${id}`, {
             headers: {
                 Authorization: token,
             },
@@ -35,24 +35,9 @@ export const getCarById = createAsyncThunk('car/getCarById', async (id, { reject
     }
 });
 
-export const getAllCars = createAsyncThunk('car/getAll', async (_, { rejectWithValue }) => {
+export const getAllOwner = createAsyncThunk('owner/getAllOwner', async (_, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`${localUrl}/travel/get-all-car`, {
-            headers: {
-                Authorization: token,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        const errorMessage = error.response?.data?.message || error.message;
-        toast.error(`Error: ${errorMessage}`);
-        return rejectWithValue(errorMessage);
-    }
-});
-
-export const deleteCar = createAsyncThunk('car/deleteCar', async (id, { rejectWithValue }) => {
-    try {
-        const response = await axios.delete(`${localUrl}/travel/delete-a-car/${id}`, {
+        const response = await axios.get(`${localUrl}/travel/get-all-owner`, {
             headers: {
                 Authorization: token,
             },
@@ -66,9 +51,9 @@ export const deleteCar = createAsyncThunk('car/deleteCar', async (id, { rejectWi
     }
 });
 
-export const updateCar = createAsyncThunk('car/updateCar', async ({ id, data }, { rejectWithValue }) => {
+export const deleteCarOwner = createAsyncThunk('owner/deleteCarOwner', async (id, { rejectWithValue }) => {
     try {
-        const response = await axios.patch(`${localUrl}/travel/update-a-car/${id}`, data, {
+        const response = await axios.delete(`${localUrl}/travel/delete-an-owner/${id}`, {
             headers: {
                 Authorization: token,
             },
@@ -82,8 +67,24 @@ export const updateCar = createAsyncThunk('car/updateCar', async ({ id, data }, 
     }
 });
 
-const carSlice = createSlice({
-    name: 'car',
+export const updateCarOwner = createAsyncThunk('owner/updateCarOwner', async ({ id, data }, { rejectWithValue }) => {
+    try {
+        const response = await axios.patch(`${localUrl}/travel/update-an-owner/${id}`, data, {
+            headers: {
+                Authorization: token,
+            },
+        });
+        notify(response?.status);
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+});
+
+const ownerSlice = createSlice({
+    name: 'onwer',
     initialState: {
         data: [],
         loading: false,
@@ -102,20 +103,20 @@ const carSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(addCar.fulfilled, (state, action) => {
+            .addCase(addCarOwner.fulfilled, (state, action) => {
                 state.data.push(action.payload);
             })
-            .addCase(getCarById.fulfilled, (state, action) => {
+            .addCase(getCarOwnerById.fulfilled, (state, action) => {
                 state.data = [action.payload];
             })
-            .addCase(getAllCars.fulfilled, (state, action) => {
+            .addCase(getAllOwner.fulfilled, (state, action) => {
                 state.data = action.payload;
             })
-            .addCase(deleteCar.fulfilled, (state, action) => {
-                state.data = state.data.filter((car) => car.id !== action.payload.id);
+            .addCase(deleteCarOwner.fulfilled, (state, action) => {
+                state.data = state.data.filter((owner) => owner.id !== action.payload.id);
             })
-            .addCase(updateCar.fulfilled, (state, action) => {
-                const index = state.data.findIndex((car) => car.id === action.payload.id);
+            .addCase(updateCarOwner.fulfilled, (state, action) => {
+                const index = state.data.findIndex((owner) => owner.id === action.payload.id);
                 if (index !== -1) {
                     state.data[index] = action.payload;
                 }
@@ -123,4 +124,4 @@ const carSlice = createSlice({
     },
 });
 
-export default carSlice.reducer;
+export default ownerSlice.reducer;

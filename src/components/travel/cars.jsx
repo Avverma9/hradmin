@@ -1,32 +1,23 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './Cars.css';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllCars } from '../redux/reducers/travel/car';
 
 const Cars = () => {
-    const cars = [
-        {
-            id: 1,
-            type: 'Sedan',
-            fuel: 'Electric',
-            price: 617,
-            seats: 4,
-            luggage: 2,
-            extraKm: 'After 20 Km @ ₹5/km',
-            badges: ['Free cancellation*', 'Toll Tax Included', '24/7 customer helpline'],
-            recommended: true,
-        },
-        {
-            id: 2,
-            type: 'Toyota Etios Or Equivalent',
-            fuel: 'CNG',
-            price: 655,
-            seats: 4,
-            luggage: 2,
-            extraKm: null,
-            badges: ['24/7 customer helpline', 'Partial Payment'],
-            recommended: false,
-        },
-    ];
+    const dispatch = useDispatch();
+    const cars = useSelector((state) => state.car.data);
 
+    useEffect(() => {
+        dispatch(getAllCars());
+    }, [dispatch]);
+
+    const handleCarImage = (car) => {
+        if (car?.images && Array.isArray(car.images) && car.images.length > 0) {
+            return car.images[0];
+        } else {
+            return carImageUrl;
+        }
+    };
     const carImageUrl = '/public/assets/car.png';
 
     return (
@@ -37,7 +28,7 @@ const Cars = () => {
                     <div className="car-radio-buttons">
                         <label>
                             <input type="radio" name="transfer-type" defaultChecked />
-                            Airport Transfer
+                            Seater
                         </label>
                         <label>
                             <input type="radio" name="transfer-type" />
@@ -102,46 +93,50 @@ const Cars = () => {
 
                 {/* Cars Section */}
                 <main className="cars-container">
-                    {cars.map((car) => (
-                        <div className="car-card" key={car.id}>
-                            {/* Header Section */}
-                            <div className="car-header">
-                                <span className="car-safety">Safety</span>
-                                {car.recommended && (
-                                    <div className="car-recommended-badge">
-                                        <span>Recommended</span>
-                                    </div>
-                                )}
-                            </div>
+                    {cars?.length > 0 ? (
+                        cars.map((car) => (
+                            <div className="car-card" key={car?._id}>
+                                <div className="car-header">
+                                    <span className="car-safety">Safety</span>
+                                    {car?.recommended && (
+                                        <div className="car-recommended-badge">
+                                            <span>Recommended</span>
+                                        </div>
+                                    )}
+                                </div>
 
-                            {/* Main Body */}
-                            <div className="car-content">
-                                <img src={carImageUrl} alt={car.type} className="car-image" />
-                                <div className="car-details">
-                                    <h3 className="car-title">{car.type}</h3>
-                                    <div className="fuel-type">{car.fuel}</div>
-                                    <div className="seats-and-luggage">
-                                        <span>{car.seats} Seat</span>
-                                        <span>{car.luggage} Luggage Bag</span>
-                                        {car.extraKm && <span>{car.extraKm}</span>}
-                                    </div>
-                                    <div className="car-badges">
-                                        {car.badges.map((badge, index) => (
-                                            <div key={index} className="car-badge">
-                                                {badge}
-                                            </div>
-                                        ))}
+                                <div className="car-content">
+                                    <img src={handleCarImage(car)} alt={car?.model} className="car-image" />
+                                    <div className="car-details">
+                                        <h3 className="car-title">
+                                            {car?.make} {car?.model} ({car?.color})
+                                        </h3>
+                                        <div className="fuel-type">{car?.fuelType}</div>
+                                        <div className="seats-and-luggage">
+                                            <span>{car?.seater} Seat</span>
+                                            <span>{car?.luggage} Luggage Bag</span>
+                                            {car?.extraKm && <span>{car?.extraKm}</span>}
+                                        </div>
+                                        <div className="car-badges">
+                                            {car?.badges?.map((badge, index) => (
+                                                <div key={index} className="car-badge">
+                                                    {badge}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Footer Section */}
-                            <div className="car-footer">
-                                <div className="car-price">₹ {car.price}</div>
-                                <button className="book-now">Book Now</button>
+                                {/* Footer Section */}
+                                <div className="car-footer">
+                                    <div className="car-price">₹ {car?.price}</div>
+                                    <button className="book-now">Book Now</button>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))
+                    ) : (
+                        <p>No cars available at the moment.</p>
+                    )}
                 </main>
             </div>
         </div>
