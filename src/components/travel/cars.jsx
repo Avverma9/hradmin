@@ -25,7 +25,7 @@ const Cars = () => {
             {/* Header Section */}
             <header className="car-upper-header">
                 <div className="car-header-left">
-                    <div className="car-radio-buttons">
+                    {/* <div className="car-radio-buttons">
                         <label>
                             <input type="radio" name="transfer-type" defaultChecked />
                             Seater
@@ -38,7 +38,7 @@ const Cars = () => {
                             <input type="radio" name="transfer-type" />
                             Hourly
                         </label>
-                    </div>
+                    </div> */}
                     <div className="car-dropdowns">
                         <select>
                             <option>Airport Pickup</option>
@@ -135,7 +135,7 @@ const Cars = () => {
                             </div>
                         ))
                     ) : (
-                        <p>No cars available at the moment.</p>
+                        <img src="https://assets-v2.lottiefiles.com/a/0e30b444-117c-11ee-9b0d-0fd3804d46cd/BkQxD7wtnZ.gif" alt="" />
                     )}
                 </main>
             </div>
