@@ -12,7 +12,6 @@ const OwnerList = () => {
     const [filteredOwners, setFilteredOwners] = useState([]);
 
     useEffect(() => {
-        // Fetch owner data from API
         const fetchOwners = async () => {
             try {
                 await dispatch(getAllOwner());
@@ -24,7 +23,6 @@ const OwnerList = () => {
         fetchOwners();
     }, [dispatch]);
 
-    // Update filtered owners based on search query
     useEffect(() => {
         if (searchQuery.trim() === '') {
             setFilteredOwners(owners);
