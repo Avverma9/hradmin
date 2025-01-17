@@ -121,6 +121,6 @@ export const paths = [
     { title: 'Availability', path: '/hotels/availability', role: 'Admin' },
     { title: 'Set Month', path: '/hotels/monthly-price', role: 'Admin' },
     { title: 'Change banner', path: '/change-banner', role: 'Admin' },
-    { title: 'Apply Coupons', path: '/apply-coupon', role: 'Admin' },
+    { title: 'Apply Coupons (Single Use)', path: '/apply-coupon', role: 'Admin' },
     { title: 'Push notification', path: '/send-notification-to-all', role: 'Admin' },
 ];

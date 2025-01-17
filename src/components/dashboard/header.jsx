@@ -50,7 +50,7 @@ export default function Header({ onOpenNav }) {
       sx={{
         boxShadow: 'none',
         height: HEADER.H_MOBILE,
-        zIndex: theme.zIndex.appBar + 1,
+        zIndex: theme.zIndex.drawer + 1,  // Ensure header stays on top of the content but below the modal
         ...bgBlur({
           color: theme.palette.background.default,
         }),

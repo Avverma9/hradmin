@@ -31,6 +31,7 @@ const AvailabilityPage = lazy(() => import('src/components/pages/admin/availabil
 const BookingCreate = lazy(() => import('src/components/pages/admin/booking_createForm'));
 const CarsPage = lazy(() => import('src/components/pages/travel/cars-page'));
 const CarFormPage = lazy(() => import('src/components/pages/travel/cars-form'));
+const OwnerList = lazy(() => import('src/components/pages/travel/owner-list-page'));
 const CarOwnerFormPage = lazy(() => import('src/components/pages/travel/car-owner-form'));
 // const CarFormPage = lazy(() => import('src/components/pages/travel/cars-page'));
 
@@ -67,7 +68,7 @@ export default function Router() {
                 { path: 'all-reviews', element: <AllReviews /> },
                 { path: 'book-now-page/:hotelId', element: <BookNowPage /> },
                 { path: 'your-cars', element: <CarsPage /> },
-                // { path: 'cars-owner', element: <CarsPage /> },
+                { path: 'cars-owner', element: <OwnerList /> },
                 { path: 'add-an-car-owner', element: <CarOwnerFormPage /> },
                 { path: 'add-a-car', element: <CarFormPage /> },
                 { path: 'complaints', element: <ComplaintPage /> },

@@ -108,10 +108,10 @@ const BookNow = () => {
                 <div className="booking-summary-right">
                     <BookingDetails
                         room={selectedRooms}
-                        hotelName={hotelById?.hotelName}
-                        hotelEmail={hotelById?.hotelEmail}
-                        hotelOwnerName={hotelById?.hotelOwnerName}
-                        destination={hotelById?.destination}
+                        hotel={hotelById?.hotelName}
+                        email={hotelById?.hotelEmail}
+                        owner={hotelById?.hotelOwnerName}
+                        address={hotelById?.destination}
                         food={selectedFoods}
                     />
                 </div>

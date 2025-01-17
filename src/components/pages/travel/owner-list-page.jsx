@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-import CarOwnerForm from '../../travel-managment/car-owner-form';
+import OwnerList from '../../travel-managment/owner-list';
 
 // ----------------------------------------------------------------------
 
@@ -8,10 +8,10 @@ export default function AllUserPages() {
     return (
         <>
             <Helmet>
-                <title> Add Car Owner | Roomsstay </title>
+                <title> Owners List | Roomsstay </title>
             </Helmet>
 
-            <CarOwnerForm />
+            <OwnerList />
         </>
     );
 }

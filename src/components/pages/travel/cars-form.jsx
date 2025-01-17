@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-import CarForm from '../../travel/car-form';
+import CarForm from '../../travel-managment/car-form';
 
 // ----------------------------------------------------------------------
 

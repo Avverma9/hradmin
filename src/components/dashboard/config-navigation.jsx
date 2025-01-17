@@ -5,8 +5,14 @@ import { VscFeedback } from 'react-icons/vsc';
 import { CiBellOn, CiImageOn } from 'react-icons/ci';
 import { FaDollarSign, FaRegUserCircle } from 'react-icons/fa';
 import { RiCoupon3Line, RiMessengerLine } from 'react-icons/ri';
-import { MdEvent, MdHotel, MdPerson, MdSettings, MdDashboard, MdOutlineTravelExplore, MdOutlineAdminPanelSettings } from 'react-icons/md';
-
+import { MdHotel, MdPerson, MdSettings, MdDashboard, MdOutlineAdminPanelSettings } from 'react-icons/md';
+import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import CarCrashIcon from '@mui/icons-material/CarCrash';
+import AddTaskIcon from '@mui/icons-material/AddTask';
+import AirplaneTicketIcon from '@mui/icons-material/AirplaneTicket';
+import LocalActivityIcon from '@mui/icons-material/LocalActivity';
+import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
+import { MdOutlineCarRental } from 'react-icons/md';
 import { userId, localUrl, token } from '../../../utils/util';
 
 // Define your icons
@@ -14,9 +20,10 @@ const icons = {
     dashboard: <MdDashboard style={{ width: '24px', height: '24px' }} />,
     messenger: <RiMessengerLine style={{ width: '24px', height: '24px' }} />,
     partners: <MdPerson style={{ width: '24px', height: '24px' }} />,
-    bookings: <MdEvent style={{ width: '24px', height: '24px' }} />,
+    bookings: <LocalActivityIcon style={{ width: '24px', height: '24px' }} />,
+    addBooking: <AddTaskIcon style={{ width: '24px', height: '24px' }} />,
     hotels: <MdHotel style={{ width: '24px', height: '24px' }} />,
-    travel: <MdOutlineTravelExplore style={{ width: '24px', height: '24px' }} />,
+    travel: <AirplaneTicketIcon style={{ width: '24px', height: '24px' }} />,
     settings: <MdSettings style={{ width: '24px', height: '24px' }} />,
     complaints: <BsInfoSquare style={{ width: '24px', height: '24px' }} />,
     banner: <CiImageOn style={{ width: '24px', height: '24px' }} />,
@@ -26,6 +33,10 @@ const icons = {
     admin: <MdOutlineAdminPanelSettings style={{ width: '24px', height: '24px' }} />,
     available: <SiTicktick style={{ width: '24px', height: '24px' }} />,
     user: <FaRegUserCircle style={{ width: '24px', height: '24px' }} />,
+    car: <MdOutlineCarRental style={{ width: '24px', height: '24px' }} />,
+    addCar: <CarCrashIcon style={{ width: '24px', height: '24px' }} />,
+    ownerList: <FormatListNumberedIcon style={{ width: '24px', height: '24px' }} />,
+    owner: <GroupAddIcon style={{ width: '24px', height: '24px' }} />,
     setMonthlyPrice: <FaDollarSign style={{ width: '24px', height: '24px' }} />,
 };
 
@@ -50,30 +61,9 @@ const getNavConfig = async () => {
             icon: icons.dashboard,
         },
         {
-            title: 'travel',
-            icon: icons.travel,
-            children: [
-                {
-                    title: 'Cars',
-                    path: '/your-cars',
-                    icon: icons.travel,
-                },
-                {
-                    title: 'Car Owner',
-                    path: '/cars-owner',
-                    icon: icons.travel,
-                },
-                {
-                    title: 'Add Car',
-                    path: '/add-a-car',
-                    icon: icons.travel,
-                },
-                {
-                    title: 'Add Owner',
-                    path: '/add-an-car-owner',
-                    icon: icons.travel,
-                },
-            ],
+            title: 'partners',
+            path: '/user',
+            icon: icons.partners,
         },
         {
             title: 'Messenger',
@@ -81,15 +71,42 @@ const getNavConfig = async () => {
 
             icon: icons.messenger,
         },
-        {
-            title: 'partners',
-            path: '/user',
-            icon: icons.partners,
-        },
+
         {
             title: 'bookings',
             icon: icons.bookings,
             path: '/your-bookings',
+        },
+        {
+            title: 'Create Booking',
+            icon: icons.addBooking,
+            path: '/booking-creation',
+        },
+        {
+            title: 'travel',
+            icon: icons.travel,
+            children: [
+                {
+                    title: 'Add Car',
+                    path: '/add-a-car',
+                    icon: icons.addCar,
+                },
+                {
+                    title: 'Cars',
+                    path: '/your-cars',
+                    icon: icons.car,
+                },
+                {
+                    title: 'Add Owner',
+                    path: '/add-an-car-owner',
+                    icon: icons.owner,
+                },
+                {
+                    title: 'Car Owner',
+                    path: '/cars-owner',
+                    icon: icons.ownerList,
+                },
+            ],
         },
         {
             title: 'Hotels',
@@ -117,11 +134,7 @@ const getNavConfig = async () => {
                 },
             ],
         },
-        {
-            title: 'Create Booking',
-            icon: icons.bookings,
-            path: '/booking-creation',
-        },
+
         {
             title: 'Admin features',
             icon: icons.admin,
@@ -178,7 +191,7 @@ const getNavConfig = async () => {
                     icon: icons.banner,
                 },
                 {
-                    title: 'Apply Coupons',
+                    title: 'Apply Coupons (Single Use)',
                     path: '/apply-coupon',
                     icon: icons.coupon,
                 },
