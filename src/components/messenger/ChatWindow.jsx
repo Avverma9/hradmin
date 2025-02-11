@@ -62,16 +62,20 @@ const ChatWindow = ({
               <div className="contact-info">
                 <p className="contact-name" style={{ fontSize: '12px' }}>
                   {selectedContact.name}
+                  <span style={{ fontSize: '10px' }}>
+                    {selectedContact.isOnline ? ' 🟢' : ' ⚪'}
+                  </span>
                 </p>
+
                 <span className="contact-mobile">{selectedContact.mobile}</span>
                 <span className={`status ${selectedContact.isOnline ? 'online' : 'offline'}`}>
                   {selectedContact.isOnline
                     ? 'Online'
-                    : `Last Seen: ${fDateTime(selectedContact.lastSeen)}`}
+                    : 'Offline'}
                 </span>
               </div>
             </div>
-            <div className="header-right">
+            {/* <div className="header-right">
               <IconButton
                 aria-label="delete"
                 onClick={(e) => {
@@ -81,7 +85,7 @@ const ChatWindow = ({
               >
                 <FiDelete />
               </IconButton>
-            </div>
+            </div> */}
           </div>
 
           <div className="messages">
@@ -112,7 +116,7 @@ const ChatWindow = ({
                   {fDateTime(msg.timestamp)} {getTickIndicators(msg.seen)}
                 </span>
 
-                {msg.sender === senderId && (
+                {/* {msg.sender === senderId && (
                   <>
                     <IconButton
                       aria-label="more"
@@ -137,7 +141,7 @@ const ChatWindow = ({
                       </MenuItem>
                     </Menu>
                   </>
-                )}
+                )} */}
               </div>
             ))}
             <div ref={messagesEndRef} /> {/* Empty div for scrolling */}

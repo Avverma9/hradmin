@@ -135,13 +135,13 @@
 
 .sent {
   align-self: flex-end; /* Sent messages align to the right */
-  background-color: #a76eff; /* Color for sent messages */
+  background-color: #3f8de6; /* Color for sent messages */
   color: white;
 }
 
 .received {
   align-self: flex-start; /* Received messages align to the left */
-  background-color: #fff;
+  background-color: #ececec;
   color: #333;
 }
 

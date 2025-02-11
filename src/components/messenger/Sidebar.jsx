@@ -33,11 +33,20 @@ const Sidebar = ({
             <img src={contact?.images || DEFAULT_AVATAR} alt={contact.name} />
             <div className="contact-info">
               <p style={{ fontSize: '12px' }}>
-                {contact?.name} ({contact?.role})
+                {contact?.name}
+                <span style={{ fontSize: '10px' }}>
+                  {contact.isOnline ? " 🟢" : " ⚪"}
+                </span>
+                {" "}
+                <span style={{ fontSize: '10px' }}>
+                  ({contact?.role})
+                </span>
               </p>
+
+
               <span>{contact?.mobile}</span>
               <span className={`status ${contact.isOnline ? 'online' : 'offline'}`}>
-                {contact.isOnline ? 'Online' : `Last Seen: ${fDateTime(contact.lastSeen)}`}
+                {contact.isOnline ? 'Online' : `Offline`}
               </span>
             </div>
           </div>
