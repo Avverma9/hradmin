@@ -25,37 +25,19 @@ const Cars = () => {
             {/* Header Section */}
             <header className="car-upper-header">
                 <div className="car-header-left">
-                    {/* <div className="car-radio-buttons">
-                        <label>
-                            <input type="radio" name="transfer-type" defaultChecked />
-                            Seater
-                        </label>
-                        <label>
-                            <input type="radio" name="transfer-type" />
-                            Outstation/Other
-                        </label>
-                        <label>
-                            <input type="radio" name="transfer-type" />
-                            Hourly
-                        </label>
-                    </div> */}
-                    <div className="car-dropdowns">
-                        <select>
-                            <option>Airport Pickup</option>
-                        </select>
-                        <select>
-                            <option>Indira Gandhi International Airport, Terminal</option>
-                        </select>
-                        <select>
-                            <option>GREATER KAILASH, GREATER KAILASH, SOUTH</option>
-                        </select>
+                    <div className="car-search-fields">
+
+                        <input type="text" placeholder="From" />
+                        <input type="text" placeholder="To" />
+                    </div> <div className="car-header-right">
+
+                        <button>Search</button>
                     </div>
                 </div>
-                <div className="car-header-right">
-                    <input type="datetime-local" />
-                    <button>Search</button>
-                </div>
+
             </header>
+
+
 
             {/* Main Layout */}
             <div className="car-layout">

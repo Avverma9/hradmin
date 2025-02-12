@@ -98,9 +98,10 @@ const AllUser = () => {
           },
         }}
       />
-      <TableContainer component={Paper} sx={{ mb: 2 }}>
+      <TableContainer component={Paper} sx={{ mb: 2, position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1 }} >
         <Table>
-          <TableHead>
+       
+          <TableHead >
             <TableRow>
               <TableCell>Profile</TableCell>
               <TableCell>
@@ -111,6 +112,7 @@ const AllUser = () => {
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
             {filteredData
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)

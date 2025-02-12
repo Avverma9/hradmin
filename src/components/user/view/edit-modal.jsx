@@ -34,6 +34,7 @@ import { addMenu, deleteMenu, updatePartnerImage } from 'src/components/redux/re
 const EditUserModal = ({ open, onClose, user, onSubmit }) => {
     const [selectedMenuItems, setSelectedMenuItems] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [openSelect, setOpenSelect] = useState(false);
     const dispatch = useDispatch();
     const partnerImage = useSelector((state) => state.partner.partnerImage);
     const [formData, setFormData] = useState({
@@ -106,6 +107,9 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
             console.error('Error adding menu items:', error);
             toast.error('Failed to add menu items');
         }
+    };
+    const handleCancel = () => {
+        setOpenSelect(false);
     };
 
     const handleDeleteMenuItem = async (item) => {
@@ -209,33 +213,80 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                                 </Select>
                             </FormControl>
                         </Grid>
-
-                        <Grid item xs={12}>
+                        <Grid item xs={12} sm={6}>
                             <FormControl fullWidth variant="outlined">
                                 <InputLabel>Assign Menu Items</InputLabel>
-                                <Select
-                                    multiple
-                                    value={selectedMenuItems}
-                                    onChange={(e) => setSelectedMenuItems(e.target.value)}
-                                    renderValue={(selected) => selected.join(', ')}
-                                    sx={{ borderRadius: '8px' }}
-                                >
-                                    {paths.map((path) => (
-                                        <MenuItem key={path.path} value={path.title}>
-                                            <Checkbox checked={selectedMenuItems.indexOf(path.title) > -1} />
-                                            <ListItemText
-                                                primary={path.title}
-                                                secondary={path.role ? `Role: ${path.role}` : 'No specific role'}
-                                            />
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-
-                                <Button onClick={handleAddMenuItems} variant="contained" color="primary" sx={{ mt: 1 }}>
-                                    Add Menu Items
-                                </Button>
+                                <div style={{ position: 'relative' }}>
+                                    <Select
+                                        open={openSelect}
+                                        multiple
+                                        value={selectedMenuItems}
+                                        onChange={(e) => setSelectedMenuItems(e.target.value)}
+                                        onOpen={() => setOpenSelect(true)} // When dropdown opens, set open to true
+                                        onClose={() => setOpenSelect(false)} // When dropdown closes, set open to false
+                                        renderValue={(selected) => selected.join(', ')}
+                                        MenuProps={{
+                                            PaperProps: {
+                                                style: {
+                                                    maxHeight: '600px', // Set max height to 400px
+                                                    overflowY: 'auto', // Enable vertical scrolling
+                                                    paddingBottom: '40px', // Increased space at the bottom for both buttons
+                                                },
+                                            },
+                                        }}
+                                        sx={{ borderRadius: '8px', width: '100%' }}
+                                    >
+                                        {paths.map((path) => (
+                                            <MenuItem key={path.path} value={path.title}>
+                                                <Checkbox checked={selectedMenuItems.indexOf(path.title) > -1} />
+                                                <ListItemText
+                                                    primary={path.title}
+                                                    secondary={path.role ? `Role: ${path.role}` : 'No specific role'}
+                                                />
+                                            </MenuItem>
+                                        ))}
+                                        <div
+                                            style={{
+                                                position: 'sticky',
+                                                bottom: '-10px',  // Position buttons at the bottom
+                                                left: 0,
+                                                right: 0,
+                                                width: '100%',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                padding: '0 10px',
+                                                zIndex: 1,
+                                            }}
+                                        >
+                                            <Button
+                                                onClick={handleCancel}
+                                                variant="contained"
+                                                color="secondary"
+                                                sx={{
+                                                    width: '45%', // Button takes up half width
+                                                }}
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                onClick={handleAddMenuItems}
+                                                variant="contained"
+                                                color="primary"
+                                                sx={{
+                                                    width: '45%', // Button takes up half width
+                                                }}
+                                            >
+                                                Add Menu Items
+                                            </Button>
+                                        </div>
+                                    </Select>
+                                </div>
                             </FormControl>
+
                         </Grid>
+
+
+
                     </Grid>
                     <Divider sx={{ my: 3 }} />
                     <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#1976d2' }}>
