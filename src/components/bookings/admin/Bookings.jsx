@@ -20,6 +20,10 @@ import {
   Typography,
   InputLabel,
   FormControl,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
 } from '@mui/material';
 
 import { fDate } from '../../../../utils/format-time';
@@ -36,7 +40,11 @@ export default function BookingsView() {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const [filterDate, setFilterDate] = useState('');
-  const [bookingCount, setBookingCount] = useState(0); // State for booking count
+  const [bookingCount, setBookingCount] = useState(0);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [filterValue, setFilterValue] = useState('');
+  const [filterColumn, setFilterColumn] = useState('');
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const filtered = useSelector((state) => state.booking.filtered);
@@ -52,12 +60,12 @@ export default function BookingsView() {
 
   useEffect(() => {
     setBookings(filtered);
-    setBookingCount(filtered.length); // Update booking count
+    setBookingCount(filtered.length);
   }, [filtered]);
 
   useEffect(() => {
     setBookings(search);
-    setBookingCount(search.length); // Update booking count
+    setBookingCount(search.length);
   }, [search]);
 
   const fetchData = async () => {
@@ -68,17 +76,14 @@ export default function BookingsView() {
       if (status) {
         queryParams.append('bookingStatus', status);
       }
-
-      // Include filterDate in query parameters
       if (filterDate) {
         queryParams.append('date', filterDate);
       }
-
       await dispatch(fetchFilteredBookings(queryParams.toString()));
     } catch (error) {
       console.error('Error:', error);
       setBookings([]);
-      setBookingCount(0); // Reset count on error
+      setBookingCount(0);
     } finally {
       hideLoader();
     }
@@ -92,7 +97,7 @@ export default function BookingsView() {
       console.error('Error:', error);
       toast.error('Something went wrong');
       setBookings([]);
-      setBookingCount(0); // Reset count on error
+      setBookingCount(0);
     } finally {
       hideLoader();
     }
@@ -114,7 +119,7 @@ export default function BookingsView() {
   const handleSave = async (updatedData) => {
     showLoader();
     try {
-      fetchData(); // Refresh the bookings list
+      fetchData();
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -128,8 +133,35 @@ export default function BookingsView() {
     setFilterDate(e.target.value);
   };
 
+  const handleFilterModalOpen = (column) => {
+    setFilterColumn(column);
+    setFilterModalOpen(true);
+  };
+
+  const handleFilterApply = () => {
+    if (filterColumn && filterValue) {
+      // Apply the filter on the bookings based on the selected column and value
+      const filteredBookings = bookings.filter((booking) => {
+        if (filterColumn === 'bookingId') {
+          return booking.bookingId.includes(filterValue);
+        }
+        if (filterColumn === 'user.name') {
+          return booking.user?.name.toLowerCase().includes(filterValue.toLowerCase());
+        }
+        if (filterColumn === 'bookingStatus') {
+          return booking.bookingStatus.toLowerCase().includes(filterValue.toLowerCase());
+        }
+        
+        return true;
+      });
+      setBookings(filteredBookings);
+      setBookingCount(filteredBookings.length);
+    }
+    setFilterModalOpen(false);
+  };
+
   return (
-    <Container maxWidth="auto"sx={{ marginTop: '40px' }}>
+    <Container maxWidth="auto" sx={{ marginTop: '40px' }}>
       <Typography variant="h4" gutterBottom>
         Bookings ({bookingCount})
       </Typography>
@@ -198,6 +230,7 @@ export default function BookingsView() {
                     <MenuItem value="No-show">No-Show</MenuItem>
                     <MenuItem value="Checked-in">Checked-in</MenuItem>
                     <MenuItem value="Checked-out">Checked-out</MenuItem>
+                    <MenuItem value="Created">Created-on</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -212,16 +245,15 @@ export default function BookingsView() {
           <TableHead>
             <TableRow>
               {[
-                'Booking ID',
-                'Name',
-                'Status',
-                'Check-in',
-                'Check-out',
-                'Created on',
-                'Actions',
-              ].map((header) => (
+                { label: 'Booking ID', field: 'bookingId' },
+                { label: 'Name', field: 'user.name' },
+                { label: 'Status', field: 'bookingStatus' },
+                { label: 'Check-in', field: 'checkInDate' },
+                { label: 'Check-out', field: 'checkOutDate' },
+                { label: 'Created on', field: 'createdAt' },
+              ].map(({ label, field }) => (
                 <TableCell
-                  key={header}
+                  key={field}
                   sx={{
                     position: 'sticky',
                     top: 0,
@@ -229,7 +261,10 @@ export default function BookingsView() {
                     zIndex: 1,
                   }}
                 >
-                  {header}
+                  {label}
+                  <Button size="small" onClick={() => handleFilterModalOpen(field)}>
+                    Filter
+                  </Button>
                 </TableCell>
               ))}
             </TableRow>
@@ -283,6 +318,27 @@ export default function BookingsView() {
           onSave={handleSave}
         />
       )}
+
+      {/* Filter Modal */}
+      <Dialog open={filterModalOpen} onClose={() => setFilterModalOpen(false)}>
+        <DialogTitle>Apply Filter</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Filter Value"
+            fullWidth
+            value={filterValue}
+            onChange={(e) => setFilterValue(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setFilterModalOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleFilterApply} color="primary">
+            Apply
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
