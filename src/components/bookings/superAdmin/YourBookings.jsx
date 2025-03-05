@@ -1,60 +1,98 @@
-import { toast } from 'react-toastify';
-import { useState, useEffect } from 'react';
-import 'react-toastify/dist/ReactToastify.css';
-import { useNavigate } from 'react-router-dom';
-import { fetchFilteredBookings, searchBooking, updateBooking } from '../../redux/reducers/booking';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLoader } from '../../../../utils/loader';
-import { styled } from '@mui/material/styles';
+import { toast } from "react-toastify";
+import * as React from "react";
+import { DataGrid } from "@mui/x-data-grid";
+import Paper from "@mui/material/Paper";
+import { useState, useEffect } from "react";
+import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Grid,
-  Table,
   Button,
-  Select,
-  TableRow,
-  MenuItem,
-  TableCell,
-  TableHead,
-  TableBody,
   Container,
   TextField,
   Typography,
-  InputLabel,
-  FormControl,
-  LinearProgress,
-} from '@mui/material';
 
-import { fDate } from '../../../../utils/format-time';
-import BookingUpdateModal from '../booking-update-modal'; // Adjust path as needed
+} from "@mui/material";
+
+import { fDate } from "../../../../utils/format-time";
+import BookingUpdateModal from "../booking-update-modal";
+import { useDispatch, useSelector } from "react-redux";
+import { useLoader } from "../../../../utils/loader";
+import {
+  fetchFilteredBookings,
+  searchBooking,
+} from "src/components/redux/reducers/booking";
 
 export default function SuperAdminBookingsView() {
-  const [bookingId, setBookingId] = useState('');
-  const [status, setStatus] = useState('');
-  const [bookings, setBookings] = useState([]);
-  const dispatch = useDispatch();
-  const search = useSelector((state) => state.booking.search);
-  const filtered = useSelector((state) => state.booking.filtered);
+  const [bookingId, setBookingId] = useState("");
+  const [status, setStatus] = useState("");
+  const [filterDate, setFilterDate] = useState("");
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [openModal, setOpenModal] = useState(false);
+
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const filtered = useSelector((state) => state.booking.filtered);
+  const search = useSelector((state) => state.booking.search);
   const { showLoader, hideLoader } = useLoader();
+
+  const bookings = search.length ? search : filtered;
+  const bookingCount = bookings.length;
   const hotelEmail = localStorage.getItem('user_email');
-  const StyledButton = styled(Button)({
-    marginRight: '10px',
-  });
+  const columns = [
+    { field: "bookingId", headerName: "Booking ID", width: 150 },
+    { field: "user", headerName: "User", width: 150 },
+    { field: "status", headerName: "Status", width: 110 },
+    { field: "source", headerName: "Source", width: 130 },
+    { field: "mop", headerName: "Payment Mode", width: 130 },
+    { field: "checkInDate", headerName: "Check-In Date", width: 180 },
+    { field: "checkOutDate", headerName: "Check-Out Date", width: 180 },
+    { field: "createdAt", headerName: "Created At", width: 180 },
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 200,
+      renderCell: (params) => (
+        <div>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => handleView(params.row.bookingId)}
+          >
+            View
+          </Button>
+          <Button
+            variant="contained"
+            color="warning"
+            size="small"
+            onClick={() => handleUpdate(params.row)}
+            style={{ marginLeft: "10px" }}
+          >
+            Update
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const rows = bookings?.map((booking) => ({
+    id: booking._id || booking.bookingId,
+    bookingId: booking.bookingId,
+    user: booking.user?.name,
+    status: booking.bookingStatus,
+    source: booking.bookingSource || "Site",
+    mop: booking.pm || "Offline",
+    checkInDate: booking.checkInDate,
+    checkOutDate: booking.checkOutDate,
+    createdAt: fDate(booking.createdAt),
+  }));
+
+  const paginationModel = { page: 0, pageSize: 10 };
 
   useEffect(() => {
     fetchData();
-  }, [status]);
-
-  useEffect(() => {
-    setBookings(search);
-  }, [search]);
-
-  useEffect(() => {
-    setBookings(filtered);
-  }, [filtered]);
+  }, [status, filterDate]);
 
   const fetchData = async () => {
     const filters = `bookingStatus=${status}&hotelEmail=${hotelEmail}`;
@@ -69,180 +107,93 @@ export default function SuperAdminBookingsView() {
     }
   };
 
-  useEffect(() => {
-    setBookings(filtered);
-  }, [filtered]);
 
   const handleSearch = async () => {
+    showLoader();
     try {
-      showLoader();
       await dispatch(searchBooking(bookingId));
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Something went wrong');
+      console.error("Error:", error);
+      toast.error("Search failed");
     } finally {
       hideLoader();
     }
   };
 
-  const handleView = (bookingId) => {
+  const handleView = (bookingId) =>
     navigate(`/your-booking-details/${bookingId}`);
-  };
 
   const handleUpdate = (booking) => {
     setSelectedBooking(booking);
     setOpenModal(true);
   };
 
-  const handleRefresh = () => {
-    window.location.reload();
+  const handleSave = async () => {
+    setOpenModal(false);
+    setSelectedBooking(null);
+    fetchData();
   };
 
-  const handleSave = async (updatedData) => {
-    showLoader();
-    try {
-      await dispatch(updateBooking(updatedData, selectedBooking.bookingId));
-      toast.success('Booking updated successfully');
-      await fetchData(); // Refresh the bookings list
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Failed to update booking');
-    } finally {
-      setOpenModal(false);
-      setSelectedBooking(null);
-      hideLoader();
-    }
-  };
+  const handleRefresh = () => window.location.reload();
 
   return (
-    <Container maxWidth="auto" sx={{ marginTop: '40px' }}>
+    <div>
       <Typography variant="h4" gutterBottom>
-        Bookings
+        Bookings ({bookingCount})
       </Typography>
 
-      <Grid
-        sx={{
-          position: 'sticky',
-          top: 0,
-          background: 'transparent',
-          zIndex: 1,
-          padding: '16px 0',
-        }}
-        container
-        spacing={3}
-        alignItems="center"
-      >
-        <Grid item md={4} xs={12}>
-          <FormControl fullWidth>
+      {/* Filter controls */}
+      <Box sx={{ position: "sticky", top: 0, zIndex: 1, padding: "16px 0" }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={3}>
             <TextField
-              id="formBookingId"
+              fullWidth
               label="Booking ID"
               variant="outlined"
               value={bookingId}
               onChange={(e) => setBookingId(e.target.value)}
             />
-          </FormControl>
-        </Grid>
-        <Grid item md={2} xs={12}>
-          <StyledButton variant="contained" onClick={handleSearch}>
-            Search
-          </StyledButton>
-        </Grid>
-        <Grid item md={2} xs={12}>
-          <StyledButton variant="outlined" onClick={handleRefresh}>
-            Refresh
-          </StyledButton>
-        </Grid>
-        <Grid item md={4} xs={12}>
-          <FormControl fullWidth>
-            <InputLabel id="formStatusLabel">Filter by Status</InputLabel>
-            <Select
-              labelId="formStatusLabel"
-              id="formStatus"
-              value={status}
-              label="Filter by Status"
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              <MenuItem value="">Select Status</MenuItem>
-              <MenuItem value="Cancelled">Cancelled</MenuItem>
-              <MenuItem value="Confirmed">Confirmed</MenuItem>
-              <MenuItem value="Failed">Failed</MenuItem>
-              <MenuItem value="No-show">No-Show</MenuItem>
-              <MenuItem value="Checked-in">Checked-in</MenuItem>
-              <MenuItem value="Checked-out">Checked-out</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-      </Grid>
+          </Grid>
 
-      <Box sx={{ marginTop: '20px', overflowX: 'auto' }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              {['Booking ID', 'Name', 'Status', 'Check-in', 'Check-out', 'Actions'].map(
-                (header) => (
-                  <TableCell
-                    key={header}
-                    sx={{
-                      position: 'sticky',
-                      top: 0,
-                      background: '#f8f9fa',
-                      zIndex: 1,
-                    }}
-                  >
-                    {header}
-                  </TableCell>
-                )
-              )}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {bookings?.length > 0 ? (
-              bookings?.map((booking) => (
-                <TableRow key={booking._id}>
-                  <TableCell>{booking.bookingId}</TableCell>
-                  <TableCell>{booking.user?.name}</TableCell>
-                  <TableCell>{booking.bookingStatus}</TableCell>
-                  <TableCell>{fDate(booking.checkInDate)}</TableCell>
-                  <TableCell>{fDate(booking.checkOutDate)}</TableCell>
-                  <TableCell>
-                    <StyledButton
-                      variant="contained"
-                      size="small"
-                      onClick={() => handleView(booking.bookingId)}
-                    >
-                      View
-                    </StyledButton>
-                    <StyledButton
-                      variant="contained"
-                      color="warning"
-                      size="small"
-                      onClick={() => handleUpdate(booking)}
-                    >
-                      Update
-                    </StyledButton>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  No bookings found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+          <Grid item xs={12} md={9}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item>
+                <Button variant="contained" onClick={handleSearch}>
+                  Search
+                </Button>
+              </Grid>
+              <Grid item md={2} xs={12}>
+                <Button variant="outlined" onClick={handleRefresh}>
+                  Refresh
+                </Button>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Grid>
       </Box>
 
-      {selectedBooking && (
-        <BookingUpdateModal
-          open={openModal}
-          onClose={() => setOpenModal(false)}
-          bookingData={selectedBooking}
-          onSave={handleSave}
+      <Paper sx={{ height: 400, width: "100%" }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          paginationModel={paginationModel}
+          pageSizeOptions={[5, 10]}
+          checkboxSelection
+          sx={{ border: 0 }}
         />
-      )}
-    </Container>
+      </Paper>
+
+      <Container maxWidth="auto" sx={{ marginTop: "40px" }}>
+        {/* Booking Update Modal */}
+        {selectedBooking && (
+          <BookingUpdateModal
+            open={openModal}
+            onClose={() => setOpenModal(false)}
+            bookingData={selectedBooking}
+            onSave={handleSave}
+          />
+        )}
+      </Container>
+    </div>
   );
 }

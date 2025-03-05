@@ -14,7 +14,7 @@ import {
     IconButton,
     Autocomplete,
     FormHelperText,
-    Input,
+    Grid,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -22,6 +22,7 @@ import { addCar } from '../redux/reducers/travel/car';
 import AlertDialog from '../../../utils/alertDialogue';
 import { userId } from '../../../utils/util';
 import { Visibility, VisibilityOff, AttachMoney, PhotoCamera, Speed } from '@mui/icons-material';
+import { FaIndianRupeeSign } from "react-icons/fa6";
 
 export default function CarForm() {
     const [make, setMake] = useState('');
@@ -127,8 +128,8 @@ export default function CarForm() {
     }, [make, allCarData]);
 
     return (
-        <Card sx={{ width: 650, margin: '0 auto', padding: 3 }}>
-            <Button variant="outlined" color="primary" onClick={handleBack} sx={{ margin: 2 }}>
+        <Card sx={{ margin: '0 auto', padding: 3 }}>
+            <Button variant="outlined" color="primary" onClick={handleBack} sx={{ marginBottom: 1 }}>
                 Go Back
             </Button>
             <CardContent>
@@ -136,195 +137,212 @@ export default function CarForm() {
                     Add New Car
                 </Typography>
                 <form onSubmit={handleSubmit}>
-                    <Autocomplete
-                        value={make}
-                        onChange={(event, newValue) => setMake(newValue)}
-                        options={makes}
-                        renderInput={(params) => <TextField {...params} label="Make" variant="outlined" />}
-                        fullWidth
-                        margin="normal"
-                        freeSolo
-                    />
-                    <hr />
-                    <Autocomplete
-                        value={model}
-                        onChange={(event, newValue) => setModel(newValue)}
-                        options={filteredModels.map((car) => car.model)}
-                        renderInput={(params) => <TextField {...params} label="Model" variant="outlined" />}
-                        fullWidth
-                        margin="normal"
-                        freeSolo
-                    />
-                    <hr />
-                    <FormControl fullWidth margin="normal">
-                        <InputLabel id="seater-label">Seater</InputLabel>
-                        <Select
-                            labelId="seater-label"
-                            value={seater}
-                            onChange={(e) => setSeater(e.target.value)}
-                            label="Seater"
-                            name="seater"
-                        >
-                            <MenuItem value={2}>2</MenuItem>
-                            <MenuItem value={3}>3</MenuItem>
-                            <MenuItem value={4}>4</MenuItem>
-                            <MenuItem value={5}>5</MenuItem>
-                            <MenuItem value={6}>6</MenuItem>
-                            <MenuItem value={7}>7</MenuItem>
-                            <MenuItem value={8}>8</MenuItem>
-                            <MenuItem value={9}>9</MenuItem>
-                            <MenuItem value={10}>10</MenuItem>
-                        </Select>
-                        {seater === '' && <FormHelperText error>Please select the number of seats</FormHelperText>}
-                    </FormControl>
-                    <hr />
-
-                    <TextField
-                        label="Extra KM Charge"
-                        variant="outlined"
-                        fullWidth
-                        type="extraKm"
-                        value={extraKm}
-                        onChange={(e) => setExtraKm(e.target.value)}
-                        margin="normal"
-                    />
-                    {extraKm == '' && <FormHelperText error>Please mention Per extram KM Charge in INR</FormHelperText>}
-                    <hr />
-                    <TextField
-                        label="Year"
-                        variant="outlined"
-                        fullWidth
-                        type="number"
-                        value={year}
-                        onChange={(e) => setYear(e.target.value)}
-                        margin="normal"
-                    />
-
-                    <TextField
-                        label="Price"
-                        variant="outlined"
-                        fullWidth
-                        type="number"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                        margin="normal"
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <AttachMoney />
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
-
-                    <FormControl fullWidth margin="normal">
-                        <InputLabel>Color</InputLabel>
-                        <Select value={color} onChange={(e) => setColor(e.target.value)} label="Color">
-                            <MenuItem value="Red">Red</MenuItem>
-                            <MenuItem value="Blue">Blue</MenuItem>
-                            <MenuItem value="Black">Black</MenuItem>
-                            <MenuItem value="White">White</MenuItem>
-                            <MenuItem value="Silver">Silver</MenuItem>
-                            <MenuItem value="Green">Green</MenuItem>
-                        </Select>
-                    </FormControl>
-
-                    <TextField
-                        label="Mileage (KM/L)"
-                        variant="outlined"
-                        fullWidth
-                        type="number"
-                        value={mileage}
-                        onChange={(e) => setMileage(e.target.value)}
-                        margin="normal"
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <Speed />
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
-
-                    <FormControl fullWidth margin="normal">
-                        <InputLabel>Fuel Type</InputLabel>
-                        <Select value={fuelType} onChange={(e) => setFuelType(e.target.value)} label="Fuel Type">
-                            <MenuItem value="Petrol">Petrol</MenuItem>
-                            <MenuItem value="Diesel">Diesel</MenuItem>
-                            <MenuItem value="Electric">Electric</MenuItem>
-                            <MenuItem value="Hybrid">Hybrid</MenuItem>
-                        </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth margin="normal">
-                        <InputLabel>Transmission</InputLabel>
-                        <Select value={transmission} onChange={(e) => setTransmission(e.target.value)} label="Transmission">
-                            <MenuItem value="Automatic">Automatic</MenuItem>
-                            <MenuItem value="Manual">Manual</MenuItem>
-                        </Select>
-                    </FormControl>
-
-                    <TextField
-                        label="Owner ID (This is by-default your userId)"
-                        variant="outlined"
-                        fullWidth
-                        value={userId}
-                        onChange={() => setOwnerId(userId)}
-                        margin="normal"
-                        type={isPasswordVisible ? 'text' : 'password'}
-                        InputProps={{
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <IconButton onClick={handleToggleVisibility} edge="end">
-                                        {isPasswordVisible ? <Visibility /> : <VisibilityOff />}
-                                    </IconButton>
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
-
-                    <Box sx={{ marginBottom: 2 }}>
-                        <input
-                            type="file"
-                            id="carImages"
-                            accept="image/*"
-                            multiple
-                            onChange={handleFileChange}
-                            style={{ display: 'none' }}
-                        />
-                        <label htmlFor="carImages">
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                component="span"
+                    <Grid container spacing={2}> {/* Reduced the spacing to 2 */}
+                        {/* First Row */}
+                        <Grid item xs={12} sm={4}>
+                            <Autocomplete
+                                value={make}
+                                onChange={(event, newValue) => setMake(newValue)}
+                                options={makes}
+                                renderInput={(params) => <TextField {...params} label="Make" variant="outlined" />}
                                 fullWidth
-                                sx={{ padding: '10px', textAlign: 'center' }}
-                                startIcon={<PhotoCamera />}
-                            >
-                                Select Car Images
-                            </Button>
-                        </label>
-                        {images.length > 0 && (
-                            <Box sx={{ marginTop: 2, textAlign: 'center' }}>
-                                {Array.from(images).map((image, index) => (
-                                    <img
-                                        key={index}
-                                        src={URL.createObjectURL(image)}
-                                        alt={`Car Image ${index}`}
-                                        style={{
-                                            width: '100px',
-                                            height: '100px',
-                                            objectFit: 'cover',
-                                            borderRadius: '8px',
-                                            margin: '5px',
-                                        }}
-                                    />
-                                ))}
-                            </Box>
-                        )}
-                    </Box>
+                                margin="normal"
+                                freeSolo
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <Autocomplete
+                                value={model}
+                                onChange={(event, newValue) => setModel(newValue)}
+                                options={filteredModels.map((car) => car.model)}
+                                renderInput={(params) => <TextField {...params} label="Model" variant="outlined" />}
+                                fullWidth
+                                margin="normal"
+                                freeSolo
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <FormControl fullWidth margin="normal">
+                                <InputLabel id="seater-label">Seater</InputLabel>
+                                <Select
+                                    labelId="seater-label"
+                                    value={seater}
+                                    onChange={(e) => setSeater(e.target.value)}
+                                    label="Seater"
+                                >
+                                    {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                                        <MenuItem key={value} value={value}>
+                                            {value}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                                {seater === '' && <FormHelperText error>Please select the number of seats</FormHelperText>}
+                            </FormControl>
+                        </Grid>
 
-                    <Button type="submit" variant="contained" color="primary" fullWidth sx={{ marginTop: 2, padding: '10px' }}>
+                        {/* Second Row */}
+                        <Grid item xs={12} sm={4}>
+                            <TextField
+                                label="Extra KM Charge"
+                                variant="outlined"
+                                fullWidth
+                                value={extraKm}
+                                onChange={(e) => setExtraKm(e.target.value)}
+                                margin="normal"
+                            />
+                            {extraKm === '' && <FormHelperText error>Please mention Per extra KM Charge in INR</FormHelperText>}
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <TextField
+                                label="Year"
+                                variant="outlined"
+                                fullWidth
+                                type="number"
+                                value={year}
+                                onChange={(e) => setYear(e.target.value)}
+                                margin="normal"
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <TextField
+                                label="Per KM Charge"
+                                variant="outlined"
+                                fullWidth
+                                type="number"
+                                value={price}
+                                onChange={(e) => setPrice(e.target.value)}
+                                margin="normal"
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <FaIndianRupeeSign />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                        </Grid>
+
+                        {/* Third Row */}
+                        <Grid item xs={12} sm={4}>
+                            <FormControl fullWidth margin="normal">
+                                <InputLabel>Color</InputLabel>
+                                <Select value={color} onChange={(e) => setColor(e.target.value)} label="Color">
+                                    {['Red', 'Blue', 'Black', 'White', 'Silver', 'Green'].map((color) => (
+                                        <MenuItem key={color} value={color}>
+                                            {color}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <TextField
+                                label="Mileage (KM/L)"
+                                variant="outlined"
+                                fullWidth
+                                type="number"
+                                value={mileage}
+                                onChange={(e) => setMileage(e.target.value)}
+                                margin="normal"
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <Speed />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <FormControl fullWidth margin="normal">
+                                <InputLabel>Fuel Type</InputLabel>
+                                <Select value={fuelType} onChange={(e) => setFuelType(e.target.value)} label="Fuel Type">
+                                    {['Petrol', 'Diesel', 'Electric', 'Hybrid'].map((type) => (
+                                        <MenuItem key={type} value={type}>
+                                            {type}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Fourth Row */}
+                        <Grid item xs={12} sm={4}>
+                            <FormControl fullWidth margin="normal">
+                                <InputLabel>Transmission</InputLabel>
+                                <Select value={transmission} onChange={(e) => setTransmission(e.target.value)} label="Transmission">
+                                    <MenuItem value="Automatic">Automatic</MenuItem>
+                                    <MenuItem value="Manual">Manual</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <TextField
+                                label="Owner ID"
+                                variant="outlined"
+                                fullWidth
+                                value={userId}
+                                onChange={() => setOwnerId(userId)}
+                                margin="normal"
+                                type={isPasswordVisible ? 'text' : 'password'}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton onClick={handleToggleVisibility} edge="end">
+                                                {isPasswordVisible ? <Visibility /> : <VisibilityOff />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                        </Grid>
+
+                        {/* Fifth Row (Image upload) */}
+                        <Grid item xs={12}>
+                            <Box sx={{ marginBottom: 1 }}>
+                                <input
+                                    type="file"
+                                    id="carImages"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={handleFileChange}
+                                    style={{ display: 'none' }}
+                                />
+                                <label htmlFor="carImages">
+                                    <Button
+                                        variant="outlined"
+                                        color="primary"
+                                        component="span"
+                                        fullWidth
+                                        sx={{ padding: '10px', textAlign: 'center' }}
+                                        startIcon={<PhotoCamera />}
+                                    >
+                                        Select Car Images
+                                    </Button>
+                                </label>
+                                {images.length > 0 && (
+                                    <Box sx={{ marginTop: 1, textAlign: 'center' }}>
+                                        {Array.from(images).map((image, index) => (
+                                            <img
+                                                key={index}
+                                                src={URL.createObjectURL(image)}
+                                                alt={`Car Image ${index}`}
+                                                style={{
+                                                    width: '80px',
+                                                    height: '80px',
+                                                    objectFit: 'cover',
+                                                    borderRadius: '8px',
+                                                    margin: '5px',
+                                                }}
+                                            />
+                                        ))}
+                                    </Box>
+                                )}
+                            </Box>
+                        </Grid>
+                    </Grid>
+
+                    <Button type="submit" variant="contained" color="primary" fullWidth sx={{ marginTop: 2 }}>
                         Add Car
                     </Button>
                 </form>
