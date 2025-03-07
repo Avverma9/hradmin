@@ -315,26 +315,7 @@ export default function CarForm() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Owner ID"
-                variant="outlined"
-                fullWidth
-                value={userId}
-                onChange={() => setOwnerId(userId)}
-                margin="normal"
-                type={isPasswordVisible ? "text" : "password"}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={handleToggleVisibility} edge="end">
-                        {isPasswordVisible ? <Visibility /> : <VisibilityOff />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
+       
             {/* Fifth Row (Image upload) */}
             <Grid item xs={12}>
               <Box sx={{ marginBottom: 1 }}>
