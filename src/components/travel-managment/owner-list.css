@@ -139,3 +139,9 @@
         margin-bottom: 15px; /* Reduced margin */
     }
 }
+.centered-heading {
+    text-align: center;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 10px;
+  }

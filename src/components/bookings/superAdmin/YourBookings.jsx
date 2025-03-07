@@ -172,7 +172,7 @@ export default function SuperAdminBookingsView() {
         </Grid>
       </Box>
 
-      <Paper sx={{ height: 400, width: "100%" }}>
+      <Paper sx={{ width: "100%" }}>
         <DataGrid
           rows={rows}
           columns={columns}

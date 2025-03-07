@@ -50,6 +50,21 @@ export const getAllCars = createAsyncThunk('car/getAll', async (_, { rejectWithV
     }
 });
 
+export const filterCar = createAsyncThunk('car/filterCar', async ({query,value}, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(`${localUrl}/travel/filter-car/by-query?${query}=${value}&${query}=${value}&${query}=${value}&${query}=${value}`, {
+            headers: {
+                Authorization: token,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+});
+
 export const deleteCar = createAsyncThunk('car/deleteCar', async (id, { rejectWithValue }) => {
     try {
         const response = await axios.delete(`${localUrl}/travel/delete-a-car/${id}`, {
@@ -109,6 +124,9 @@ const carSlice = createSlice({
                 state.data = [action.payload];
             })
             .addCase(getAllCars.fulfilled, (state, action) => {
+                state.data = action.payload;
+            })
+            .addCase(filterCar.fulfilled, (state, action) => {
                 state.data = action.payload;
             })
             .addCase(deleteCar.fulfilled, (state, action) => {
