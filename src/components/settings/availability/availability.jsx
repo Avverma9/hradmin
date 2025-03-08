@@ -110,8 +110,7 @@ const HotelAvailability = () => {
         </Typography>
         <hr />
         <Typography variant="body1" gutterBottom>
-          Please select a start date and an end date. You can only select dates starting from
-          tomorrow. <hr /> After selecting your dates, click on "View Availability" to see the list
+          Please select a start date and an end date. <hr /> After selecting your dates, click on "View Availability" to see the list
           of hotels. <hr /> To view more details about a specific hotel, click on the hotel name.{' '}
           <hr />
           further on you also can click view more button to see booked rooms and booking status of
@@ -124,10 +123,7 @@ const HotelAvailability = () => {
               label="From Date"
               value={fromDate}
               onChange={(newValue) => {
-                if (newValue && isBefore(newValue, new Date())) {
-                  alert('You cannot select a past or current date.');
-                  return;
-                }
+               
                 setFromDate(newValue);
                 if (toDate && isSameDay(newValue, toDate)) {
                   setToDate(null); // Reset toDate if same as fromDate
@@ -187,7 +183,7 @@ const HotelAvailability = () => {
                         to={`/view-hotel-details/${hotel.hotelId}`}
                         style={{ textDecoration: 'none', color: 'inherit' }}
                       >
-                        {hotel.hotelName}
+                        {hotel.hotelName} ({hotel.city})
                       </Link>
                     </TableCell>
                     <TableCell>{hotel.totalRooms}</TableCell>
