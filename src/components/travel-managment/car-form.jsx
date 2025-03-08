@@ -11,7 +11,6 @@ import {
   Select,
   FormControl,
   InputLabel,
-  IconButton,
   Autocomplete,
   FormHelperText,
   Grid,
@@ -21,14 +20,9 @@ import { useDispatch } from "react-redux";
 import { addCar } from "../redux/reducers/travel/car";
 import AlertDialog from "../../../utils/alertDialogue";
 import { userId } from "../../../utils/util";
-import {
-  Visibility,
-  VisibilityOff,
-  AttachMoney,
-  PhotoCamera,
-  Speed,
-} from "@mui/icons-material";
+import { PhotoCamera, Speed } from "@mui/icons-material";
 import { FaIndianRupeeSign } from "react-icons/fa6";
+import { FaLocationArrow } from "react-icons/fa";
 
 export default function CarForm() {
   const [make, setMake] = useState("");
@@ -36,6 +30,8 @@ export default function CarForm() {
   const [year, setYear] = useState("");
   const [images, setImages] = useState([]);
   const [price, setPrice] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [seater, setSeater] = useState("");
   const [extraKm, setExtraKm] = useState("");
   const [color, setColor] = useState("");
@@ -85,6 +81,8 @@ export default function CarForm() {
     formData.append("extraKm", extraKm);
     formData.append("year", year);
     formData.append("price", price);
+    formData.append("from", from);
+    formData.append("to", to);
     formData.append("color", color);
     formData.append("mileage", mileage);
     formData.append("fuelType", fuelType);
@@ -221,6 +219,42 @@ export default function CarForm() {
             </Grid>
             <Grid item xs={12} sm={4}>
               <TextField
+                label="Pickup Location"
+                variant="outlined"
+                fullWidth
+                type="text"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                margin="normal"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <FaLocationArrow />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>{" "}
+            <Grid item xs={12} sm={4}>
+              <TextField
+                label="Drop Location"
+                variant="outlined"
+                fullWidth
+                type="text"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                margin="normal"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <FaLocationArrow />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
                 label="Year"
                 variant="outlined"
                 fullWidth
@@ -232,7 +266,7 @@ export default function CarForm() {
             </Grid>
             <Grid item xs={12} sm={4}>
               <TextField
-                label="Per KM Charge"
+                label="Full ride price"
                 variant="outlined"
                 fullWidth
                 type="number"
@@ -315,7 +349,6 @@ export default function CarForm() {
                 </Select>
               </FormControl>
             </Grid>
-       
             {/* Fifth Row (Image upload) */}
             <Grid item xs={12}>
               <Box sx={{ marginBottom: 1 }}>
