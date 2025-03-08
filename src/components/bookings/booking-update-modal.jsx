@@ -46,18 +46,20 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
   // Update form data when bookingData changes
   useEffect(() => {
     if (bookingData) {
+      console.log('Received bookingData:', bookingData);
       setFormData({
         checkInDate: bookingData.checkInDate || '',
         checkOutDate: bookingData.checkOutDate || '',
         checkInTime: bookingData.checkInTime ? new Date(bookingData.checkInTime) : null,
         checkOutTime: bookingData.checkOutTime ? new Date(bookingData.checkOutTime) : null,
         price: bookingData.price || '',
-        bookingStatus: bookingData.bookingStatus || '',
+        bookingStatus: bookingData.status || '',
         numRooms: bookingData.numRooms || '',
         guests: bookingData.guests || '',
       });
     }
   }, [bookingData]);
+  
 
   // Handle input changes
   const handleChange = (e) => {
