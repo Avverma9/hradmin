@@ -111,9 +111,10 @@ const OwnerList = () => {
           backgroundColor: "#f0f0f0",
           border: "1px solid #ccc",
           padding: "10px",
+          fontSize: "14px",
         }}
       >
-        List Of Owners
+       The following list contains detailed information about the car owners. Each owner is categorized by their personal details, including the car they own, and additional information that helps provide a comprehensive view of each owner.
       </h2>
       <Paper sx={{ width: "100%" }}>
         <DataGrid
