@@ -1,5 +1,3 @@
-/* eslint-disable no-shadow */
-/* eslint-disable no-unused-vars */
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import React, { useState, useEffect } from 'react';
@@ -22,8 +20,6 @@ import {
 import { localUrl } from '../../../../utils/util';
 import { paths } from '../../../../utils/filterOptions';
 
-// Sample path configuration (replace with your actual path options)
-
 const UserNotification = () => {
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
@@ -31,6 +27,7 @@ const UserNotification = () => {
   const [error, setError] = useState(null);
   const [users, setUsers] = useState([]);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [selectedRole, setSelectedRole] = useState('');
 
   // Fetch user data when component mounts
   useEffect(() => {
@@ -47,8 +44,26 @@ const UserNotification = () => {
     fetchUsers();
   }, []);
 
+  // Filter users based on selected role
+  const filteredUsers = selectedRole
+    ? users.filter(user => user.role === selectedRole)
+    : users;
+
+  // Fetch unique roles for the role dropdown
+  const uniqueRoles = [...new Set(users.map(user => user.role))];
+
   const handleUserChange = (event) => {
     setSelectedUserIds(event.target.value);
+  };
+
+  const handleRoleChange = (event) => {
+    setSelectedRole(event.target.value); // Update selected role
+  };
+
+  const handleSelectAll = () => {
+    // Select all filtered users
+    const allUserIds = filteredUsers.map(user => user._id);
+    setSelectedUserIds(allUserIds);
   };
 
   const handleSubmit = async (e) => {
@@ -75,6 +90,7 @@ const UserNotification = () => {
       setSelectedPath('');
       setSelectedUserIds([]);
       setError(null);
+      setSelectedRole(''); // Reset selected role
       toast.success('You have successfully sent a notification');
       window.location.reload();
     } catch (err) {
@@ -125,6 +141,38 @@ const UserNotification = () => {
             ))}
           </Select>
         </FormControl>
+
+        {/* Role Filter Dropdown */}
+        <FormControl fullWidth margin="normal">
+          <InputLabel>Role</InputLabel>
+          <Select
+            value={selectedRole}
+            onChange={handleRoleChange}
+            label="Role"
+            required
+          >
+            <MenuItem value="">
+              <em>All Roles</em>
+            </MenuItem>
+            {uniqueRoles.map((role) => (
+              <MenuItem key={role} value={role}>
+                {role}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* Select All Button */}
+        <Button
+          variant="outlined"
+          color="primary"
+          onClick={handleSelectAll}
+          sx={{ mt: 2 }}
+        >
+          Select All Users
+        </Button>
+
+        {/* Users Dropdown */}
         <FormControl fullWidth margin="normal">
           <InputLabel>Users</InputLabel>
           <Select
@@ -134,21 +182,22 @@ const UserNotification = () => {
             renderValue={(selected) =>
               selected
                 .map((id) => {
-                  const user = users.find((user) => user._id === id);
+                  const user = filteredUsers.find((user) => user._id === id);
                   return user ? user.name : '';
                 })
                 .join(', ')
             }
             required
           >
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <MenuItem key={user._id} value={user._id}>
                 <Checkbox checked={selectedUserIds.indexOf(user._id) > -1} />
-                <ListItemText primary={user.name} secondary={user.mobile} />
+                <ListItemText primary={user.name} secondary={user.mobile} /> {user?.role}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
+
         <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
           Create Notification
         </Button>
