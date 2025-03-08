@@ -6,141 +6,70 @@ import { MdOutlineAirlineSeatReclineNormal } from "react-icons/md";
 import { BsFillFuelPumpFill } from "react-icons/bs";
 import { FaPersonWalkingLuggage } from "react-icons/fa6";
 import { IoMdSpeedometer } from "react-icons/io";
-import { useLoader } from "../../../utils/loader";
-
+import axios from "axios";
+import { localUrl } from "../../../utils/util";
+import { CiSearch } from "react-icons/ci";
+import { RxCross1 } from "react-icons/rx";
 const Cars = () => {
   const dispatch = useDispatch();
-  const cars = useSelector((state) => state.car.data);
-  const { showLoader, hideLoader } = useLoader();
-  const [filteredCars, setFilteredCars] = useState([]);
+  const [data, setData] = useState([]);
+  const filterList = useSelector((state) => state.car.data);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [filters, setFilters] = useState({
     make: [],
     fuelType: [],
   });
 
-  // Fetch cars only once
   useEffect(() => {
-    const fetchCars = async () => {
-      showLoader();
-      await dispatch(getAllCars());
-      hideLoader();
+    const fetchData = async () => {
+      const response = await dispatch(getAllCars());
+      setData(response.payload);
     };
-
-    fetchCars();
+    fetchData();
   }, [dispatch]);
 
-  // Update filtered cars when the cars or filters change
-  useEffect(() => {
-    const applyFilters = () => {
-      let filtered = cars;
+  const handleFilterChange = async (key, value) => {
+    const newFilters = { ...filters };
+    const currentFilterValues = newFilters[key];
 
-      if (filters.make.length > 0) {
-        filtered = filtered.filter((car) => filters.make.includes(car.make));
-      }
+    if (currentFilterValues.includes(value)) {
+      // If value is already selected, uncheck it
+      newFilters[key] = currentFilterValues.filter((item) => item !== value);
+    } else {
+      // Otherwise, add the new value to the filter
+      newFilters[key] = [...currentFilterValues, value];
+    }
 
-      if (filters.fuelType.length > 0) {
-        filtered = filtered.filter((car) =>
-          filters.fuelType.includes(car.fuelType)
-        );
-      }
+    setFilters(newFilters);
 
-      setFilteredCars(filtered);
-    };
+    // If all filters are unchecked, reset data by calling getAllCars
+    if (newFilters.make.length === 0 && newFilters.fuelType.length === 0) {
+      const response = await dispatch(getAllCars());
+      setData(response.payload);
+    } else {
+      const response = await dispatch(filterCar({ query: key, value }));
+      setData(response.payload);
+    }
+  };
 
-    applyFilters();
-  }, [cars, filters]);
-
-  // Handle car image source
   const handleCarImage = (car) => {
     return car?.images && Array.isArray(car.images) && car.images.length > 0
       ? car.images[0]
       : "/public/assets/car.png";
   };
 
-  // Handle filter change
-  const handleFilterChange = (filterType, value) => {
-    setFilters((prevFilters) => {
-      const newFilters = { ...prevFilters };
-      const filterList = newFilters[filterType];
-      const filterIndex = filterList.indexOf(value);
+  const handleSearch = async () => {
+    if (!from || !to) return;
 
-      if (filterIndex >= 0) {
-        filterList.splice(filterIndex, 1); // Remove filter
-      } else {
-        filterList.push(value); // Add filter
-      }
-
-      // Apply the filter directly to the store
-      dispatch(filterCar({ query: filterType, value }));
-
-      return newFilters;
-    });
+    const response = await axios.get(
+      `${localUrl}/travel/filter-car/by-query?from=${from}&to=${to}`,
+    );
+    setData(response.data);
   };
 
-  // Render car cards
-  const renderCars = () => {
-    if (filteredCars.length === 0) {
-      return (
-        <img
-          src="https://assets-v2.lottiefiles.com/a/0e30b444-117c-11ee-9b0d-0fd3804d46cd/BkQxD7wtnZ.gif"
-          alt="Loading..."
-        />
-      );
-    }
-
-    return filteredCars.map((car) => (
-      <div className="car-card" key={car?._id}>
-        <div className="car-header">
-          <span className="car-safety">Safety</span>
-          {car?.recommended && (
-            <div className="car-recommended-badge">
-              <span>Recommended</span>
-            </div>
-          )}
-        </div>
-
-        <div className="car-content">
-          <img
-            src={handleCarImage(car)}
-            alt={car?.model}
-            className="car-image"
-          />
-          <div className="car-details">
-            <h3 className="car-title">
-              {car?.make} {car?.model} ({car?.color})
-            </h3>
-            <div className="fuel-type">
-              <BsFillFuelPumpFill /> {car?.fuelType}
-            </div>
-            <div className="seats-and-luggage">
-              <span>
-                <MdOutlineAirlineSeatReclineNormal /> {car?.seater} Seater
-              </span>
-              <span>
-                <FaPersonWalkingLuggage /> {car?.luggage} Luggage Bag
-              </span>
-              {car?.extraKm && (
-                <span style={{ color: "black" }}>
-                  <IoMdSpeedometer /> {car?.extraKm}₹ Extra Per Km
-                </span>
-              )}
-            </div>
-            <div className="car-badges">
-              {car?.badges?.map((badge, index) => (
-                <div key={index} className="car-badge">
-                  {badge}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="car-footer">
-          <div className="car-price">₹ {car?.price}</div>
-          <button className="book-now">Book Now</button>
-        </div>
-      </div>
-    ));
+  const handleClear =  () => {
+window.location.reload();
   };
 
   return (
@@ -148,11 +77,22 @@ const Cars = () => {
       <header className="car-upper-header">
         <div className="car-header-left">
           <div className="car-search-fields">
-            <input type="text" placeholder="From" />
-            <input type="text" placeholder="To" />
+            <input
+              type="text"
+              placeholder="From"
+              onChange={(e) => setFrom(e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="To"
+              onChange={(e) => setTo(e.target.value)}
+            />
           </div>
           <div className="car-header-right">
-            <button>Search</button>
+            <button onClick={handleSearch}><CiSearch/></button>
+          </div>
+          <div className="car-header-right">
+            <button onClick={handleClear}><RxCross1/></button>
           </div>
         </div>
       </header>
@@ -160,25 +100,31 @@ const Cars = () => {
       <div className="car-layout">
         <aside className="car-sidebar">
           <div className="car-filter">
-            <h3>Car Type</h3>
+          <h5 style={{ backgroundColor: '#f2f2f2', borderRadius: '10px', padding: '10px', fontSize: '13px', color: 'black', fontWeight: 'bold', textAlign: 'center' }}>
+        Car Type
+      </h5>
             <div>
-              {Array.from(new Set(cars?.map((car) => car.make))).map((make) => (
-                <label key={make}>
-                  <input
-                    type="checkbox"
-                    checked={filters.make.includes(make)}
-                    onChange={() => handleFilterChange("make", make)}
-                  />{" "}
-                  {make}
-                </label>
-              ))}
+              {Array.from(new Set(filterList?.map((car) => car.make))).map(
+                (make) => (
+                  <label key={make}>
+                    <input
+                      type="checkbox"
+                      checked={filters.make.includes(make)}
+                      onChange={() => handleFilterChange("make", make)}
+                    />{" "}
+                    {make}
+                  </label>
+                ),
+              )}
             </div>
           </div>
 
           <div className="car-filter">
-            <h3>Fuel Type</h3>
+          <h5 style={{ backgroundColor: '#f2f2f2', borderRadius: '10px', padding: '10px', fontSize: '13px', color: 'black', fontWeight: 'bold', textAlign: 'center' }}>
+        Fuel Type
+      </h5>
             <div>
-              {Array.from(new Set(cars?.map((car) => car.fuelType))).map(
+              {Array.from(new Set(filterList?.map((car) => car.fuelType))).map(
                 (fuelType) => (
                   <label key={fuelType}>
                     <input
@@ -188,13 +134,75 @@ const Cars = () => {
                     />{" "}
                     {fuelType}
                   </label>
-                )
+                ),
               )}
             </div>
           </div>
         </aside>
 
-        <main className="cars-container">{renderCars()}</main>
+        <main className="cars-container">
+          {data?.length > 0 ? (
+            data.map((car) => (
+              <div className="car-card" key={car?._id}>
+                <div className="car-header">
+                  <span className="car-safety">Safety</span>
+                  {car?.recommended && (
+                    <div className="car-recommended-badge">
+                      <span>Recommended</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="car-content">
+                  <img
+                    src={handleCarImage(car)}
+                    alt={car?.model}
+                    className="car-image"
+                  />
+                  <div className="car-details">
+                    <h3 className="car-title">
+                      {car?.make} {car?.model} ({car?.color})
+                    </h3>
+                    <div className="fuel-type">
+                      <BsFillFuelPumpFill /> {car?.fuelType}
+                    </div>
+                    <div className="seats-and-luggage">
+                      <span>
+                        <MdOutlineAirlineSeatReclineNormal /> {car?.seater}{" "}
+                        Seater
+                      </span>
+                      <span>
+                        <FaPersonWalkingLuggage /> {car?.luggage} Luggage Bag
+                      </span>
+                      {car?.extraKm && (
+                        <span style={{ color: "black" }}>
+                          <IoMdSpeedometer /> {car?.extraKm}₹ Extra Per Km
+                        </span>
+                      )}
+                    </div>
+                    <div className="car-badges">
+                      {car?.badges?.map((badge, index) => (
+                        <div key={index} className="car-badge">
+                          {badge}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="car-footer">
+                  <div className="car-price">₹ {car?.price}</div>
+                  <button className="book-now">Book Now</button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <img
+              src="https://assets-v2.lottiefiles.com/a/0e30b444-117c-11ee-9b0d-0fd3804d46cd/BkQxD7wtnZ.gif"
+              alt="Loading..."
+            />
+          )}
+        </main>
       </div>
     </div>
   );

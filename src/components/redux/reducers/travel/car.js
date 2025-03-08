@@ -52,7 +52,7 @@ export const getAllCars = createAsyncThunk('car/getAll', async (_, { rejectWithV
 
 export const filterCar = createAsyncThunk('car/filterCar', async ({query,value}, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`${localUrl}/travel/filter-car/by-query?${query}=${value}&${query}=${value}&${query}=${value}&${query}=${value}`, {
+        const response = await axios.get(`${localUrl}/travel/filter-car/by-query?${query}=${value}`, {
             headers: {
                 Authorization: token,
             },
@@ -101,6 +101,7 @@ const carSlice = createSlice({
     name: 'car',
     initialState: {
         data: [],
+        filterCar: [],
         loading: false,
         error: null,
     },
@@ -127,7 +128,7 @@ const carSlice = createSlice({
                 state.data = action.payload;
             })
             .addCase(filterCar.fulfilled, (state, action) => {
-                state.data = action.payload;
+                state.filterCar = action.payload;
             })
             .addCase(deleteCar.fulfilled, (state, action) => {
                 state.data = state.data.filter((car) => car.id !== action.payload.id);
