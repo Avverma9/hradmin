@@ -25,6 +25,10 @@ import {
   TableContainer,
   TablePagination,
   CircularProgress,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
 } from '@mui/material';
 
 import { localUrl } from '../../../../utils/util';
@@ -37,10 +41,14 @@ const HotelAvailability = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
 
   // Pagination state
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  // Extract unique cities for filtering
+  const hotelCities = Array.from(new Set(hotels.map(hotel => hotel.hotelCity)));
 
   const fetchHotels = async () => {
     if (!fromDate || !toDate) {
@@ -87,11 +95,14 @@ const HotelAvailability = () => {
     setSearchTerm(event.target.value);
   };
 
-  const filteredHotels = hotels.filter(
-    (hotel) =>
-      hotel.hotelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      hotel.hotelId.toString().includes(searchTerm)
-  );
+  const filteredHotels = hotels
+    .filter(
+      (hotel) =>
+        (hotel.hotelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          hotel.hotelId.toString().includes(searchTerm)) &&
+        (selectedCity ? hotel.hotelCity === selectedCity : true) // Filter by city if selected
+    )
+    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -117,13 +128,43 @@ const HotelAvailability = () => {
           particular hotels
         </Typography>
         <hr />
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div style={{ flex: 1 }}>
+
+        {/* Grid Container with row layout */}
+        <Grid container direction="row" spacing={2} alignItems="center">
+                    {/* City Filter Dropdown */}
+                    <Grid item xs={2}>
+            <FormControl fullWidth>
+              <InputLabel>Hotel City</InputLabel>
+              <Select
+                value={selectedCity}
+                onChange={(event) => setSelectedCity(event.target.value)}
+                label="Hotel City"
+              >
+                <MenuItem value="">All Cities</MenuItem>
+                {hotelCities.map((city, index) => (
+                  <MenuItem key={index} value={city}>
+                    {city}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* Search Input */}
+          <Grid item xs={2}>
+            <InputBase
+              placeholder="Search by Hotel Name or ID"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '4px', width: '100%' }}
+            />
+          </Grid>
+          {/* From Date */}
+          <Grid item xs={3}>
             <DatePicker
               label="From Date"
               value={fromDate}
               onChange={(newValue) => {
-               
                 setFromDate(newValue);
                 if (toDate && isSameDay(newValue, toDate)) {
                   setToDate(null); // Reset toDate if same as fromDate
@@ -132,8 +173,10 @@ const HotelAvailability = () => {
               renderInput={(params) => <TextField {...params} />}
               minDate={new Date()} // Disable past dates
             />
-          </div>
-          <div style={{ flex: 1 }}>
+          </Grid>
+
+          {/* To Date */}
+          <Grid item xs={3}>
             <DatePicker
               label="To Date"
               value={toDate}
@@ -147,22 +190,20 @@ const HotelAvailability = () => {
               renderInput={(params) => <TextField {...params} />}
               minDate={fromDate || new Date()} // Disable dates before fromDate
             />
-          </div>
-          <Button variant="contained" color="primary" onClick={fetchHotels} disabled={loading}>
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'View Availability'}
-          </Button>
-        </div>
+          </Grid>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-          <InputBase
-            placeholder="Search by Hotel Name or ID"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '4px', flex: 1 }}
-          />
-        </div>
+          {/* View Availability Button */}
+          <Grid item xs={2}>
+            <Button variant="contained" color="primary" onClick={fetchHotels} disabled={loading} fullWidth>
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Check'}
+            </Button>
+          </Grid>
 
-        <TableContainer component={Paper}>
+
+        </Grid>
+
+        {/* Table for Hotels */}
+        <TableContainer component={Paper} style={{ marginTop: '20px' }}>
           <Table>
             <TableHead>
               <TableRow>
@@ -174,32 +215,30 @@ const HotelAvailability = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredHotels
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((hotel) => (
-                  <TableRow key={hotel.hotelId}>
-                    <TableCell>
-                      <Link
-                        to={`/view-hotel-details/${hotel.hotelId}`}
-                        style={{ textDecoration: 'none', color: 'inherit' }}
-                      >
-                        {hotel.hotelName} ({hotel.city})
-                      </Link>
-                    </TableCell>
-                    <TableCell>{hotel.totalRooms}</TableCell>
-                    <TableCell>{hotel.bookedRooms}</TableCell>
-                    <TableCell>{hotel.availableRooms}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={() => handleViewMore(hotel)}
-                      >
-                        View More
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+              {filteredHotels.map((hotel) => (
+                <TableRow key={hotel.hotelId}>
+                  <TableCell>
+                    <Link
+                      to={`/view-hotel-details/${hotel.hotelId}`}
+                      style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                      {hotel.hotelName} ({hotel.hotelCity})
+                    </Link>
+                  </TableCell>
+                  <TableCell>{hotel.totalRooms}</TableCell>
+                  <TableCell>{hotel.bookedRooms}</TableCell>
+                  <TableCell>{hotel.availableRooms}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      onClick={() => handleViewMore(hotel)}
+                    >
+                      View More
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </TableContainer>
