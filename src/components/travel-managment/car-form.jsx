@@ -99,6 +99,17 @@ export default function CarForm() {
     navigate("/your-cars");
   };
 
+  // Update the onChange for availableFrom and availableTo fields
+  const handleAvailableFromChange = (e) => {
+    const date = new Date(e.target.value);
+    setAvailableFrom(date); // Store as Date object
+  };
+
+  const handleAvailableToChange = (e) => {
+    const date = new Date(e.target.value);
+    setAvailableTo(date); // Store as Date object
+  };
+
   useEffect(() => {
     const fetchCarData = async () => {
       try {
@@ -323,8 +334,10 @@ export default function CarForm() {
               <TextField
                 label="Available From"
                 type="date"
-                value={availableFrom}
-                onChange={(e) => setAvailableFrom(e.target.value)}
+                value={
+                  availableFrom ? availableFrom.toISOString().split("T")[0] : ""
+                }
+                onChange={handleAvailableFromChange}
                 margin="normal"
                 InputLabelProps={{
                   shrink: true,
@@ -335,8 +348,10 @@ export default function CarForm() {
               <TextField
                 label="Available To"
                 type="date"
-                value={availableTo}
-                onChange={(e) => setAvailableTo(e.target.value)}
+                value={
+                  availableTo ? availableTo.toISOString().split("T")[0] : ""
+                }
+                onChange={handleAvailableToChange}
                 margin="normal"
                 InputLabelProps={{
                   shrink: true,
