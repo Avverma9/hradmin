@@ -80,6 +80,22 @@ export const getSeatsData = createAsyncThunk('car/getSeatsData', async (id, { re
         return rejectWithValue(errorMessage);
     }
 });
+
+export const bookSeat = createAsyncThunk('car/bookSeat', async ({id, data}, { rejectWithValue }) => {
+    try {
+        const response = await axios.post(`${localUrl}/travel/book-a-seat/${id}`, data, {
+            headers: {
+                Authorization: token,
+            },
+        });
+        notify(response?.status);
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+});
 export const deleteCar = createAsyncThunk('car/deleteCar', async (id, { rejectWithValue }) => {
     try {
         const response = await axios.delete(`${localUrl}/travel/delete-a-car/${id}`, {
