@@ -10,6 +10,11 @@ import axios from "axios";
 import { localUrl } from "../../../utils/util";
 import { CiSearch } from "react-icons/ci";
 import { RxCross1 } from "react-icons/rx";
+import { Button, TextField } from "@mui/material";
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { format } from "date-fns"; // Import format from date-fns
+
 const Cars = () => {
   const dispatch = useDispatch();
   const [data, setData] = useState([]);
@@ -20,6 +25,8 @@ const Cars = () => {
     make: [],
     fuelType: [],
   });
+  const [fromDate, setFromDate] = useState("");  // New state for from date
+  const [toDate, setToDate] = useState("");  // New state for to date
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,16 +41,13 @@ const Cars = () => {
     const currentFilterValues = newFilters[key];
 
     if (currentFilterValues.includes(value)) {
-      // If value is already selected, uncheck it
       newFilters[key] = currentFilterValues.filter((item) => item !== value);
     } else {
-      // Otherwise, add the new value to the filter
       newFilters[key] = [...currentFilterValues, value];
     }
 
     setFilters(newFilters);
 
-    // If all filters are unchecked, reset data by calling getAllCars
     if (newFilters.make.length === 0 && newFilters.fuelType.length === 0) {
       const response = await dispatch(getAllCars());
       setData(response.payload);
@@ -60,49 +64,143 @@ const Cars = () => {
   };
 
   const handleSearch = async () => {
-    if (!from || !to) return;
+    // Check if either pickup and drop locations are empty or dates are empty
+    if ((!from || !to) && (!fromDate || !toDate)) {
+      return; // Don't make API call if both location and dates are empty
+    }
 
-    const response = await axios.get(
-      `${localUrl}/travel/filter-car/by-query?from=${from}&to=${to}`,
-    );
+    // Format dates to YYYY-MM-DD
+    const formattedFromDate = fromDate ? format(fromDate, "yyyy-MM-dd") : "";
+    const formattedToDate = toDate ? format(toDate, "yyyy-MM-dd") : "";
+
+    // Construct the API URL with location and date filters
+    const queryParams = [
+      from && `from=${from}`,
+      to && `to=${to}`,
+      formattedFromDate && `availableFrom=${formattedFromDate}`,
+      formattedToDate && `availableTo=${formattedToDate}`,
+    ]
+      .filter(Boolean)
+      .join("&");
+
+    // Proceed with the API call
+    const response = await axios.get(`${localUrl}/travel/filter-car/by-query?${queryParams}`);
     setData(response.data);
   };
 
-  const handleClear =  () => {
-window.location.reload();
+  const handleClear = () => {
+    window.location.reload();
   };
 
   return (
     <div className="cars-page">
       <header className="car-upper-header">
         <div className="car-header-left">
-          <div className="car-search-fields">
-            <input
-              type="text"
-              placeholder="From"
-              onChange={(e) => setFrom(e.target.value)}
+          <TextField
+            label="Pickup Location"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            sx={{
+              width: "200px",
+              height: "40px",
+              marginBottom: "16px",
+            }}
+          />
+
+          <TextField
+            label="Drop Location"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            sx={{
+              width: "200px",
+              height: "40px",
+              marginBottom: "16px",
+            }}
+          />
+
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label="Pick From"
+              value={fromDate}
+              onChange={(newValue) => setFromDate(newValue)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  variant="outlined"
+                  fullWidth
+                  margin="normal"
+                  placeholder="Pick From"
+                  sx={{
+                    width: "200px",
+                    height: "40px",
+                    marginBottom: "16px",
+                  }}
+                />
+              )}
             />
-            <input
-              type="text"
-              placeholder="To"
-              onChange={(e) => setTo(e.target.value)}
+
+            <DatePicker
+              label="Pick To"
+              value={toDate}
+              onChange={(newValue) => setToDate(newValue)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  variant="outlined"
+                  fullWidth
+                  margin="normal"
+                  placeholder="Pick To"
+                  sx={{
+                    width: "200px",
+                    height: "40px",
+                    marginBottom: "16px",
+                  }}
+                />
+              )}
             />
-          </div>
-          <div className="car-header-right">
-            <button onClick={handleSearch}><CiSearch/></button>
-          </div>
-          <div className="car-header-right">
-            <button onClick={handleClear}><RxCross1/></button>
-          </div>
+          </LocalizationProvider>
+
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSearch}
+            startIcon={<CiSearch />}
+            sx={{ marginTop: "16px" }}
+          />
+          
+
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={handleClear}
+            startIcon={<RxCross1 />}
+            sx={{ marginTop: "16px" }}
+          />
         </div>
       </header>
 
       <div className="car-layout">
         <aside className="car-sidebar">
           <div className="car-filter">
-          <h5 style={{ backgroundColor: '#f2f2f2', borderRadius: '10px', padding: '10px', fontSize: '13px', color: 'black', fontWeight: 'bold', textAlign: 'center' }}>
-        Car Type
-      </h5>
+            <h5
+              style={{
+                backgroundColor: "#f2f2f2",
+                borderRadius: "10px",
+                padding: "10px",
+                fontSize: "13px",
+                color: "black",
+                fontWeight: "bold",
+                textAlign: "center",
+              }}
+            >
+              Car Type
+            </h5>
             <div>
               {Array.from(new Set(filterList?.map((car) => car.make))).map(
                 (make) => (
@@ -114,15 +212,25 @@ window.location.reload();
                     />{" "}
                     {make}
                   </label>
-                ),
+                )
               )}
             </div>
           </div>
 
           <div className="car-filter">
-          <h5 style={{ backgroundColor: '#f2f2f2', borderRadius: '10px', padding: '10px', fontSize: '13px', color: 'black', fontWeight: 'bold', textAlign: 'center' }}>
-        Fuel Type
-      </h5>
+            <h5
+              style={{
+                backgroundColor: "#f2f2f2",
+                borderRadius: "10px",
+                padding: "10px",
+                fontSize: "13px",
+                color: "black",
+                fontWeight: "bold",
+                textAlign: "center",
+              }}
+            >
+              Fuel Type
+            </h5>
             <div>
               {Array.from(new Set(filterList?.map((car) => car.fuelType))).map(
                 (fuelType) => (
@@ -134,7 +242,7 @@ window.location.reload();
                     />{" "}
                     {fuelType}
                   </label>
-                ),
+                )
               )}
             </div>
           </div>

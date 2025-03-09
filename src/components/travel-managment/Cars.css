@@ -152,9 +152,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    background-color: #88d3ff;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 40px;
 }
 
 .car-header-left {
@@ -174,6 +172,8 @@
     font-size: 16px;
     outline: none;
     border-radius: 30px;
+    width: 127px;
+    height: 38px;
 }
 
 .car-search-fields input:focus, .car-header-right input[type="datetime-local"]:focus {
