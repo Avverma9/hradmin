@@ -48,6 +48,8 @@ export default function CarForm() {
   const [allCarData, setAllCarData] = useState([]);
   const [makes, setMakes] = useState([]);
   const [filteredModels, setFilteredModels] = useState([]);
+  const [seatConfig, setSeatConfig] = useState([]);
+  const [showSeatConfig, setShowSeatConfig] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -81,6 +83,18 @@ export default function CarForm() {
     formData.append("make", make);
     formData.append("model", model);
     formData.append("seater", seater);
+
+    // Convert each seatConfig object to a JSON string and append it to formData
+    seatConfig.forEach((seat, index) => {
+      formData.append(`seatConfig[${index}]`, JSON.stringify({
+        seatType: seat.seatType,
+        seatNumber: Number(seat.seatNumber),
+        isBooked: seat.isBooked,
+        seatPrice: Number(seat.seatPrice), // Ensure seatPrice is a number
+        bookedBy: seat.bookedBy
+      }));
+    });
+
     formData.append("extraKm", extraKm);
     formData.append("year", year);
     formData.append("price", price);
@@ -139,6 +153,24 @@ export default function CarForm() {
     }
   }, [make, allCarData]);
 
+  const handleSeaterChange = (e) => {
+    setSeater(e.target.value);
+    setShowSeatConfig(false); // Hide the seat configuration when seater is selected
+  };
+
+  const handleSeatChange = (index, field, value) => {
+    const updatedSeatsData = [...seatConfig];
+    updatedSeatsData[index] = {
+      ...updatedSeatsData[index],
+      [field]: value,
+    };
+    setSeatConfig(updatedSeatsData);
+  };
+
+  const addNewSeat = () => {
+    setSeatConfig([...seatConfig, { seatType: "", seatNumber: "",seatPrice: "", isBooked: false, bookedBy: "" }]);
+  };
+
   return (
     <Card sx={{ margin: "0 auto", padding: 3 }}>
       {" "}
@@ -156,9 +188,7 @@ export default function CarForm() {
       <CardContent>
         <form onSubmit={handleSubmit}>
           <Grid container spacing={2}>
-            {" "}
-            {/* Reduced the spacing to 2 */}
-            {/* First Row */}
+
             <Grid item xs={12} sm={4}>
               <Autocomplete
                 value={make}
@@ -220,7 +250,7 @@ export default function CarForm() {
                 <Select
                   labelId="seater-label"
                   value={seater}
-                  onChange={(e) => setSeater(e.target.value)}
+                  onChange={handleSeaterChange}
                   label="Seater"
                 >
                   {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
@@ -236,6 +266,93 @@ export default function CarForm() {
                 )}
               </FormControl>
             </Grid>
+            {seater && (
+              <Grid item xs={12}>
+                <Button
+                  variant="text"
+                  color="primary"
+                  onClick={() => setShowSeatConfig(true)}
+                >
+                  Want to set seats
+                </Button>
+              </Grid>
+            )}
+            {showSeatConfig && (
+              <>
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom>
+                    Seat Configuration
+                  </Typography>
+                  {Array.from({ length: seater }).map((_, index) => (
+                    <Box key={index} sx={{ marginBottom: 2 }}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={4}>
+                          <TextField
+                            label={`Seat ${index + 1} Type`}
+                            variant="outlined"
+                            fullWidth
+                            value={seatConfig[index]?.seatType || ""}
+                            onChange={(e) => handleSeatChange(index, "seatType", e.target.value)}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <TextField
+                            label={`Seat ${index + 1} Number`}
+                            variant="outlined"
+                            fullWidth
+                            value={seatConfig[index]?.seatNumber || ""}
+                            onChange={(e) => handleSeatChange(index, "seatNumber", e.target.value)}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <TextField
+                            label={`Seat ${index + 1} Price`}
+                            variant="outlined"
+                            fullWidth
+                            value={seatConfig[index]?.seatPrice}
+                            onChange={(e) => handleSeatChange(index, "seatPrice", e.target.value)}
+                            type="number"
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <FaIndianRupeeSign />
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <FormControl fullWidth margin="normal">
+                            <InputLabel>Seat {index + 1} Status</InputLabel>
+                            <Select
+                              value={seatConfig[index]?.isBooked || false}
+                              onChange={(e) => handleSeatChange(index, "isBooked", e.target.value)}
+                            >
+                              <MenuItem value={false}>Available</MenuItem>
+                              <MenuItem value={true}>Booked</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        {seatConfig[index]?.isBooked && (
+                          <Grid item xs={12} sm={4}>
+                            <TextField
+                              label={`Seat ${index + 1} Booked By`}
+                              variant="outlined"
+                              fullWidth
+                              value={seatConfig[index]?.bookedBy || ""}
+                              onChange={(e) => handleSeatChange(index, "bookedBy", e.target.value)}
+                            />
+                          </Grid>
+                        )}
+                      </Grid>
+                    </Box>
+                  ))}
+                  <Button variant="outlined" onClick={addNewSeat}>
+                    Add More Seats
+                  </Button>
+                </Grid>
+              </>
+            )}
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth margin="normal">
                 <InputLabel>Fuel Type</InputLabel>

@@ -14,10 +14,14 @@ import { Button, TextField } from "@mui/material";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format } from "date-fns"; // Import format from date-fns
+import SeatData from "./seat-data";
 
 const Cars = () => {
   const dispatch = useDispatch();
   const [data, setData] = useState([]);
+  const [openSeatData, setOpenSeatData] = useState(false);
+  const [selectedCarId, setSelectedCarId] = useState(null);  // Track selected car ID
+  
   const filterList = useSelector((state) => state.car.data);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -57,12 +61,23 @@ const Cars = () => {
     }
   };
 
+  const handleSeatDataOpen = (carId) => {
+    setSelectedCarId(carId);  // Set the selected car ID
+    setOpenSeatData(true);     // Open the SeatData component
+  };
+  
+  const handleSeatDataClose = () => {
+    setOpenSeatData(false);  // Close the SeatData component
+  };
+
+
   const handleCarImage = (car) => {
     return car?.images && Array.isArray(car.images) && car.images.length > 0
       ? car.images[0]
       : "/public/assets/car.png";
   };
 
+ 
   const handleSearch = async () => {
     // Check if either pickup and drop locations are empty or dates are empty
     if ((!from || !to) && (!fromDate || !toDate)) {
@@ -250,7 +265,7 @@ const Cars = () => {
 
         <main className="cars-container">
           {data?.length > 0 ? (
-            data.map((car) => (
+            data?.map((car) => (
               <div className="car-card" key={car?._id}>
                 <div className="car-header">
                   <span className="car-safety">Safety</span>
@@ -300,7 +315,7 @@ const Cars = () => {
 
                 <div className="car-footer">
                   <div className="car-price">₹ {car?.price}</div>
-                  <button className="book-now">Book Now</button>
+                  <button className="book-now" onClick={() => handleSeatDataOpen(car._id)}>Book Now</button>
                 </div>
               </div>
             ))
@@ -312,6 +327,7 @@ const Cars = () => {
           )}
         </main>
       </div>
+      <SeatData open={openSeatData} onClose={handleSeatDataClose} id={selectedCarId} />
     </div>
   );
 };
