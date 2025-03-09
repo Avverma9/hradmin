@@ -31,6 +31,9 @@ export default function CarForm() {
   const [images, setImages] = useState([]);
   const [price, setPrice] = useState("");
   const [from, setFrom] = useState("");
+  const [availableFrom, setAvailableFrom] = useState("");
+  const [availableTo, setAvailableTo] = useState("");
+  const [perPersonCost, setPerPersonCost] = useState("");
   const [to, setTo] = useState("");
   const [seater, setSeater] = useState("");
   const [extraKm, setExtraKm] = useState("");
@@ -82,6 +85,9 @@ export default function CarForm() {
     formData.append("year", year);
     formData.append("price", price);
     formData.append("from", from);
+    formData.append("availableFrom", availableFrom);
+    formData.append("availableTo", availableTo);
+    formData.append("perPersonCost", perPersonCost);
     formData.append("to", to);
     formData.append("color", color);
     formData.append("mileage", mileage);
@@ -180,6 +186,35 @@ export default function CarForm() {
               />
             </Grid>
             <Grid item xs={12} sm={4}>
+              <TextField
+                label="Year"
+                variant="outlined"
+                fullWidth
+                type="number"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Color</InputLabel>
+                <Select
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  label="Color"
+                >
+                  {["Red", "Blue", "Black", "White", "Silver", "Green"].map(
+                    (color) => (
+                      <MenuItem key={color} value={color}>
+                        {color}
+                      </MenuItem>
+                    ),
+                  )}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4}>
               <FormControl fullWidth margin="normal">
                 <InputLabel id="seater-label">Seater</InputLabel>
                 <Select
@@ -201,21 +236,52 @@ export default function CarForm() {
                 )}
               </FormControl>
             </Grid>
-            {/* Second Row */}
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Fuel Type</InputLabel>
+                <Select
+                  value={fuelType}
+                  onChange={(e) => setFuelType(e.target.value)}
+                  label="Fuel Type"
+                >
+                  {["Petrol", "Diesel", "Electric", "Hybrid"].map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {type}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Transmission</InputLabel>
+                <Select
+                  value={transmission}
+                  onChange={(e) => setTransmission(e.target.value)}
+                  label="Transmission"
+                >
+                  <MenuItem value="Automatic">Automatic</MenuItem>
+                  <MenuItem value="Manual">Manual</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
             <Grid item xs={12} sm={4}>
               <TextField
-                label="Extra KM Charge"
+                label="Mileage (KM/L)"
                 variant="outlined"
                 fullWidth
-                value={extraKm}
-                onChange={(e) => setExtraKm(e.target.value)}
+                type="number"
+                value={mileage}
+                onChange={(e) => setMileage(e.target.value)}
                 margin="normal"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Speed />
+                    </InputAdornment>
+                  ),
+                }}
               />
-              {extraKm === "" && (
-                <FormHelperText error>
-                  Please mention Per extra KM Charge in INR
-                </FormHelperText>
-              )}
             </Grid>
             <Grid item xs={12} sm={4}>
               <TextField
@@ -255,13 +321,26 @@ export default function CarForm() {
             </Grid>
             <Grid item xs={12} sm={4}>
               <TextField
-                label="Year"
-                variant="outlined"
-                fullWidth
-                type="number"
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
+                label="Available From"
+                type="date"
+                value={availableFrom}
+                onChange={(e) => setAvailableFrom(e.target.value)}
                 margin="normal"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                label="Available To"
+                type="date"
+                value={availableTo}
+                onChange={(e) => setAvailableTo(e.target.value)}
+                margin="normal"
+                InputLabelProps={{
+                  shrink: true,
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={4}>
@@ -282,72 +361,36 @@ export default function CarForm() {
                 }}
               />
             </Grid>
-            {/* Third Row */}
-            <Grid item xs={12} sm={4}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Color</InputLabel>
-                <Select
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  label="Color"
-                >
-                  {["Red", "Blue", "Black", "White", "Silver", "Green"].map(
-                    (color) => (
-                      <MenuItem key={color} value={color}>
-                        {color}
-                      </MenuItem>
-                    ),
-                  )}
-                </Select>
-              </FormControl>
-            </Grid>
             <Grid item xs={12} sm={4}>
               <TextField
-                label="Mileage (KM/L)"
-                variant="outlined"
-                fullWidth
+                label="Per Person Cost"
                 type="number"
-                value={mileage}
-                onChange={(e) => setMileage(e.target.value)}
+                value={perPersonCost}
+                onChange={(e) => setPerPersonCost(e.target.value)}
                 margin="normal"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Speed />
+                      <FaIndianRupeeSign />
                     </InputAdornment>
                   ),
                 }}
               />
             </Grid>
             <Grid item xs={12} sm={4}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Fuel Type</InputLabel>
-                <Select
-                  value={fuelType}
-                  onChange={(e) => setFuelType(e.target.value)}
-                  label="Fuel Type"
-                >
-                  {["Petrol", "Diesel", "Electric", "Hybrid"].map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {type}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            {/* Fourth Row */}
-            <Grid item xs={12} sm={4}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Transmission</InputLabel>
-                <Select
-                  value={transmission}
-                  onChange={(e) => setTransmission(e.target.value)}
-                  label="Transmission"
-                >
-                  <MenuItem value="Automatic">Automatic</MenuItem>
-                  <MenuItem value="Manual">Manual</MenuItem>
-                </Select>
-              </FormControl>
+              <TextField
+                label="Extra KM Charge"
+                variant="outlined"
+                fullWidth
+                value={extraKm}
+                onChange={(e) => setExtraKm(e.target.value)}
+                margin="normal"
+              />
+              {extraKm === "" && (
+                <FormHelperText error>
+                  Please mention Per extra KM Charge in INR
+                </FormHelperText>
+              )}
             </Grid>
             {/* Fifth Row (Image upload) */}
             <Grid item xs={12}>
