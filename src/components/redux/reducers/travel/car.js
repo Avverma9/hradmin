@@ -35,6 +35,23 @@ export const getCarById = createAsyncThunk('car/getCarById', async (id, { reject
     }
 });
 
+export const getCarByOwnerId = createAsyncThunk('car/getCarByOwnerId', async (id, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(`${localUrl}/travel/get-a-car/by-owner/${id}`, {
+            headers: {
+                Authorization: token,
+            },
+        });
+        notify(response?.status);
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+});
+
+
 export const getAllCars = createAsyncThunk('car/getAll', async (_, { rejectWithValue }) => {
     try {
         const response = await axios.get(`${localUrl}/travel/get-all-car`, {
@@ -165,6 +182,9 @@ const carSlice = createSlice({
             })
             .addCase(filterCar.fulfilled, (state, action) => {
                 state.filterCar = action.payload;
+            })
+            .addCase(getCarByOwnerId.fulfilled, (state, action) => {
+                state.ownerCar = action.payload;
             })
             .addCase(deleteCar.fulfilled, (state, action) => {
                 state.data = state.data.filter((car) => car.id !== action.payload.id);
