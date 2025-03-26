@@ -37,6 +37,7 @@ export default function CarForm() {
   const [to, setTo] = useState("");
   const [seater, setSeater] = useState("");
   const [extraKm, setExtraKm] = useState("");
+  const [runningStatus, setRunningStatus] = useState("");
   const [color, setColor] = useState("");
   const [mileage, setMileage] = useState("");
   const [fuelType, setFuelType] = useState("");
@@ -86,16 +87,20 @@ export default function CarForm() {
 
     // Convert each seatConfig object to a JSON string and append it to formData
     seatConfig.forEach((seat, index) => {
-      formData.append(`seatConfig[${index}]`, JSON.stringify({
-        seatType: seat.seatType,
-        seatNumber: Number(seat.seatNumber),
-        isBooked: seat.isBooked,
-        seatPrice: Number(seat.seatPrice), // Ensure seatPrice is a number
-        bookedBy: seat.bookedBy
-      }));
+      formData.append(
+        `seatConfig[${index}]`,
+        JSON.stringify({
+          seatType: seat.seatType,
+          seatNumber: Number(seat.seatNumber),
+          isBooked: seat.isBooked,
+          seatPrice: Number(seat.seatPrice), // Ensure seatPrice is a number
+          bookedBy: seat.bookedBy,
+        }),
+      );
     });
 
     formData.append("extraKm", extraKm);
+    formData.append("runningStatus", runningStatus);
     formData.append("year", year);
     formData.append("price", price);
     formData.append("from", from);
@@ -168,7 +173,16 @@ export default function CarForm() {
   };
 
   const addNewSeat = () => {
-    setSeatConfig([...seatConfig, { seatType: "", seatNumber: "",seatPrice: "", isBooked: false, bookedBy: "" }]);
+    setSeatConfig([
+      ...seatConfig,
+      {
+        seatType: "",
+        seatNumber: "",
+        seatPrice: "",
+        isBooked: false,
+        bookedBy: "",
+      },
+    ]);
   };
 
   return (
@@ -188,7 +202,6 @@ export default function CarForm() {
       <CardContent>
         <form onSubmit={handleSubmit}>
           <Grid container spacing={2}>
-
             <Grid item xs={12} sm={4}>
               <Autocomplete
                 value={make}
@@ -292,7 +305,13 @@ export default function CarForm() {
                             variant="outlined"
                             fullWidth
                             value={seatConfig[index]?.seatType || ""}
-                            onChange={(e) => handleSeatChange(index, "seatType", e.target.value)}
+                            onChange={(e) =>
+                              handleSeatChange(
+                                index,
+                                "seatType",
+                                e.target.value,
+                              )
+                            }
                           />
                         </Grid>
                         <Grid item xs={12} sm={4}>
@@ -301,7 +320,13 @@ export default function CarForm() {
                             variant="outlined"
                             fullWidth
                             value={seatConfig[index]?.seatNumber || ""}
-                            onChange={(e) => handleSeatChange(index, "seatNumber", e.target.value)}
+                            onChange={(e) =>
+                              handleSeatChange(
+                                index,
+                                "seatNumber",
+                                e.target.value,
+                              )
+                            }
                           />
                         </Grid>
                         <Grid item xs={12} sm={4}>
@@ -310,7 +335,13 @@ export default function CarForm() {
                             variant="outlined"
                             fullWidth
                             value={seatConfig[index]?.seatPrice}
-                            onChange={(e) => handleSeatChange(index, "seatPrice", e.target.value)}
+                            onChange={(e) =>
+                              handleSeatChange(
+                                index,
+                                "seatPrice",
+                                e.target.value,
+                              )
+                            }
                             type="number"
                             InputProps={{
                               startAdornment: (
@@ -326,7 +357,13 @@ export default function CarForm() {
                             <InputLabel>Seat {index + 1} Status</InputLabel>
                             <Select
                               value={seatConfig[index]?.isBooked || false}
-                              onChange={(e) => handleSeatChange(index, "isBooked", e.target.value)}
+                              onChange={(e) =>
+                                handleSeatChange(
+                                  index,
+                                  "isBooked",
+                                  e.target.value,
+                                )
+                              }
                             >
                               <MenuItem value={false}>Available</MenuItem>
                               <MenuItem value={true}>Booked</MenuItem>
@@ -340,7 +377,13 @@ export default function CarForm() {
                               variant="outlined"
                               fullWidth
                               value={seatConfig[index]?.bookedBy || ""}
-                              onChange={(e) => handleSeatChange(index, "bookedBy", e.target.value)}
+                              onChange={(e) =>
+                                handleSeatChange(
+                                  index,
+                                  "bookedBy",
+                                  e.target.value,
+                                )
+                              }
                             />
                           </Grid>
                         )}
@@ -508,6 +551,20 @@ export default function CarForm() {
                   Please mention Per extra KM Charge in INR
                 </FormHelperText>
               )}
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Running Status</InputLabel>
+                <Select
+                  value={runningStatus}
+                  onChange={(e) => setRunningStatus(e.target.value)}
+                  label="Running Status"
+                >
+                  <MenuItem value="Available">Available</MenuItem>
+                  <MenuItem value="On A Trip">On A Trip</MenuItem>
+                  <MenuItem value="Trip Completed">Trip Completed</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
             {/* Fifth Row (Image upload) */}
             <Grid item xs={12}>

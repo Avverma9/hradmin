@@ -208,25 +208,16 @@ export default function CarUpdate({ car, onClose, open }) {
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4}>
                   <Autocomplete
-                    value={make}
-                    placeholder={car?.make}
+                    value={make || car?.make} // Use the car prop as a fallback
                     onChange={(event, newValue) => setMake(newValue)}
                     options={makes}
                     renderInput={(params) => (
-                      <TextField {...params} label="Make" variant="outlined" />
-                    )}
-                    fullWidth
-                    margin="normal"
-                    freeSolo
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Autocomplete
-                    value={model}
-                    onChange={(event, newValue) => setModel(newValue)}
-                    options={filteredModels.map((car) => car.model)}
-                    renderInput={(params) => (
-                      <TextField {...params} label="Model" variant="outlined" />
+                      <TextField
+                        {...params}
+                        label="Make"
+                        variant="outlined"
+                        defaultValue={car?.make} // Set the previous value from the car prop
+                      />
                     )}
                     fullWidth
                     margin="normal"
@@ -235,11 +226,21 @@ export default function CarUpdate({ car, onClose, open }) {
                 </Grid>
                 <Grid item xs={12} sm={4}>
                   <TextField
+                    label="Model"
+                    variant="outlined"
+                    fullWidth
+                    value={model || car?.model} // Use the car prop as a fallback
+                    onChange={(e) => setModel(e.target.value)}
+                    margin="normal"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <TextField
                     label="Year"
                     variant="outlined"
                     fullWidth
                     type="number"
-                    value={year}
+                    value={year || car?.year} // Use the car prop as a fallback
                     onChange={(e) => setYear(e.target.value)}
                     margin="normal"
                   />
@@ -248,7 +249,7 @@ export default function CarUpdate({ car, onClose, open }) {
                   <FormControl fullWidth margin="normal">
                     <InputLabel>Color</InputLabel>
                     <Select
-                      value={color}
+                      value={color || car?.color} // Use the car prop as a fallback
                       onChange={(e) => setColor(e.target.value)}
                       label="Color"
                     >
@@ -267,7 +268,7 @@ export default function CarUpdate({ car, onClose, open }) {
                     <InputLabel id="seater-label">Seater</InputLabel>
                     <Select
                       labelId="seater-label"
-                      value={seater}
+                      value={seater   || car?.seater} // Use the car prop as a fallback
                       onChange={handleSeaterChange}
                       label="Seater"
                     >
@@ -339,7 +340,7 @@ export default function CarUpdate({ car, onClose, open }) {
                                 label={`Seat ${index + 1} Price`}
                                 variant="outlined"
                                 fullWidth
-                                value={seatConfig[index]?.seatPrice}
+                                value={seatConfig[index]?.seatPrice || car?.seatPrice}
                                 onChange={(e) =>
                                   handleSeatChange(
                                     index,
