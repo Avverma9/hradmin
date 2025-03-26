@@ -100,7 +100,7 @@ export const paths = [
     { title: 'Dashboard', path: '/dashboard', role: 'PMS' },
     { title: 'Messenger', path: '/messenger', role: 'PMS' },
     { title: 'Cars', path: '/your-cars', role: 'TMS' },
-    { title: 'My Car', path: '/your-car-details/owner-car', role: 'TMS' },
+    { title: 'My Ride', path: '/your-car-details/owner-car', role: 'TMS' },
     { title: 'Car Owner', path: '/cars-owner', role: 'TMS' },
     { title: 'Add Car', path: '/add-a-car', role: 'TMS' },
     { title: 'Add Owner', path: '/add-an-car-owner', role: 'TMS' },

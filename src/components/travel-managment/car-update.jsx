@@ -43,7 +43,7 @@ export default function CarUpdate({ car, onClose, open }) {
   const [mileage, setMileage] = useState("");
   const [fuelType, setFuelType] = useState("");
   const [transmission, setTransmission] = useState("");
-  const [ownerId, setOwnerId] = useState(userId);
+  const [runningStatus, setRunningStatus] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isAvailable, setIsAvailable] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
@@ -61,7 +61,7 @@ export default function CarUpdate({ car, onClose, open }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     setOpenDialog(true);
   };
 
@@ -76,7 +76,7 @@ export default function CarUpdate({ car, onClose, open }) {
   const handleDialogConfirm = async () => {
     setOpenDialog(false);
     const formData = new FormData();
-  
+
     // Append updated data or retain existing data as fallback
     formData.append("make", make || car.make);
     formData.append("model", model || car.model);
@@ -92,13 +92,15 @@ export default function CarUpdate({ car, onClose, open }) {
     formData.append("transmission", transmission || car.transmission);
     formData.append("perPersonCost", perPersonCost || car.perPersonCost);
     formData.append("extraKm", extraKm || car.extraKm);
+    formData.append("runningStatus", runningStatus || car.runningStatus);
+
     formData.append("isAvailable", isAvailable);
-  
+
     // Append images if updated
     if (images.length > 0) {
       Array.from(images).forEach((file) => formData.append("images", file));
     }
-  
+
     // Append seat configuration
     seatConfig.forEach((seat, index) => {
       formData.append(
@@ -112,11 +114,11 @@ export default function CarUpdate({ car, onClose, open }) {
         })
       );
     });
-  
+
     // Dispatch update action with car._id
     await dispatch(updateCar({ id: car._id, data: formData }));
   };
-  
+
 
   useEffect(() => {
     const fetchCarData = async () => {
@@ -560,6 +562,21 @@ export default function CarUpdate({ car, onClose, open }) {
                       Please mention Per extra KM Charge in INR
                     </FormHelperText>
                   )}
+                </Grid>
+
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth margin="normal">
+                    <InputLabel>Running Status</InputLabel>
+                    <Select
+                      value={runningStatus}
+                      onChange={(e) => setRunningStatus(e.target.value)}
+                      label="Running Status"
+                    >
+                      <MenuItem value="On A Trip">On A Trip</MenuItem>
+                      <MenuItem value="Trip Completed">Trip Completed</MenuItem>
+                      <MenuItem value="Available">Available</MenuItem>
+                    </Select>
+                  </FormControl>
                 </Grid>
                 {/* Fifth Row (Image upload) */}
                 <Grid item xs={12}>

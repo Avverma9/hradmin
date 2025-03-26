@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-import OwnerCar from '../../travel-managment/my-car';
+import OwnerCar from '../../travel-managment/my-ride';
 
 // ----------------------------------------------------------------------
 

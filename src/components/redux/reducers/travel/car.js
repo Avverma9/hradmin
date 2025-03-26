@@ -26,7 +26,7 @@ export const getCarById = createAsyncThunk('car/getCarById', async (id, { reject
                 Authorization: token,
             },
         });
-        notify(response?.status);
+        // notify(response?.status);
         return response.data;
     } catch (error) {
         const errorMessage = error.response?.data?.message || error.message;
@@ -42,7 +42,7 @@ export const getCarByOwnerId = createAsyncThunk('car/getCarByOwnerId', async (id
                 Authorization: token,
             },
         });
-        notify(response?.status);
+        // notify(response?.status);
         return response.data;
     } catch (error) {
         const errorMessage = error.response?.data?.message || error.message;

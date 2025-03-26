@@ -47,7 +47,7 @@ const MyCar = () => {
           carData.map((car) => (
             <div className="car-card" key={car?._id}>
               <div className="car-header">
-                <span className="car-safety">Safety</span>
+                <span className="car-safety">{car?.runningStatus}</span>
                 {car?.recommended && (
                   <div className="car-recommended-badge">
                     <span>Recommended</span>

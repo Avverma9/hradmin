@@ -97,7 +97,7 @@ const getNavConfig = async () => {
                     icon: icons.car,
                 },
                 {
-                    title: 'My Car',
+                    title: 'My Ride',
                     path: '/your-car-details/owner-car',
                     icon: icons.addCar,
                 },
