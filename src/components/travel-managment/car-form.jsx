@@ -253,9 +253,9 @@ export default function CarForm() {
                   onChange={handleSeaterChange}
                   label="Seater"
                 >
-                  {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
-                    <MenuItem key={value} value={value}>
-                      {value}
+                  {[...Array(60).keys()].map((value) => (
+                    <MenuItem key={value + 1} value={value + 1}>
+                      {value + 1}
                     </MenuItem>
                   ))}
                 </Select>
