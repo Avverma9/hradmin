@@ -33,7 +33,7 @@ const CarsPage = lazy(() => import('src/components/pages/travel/cars-page'));
 const CarFormPage = lazy(() => import('src/components/pages/travel/cars-form'));
 const OwnerList = lazy(() => import('src/components/pages/travel/owner-list-page'));
 const CarOwnerFormPage = lazy(() => import('src/components/pages/travel/car-owner-form'));
-// const CarFormPage = lazy(() => import('src/components/pages/travel/cars-page'));
+const OwnerCar = lazy(() => import('src/components/pages/travel/owner-car'));
 
 export default function Router() {
     const routes = useRoutes([
@@ -71,6 +71,8 @@ export default function Router() {
                 { path: 'cars-owner', element: <OwnerList /> },
                 { path: 'add-an-car-owner', element: <CarOwnerFormPage /> },
                 { path: 'add-a-car', element: <CarFormPage /> },
+                { path: 'your-car-details/owner-car', element: <OwnerCar /> },
+
                 { path: 'complaints', element: <ComplaintPage /> },
                 { path: 'hotels/availability', element: <AvailabilityPage /> },
                 { path: 'apply-coupon', element: <CouponPage /> },
