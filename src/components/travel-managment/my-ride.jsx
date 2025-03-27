@@ -160,7 +160,6 @@ const MyCar = () => {
                     label="Change Running Status"
                   >
                     <MenuItem value="">
-                      <em>None</em>
                     </MenuItem>
                     <MenuItem value="On A Trip">On A Trip</MenuItem>
                     <MenuItem value="Available">Available</MenuItem>
