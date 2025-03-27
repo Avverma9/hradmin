@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { addCar, updateCar } from "../redux/reducers/travel/car";
+import { updateCar } from "../redux/reducers/travel/car";
 import AlertDialog from "../../../utils/alertDialogue";
 import { userId } from "../../../utils/util";
 import { PhotoCamera, Speed } from "@mui/icons-material";
@@ -92,8 +92,6 @@ export default function CarUpdate({ car, onClose, open }) {
     formData.append("transmission", transmission || car.transmission);
     formData.append("perPersonCost", perPersonCost || car.perPersonCost);
     formData.append("extraKm", extraKm || car.extraKm);
-    formData.append("runningStatus", runningStatus || car.runningStatus);
-
     formData.append("isAvailable", isAvailable);
 
     // Append images if updated
@@ -111,14 +109,13 @@ export default function CarUpdate({ car, onClose, open }) {
           seatPrice: seat.seatPrice,
           isBooked: seat.isBooked,
           bookedBy: seat.bookedBy,
-        })
+        }),
       );
     });
 
     // Dispatch update action with car._id
     await dispatch(updateCar({ id: car._id, data: formData }));
   };
-
 
   useEffect(() => {
     const fetchCarData = async () => {
@@ -204,7 +201,7 @@ export default function CarUpdate({ car, onClose, open }) {
             Close
           </Button>
           <CardContent>
-            <Card >
+            <Card>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4}>
                   <Autocomplete
@@ -268,7 +265,7 @@ export default function CarUpdate({ car, onClose, open }) {
                     <InputLabel id="seater-label">Seater</InputLabel>
                     <Select
                       labelId="seater-label"
-                      value={seater   || car?.seater} // Use the car prop as a fallback
+                      value={seater || car?.seater} // Use the car prop as a fallback
                       onChange={handleSeaterChange}
                       label="Seater"
                     >
@@ -340,7 +337,9 @@ export default function CarUpdate({ car, onClose, open }) {
                                 label={`Seat ${index + 1} Price`}
                                 variant="outlined"
                                 fullWidth
-                                value={seatConfig[index]?.seatPrice || car?.seatPrice}
+                                value={
+                                  seatConfig[index]?.seatPrice || car?.seatPrice
+                                }
                                 onChange={(e) =>
                                   handleSeatChange(
                                     index,
@@ -406,7 +405,7 @@ export default function CarUpdate({ car, onClose, open }) {
                   <FormControl fullWidth margin="normal">
                     <InputLabel>Fuel Type</InputLabel>
                     <Select
-                      value={fuelType}
+                      value={fuelType || car?.fuelType} // Use the car prop as a fallback
                       onChange={(e) => setFuelType(e.target.value)}
                       label="Fuel Type"
                     >
@@ -424,7 +423,7 @@ export default function CarUpdate({ car, onClose, open }) {
                   <FormControl fullWidth margin="normal">
                     <InputLabel>Transmission</InputLabel>
                     <Select
-                      value={transmission}
+                      value={transmission  || car?.transmission} // Use the car prop as a fallback
                       onChange={(e) => setTransmission(e.target.value)}
                       label="Transmission"
                     >
@@ -439,7 +438,7 @@ export default function CarUpdate({ car, onClose, open }) {
                     variant="outlined"
                     fullWidth
                     type="number"
-                    value={mileage}
+                    value={mileage || car?.mileage} // Use the car prop as a fallback
                     onChange={(e) => setMileage(e.target.value)}
                     margin="normal"
                     InputProps={{
@@ -457,7 +456,7 @@ export default function CarUpdate({ car, onClose, open }) {
                     variant="outlined"
                     fullWidth
                     type="text"
-                    value={from}
+                    value={from || car?.from}
                     onChange={(e) => setFrom(e.target.value)}
                     margin="normal"
                     InputProps={{
@@ -475,7 +474,7 @@ export default function CarUpdate({ car, onClose, open }) {
                     variant="outlined"
                     fullWidth
                     type="text"
-                    value={to}
+                    value={to || car?.to}
                     onChange={(e) => setTo(e.target.value)}
                     margin="normal"
                     InputProps={{
@@ -491,7 +490,7 @@ export default function CarUpdate({ car, onClose, open }) {
                   <TextField
                     label="Available From"
                     type="date"
-                    value={availableFrom}
+                    value={availableFrom || car?.availableFrom}
                     placeholder={car?.availableFrom}
                     onChange={(e) => setAvailableFrom(e.target.value)}
                     margin="normal"
@@ -504,7 +503,7 @@ export default function CarUpdate({ car, onClose, open }) {
                   <TextField
                     label="Available To"
                     type="date"
-                    value={availableTo}
+                    value={availableTo || car?.availableTo}
                     placeholder={
                       car?.isAvailable ? "Available" : "Not Available"
                     }
@@ -521,7 +520,7 @@ export default function CarUpdate({ car, onClose, open }) {
                     variant="outlined"
                     fullWidth
                     type="number"
-                    value={price}
+                    value={price || car?.price}
                     onChange={(e) => setPrice(e.target.value)}
                     margin="normal"
                     InputProps={{
@@ -537,7 +536,7 @@ export default function CarUpdate({ car, onClose, open }) {
                   <TextField
                     label="Per Person Cost"
                     type="number"
-                    value={perPersonCost}
+                    value={perPersonCost || car?.perPersonCost}
                     onChange={(e) => setPerPersonCost(e.target.value)}
                     margin="normal"
                     InputProps={{
@@ -554,7 +553,7 @@ export default function CarUpdate({ car, onClose, open }) {
                     label="Extra KM Charge"
                     variant="outlined"
                     fullWidth
-                    value={extraKm}
+                    value={extraKm || car?.extraKm}
                     onChange={(e) => setExtraKm(e.target.value)}
                     margin="normal"
                   />
@@ -563,20 +562,6 @@ export default function CarUpdate({ car, onClose, open }) {
                       Please mention Per extra KM Charge in INR
                     </FormHelperText>
                   )}
-                </Grid>
-
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Running Status</InputLabel>
-                    <Select
-                      value={runningStatus}
-                      onChange={(e) => setRunningStatus(e.target.value)}
-                      label="Running Status"
-                    >
-                      <MenuItem value="On A Trip">On A Trip</MenuItem>
-                      <MenuItem value="Available">Available</MenuItem>
-                    </Select>
-                  </FormControl>
                 </Grid>
                 {/* Fifth Row (Image upload) */}
                 <Grid item xs={12}>
