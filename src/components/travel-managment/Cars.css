@@ -58,7 +58,7 @@
 
 .car-safety {
     color: #4caf50;
-    font-weight: 600;
+    font-weight: 400;
 }
 
 .car-recommended-badge {
@@ -229,7 +229,7 @@
 
 /* Sidebar */
 .car-sidebar {
-    width: 260px;
+    width: 160px;
     background: #fff;
     border: 1px solid #ddd;
     padding: 25px;
