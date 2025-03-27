@@ -22,7 +22,7 @@ export const notify = (statusCode, data) => {
     // Once the process completes, update the toast based on status
     if (statusCode === 200 || statusCode === 201) {
         toast.update(toastId, {
-            render: 'Completely Done!',
+            render: ' Done!',
             type: 'success',
             isLoading: false,
             autoClose: 3000, // You can adjust the autoClose duration

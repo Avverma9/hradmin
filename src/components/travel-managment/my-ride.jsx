@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { getCarByOwnerId } from "../redux/reducers/travel/car";
+import { getCarByOwnerId, updateCar } from "../redux/reducers/travel/car";
 import { useDispatch, useSelector } from "react-redux";
 import "./Cars.css";
 import { MdOutlineAirlineSeatReclineNormal } from "react-icons/md";
 import { BsFillFuelPumpFill, BsPersonCircle } from "react-icons/bs";
 import { FaPersonWalkingLuggage } from "react-icons/fa6";
 import { IoMdSpeedometer } from "react-icons/io";
-import CarUpdate from "./car-update";
+import CarUpdate from "./car-update"; // Ensure this path is correct
 import { FaLocationArrow, FaMapMarkerAlt } from "react-icons/fa";
 import { AiOutlineCalendar } from "react-icons/ai";
 import { fDate } from "../../../utils/format-time";
+import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { updateStatus } from "../redux/reducers/partner";
 
 const MyCar = () => {
   const dispatch = useDispatch();
@@ -29,17 +31,44 @@ const MyCar = () => {
   };
 
   // State to manage the modal and selected car data
-  const [open, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const [selectedCar, setSelectedCar] = useState(null);
+
+  // State to manage individual car status
+  const [carStatus, setCarStatus] = useState({});
 
   // Function to open the modal with selected car
   const handleUpdate = (car) => {
     setSelectedCar(car);
-    setIsOpen(true);
+    setOpen(true);
   };
 
   const handleClose = () => {
-    setIsOpen(false);
+    setOpen(false);
+    setSelectedCar(null);
+  };
+
+  const handleChangeRunningStatus = (e, car) => {
+    const newStatus = e.target.value;
+  
+    // Update status in local state for the car
+    setCarStatus((prevStatus) => ({
+      ...prevStatus,
+      [car._id]: newStatus,
+    }));
+  
+    console.log("here is ", car?._id, newStatus);
+  
+    // Dispatch action to update the status in the Redux store
+    dispatch(updateCar({ id: car._id, data: { runningStatus: newStatus } }))
+      .unwrap()
+      .then(() => {
+        // Refetch the car data after updating the status
+        dispatch(getCarByOwnerId(userId));
+      })
+      .catch((error) => {
+        console.error("Error updating car status:", error);
+      });
   };
 
   return (
@@ -118,7 +147,27 @@ const MyCar = () => {
 
               {/* Car Footer */}
               <div className="car-footer">
-                <div className="car-price">₹{car?.price}</div>
+                {/* Status Select */}
+                <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+                  <InputLabel id={`status-select-label-${car._id}`}>
+                    Change Running Status
+                  </InputLabel>
+                  <Select
+                    labelId={`status-select-label-${car._id}`}
+                    id={`status-select-${car._id}`}
+                    value={carStatus[car._id] || car?.runningStatus || ""}
+                    onChange={(e) => handleChangeRunningStatus(e, car)}
+                    label="Change Running Status"
+                  >
+                    <MenuItem value="">
+                      <em>None</em>
+                    </MenuItem>
+                    <MenuItem value="On A Trip">On A Trip</MenuItem>
+                    <MenuItem value="Available">Available</MenuItem>
+                  </Select>
+                </FormControl>
+
+                {/* Update Button */}
                 <button className="book-now" onClick={() => handleUpdate(car)}>
                   Update
                 </button>

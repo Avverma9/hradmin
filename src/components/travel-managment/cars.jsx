@@ -272,7 +272,7 @@ const Cars = () => {
       <div className="car-card" key={car?._id}>
         {/* Car Header */}
         <div className="car-header">
-          <span className="car-safety">Safety</span>
+          <span className="car-safety">{car?.runningStatus}</span>
           {car?.recommended && (
             <div className="car-recommended-badge">
               <span>Recommended</span>

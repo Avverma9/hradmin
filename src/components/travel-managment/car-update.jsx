@@ -574,7 +574,6 @@ export default function CarUpdate({ car, onClose, open }) {
                       label="Running Status"
                     >
                       <MenuItem value="On A Trip">On A Trip</MenuItem>
-                      <MenuItem value="Trip Completed">Trip Completed</MenuItem>
                       <MenuItem value="Available">Available</MenuItem>
                     </Select>
                   </FormControl>
