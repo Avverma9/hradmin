@@ -6,7 +6,19 @@ import { format, getTime, formatDistanceToNow } from 'date-fns';
 export function fDate(date, newFormat) {
   const fm = newFormat || 'dd MMM yyyy';
 
-  return date ? format(new Date(date), fm) : '';
+  // Validate the date input
+  if (!date) {
+    console.error('fDate: Invalid date input:', date);
+    return 'Invalid Date';
+  }
+
+  const parsedDate = new Date(date);
+  if (isNaN(parsedDate.getTime())) {
+    console.error('fDate: Unable to parse date:', date);
+    return 'Invalid Date';
+  }
+
+  return format(parsedDate, fm);
 }
 
 export function fDateTime(date, newFormat) {
