@@ -186,11 +186,11 @@ export default function CarUpdate({ car, onClose, open }) {
     ]);
   };
   return (
-    <Dialog onClose={onClose} open={open}>
-      <DialogContent>
-        <Card sx={{ margin: "0 auto", padding: 3 }}>
+    <Dialog onClose={onClose} open={open} maxWidth="xl" >
+      <DialogContent sx={{ width: "80vw" }}>
+        <Card >
           <Typography variant="h5" gutterBottom textAlign="center">
-            Add New Car
+            Update details
           </Typography>
           <Button
             variant="outlined"
@@ -423,7 +423,7 @@ export default function CarUpdate({ car, onClose, open }) {
                   <FormControl fullWidth margin="normal">
                     <InputLabel>Transmission</InputLabel>
                     <Select
-                      value={transmission  || car?.transmission} // Use the car prop as a fallback
+                      value={transmission || car?.transmission} // Use the car prop as a fallback
                       onChange={(e) => setTransmission(e.target.value)}
                       label="Transmission"
                     >
