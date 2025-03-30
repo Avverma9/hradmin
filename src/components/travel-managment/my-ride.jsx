@@ -6,12 +6,12 @@ import { MdOutlineAirlineSeatReclineNormal } from "react-icons/md";
 import { BsFillFuelPumpFill, BsPersonCircle } from "react-icons/bs";
 import { FaPersonWalkingLuggage } from "react-icons/fa6";
 import { IoMdSpeedometer } from "react-icons/io";
-import CarUpdate from "./car-update"; // Ensure this path is correct
+import CarUpdate from "./car-update";
 import { FaLocationArrow, FaMapMarkerAlt } from "react-icons/fa";
 import { AiOutlineCalendar } from "react-icons/ai";
 import { fDate } from "../../../utils/format-time";
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
-import { updateStatus } from "../redux/reducers/partner";
+import SeatConfigUpdate from "./update-seats";
 
 const MyCar = () => {
   const dispatch = useDispatch();
@@ -30,35 +30,49 @@ const MyCar = () => {
       : "/public/assets/car.png";
   };
 
-  // State to manage the modal and selected car data
-  const [open, setOpen] = useState(false);
+  // Separate states for different modals
+  const [openCarUpdate, setOpenCarUpdate] = useState(false);
+  const [openSeatConfig, setOpenSeatConfig] = useState(false);
   const [selectedCar, setSelectedCar] = useState(null);
 
   // State to manage individual car status
   const [carStatus, setCarStatus] = useState({});
 
-  // Function to open the modal with selected car
-  const handleUpdate = (car) => {
+  // Open Car Update Modal
+  const handleUpdateCar = (car) => {
     setSelectedCar(car);
-    setOpen(true);
+    setOpenCarUpdate(true);
   };
 
-  const handleClose = () => {
-    setOpen(false);
+  // Open Seat Config Modal
+  const handleUpdateSeats = (car) => {
+    setSelectedCar(car);
+    setOpenSeatConfig(true);
+  };
+
+  // Close Car Update Modal
+  const handleCloseCarUpdate = () => {
+    setOpenCarUpdate(false);
+    setSelectedCar(null);
+  };
+
+  // Close Seat Config Modal
+  const handleCloseSeatConfig = () => {
+    setOpenSeatConfig(false);
     setSelectedCar(null);
   };
 
   const handleChangeRunningStatus = (e, car) => {
     const newStatus = e.target.value;
-  
+
     // Update status in local state for the car
     setCarStatus((prevStatus) => ({
       ...prevStatus,
       [car._id]: newStatus,
     }));
-  
+
     console.log("here is ", car?._id, newStatus);
-  
+
     // Dispatch action to update the status in the Redux store
     dispatch(updateCar({ id: car._id, data: { runningStatus: newStatus } }))
       .unwrap()
@@ -159,16 +173,19 @@ const MyCar = () => {
                     onChange={(e) => handleChangeRunningStatus(e, car)}
                     label="Change Running Status"
                   >
-                    <MenuItem value="">
-                    </MenuItem>
+                    <MenuItem value=""> </MenuItem>
                     <MenuItem value="On A Trip">On A Trip</MenuItem>
                     <MenuItem value="Available">Available</MenuItem>
                   </Select>
                 </FormControl>
 
                 {/* Update Button */}
-                <button className="book-now" onClick={() => handleUpdate(car)}>
-                  Update
+                <button className="book-now" onClick={() => handleUpdateCar(car)}>
+                  Update Car
+                </button>
+
+                <button className="book-now" onClick={() => handleUpdateSeats(car)}>
+                  Update Seats
                 </button>
               </div>
             </div>
@@ -182,8 +199,14 @@ const MyCar = () => {
         )}
       </main>
 
-      {open && selectedCar && (
-        <CarUpdate open={open} onClose={handleClose} car={selectedCar} />
+      {/* Car Update Modal */}
+      {openCarUpdate && selectedCar && (
+        <CarUpdate open={openCarUpdate} onClose={handleCloseCarUpdate} car={selectedCar} />
+      )}
+
+      {/* Seat Config Update Modal */}
+      {openSeatConfig && selectedCar && (
+        <SeatConfigUpdate open={openSeatConfig} onClose={handleCloseSeatConfig} car={selectedCar} />
       )}
     </div>
   );
