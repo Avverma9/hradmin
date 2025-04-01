@@ -53,7 +53,6 @@ export default function CarUpdate({ car, onClose, open }) {
   const [seatConfig, setSeatConfig] = useState([]);
   const [showSeatConfig, setShowSeatConfig] = useState(false);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   const handleFileChange = (e) => {
     setImages(e.target.files);
@@ -69,9 +68,6 @@ export default function CarUpdate({ car, onClose, open }) {
     setOpenDialog(false);
   };
 
-  const handleToggleVisibility = () => {
-    setIsPasswordVisible(!isPasswordVisible);
-  };
 
   const handleDialogConfirm = async () => {
     setOpenDialog(false);
@@ -162,29 +158,7 @@ export default function CarUpdate({ car, onClose, open }) {
     setShowSeatConfig(false); // Hide the seat configuration when seater is selected
   };
 
-  const handleSeatChange = (index, field, value) => {
-    setSeatConfig((prev) => {
-      const updatedConfig = [...prev];
-      updatedConfig[index] = {
-        ...updatedConfig[index],
-        [field]: field === "seatPrice" ? value : value.toString(),
-      };
-      return updatedConfig;
-    });
-  };
 
-  const addNewSeat = () => {
-    setSeatConfig([
-      ...seatConfig,
-      {
-        seatType: "",
-        seatNumber: "",
-        seatPrice: "",
-        isBooked: false,
-        bookedBy: "",
-      },
-    ]);
-  };
   return (
     <Dialog onClose={onClose} open={open} maxWidth="xl" >
       <DialogContent sx={{ width: "80vw" }}>
@@ -265,7 +239,7 @@ export default function CarUpdate({ car, onClose, open }) {
                     <InputLabel id="seater-label">Seater</InputLabel>
                     <Select
                       labelId="seater-label"
-                      value={seater || car?.seater} // Use the car prop as a fallback
+                      value={seater || (car && car.seater) || ''} // added empty string to handle undefined car.seater.
                       onChange={handleSeaterChange}
                       label="Seater"
                     >
@@ -282,125 +256,7 @@ export default function CarUpdate({ car, onClose, open }) {
                     )}
                   </FormControl>
                 </Grid>
-                {seater && (
-                  <Grid item xs={12}>
-                    <Button
-                      variant="text"
-                      color="primary"
-                      onClick={() => setShowSeatConfig(true)}
-                    >
-                      Want to set seats
-                    </Button>
-                  </Grid>
-                )}
-                {showSeatConfig && (
-                  <>
-                    <Grid item xs={12}>
-                      <Typography variant="h6" gutterBottom>
-                        Seat Configuration
-                      </Typography>
-                      {Array.from({ length: seater }).map((_, index) => (
-                        <Box key={index} sx={{ marginBottom: 2 }}>
-                          <Grid container spacing={2}>
-                            <Grid item xs={12} sm={4}>
-                              <TextField
-                                label={`Seat ${index + 1} Type`}
-                                variant="outlined"
-                                fullWidth
-                                value={seatConfig[index]?.seatType || ""}
-                                onChange={(e) =>
-                                  handleSeatChange(
-                                    index,
-                                    "seatType",
-                                    e.target.value,
-                                  )
-                                }
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={4}>
-                              <TextField
-                                label={`Seat ${index + 1} Number`}
-                                variant="outlined"
-                                fullWidth
-                                value={seatConfig[index]?.seatNumber || ""}
-                                onChange={(e) =>
-                                  handleSeatChange(
-                                    index,
-                                    "seatNumber",
-                                    e.target.value,
-                                  )
-                                }
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={4}>
-                              <TextField
-                                label={`Seat ${index + 1} Price`}
-                                variant="outlined"
-                                fullWidth
-                                value={
-                                  seatConfig[index]?.seatPrice || car?.seatPrice
-                                }
-                                onChange={(e) =>
-                                  handleSeatChange(
-                                    index,
-                                    "seatPrice",
-                                    e.target.value,
-                                  )
-                                }
-                                type="number"
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      <FaIndianRupeeSign />
-                                    </InputAdornment>
-                                  ),
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={4}>
-                              <FormControl fullWidth margin="normal">
-                                <InputLabel>Seat {index + 1} Status</InputLabel>
-                                <Select
-                                  value={seatConfig[index]?.isBooked || false}
-                                  onChange={(e) =>
-                                    handleSeatChange(
-                                      index,
-                                      "isBooked",
-                                      e.target.value,
-                                    )
-                                  }
-                                >
-                                  <MenuItem value={false}>Available</MenuItem>
-                                  <MenuItem value={true}>Booked</MenuItem>
-                                </Select>
-                              </FormControl>
-                            </Grid>
-                            {seatConfig[index]?.isBooked && (
-                              <Grid item xs={12} sm={4}>
-                                <TextField
-                                  label={`Seat ${index + 1} Booked By`}
-                                  variant="outlined"
-                                  fullWidth
-                                  value={seatConfig[index]?.bookedBy || ""}
-                                  onChange={(e) =>
-                                    handleSeatChange(
-                                      index,
-                                      "bookedBy",
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                              </Grid>
-                            )}
-                          </Grid>
-                        </Box>
-                      ))}
-                      <Button variant="outlined" onClick={addNewSeat}>
-                        Add More Seats
-                      </Button>
-                    </Grid>
-                  </>
-                )}
+
                 <Grid item xs={12} sm={4}>
                   <FormControl fullWidth margin="normal">
                     <InputLabel>Fuel Type</InputLabel>

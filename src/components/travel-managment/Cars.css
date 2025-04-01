@@ -141,9 +141,9 @@
 /* Footer Section Inside Car Card */
 .car-footer {
     display: flex;
-    justify-content: space-between;
+    justify-content: end;
     align-items: center;
-    padding-top: 10px;
+    gap: 10px;
     border-top: 1px solid #ddd;
 }
 
@@ -153,17 +153,18 @@
 }
 
 .book-now {
-    background-color: #ff5722;
-    color: white;
+    background-color: #8b84823b;
+    color: rgb(0, 0, 0);
     padding: 12px 25px;
-    border: none;
+    border: 1px solid #6b6b6b;
+    border-radius: 30px;
     font-size: 15px;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
 
 .book-now:hover {
-    background-color: #e64a19;
+    background-color: #b4b4b4;
 }
 
 /* Upper header search UI */
