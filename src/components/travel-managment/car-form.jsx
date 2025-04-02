@@ -290,6 +290,7 @@ export default function CarForm() {
                 </Button>
               </Grid>
             )}
+
             {showSeatConfig && (
               <>
                 <Grid item xs={12}>
@@ -299,21 +300,24 @@ export default function CarForm() {
                   {Array.from({ length: seater }).map((_, index) => (
                     <Box key={index} sx={{ marginBottom: 2 }}>
                       <Grid container spacing={2}>
+                        {/* Seat Type (Dropdown) */}
                         <Grid item xs={12} sm={4}>
-                          <TextField
-                            label={`Seat ${index + 1} Type`}
-                            variant="outlined"
-                            fullWidth
-                            value={seatConfig[index]?.seatType || ""}
-                            onChange={(e) =>
-                              handleSeatChange(
-                                index,
-                                "seatType",
-                                e.target.value,
-                              )
-                            }
-                          />
+                          <FormControl fullWidth variant="outlined">
+                            <InputLabel>Seat {index + 1} Type</InputLabel>
+                            <Select
+                              value={seatConfig[index]?.seatType || ""}
+                              onChange={(e) =>
+                                handleSeatChange(index, "seatType", e.target.value)
+                              }
+                              label={`Seat ${index + 1} Type`}
+                            >
+                              <MenuItem value="AC">AC</MenuItem>
+                              <MenuItem value="Non-AC">Non-AC</MenuItem>
+                            </Select>
+                          </FormControl>
                         </Grid>
+
+                        {/* Seat Number */}
                         <Grid item xs={12} sm={4}>
                           <TextField
                             label={`Seat ${index + 1} Number`}
@@ -321,14 +325,12 @@ export default function CarForm() {
                             fullWidth
                             value={seatConfig[index]?.seatNumber || ""}
                             onChange={(e) =>
-                              handleSeatChange(
-                                index,
-                                "seatNumber",
-                                e.target.value,
-                              )
+                              handleSeatChange(index, "seatNumber", e.target.value)
                             }
                           />
                         </Grid>
+
+                        {/* Seat Price */}
                         <Grid item xs={12} sm={4}>
                           <TextField
                             label={`Seat ${index + 1} Price`}
@@ -336,11 +338,7 @@ export default function CarForm() {
                             fullWidth
                             value={seatConfig[index]?.seatPrice}
                             onChange={(e) =>
-                              handleSeatChange(
-                                index,
-                                "seatPrice",
-                                e.target.value,
-                              )
+                              handleSeatChange(index, "seatPrice", e.target.value)
                             }
                             type="number"
                             InputProps={{
@@ -352,24 +350,25 @@ export default function CarForm() {
                             }}
                           />
                         </Grid>
+
+                        {/* Seat Booking Status */}
                         <Grid item xs={12} sm={4}>
-                          <FormControl fullWidth margin="normal">
+                          <FormControl fullWidth variant="outlined">
                             <InputLabel>Seat {index + 1} Status</InputLabel>
                             <Select
                               value={seatConfig[index]?.isBooked || false}
                               onChange={(e) =>
-                                handleSeatChange(
-                                  index,
-                                  "isBooked",
-                                  e.target.value,
-                                )
+                                handleSeatChange(index, "isBooked", e.target.value)
                               }
+                              label={`Seat ${index + 1} Status`}
                             >
                               <MenuItem value={false}>Available</MenuItem>
                               <MenuItem value={true}>Booked</MenuItem>
                             </Select>
                           </FormControl>
                         </Grid>
+
+                        {/* Booked By Field (Only if Seat is Booked) */}
                         {seatConfig[index]?.isBooked && (
                           <Grid item xs={12} sm={4}>
                             <TextField
@@ -378,11 +377,7 @@ export default function CarForm() {
                               fullWidth
                               value={seatConfig[index]?.bookedBy || ""}
                               onChange={(e) =>
-                                handleSeatChange(
-                                  index,
-                                  "bookedBy",
-                                  e.target.value,
-                                )
+                                handleSeatChange(index, "bookedBy", e.target.value)
                               }
                             />
                           </Grid>

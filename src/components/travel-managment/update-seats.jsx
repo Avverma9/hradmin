@@ -79,15 +79,24 @@ reloadPage();
                 {localSeatConfig.map((seat, index) => (
                     <Box key={index} sx={{ marginBottom: 2 }}>
                         <Grid container spacing={2}>
-                            <Grid item xs={12} sm={4}>
-                                <TextField
-                                    label={`Seat ${index + 1} Type`}
-                                    variant="outlined"
-                                    fullWidth
-                                    value={seat.seatType || ""}
-                                    onChange={(e) => handleSeatChange(index, "seatType", e.target.value)}
-                                />
-                            </Grid>
+                        <Grid item xs={12} sm={4}>
+                        <FormControl fullWidth variant="outlined">
+                            <InputLabel>Seat {index + 1} Type</InputLabel>
+                            <Select
+                                value={seat.seatType}  // Default to "AC" if empty
+                                onChange={(e) =>
+                                    handleSeatChange(index, "seatType", e.target.value)
+                                }
+                                label={`Seat ${index + 1} Type`}
+                            >
+                                <MenuItem value="AC">AC</MenuItem>
+                                <MenuItem value="Non-AC">Non-AC</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Grid>
+
+
+                            
                             <Grid item xs={12} sm={4}>
                                 <TextField
                                     label={`Seat ${index + 1} Number`}
