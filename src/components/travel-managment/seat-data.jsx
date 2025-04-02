@@ -72,13 +72,12 @@ export default function SeatData({ open, onClose, id }) {
                 car.seats.map((data) => (
                   <div
                     key={data._id}
-                    className={`seat ${
-                      data.isBooked
+                    className={`seat ${data.isBooked
                         ? "booked"
                         : selectedSeat?._id === data._id
-                        ? "selected"
-                        : "available"
-                    }`}
+                          ? "selected"
+                          : "available"
+                      }`}
                     onClick={() => handleSeatClick(data)}
                   >
                     <FaChair className="seat-icon" />
@@ -91,8 +90,8 @@ export default function SeatData({ open, onClose, id }) {
               )}
           </div>
 
-          {/* GST Details Section */}
-          {selectedSeat && (
+          {/* GST Details Section (Only Show When Seat Data Exists & a Seat is Selected) */}
+          {selectedSeat && seatData?.length > 0 && seatData && (
             <Paper elevation={3} className="gst-details">
               <Typography variant="h6" className="gst-title">
                 🧾 Pricing Breakdown
@@ -114,6 +113,7 @@ export default function SeatData({ open, onClose, id }) {
               </Typography>
             </Paper>
           )}
+
         </DialogContent>
 
         <DialogActions>
