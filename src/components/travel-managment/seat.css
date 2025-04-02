@@ -1,166 +1,145 @@
-/* Container for all seats */
+/* Seat Container: Compact Grid */
 .seat-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 8px;
   justify-content: center;
-  padding: 20px;
+  padding: 15px;
 }
 
-/* Individual seat styling */
+/* Seat Box: Smaller & Modern */
 .seat {
-  width: 100px;
-  height: 120px;
+  width: 70px;
+  height: 80px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
-  padding: 12px;
+  border-radius: 8px;
+  padding: 6px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s ease-in-out;
-  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+  box-shadow: 1px 2px 5px rgba(0, 0, 0, 0.08);
+  font-size: 12px;
 }
 
-/* Available seat */
+/* Available Seat */
 .available {
-  background-color: #e3f2fd;
-  border: 2px solid #90caf9;
+  background-color: #e0f7fa;
+  border: 1px solid #00acc1;
 }
 
 .available:hover {
-  background-color: #bbdefb;
+  background-color: #b2ebf2;
   transform: scale(1.05);
 }
 
-/* Selected seat */
+/* Selected Seat */
 .selected {
-  border: 3px solid #ff5722 !important;
-  background-color: #ffccbc;
-  transform: scale(1.1);
+  border: 2px solid #ff7043 !important;
+  background-color: #ffe0b2;
+  transform: scale(1.08);
   font-weight: bold;
 }
 
-/* Booked seat */
+/* Booked Seat */
 .booked {
-  background-color: #f44336;
+  background-color: #d32f2f;
   color: white;
   pointer-events: none;
+  opacity: 0.8;
 }
 
-/* Seat icon */
+/* Seat Icon */
 .seat-icon {
-  font-size: 24px;
-  margin-bottom: 5px;
+  font-size: 18px;
+  margin-bottom: 3px;
 }
 
-/* Seat type */
+/* Seat Type & Number */
 .seat-type {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: bold;
   color: #37474f;
 }
 
-/* Seat number */
 .seat-number {
-  font-size: 14px;
+  font-size: 11px;
   color: #455a64;
 }
 
-/* Seat price */
 .seat-price {
-  font-size: 14px;
-  color: #1976d2;
+  font-size: 11px;
+  color: #00796b;
   font-weight: bold;
 }
 
-/* Booked label */
+/* Booked Label */
 .booked-by {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: bold;
-  color: #fff;
-  background-color: #d32f2f;
-  padding: 3px 6px;
-  border-radius: 5px;
-  margin-top: 5px;
+  background-color: #b71c1c;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: white;
+  margin-top: 3px;
 }
 
-/* GST Details Section */
+/* GST Details: Compact & Clean */
 .gst-details {
-  margin-top: 20px;
-  padding: 15px;
-  background: #fff8e1;
-  border-radius: 10px;
-  box-shadow: 3px 4px 10px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
+  margin-top: 10px;
+  padding: 10px;
+  background: #fffde7;
+  border-radius: 8px;
+  box-shadow: 1px 2px 6px rgba(0, 0, 0, 0.08);
+  max-width: 300px;
   margin-left: auto;
   margin-right: auto;
+  font-size: 12px;
 }
 
 .gst-title {
   font-weight: bold;
   text-align: center;
-  margin-bottom: 10px;
-  color: #ff9800;
+  color: #ffa000;
 }
 
 .gst-row {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 4px 0;
 }
 
-/* Total price row */
 .total {
   font-weight: bold;
-  font-size: 16px;
-  border-top: 2px solid #ff9800;
-  padding-top: 10px;
-  margin-top: 10px;
+  font-size: 14px;
+  border-top: 1px solid #ffa000;
+  padding-top: 6px;
 }
 
-/* GST Note */
-.gst-note {
-  font-size: 13px;
-  color: #757575;
-  text-align: center;
-  margin-top: 8px;
-}
-
-/* Dialog Buttons */
-.MuiDialogActions-root {
-  padding: 10px 20px;
-}
-
-.MuiButton-root {
-  font-weight: bold !important;
-}
-
-/* Mobile Responsiveness */
+/* Responsive Design */
 @media (max-width: 600px) {
   .seat {
-    width: 80px;
-    height: 100px;
-    font-size: 12px;
+    width: 60px;
+    height: 70px;
+    font-size: 10px;
   }
 
   .seat-icon {
-    font-size: 20px;
+    font-size: 16px;
   }
 
   .gst-details {
     max-width: 100%;
-    padding: 12px;
+    padding: 8px;
   }
 
   .gst-row {
-    font-size: 12px;
+    font-size: 10px;
   }
 
   .total {
-    font-size: 14px;
+    font-size: 12px;
   }
 }
