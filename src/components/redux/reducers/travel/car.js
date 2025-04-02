@@ -67,7 +67,7 @@ export const getAllCars = createAsyncThunk('car/getAll', async (_, { rejectWithV
     }
 });
 
-export const filterCar = createAsyncThunk('car/filterCar', async ({query,value}, { rejectWithValue }) => {
+export const filterCar = createAsyncThunk('car/filterCar', async ({ query, value }, { rejectWithValue }) => {
     try {
         const response = await axios.get(`${localUrl}/travel/filter-car/by-query?${query}=${value}`, {
             headers: {
@@ -84,7 +84,7 @@ export const filterCar = createAsyncThunk('car/filterCar', async ({query,value},
 
 
 export const getSeatsData = createAsyncThunk('car/getSeatsData', async (id, { rejectWithValue }) => {
-    try {   
+    try {
         const response = await axios.get(`${localUrl}/travel/get-seat-data/by-id/${id}`, {
             headers: {
                 Authorization: token,
@@ -98,9 +98,9 @@ export const getSeatsData = createAsyncThunk('car/getSeatsData', async (id, { re
     }
 });
 
-export const bookSeat = createAsyncThunk('car/bookSeat', async ({id, data}, { rejectWithValue }) => {
+export const bookSeat = createAsyncThunk('car/bookSeat', async (data, { rejectWithValue }) => {
     try {
-        const response = await axios.post(`${localUrl}/travel/book-a-seat/${id}`, data, {
+        const response = await axios.post(`${localUrl}/create-travel/booking`, data, {
             headers: {
                 Authorization: token,
             },
@@ -175,6 +175,10 @@ const carSlice = createSlice({
             })
             .addCase(getSeatsData.fulfilled, (state, action) => {
                 state.seatsData = [action.payload];
+            }
+            )
+            .addCase(bookSeat.fulfilled, (state, action) => {
+                state.data.push = action.payload;
             }
             )
             .addCase(getAllCars.fulfilled, (state, action) => {
