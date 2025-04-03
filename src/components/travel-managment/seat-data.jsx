@@ -18,6 +18,7 @@ export default function SeatData({ open, onClose, id }) {
   const dispatch = useDispatch();
   const seatData = useSelector((state) => state.car.seatsData);
   const [selectedSeat, setSelectedSeat] = useState(null);
+  
   const [customerName, setCustomerName] = useState("");
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const GST_RATE = 0.18;
@@ -91,7 +92,7 @@ export default function SeatData({ open, onClose, id }) {
           </div>
 
           {/* GST Details Section (Only Show When Seat Data Exists & a Seat is Selected) */}
-          {selectedSeat && seatData?.length > 0 && seatData && (
+          {selectedSeat  && (
             <Paper elevation={3} className="gst-details">
               <Typography variant="h6" className="gst-title">
                 🧾 Pricing Breakdown
