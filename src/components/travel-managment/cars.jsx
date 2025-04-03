@@ -70,7 +70,7 @@ const Cars = () => {
   };
   
   const handleSeatDataClose = () => {
-    setOpenSeatData(false);  // Close the SeatData component
+  setOpenSeatData(false);  // Close the SeatData component
   };
 
 
