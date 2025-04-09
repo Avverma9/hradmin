@@ -106,7 +106,7 @@ const getNavConfig = async () => {
             icon: icons.tour,
             children: [
                 { title: 'Add Tour', path: '/add-tour-data', icon: icons.addTour },
-                { title: 'Tour List', path: '/tour-list', icon: icons.car },
+                { title: 'Tour List', path: '/tour-list', icon: icons.tour },
             ],
         },
         {
