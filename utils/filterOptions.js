@@ -1,3 +1,5 @@
+import { role } from "./util";
+
 export const roomTypes = ['Single Room', 'Double Room', 'Suite', 'Deluxe Room', 'Executive Room', 'Family Room', 'Penthouse', 'Studio'];
 export const bedTypes = [
     'King Size Bed',
@@ -101,6 +103,8 @@ export const paths = [
     { title: 'Messenger', path: '/messenger', role: 'PMS' },
     { title: 'Cars', path: '/your-cars', role: 'TMS' },
     { title: 'My Ride', path: '/your-car-details/owner-car', role: 'TMS' },
+    { title: 'Add Tour', path: '/add-tour-data', role: 'TMS' },
+    { title: 'Tour List', path: '/tour-list', role: 'TMS' },
     { title: 'Car Owner', path: '/cars-owner', role: 'TMS' },
     { title: 'Add Car', path: '/add-a-car', role: 'TMS' },
     { title: 'Add Owner', path: '/add-an-car-owner', role: 'TMS' },

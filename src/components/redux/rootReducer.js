@@ -7,6 +7,7 @@ import couponReducer from './reducers/coupon';
 import userReducer from './reducers/user';
 import carReducer from './reducers/travel/car';
 import carOwnerReducer from './reducers/travel/carOwner';
+import tourReducer from './reducers/tour/tour';
 
 // Combine reducers into a rootReducer
 const rootReducer = combineReducers({
@@ -17,5 +18,6 @@ const rootReducer = combineReducers({
     user: userReducer,
     car: carReducer,
     owner: carOwnerReducer,
+    tour: tourReducer,
 });
 export default rootReducer;
