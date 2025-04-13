@@ -98,6 +98,27 @@ export const allAmenities = [
     { name: 'Non-Smoking Throughout', id: 'nonSmokingThroughoutCheckbox' },
     { name: 'Kitchen', id: 'kitchen' },
 ];
+
+export const TravelAmenties = [
+    "Flight Reservations",
+    "Hotel Booking",
+    "Cruise Bookings",
+    "Train/Bus Tickets",
+    "Airport Transfers",
+    "Sightseeing Transport",
+    "Visa Assistance",
+    "Travel Insurance",
+    "Tour Guide Services",
+    "Car Rental",
+    "24x7 Support",
+    "Customized Packages",
+    "Event Travel Coordination",
+    "Foreign Exchange",
+    "Mobile Travel App",
+    "Luxury Coach Booking",
+    "Destination Wedding Planning"
+  ];
+  
 export const paths = [
     { title: 'Dashboard', path: '/dashboard', role: 'PMS' },
     { title: 'Messenger', path: '/messenger', role: 'PMS' },

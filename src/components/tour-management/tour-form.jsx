@@ -10,11 +10,14 @@ import {
   MenuItem,
   Select,
   FormControl,
+  Autocomplete,
+  Checkbox,
   InputLabel,
   FormHelperText,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import AlertDialog from "../../../utils/alertDialogue";
+import { TravelAmenties } from "../../../utils/filterOptions";
 
 export default function TourForm() {
   const [travelAgencyName, setTravelAgencyName] = useState("");
@@ -242,16 +245,39 @@ export default function TourForm() {
               />
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                label="Amenities (comma-separated)"
-                variant="outlined"
-                fullWidth
-                value={amenities.join(", ")}
-                onChange={(e) =>
-                  setAmenities(e.target.value.split(",").map((item) => item.trim()))
-                }
-                margin="normal"
-              />
+              <FormControl fullWidth margin="normal">
+                <Autocomplete
+                  multiple
+                  options={TravelAmenties}
+                  value={amenities}
+                  onChange={(event, newValue) => {
+                    setAmenities(newValue);
+                  }}
+                  filterSelectedOptions
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Amenities"
+                      placeholder="Search and select amenities"
+                      margin="normal"
+                    />
+                  )}
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Checkbox
+                        style={{ marginRight: 8 }}
+                        checked={selected}
+                      />
+                      {option}
+                    </li>
+                  )}
+                  fullWidth
+                />
+
+                <FormHelperText>Select all applicable amenities</FormHelperText>
+              </FormControl>
+
+
             </Grid>
             <Grid item xs={12}>
               <TextField
