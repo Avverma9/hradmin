@@ -1,402 +1,649 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
+import { FaBeer, FaCoffee, FaApple, FaCar, FaPlane, FaMusic } from 'react-icons/fa';
+import { MdLabelImportant } from 'react-icons/md';
+import './tour.css';
+import { Country, State, City } from 'country-state-city';
+import { useDispatch } from 'react-redux';
+
 import {
-  TextField,
-  Button,
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Grid,
-  MenuItem,
-  Select,
-  FormControl,
-  Autocomplete,
-  Checkbox,
-  InputLabel,
-  FormHelperText,
-} from "@mui/material";
-import { useNavigate } from "react-router-dom";
-import AlertDialog from "../../../utils/alertDialogue";
-import { TravelAmenties } from "../../../utils/filterOptions";
+    FaCity,
+    FaMapMarkerAlt,
+    FaCalendarAlt,
+    FaStar,
+    FaTools,
+    FaFileImage,
+    FaRegCheckCircle,
+    FaRupeeSign,
+    FaStreetView,
+    FaGlobe,
+    FaUser,
+} from 'react-icons/fa';
+import Select from 'react-select';
+import { FaLocationArrow } from 'react-icons/fa6';
+import { addTour } from '../redux/reducers/tour/tour';
+import { useLoader } from '../../../utils/loader';
+const TourForm = () => {
+    const [formData, setFormData] = useState({
+        city: '',
+        country: '',
+        state: '',
+        travelAgencyName: '',
+        themes: '',
+        visitngPlaces: '',
+        overview: '',
+        price: '',
+        nights: '',
+        days: '',
+        from: '',
+        to: '',
+        amenities: [],
+        inclusion: [''],
+        exclusion: [''],
+        termsAndConditions: { cancellation: '', refund: '', bookingPolicy: '' },
+        dayWise: [{ day: '', description: '' }],
+        starRating: '',
+        images: [],
+    });
 
-export default function TourForm() {
-  const [travelAgencyName, setTravelAgencyName] = useState("");
-  const [country, setCountry] = useState("");
-  const [state, setState] = useState("");
-  const [city, setCity] = useState("");
-  const [visitingPlaces, setVisitingPlaces] = useState("");
-  const [themes, setThemes] = useState("");
-  const [price, setPrice] = useState("");
-  const [nights, setNights] = useState("");
-  const [days, setDays] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [amenities, setAmenities] = useState([]);
-  const [inclusion, setInclusion] = useState([]);
-  const [exclusion, setExclusion] = useState([]);
-  const [termsAndConditions, setTermsAndConditions] = useState({});
-  const [dayWise, setDayWise] = useState([]);
-  const [starRating, setStarRating] = useState("");
-  const [images, setImages] = useState([]);
-  const [openDialog, setOpenDialog] = useState(false);
-  const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { showLoader, hideLoader } = useLoader();
+    const [countries, setCountries] = useState([]);
+    const [states, setStates] = useState([]);
+    const [cities, setCities] = useState([]);
 
-  const handleBack = () => {
-    navigate(-1);
-  };
+    const handleChange = (e, index = null) => {
+        const { name, value } = e.target;
+        if (['cancellation', 'refund', 'bookingPolicy'].includes(name)) {
+            setFormData({
+                ...formData,
+                termsAndConditions: {
+                    ...formData.termsAndConditions,
+                    [name]: value,
+                },
+            });
+        } else if (name === 'inclusion') {
+            const newInclusion = [...formData.inclusion];
+            if (index !== null) {
+                newInclusion[index] = value;
+            } else {
+                newInclusion.push(value);
+            }
+            setFormData({
+                ...formData,
+                inclusion: newInclusion,
+            });
+        }
+        // Handle exclusion field, add/update based on index
+        else if (name === 'exclusion') {
+            const newExclusion = [...formData.exclusion];
+            if (index !== null) {
+                // Update specific exclusion point if index is provided
+                newExclusion[index] = value;
+            } else {
+                // Add a new empty exclusion point if no index
+                newExclusion.push(value);
+            }
+            setFormData({
+                ...formData,
+                exclusion: newExclusion,
+            });
+        } else {
+            setFormData({
+                ...formData,
+                [name]: ['duration', 'nights', 'days', 'starRating'].includes(name) ? Number(value) : value,
+            });
+        }
+    };
 
-  const handleFileChange = (e) => {
-    setImages(e.target.files);
-  };
+    const handleAmenitiesChange = (selectedOptions) => {
+        // Log the selected options for debugging
+        console.log('Selected Options:', selectedOptions);
 
-  const handleAddDay = () => {
-    setDayWise([
-      ...dayWise,
-      { day: dayWise.length + 1, description: "" },
-    ]);
-  };
+        // Update the state with selected amenities
+        setFormData({
+            ...formData,
+            amenities: selectedOptions ? selectedOptions.map((option) => option.value) : [],
+        });
+    };
 
-  const handleDayChange = (index, value) => {
-    const updatedDayWise = [...dayWise];
-    updatedDayWise[index].description = value;
-    setDayWise(updatedDayWise);
-  };
+    const handleDayWiseChange = (index, e) => {
+        const updatedDayWise = [...formData.dayWise];
+        updatedDayWise[index][e.target.name] = e.target.value;
+        setFormData({ ...formData, dayWise: updatedDayWise });
+    };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setOpenDialog(true);
-  };
+    const handleAddDay = () => {
+        setFormData({
+            ...formData,
+            dayWise: [...formData.dayWise, { day: '', description: '' }],
+        });
+    };
 
-  const handleDialogConfirm = () => {
-    setOpenDialog(false);
-    const formData = new FormData();
-    for (let i = 0; i < images.length; i++) {
-      formData.append("images", images[i]);
-    }
-    formData.append("travelAgencyName", travelAgencyName);
-    formData.append("country", country);
-    formData.append("state", state);
-    formData.append("city", city);
-    formData.append("visitingPlaces", visitingPlaces);
-    formData.append("themes", themes);
-    formData.append("price", price);
-    formData.append("nights", nights);
-    formData.append("days", days);
-    formData.append("from", from);
-    formData.append("to", to);
-    formData.append("amenities", JSON.stringify(amenities));
-    formData.append("inclusion", JSON.stringify(inclusion));
-    formData.append("exclusion", JSON.stringify(exclusion));
-    formData.append("termsAndConditions", JSON.stringify(termsAndConditions));
-    formData.append("dayWise", JSON.stringify(dayWise));
-    formData.append("starRating", starRating);
+    const handleRemoveDay = (index) => {
+        const updatedDayWise = formData.dayWise.filter((_, i) => i !== index);
+        setFormData({ ...formData, dayWise: updatedDayWise });
+    };
 
-    // Submit formData to the backend
-    console.log("Form submitted:", formData);
-  };
+    const handleAddImage = () => {
+        setFormData({ ...formData, images: [...formData.images, null] });
+    };
 
-  return (
-    <Card sx={{ margin: "0 auto", padding: 3 }}>
-      <Typography variant="h5" gutterBottom textAlign="center">
-        Add New Travel Package
-      </Typography>
-      <Button
-        variant="outlined"
-        color="primary"
-        onClick={handleBack}
-        sx={{ marginBottom: 1 }}
-      >
-        Go Back
-      </Button>
-      <CardContent>
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Travel Agency Name"
-                variant="outlined"
-                fullWidth
-                value={travelAgencyName}
-                onChange={(e) => setTravelAgencyName(e.target.value)}
-                margin="normal"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Country"
-                variant="outlined"
-                fullWidth
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                margin="normal"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="State"
-                variant="outlined"
-                fullWidth
-                value={state}
-                onChange={(e) => setState(e.target.value)}
-                margin="normal"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="City"
-                variant="outlined"
-                fullWidth
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                margin="normal"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label="Visiting Places"
-                  variant="outlined"
-                  fullWidth
-                  value={visitingPlaces}
-                  onChange={(e) => setVisitingPlaces(e.target.value)}
-                />
-                <FormHelperText>
-                  Example: 1N Delhi|1N Gurgaon|1N Uttar Pradesh
-                </FormHelperText>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="themes-label">Themes</InputLabel>
-                <Select
-                  labelId="themes-label"
-                  value={themes}
-                  onChange={(e) => setThemes(e.target.value)}
-                  variant="outlined"
-                >
-                  <MenuItem value="Adventure">Adventure</MenuItem>
-                  <MenuItem value="Honeymoon">Honeymoon</MenuItem>
-                  <MenuItem value="Romantic">Romantic</MenuItem>
-                  <MenuItem value="Family">Family</MenuItem>
-                  <MenuItem value="Cultural">Cultural</MenuItem>
-                  <MenuItem value="Wildlife">Wildlife</MenuItem>
-                  <MenuItem value="Beach">Beach</MenuItem>
-                </Select>
-                <FormHelperText>Select a theme for the travel package</FormHelperText>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Price"
-                variant="outlined"
-                fullWidth
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                margin="normal"
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                label="Nights"
-                variant="outlined"
-                fullWidth
-                type="number"
-                value={nights}
-                onChange={(e) => setNights(e.target.value)}
-                margin="normal"
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                label="Days"
-                variant="outlined"
-                fullWidth
-                type="number"
-                value={days}
-                onChange={(e) => setDays(e.target.value)}
-                margin="normal"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="From"
-                type="date"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                margin="normal"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="To"
-                type="date"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                margin="normal"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControl fullWidth margin="normal">
-                <Autocomplete
-                  multiple
-                  options={TravelAmenties}
-                  value={amenities}
-                  onChange={(event, newValue) => {
-                    setAmenities(newValue);
-                  }}
-                  filterSelectedOptions
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Amenities"
-                      placeholder="Search and select amenities"
-                      margin="normal"
-                    />
-                  )}
-                  renderOption={(props, option, { selected }) => (
-                    <li {...props}>
-                      <Checkbox
-                        style={{ marginRight: 8 }}
-                        checked={selected}
-                      />
-                      {option}
-                    </li>
-                  )}
-                  fullWidth
-                />
+    const handleRemoveImage = (index) => {
+        const updatedImages = formData.images.filter((_, i) => i !== index);
+        setFormData({ ...formData, images: updatedImages });
+    };
 
-                <FormHelperText>Select all applicable amenities</FormHelperText>
-              </FormControl>
+    const handleImageChange = (index, e) => {
+        const updatedImages = [...formData.images];
+        updatedImages[index] = e.target.files[0]; // Store the first image in the file input
+        setFormData({ ...formData, images: updatedImages });
+    };
 
+    // Add a new empty input field for inclusion
+    const handleAddInclusion = () => {
+        setFormData({ ...formData, inclusion: [...formData.inclusion, ''] });
+    };
 
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Inclusion (comma-separated)"
-                variant="outlined"
-                fullWidth
-                value={inclusion.join(", ")}
-                onChange={(e) =>
-                  setInclusion(e.target.value.split(",").map((item) => item.trim()))
-                }
-                margin="normal"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Exclusion (comma-separated)"
-                variant="outlined"
-                fullWidth
-                value={exclusion.join(", ")}
-                onChange={(e) =>
-                  setExclusion(e.target.value.split(",").map((item) => item.trim()))
-                }
-                margin="normal"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                Day-wise Itinerary
-              </Typography>
-              {dayWise.map((day, index) => (
-                <Box key={index} sx={{ marginBottom: 2 }}>
-                  <TextField
-                    label={`Day ${day.day} Description`}
-                    variant="outlined"
-                    fullWidth
-                    value={day.description}
-                    onChange={(e) => handleDayChange(index, e.target.value)}
-                    margin="normal"
-                  />
-                </Box>
-              ))}
-              <Button variant="outlined" onClick={handleAddDay}>
-                Add Day
-              </Button>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Star Rating"
-                variant="outlined"
-                fullWidth
-                type="number"
-                value={starRating}
-                onChange={(e) => setStarRating(e.target.value)}
-                margin="normal"
-                InputProps={{
-                  inputProps: { min: 1, max: 5 },
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Box sx={{ marginBottom: 1 }}>
-                <input
-                  type="file"
-                  id="travelImages"
-                  accept="image/*"
-                  multiple
-                  onChange={handleFileChange}
-                  style={{ display: "none" }}
-                />
-                <label htmlFor="travelImages">
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    component="span"
-                    fullWidth
-                    sx={{ padding: "10px", textAlign: "center" }}
-                  >
-                    Select Travel Images
-                  </Button>
-                </label>
-                {images.length > 0 && (
-                  <Box sx={{ marginTop: 1, textAlign: "center" }}>
-                    {Array.from(images).map((image, index) => (
-                      <img
-                        key={index}
-                        src={URL.createObjectURL(image)}
-                        alt={`Travel Image ${index}`}
-                        style={{
-                          width: "80px",
-                          height: "80px",
-                          objectFit: "cover",
-                          borderRadius: "8px",
-                          margin: "5px",
-                        }}
-                      />
-                    ))}
-                  </Box>
-                )}
-              </Box>
-            </Grid>
-          </Grid>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{ marginTop: 2 }}
-          >
-            Add Travel Package
-          </Button>
-        </form>
-      </CardContent>
-      <AlertDialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        onConfirm={handleDialogConfirm}
-        title="Confirm Travel Package Submission"
-        message="Are you sure you want to add this travel package?"
-      />
-    </Card>
-  );
-}
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        const formDataToSend = new FormData();
+        formDataToSend.append('city', formData.city);
+        formDataToSend.append('themes', formData.themes);
+        formDataToSend.append('state', formData.state);
+        formDataToSend.append('overview', formData.overview);
+        formDataToSend.append('travelAgencyName', formData.travelAgencyName);
+        formDataToSend.append('visitngPlaces', formData.visitngPlaces);
+        formDataToSend.append('price', formData.price);
+        formDataToSend.append('nights', formData.nights);
+        formDataToSend.append('days', formData.days);
+        formDataToSend.append('from', formData.from);
+        formDataToSend.append('to', formData.to);
+        formDataToSend.append('starRating', formData.starRating);
+        formData.inclusion.forEach((inclusions) => {
+            formDataToSend.append('inclusion[]', inclusions);
+        });
+        formData.exclusion.forEach((exclusions) => {
+            formDataToSend.append('exclusion[]', exclusions);
+        });
+
+        formData.amenities.forEach((amenity) => {
+            formDataToSend.append('amenities[]', amenity);
+        });
+
+        formData.dayWise.forEach((day, index) => {
+            formDataToSend.append(`dayWise[${index}][day]`, day.day);
+            formDataToSend.append(`dayWise[${index}][description]`, day.description);
+        });
+
+        for (const [key, value] of Object.entries(formData.termsAndConditions)) {
+            formDataToSend.append(`termsAndConditions[${key}]`, value);
+        }
+        formData.images.forEach((image) => {
+            if (image instanceof File) {
+                formDataToSend.append('images', image);
+            }
+        });
+
+        try {
+            showLoader();
+            await dispatch(addTour(formDataToSend));
+        } catch (error) {
+            console.error('Error submitting form:', error);
+        } finally {
+            hideLoader();
+            window.location.reload();
+        }
+    };
+
+    const inputStyles = {
+        width: '100%',
+        padding: '12px',
+        border: '1px solid #ddd',
+        borderRadius: '20px',
+        fontSize: '0.9rem',
+        color: '#555',
+        boxSizing: 'border-box',
+    };
+
+    useEffect(() => {
+        const allCountries = Country.getAllCountries(); // Fetching all countries
+        setCountries(allCountries);
+
+        if (formData.country) {
+            const initialStates = State.getStatesOfCountry(formData.country);
+            setStates(initialStates);
+        }
+
+        if (formData.state && formData.country) {
+            const initialCities = City.getCitiesOfState(formData.country, formData.state);
+            setCities(initialCities);
+        }
+    }, [formData.country, formData.state]);
+    const pattern = /^[0-9]+N [a-zA-Z\s]+(\|[0-9]+N [a-zA-Z\s]+)*$/;
+
+    const isValid = pattern.test(formData.visitngPlaces);
+
+    const openDatePicker = (e) => {
+        e.target.showPicker();
+    };
+
+    const AmenitiesList = [
+        { icon: <FaBeer />, label: 'Beer' },
+        { icon: <FaCoffee />, label: 'Coffee' },
+        { icon: <FaApple />, label: 'Apple' },
+        { icon: <FaCar />, label: 'Car' },
+        { icon: <FaPlane />, label: 'Plane' },
+        { icon: <FaMusic />, label: 'Music' },
+    ];
+    
+    return (
+        <div className="form-container">
+            <h2>Travel Package Form</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="form-row">
+                    <div className="form-group">
+                        <label>
+                            <FaUser />
+                            Enter your travel agency name
+                        </label>
+                        <input
+                            type="text"
+                            style={inputStyles}
+                            name="travelAgencyName"
+                            value={formData.travelAgencyName}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>
+                            <FaUser />
+                            Select your travel theme
+                        </label>
+                        <select
+                            style={inputStyles} // Assuming `inputStyles` is defined
+                            name="themes" // The correct field name for the travel theme
+                            value={formData.themes} // Make sure `formData.themes` is managed in your state
+                            onChange={handleChange} // `handleChange` should update the `formData` state
+                            required
+
+                        >
+                          
+                          <option value=""></option>
+                            <option value="">Select theme</option>
+                            <option value="Winter">Winter</option>
+                            <option value="Summer">Summer</option>
+                            <option value="Honeymoon">Honeymoon</option>
+                            <option value="Romantic">Romantic</option>
+                            <option value="Adventure">Adventure</option>
+                            <option value="Beach">Beach</option>
+                        </select>
+                    </div>
+                </div>
+                <div className="form-row">
+                    <div className="form-group">
+                        <label>
+                            <FaCity /> Country <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <Select
+                            options={countries.map((country) => ({
+                                label: country.name,
+                                value: country.isoCode,
+                            }))}
+                            value={formData.country ? { label: formData.country, value: formData.country } : null}
+                            onChange={(selectedOption) => setFormData({ ...formData, country: selectedOption.value })}
+                            required
+                            styles={{ container: (provided) => ({ ...provided, width: '100%' }) }}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>
+                            <FaMapMarkerAlt /> State
+                        </label>
+                        <Select
+                            options={states.map((state) => ({
+                                label: state.name,
+                                value: state.isoCode,
+                            }))}
+                            value={formData.state ? { label: formData.state, value: formData.state } : null}
+                            onChange={(selectedOption) => setFormData({ ...formData, state: selectedOption.value })}
+                            styles={{ container: (provided) => ({ ...provided, width: '100%' }) }}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>
+                            <FaLocationArrow /> City
+                        </label>
+                        <Select
+                            options={cities.map((city) => ({
+                                label: city.name,
+                                value: city.name,
+                            }))}
+                            value={formData.city ? { label: formData.city, value: formData.city } : null}
+                            onChange={(selectedOption) => setFormData({ ...formData, city: selectedOption.value })}
+                            styles={{ container: (provided) => ({ ...provided, width: '100%' }) }}
+                        />
+                    </div>
+                </div>
+                <div className="form-row">
+                    <div className="form-group">
+                        <label>
+                            <FaCalendarAlt /> Days <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <select style={inputStyles} name="days" value={formData.days} onChange={handleChange} required>
+                            <option value="">Select Days</option>
+                            {[...Array(30).keys()].map((i) => {
+                                const dayOption = i + 1;
+                                return (
+                                    <option key={dayOption} value={dayOption}>
+                                        {dayOption} Day
+                                    </option>
+                                );
+                            })}
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>
+                            <FaCalendarAlt /> Nights <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <select style={inputStyles} name="nights" value={formData.nights} onChange={handleChange} required>
+                            <option value="">Select nights</option>
+                            {[...Array(30).keys()].map((i) => {
+                                const nightOption = i + 1;
+                                return (
+                                    <option key={nightOption} value={nightOption}>
+                                        {nightOption} Night
+                                    </option>
+                                );
+                            })}
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>
+                            <FaStar /> Star Rating <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <select style={inputStyles} name="starRating" value={formData.starRating} onChange={handleChange} required>
+                            <option value="">Select Rating</option>
+                            {[1, 2, 3, 4, 5].map((rating) => (
+                                <option key={rating} value={rating}>
+                                    {rating} Star
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+                <div className="form-row">
+                    <div className="form-group">
+                        <label>
+                            <FaGlobe /> Places to visit eg(1N Bihar|2N Patna|1N Delhi)
+                            <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <input
+                            type="text"
+                            style={inputStyles}
+                            name="visitngPlaces"
+                            value={formData.visitngPlaces}
+                            onChange={handleChange}
+                            required
+                            placeholder="Enter places like 1N Bihar|2N Patna|1N Delhi"
+                        />
+                        {!isValid && formData.visitngPlaces && (
+                            <small style={{ color: 'red' }}>
+                                Please enter the places in the correct format (e.g., 1N Bihar|2N Patna|1N Delhi)
+                            </small>
+                        )}
+                    </div>
+                    <div className="form-group">
+                        <label>
+                            <FaRupeeSign /> Package Price <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <input type="number" style={inputStyles} name="price" value={formData.price} onChange={handleChange} required />
+                    </div>
+                    <div className="form-group">
+                        <label>
+                            <FaStreetView /> Package Overview <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <textarea
+                            type="text"
+                            style={inputStyles}
+                            name="overview"
+                            value={formData.overview}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+                </div>
+
+                <div className="form-row">
+                    <div className="form-group">
+                        <label>
+                            <FaCalendarAlt /> From Date <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <input
+                            type="date"
+                            style={inputStyles}
+                            name="from"
+                            value={formData.from}
+                            onChange={handleChange}
+                            onClick={openDatePicker} // Open the date picker on click
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>
+                            <FaCalendarAlt /> To Date <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <input
+                            type="date"
+                            style={inputStyles}
+                            name="to"
+                            value={formData.to}
+                            onChange={handleChange}
+                            onClick={openDatePicker} // Open the date picker on click
+                            required
+                        />
+                    </div>
+                </div>
+                <div className="form-row">
+                    <div className="form-group">
+                        <label>
+                            <FaRegCheckCircle /> Inclusion <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        {formData.inclusion.map((inclusion, index) => (
+                            <div key={index}>
+                                <input
+                                    style={inputStyles}
+                                    name="inclusion"
+                                    value={inclusion}
+                                    onChange={(e) => handleChange(e, index)} // Pass the index here
+                                    required
+                                />
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            className="add-button"
+                            onClick={() => handleChange({ target: { name: 'inclusion', value: '' } })}
+                        >
+                            Add More Inclusion
+                        </button>
+                    </div>
+                    <div className="form-group">
+                        <label>
+                            <FaRegCheckCircle /> Exclusion <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        {formData.exclusion.map((exclusion, index) => (
+                            <div key={index}>
+                                <input
+                                    style={inputStyles}
+                                    name="exclusion"
+                                    value={exclusion}
+                                    onChange={(e) => handleChange(e, index)} // Pass the index here
+                                    required
+                                />
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            className="add-button"
+                            onClick={() => handleChange({ target: { name: 'exclusion', value: '' } })}
+                        >
+                            Add More Exclusion
+                        </button>
+                    </div>
+                </div>
+                <h4 style={{ background: '#2196f3', width: '220px', fontSize: '18px', color: 'white' }}>
+                    <MdLabelImportant /> Amenities
+                </h4>
+                <div className="form-row">
+                    <div className="form-group">
+                        <label>
+                            <FaTools /> Amenity Name <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <Select
+                            styles={{
+                                container: (provided) => ({ ...provided, width: '100%' }),
+                                control: (provided) => ({ ...provided, padding: '10px', borderRadius: '20px' }),
+                            }}
+                            isMulti
+                            value={formData.amenities.map((amenity) => ({ label: amenity, value: amenity }))}
+                            onChange={handleAmenitiesChange}
+                            options={AmenitiesList.map((icon) => ({ label: icon.label, value: icon.label }))}
+                            placeholder="Select amenities..."
+                            required
+                        />
+                    </div>
+                </div>
+
+                <h4 style={{ background: '#2196f3', width: '220px', fontSize: '18px', color: 'white' }}>
+                    <MdLabelImportant /> Day-wise Itinerary
+                </h4>
+                {formData.dayWise.map((day, index) => (
+                    <div key={index} className="form-row">
+                        <div className="form-group">
+                            <label>
+                                <FaCalendarAlt /> Day <span style={{ color: 'red' }}>*</span>
+                            </label>
+                            <select style={inputStyles} name="day" value={day.day} onChange={(e) => handleDayWiseChange(index, e)} required>
+                                <option value="">Select Day</option>
+                                {[...Array(30).keys()].map((i) => {
+                                    const dayOption = i + 1; // Creating day options from 1 to 100
+                                    return (
+                                        <option key={dayOption} value={dayOption}>
+                                            Day {dayOption}
+                                        </option>
+                                    );
+                                })}
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label>
+                                <FaCalendarAlt /> Description <span style={{ color: 'red' }}>*</span>
+                            </label>
+                            <textarea
+                                type="text"
+                                style={inputStyles}
+                                name="description"
+                                value={day.description}
+                                onChange={(e) => handleDayWiseChange(index, e)}
+                                required
+                            />
+                        </div>
+                        <button
+                            type="button"
+                            className="remove-button"
+                            style={{ height: '60px', marginTop: '30px' }}
+                            onClick={() => handleRemoveDay(index)}
+                        >
+                            Remove
+                        </button>
+                    </div>
+                ))}
+                <button type="button" className="add-button" onClick={handleAddDay}>
+                    Add Day
+                </button>
+                <hr />
+                <h4 style={{ background: '#2196f3', width: '220px', fontSize: '18px', color: 'white' }}>
+                    <MdLabelImportant /> Terms & conditions
+                </h4>
+                <div className="form-row">
+                    <div className="form-group">
+                        <label>
+                            <FaRegCheckCircle /> Cancellation Policy <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <textarea
+                            type="text"
+                            style={inputStyles}
+                            name="cancellation"
+                            value={formData.termsAndConditions.cancellation}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>
+                            <FaRegCheckCircle /> Refund Policy <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <textarea
+                            type="text"
+                            style={inputStyles}
+                            name="refund"
+                            value={formData.termsAndConditions.refund}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>
+                            <FaRegCheckCircle /> Booking Policy <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <textarea
+                            style={inputStyles}
+                            name="bookingPolicy" // Name must match the nested property
+                            value={formData.termsAndConditions.bookingPolicy} // Bind to the correct state property
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+                </div>
+
+                <hr />
+                <h4 style={{ background: '#2196f3', width: '220px', fontSize: '18px', color: 'white' }}>
+                    <MdLabelImportant /> Upload images
+                </h4>
+                {formData.images.map((image, index) => (
+                    <div key={index} className="form-row">
+                        <div className="form-group">
+                            <label>
+                                <FaFileImage /> Image {index + 1} <span style={{ color: 'red' }}>*</span>
+                            </label>
+                            <input type="file" accept="image/*" style={inputStyles} onChange={(e) => handleImageChange(index, e)} />
+                        </div>
+                        <button
+                            type="button"
+                            className="remove-button"
+                            style={{ height: '60px', marginTop: '20px' }}
+                            onClick={() => handleRemoveImage(index)}
+                        >
+                            Remove
+                        </button>
+                    </div>
+                ))}
+                <button type="button" className="add-button" onClick={handleAddImage}>
+                    Add Image
+                </button>
+                <hr />
+                <div className="form-row">
+                    <button className="submit-button" type="submit">
+                        Submit
+                    </button>
+                </div>
+            </form>
+        </div>
+    );
+};
+
+export default TourForm;
