@@ -1,0 +1,162 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Container */
+.travel-packages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+    background-color: #f9f9f9;
+}
+
+/* Package Card */
+.package-card {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    flex: 1 1 calc(45% - 20px); /* Ensures 4 items per row with gap */
+    max-width: calc(45% - 20px); /* Prevents items from growing beyond 25% */
+    box-sizing: border-box;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.package-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Image */
+.package-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+/* Package Info */
+.package-info {
+    padding: 15px;
+}
+
+/* Title */
+.package-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0 0 10px;
+    color: #333;
+}
+
+/* Duration */
+.package-duration {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+/* Nights Badge */
+.nights-badge {
+    display: inline-block;
+    background-color: #007bff;
+    color: #fff;
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+}
+
+/* Amenities */
+.amenities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.amenity {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: #555;
+}
+
+.amenity-icon {
+    margin-right: 5px;
+    font-size: 16px;
+    color: #007bff;
+}
+
+/* Price Section */
+.price-section {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+/* Button */
+.package-button {
+    display: block;
+    width: 100%;
+    background-color: #454b52;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.package-button:hover {
+    background-color: #0056b3;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .travel-packages {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .package-card {
+        width: 90%;
+    }
+}
+
+@media (max-width: 480px) {
+    .package-title {
+        font-size: 16px;
+    }
+
+    .package-duration {
+        font-size: 12px;
+    }
+
+    .nights-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+
+    .amenity {
+        font-size: 10px;
+    }
+
+    .price-section {
+        font-size: 14px;
+    }
+
+    .package-button {
+        font-size: 12px;
+        padding: 8px;
+    }
+}
