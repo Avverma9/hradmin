@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { localUrl, notify, token } from "../../../../../utils/util";
 import axios from "axios";
-import { toast } from "react-toastify"; // Assuming you're using react-toastify
+import { localUrl, notify, token } from "../../../../../utils/util";
+import { toast } from "react-toastify";
 
 export const addTour = createAsyncThunk("tour/addTour", async (data, { rejectWithValue }) => {
     try {
@@ -26,6 +26,21 @@ export const tourList = createAsyncThunk("tour/tourList", async (_, { rejectWith
                 Authorization: token,
             },
         });
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+});
+
+export const tourById = createAsyncThunk("tour/tourById", async (id, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(`${localUrl}/get-travel/${id}`, {
+            headers: {
+                Authorization: token,
+            },
+        });
         notify(response?.status);
         return response.data;
     } catch (error) {
@@ -35,24 +50,56 @@ export const tourList = createAsyncThunk("tour/tourList", async (_, { rejectWith
     }
 });
 
+export const tourUpdate = createAsyncThunk("tour/tourUpdate", async ({ id, data }, { rejectWithValue }) => {
+    try {
+        const response = await axios.put(`${localUrl}/update-tour/data/${id}`, data, {
+            headers: {
+                Authorization: token,
+            },
+        });
+        notify(response?.status);
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+});
+
+const initialState = {
+    data: [],
+    editData: null,
+    loading: false,
+    error: null,
+};
+
 const tourSlice = createSlice({
     name: "tour",
-    initialState: {
-        data: [],
-        loading: false,
-        error: null,
-    },
+    initialState,
     reducers: {},
     extraReducers: (builder) => {
         builder
+
             .addCase(addTour.fulfilled, (state, action) => {
                 state.loading = false;
-                state.data.push(action.payload); // Add the new tour to the list
+                state.data.push(action.payload);
             })
             .addCase(tourList.fulfilled, (state, action) => {
                 state.loading = false;
-                state.data = action.payload; // Update the data field with the fetched tours
+                state.data = action.payload;
             })
+            .addCase(tourById.fulfilled, (state, action) => {
+                state.loading = false;
+                state.editData = [action.payload];
+            })
+            .addCase(tourUpdate.fulfilled, (state, action) => {
+                state.loading = false;
+                const index = state.data.findIndex((tour) => tour._id === action.payload._id);
+                if (index !== -1) {
+                    state.data[index] = action.payload;
+                }
+            })
+
     },
 });
 

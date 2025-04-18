@@ -1,37 +1,9 @@
-.section-box {
-  background-color: #f9f9f9;
-  padding: 20px;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-}
-
-.section-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #0d6efd;
-  margin-bottom: 10px;
-}
-
-.section-subtitle {
-  font-weight: 500;
-  color: #343a40;
-  margin-bottom: 5px;
-}
-
-.gallery-image {
-  overflow: hidden;
-  border-radius: 6px;
-  transition: transform 0.3s ease;
-}
-
-.gallery-image img:hover {
-  transform: scale(1.05);
+.edit-icon {
   cursor: pointer;
+  margin-left: 8px;
+  font-size: 0.9em;
+  color: #007bff;
 }
-.enhanced-modal .modal-dialog {
-    z-index: 9999 !important; /* High enough to stay on top */
-    position: relative;
-  }
-  
+.edit-icon:hover {
+  color: #0056b3;
+}
