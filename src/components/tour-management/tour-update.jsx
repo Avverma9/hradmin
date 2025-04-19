@@ -42,7 +42,7 @@ export default function TourUpdate() {
 
   return (
     <div>
-      <h1>Tour Update</h1>
+     <h3>Update tour package details !</h3>
       <div className="travel-packages">
         {editableData && editableData.length > 0 && (
           <div className="package-card">
