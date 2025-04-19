@@ -1,314 +1,317 @@
-// src/pages/TourDetailsPage.jsx
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
+import { tourById, tourUpdate } from "../redux/reducers/tour/tour";
 import './listModal.css';
-import { useDispatch, useSelector } from 'react-redux';
-import { tourById, tourUpdate } from '../../../src/components/redux/reducers/tour/tour'; // Import your actions
 
-const UpdatePage = () => {
+export default function TourUpdate() {
+  const { editData } = useSelector((state) => state?.tour);
   const { id } = useParams();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const data = useSelector((state) => state.tour.editData); // Assuming you have a selector for the tour data
+  const [editableData, setEditableData] = useState([]);
+  const [editMode, setEditMode] = useState({});
 
-  const [formData, setFormData] = useState({});
-  const [editMode, setEditMode] = useState({
-    travelAgencyName: false,
-    themes: false,
-    overview: false,
-    city: false,
-    state: false,
-    price: false,
-    days: false,
-    nights: false,
-    from: false,
-    to: false,
-    visitingPlaces: false,
-    amenities: false,
-    inclusion: false,
-    exclusion: false,
-    cancellation: false,
-    refund: false,
-    bookingPolicy: false,
-    dayWise: false,
-  });
-
-  // Fetch tour data on component mount
   useEffect(() => {
     dispatch(tourById(id));
-  }, [dispatch, id]);
+  }, [id, dispatch]);
 
-  // Update formData when data is fetched
   useEffect(() => {
-    if (data && data._id === id) {
-      setFormData(data);
+    if (editData && Array.isArray(editData)) {
+      setEditableData([...editData]); // Create a copy to avoid mutation
     }
-  }, [data, id]);
-  console.log("here is my data",data)
-  if (!data || data._id !== id) {
-    return (
-      <div className="tour-details-container">
-        <p>Package not found or data missing.</p>
-        <button onClick={() => navigate(-1)}>Go Back</button>
-      </div>
-    );
-  }
+  }, [editData]);
 
-  const toggleEdit = (field) => {
-    setEditMode((prev) => ({ ...prev, [field]: !prev[field] }));
+  const handleInputChange = (index, field, value) => {
+    const updated = [...editableData];
+    updated[index] = { ...updated[index], [field]: value };
+    setEditableData(updated);
   };
 
-  const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const toggleEditMode = (index, field) => {
+    setEditMode((prev) => ({
+      ...prev,
+      [`${index}-${field}`]: !prev[`${index}-${field}`],
+    }));
   };
 
-  const handleArrayChange = (field, index, value) => {
-    const updated = [...formData[field]];
-    updated[index] = value;
-    setFormData((prev) => ({ ...prev, [field]: updated }));
+  const handleUpdate = (index, field) => {
+    const updatedPkg = editableData[index];
+    dispatch(tourUpdate({ id: updatedPkg._id, data: updatedPkg }));
+    toggleEditMode(index, field);
   };
-
-  const handleDayWiseChange = (index, value) => {
-    const updated = [...formData.dayWise];
-    updated[index].description = value;
-    setFormData((prev) => ({ ...prev, dayWise: updated }));
-  };
-
-  const formatDate = (dateStr) => new Date(dateStr).toISOString().split('T')[0];
-
-  const handleUpdate = () => {
-    dispatch(tourUpdate(id, formData)); // Dispatch the update action
-    navigate(-1); // Navigate back after update
-  };
-
 
   return (
-    <div className="tour-details-container">
-      <h2>
-        <input
-          value={formData.travelAgencyName}
-          readOnly={!editMode.travelAgencyName}
-          onChange={(e) => handleChange('travelAgencyName', e.target.value)}
-        />
-        <span> - </span>
-        <input
-          value={formData.themes || ''}
-          readOnly={!editMode.themes}
-          onChange={(e) => handleChange('themes', e.target.value)}
-        />
-        <span className="edit-icon" onClick={() => toggleEdit('travelAgencyName')}>✏️</span>
-        <span className="edit-icon" onClick={() => toggleEdit('themes')}>✏️</span>
-      </h2>
+    <div>
+      <h1>Tour Update</h1>
+      <div className="travel-packages">
+        {editableData && editableData.length > 0 && (
+          <div className="package-card">
+            {editableData.map((pkg, index) => (
+              <div key={pkg._id || index} className="package-info">
 
-      <section className="section-box">
-        <h4>🌴 Overview <span className="edit-icon" onClick={() => toggleEdit('overview')}>✏️</span></h4>
-        <textarea
-          value={formData.overview}
-          readOnly={!editMode.overview}
-          onChange={(e) => handleChange('overview', e.target.value)}
-        />
-      </section>
+                <div className="grouped-inputs">
+                  {/* Travel Agency Name */}
+                  <div className="editable-field">
+                    <label className="input-label">Travel Agency Name</label>
+                    <div className="field-control">
+                      {editMode[`${index}-travelAgencyName`] ? (
+                        <>
+                          <input
+                            type="text"
+                            value={pkg.travelAgencyName || ""}
+                            onChange={(e) =>
+                              handleInputChange(index, "travelAgencyName", e.target.value)
+                            }
+                          />
+                          <div className="buttons">
+                            <button onClick={() => toggleEditMode(index, "travelAgencyName")} title="Cancel">✖</button>
+                            <button onClick={() => handleUpdate(index, "travelAgencyName")} title="Update">✔</button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <input type="text" value={pkg.travelAgencyName} readOnly />
+                          <span onClick={() => toggleEditMode(index, "travelAgencyName")} title="Edit">✎</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
 
-      <section className="section-box">
-        <div>
-          📍 Location:
-          <input
-            value={formData.city}
-            readOnly={!editMode.city}
-            onChange={(e) => handleChange('city', e.target.value)}
-          />
-          <input
-            value={formData.state}
-            readOnly={!editMode.state}
-            onChange={(e) => handleChange('state', e.target.value)}
-          />
-          <span className="edit-icon" onClick={() => toggleEdit('city')}>✏️</span>
-          <span className="edit-icon" onClick={() => toggleEdit('state')}>✏️</span>
-        </div>
-        <div>
-          💸 Price:
-          <input
-            type="number"
-            value={formData.price}
-            readOnly={!editMode.price}
-            onChange={(e) => handleChange('price', e.target.value)}
-          />
-          <span className="edit-icon" onClick={() => toggleEdit('price')}>✏️</span>
-        </div>
-        <div>
-          ⏳ Duration:
-          <input
-            type="number"
-            value={formData.days}
-            readOnly={!editMode.days}
-            onChange={(e) => handleChange('days', e.target.value)}
-          /> Days /
-          <input
-            type="number"
-            value={formData.nights}
-            readOnly={!editMode.nights}
-            onChange={(e) => handleChange('nights', e.target.value)}
-          /> Nights
-          <span className="edit-icon" onClick={() => toggleEdit('days')}>✏️</span>
-          <span className="edit-icon" onClick={() => toggleEdit('nights')}>✏️</span>
-        </div>
-        <div>
-          📅 Dates:
-          <input
-            type="date"
-            value={formatDate(formData.from)}
-            readOnly={!editMode.from}
-            onChange={(e) => handleChange('from', e.target.value)}
-          />
-          -
-          <input
-            type="date"
-            value={formatDate(formData.to)}
-            readOnly={!editMode.to}
-            onChange={(e) => handleChange('to', e.target.value)}
-          />
-          <span className="edit-icon" onClick={() => toggleEdit('from')}>✏️</span>
-          <span className="edit-icon" onClick={() => toggleEdit('to')}>✏️</span>
-        </div>
-        <div>
-          🗺️ Visiting:
-          <input
-            value={formData.visitngPlaces}
-            readOnly={!editMode.visitingPlaces}
-            onChange={(e) => handleChange('visitngPlaces', e.target.value)}
-          />
-          <span className="edit-icon" onClick={() => toggleEdit('visitingPlaces')}>✏️</span>
-        </div>
-      </section>
+                  {/* Nights */}
+                  <div className="editable-field">
+                    <label className="input-label">Nights</label>
+                    <div className="field-control">
+                      {editMode[`${index}-nights`] ? (
+                        <>
+                          <input
+                            type="number"
+                            value={pkg.nights || ""}
+                            onChange={(e) => handleInputChange(index, "nights", e.target.value)}
+                          />
+                          <div className="buttons">
+                            <button onClick={() => toggleEditMode(index, "nights")} title="Cancel">✖</button>
+                            <button onClick={() => handleUpdate(index, "nights")} title="Update">✔</button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <input type="text" value={pkg.nights} readOnly />
+                          <span onClick={() => toggleEditMode(index, "nights")} title="Edit">✎</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
 
-      <section className="section-box">
-        <h4>🗓️ Day-wise Itinerary <span className="edit-icon" onClick={() => toggleEdit('dayWise')}>✏️</span></h4>
-        <ul>
-          {formData.dayWise?.map((d, i) => (
-            <li key={d._id}>
-              <strong>Day {d.day}:</strong>
-              <textarea
-                value={d.description}
-                readOnly={!editMode.dayWise}
-                onChange={(e) => handleDayWiseChange(i, e.target.value)}
-              />
-            </li>
-          ))}
-        </ul>
-      </section>
+                  {/* Days */}
+                  <div className="editable-field">
+                    <label className="input-label">Days</label>
+                    <div className="field-control">
+                      {editMode[`${index}-days`] ? (
+                        <>
+                          <input
+                            type="number"
+                            value={pkg.days || ""}
+                            onChange={(e) => handleInputChange(index, "days", e.target.value)}
+                          />
+                          <div className="buttons">
+                            <button onClick={() => toggleEditMode(index, "days")} title="Cancel">✖</button>
+                            <button onClick={() => handleUpdate(index, "days")} title="Update">✔</button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <input type="text" value={pkg.days} readOnly />
+                          <span onClick={() => toggleEditMode(index, "days")} title="Edit">✎</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-      <section className="section-box">
-        <h4>🎒 Amenities <span className="edit-icon" onClick={() => toggleEdit('amenities')}>✏️</span></h4>
-        <textarea
-          value={formData.amenities?.join(', ')}
-          readOnly={!editMode.amenities}
-          onChange={(e) => handleChange('amenities', e.target.value.split(',').map(a => a.trim()))}
-        />
-      </section>
+                {/* Grouped Inputs for State, City, Price */}
+                <div className="grouped-inputs">
+                  <div className="editable-field">
+                    <label className="input-label">State</label>
+                    <div className="field-control">
+                      {editMode[`${index}-state`] ? (
+                        <>
+                          <input
+                            type="text"
+                            value={pkg.state || ""}
+                            onChange={(e) => handleInputChange(index, "state", e.target.value)}
+                          />
+                          <div className="buttons">
+                            <button onClick={() => toggleEditMode(index, "state")} title="Cancel">✖</button>
+                            <button onClick={() => handleUpdate(index, "state")} title="Update">✔</button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <input type="text" value={pkg.state} readOnly />
+                          <span onClick={() => toggleEditMode(index, "state")} title="Edit">✎</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
 
-      <section className="section-box split-columns">
-        <div>
-          <h5>✅ Inclusions <span className="edit-icon" onClick={() => toggleEdit('inclusion')}>✏️</span></h5>
-          <ul>
-            {formData.inclusion?.map((inc, i) => (
-              <li key={i}>
-                <input
-                  value={inc}
-                  readOnly={!editMode.inclusion}
-                  onChange={(e) => handleArrayChange('inclusion', i, e.target.value)}
-                />
-              </li>
+                  <div className="editable-field">
+                    <label className="input-label">City</label>
+                    <div className="field-control">
+                      {editMode[`${index}-city`] ? (
+                        <>
+                          <input
+                            type="text"
+                            value={pkg.city || ""}
+                            onChange={(e) => handleInputChange(index, "city", e.target.value)}
+                          />
+                          <div className="buttons">
+                            <button onClick={() => toggleEditMode(index, "city")} title="Cancel">✖</button>
+                            <button onClick={() => handleUpdate(index, "city")} title="Update">✔</button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <input type="text" value={pkg.city} readOnly />
+                          <span onClick={() => toggleEditMode(index, "city")} title="Edit">✎</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="editable-field">
+                    <label className="input-label">Price</label>
+                    <div className="field-control">
+                      {editMode[`${index}-price`] ? (
+                        <>
+                          <input
+                            type="number"
+                            value={pkg.price || ""}
+                            onChange={(e) => handleInputChange(index, "price", e.target.value)}
+                          />
+                          <div className="buttons">
+                            <button onClick={() => toggleEditMode(index, "price")} title="Cancel">✖</button>
+                            <button onClick={() => handleUpdate(index, "price")} title="Update">✔</button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <input type="text" value={pkg.price} readOnly />
+                          <span onClick={() => toggleEditMode(index, "price")} title="Edit">✎</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Date Fields */}
+                <div className="grouped-inputs">
+                  <div className="editable-field">
+                    <label className="input-label">From</label>
+                    <div className="field-control">
+                      {editMode[`${index}-from`] ? (
+                        <>
+                          <input
+                            type="date"
+                            value={pkg.from || ""}
+                            onChange={(e) => handleInputChange(index, "from", e.target.value)}
+                          />
+                          <div className="buttons">
+                            <button onClick={() => toggleEditMode(index, "from")} title="Cancel">✖</button>
+                            <button onClick={() => handleUpdate(index, "from")} title="Update">✔</button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <input type="text" value={pkg.from} readOnly />
+                          <span onClick={() => toggleEditMode(index, "from")} title="Edit">✎</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="editable-field">
+                    <label className="input-label">To</label>
+                    <div className="field-control">
+                      {editMode[`${index}-to`] ? (
+                        <>
+                          <input
+                            type="date"
+                            value={pkg.to || ""}
+                            onChange={(e) => handleInputChange(index, "to", e.target.value)}
+                          />
+                          <div className="buttons">
+                            <button onClick={() => toggleEditMode(index, "to")} title="Cancel">✖</button>
+                            <button onClick={() => handleUpdate(index, "to")} title="Update">✔</button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <input type="text" value={pkg.to} readOnly />
+                          <span onClick={() => toggleEditMode(index, "to")} title="Edit">✎</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Overview */}
+                <div className="editable-field">
+                  <label className="input-label">Overview</label>
+                  <div className="field-control">
+                    {editMode[`${index}-overview`] ? (
+                      <>
+                        <textarea
+                          value={pkg.overview || ""}
+                          onChange={(e) => handleInputChange(index, "overview", e.target.value)}
+                        />
+                        <div className="buttons">
+                          <button onClick={() => toggleEditMode(index, "overview")} title="Cancel">✖</button>
+                          <button onClick={() => handleUpdate(index, "overview")} title="Update">✔</button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <textarea value={pkg.overview} readOnly />
+                        <span onClick={() => toggleEditMode(index, "overview")} title="Edit">✎</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Render dayWise descriptions */}
+                <div className="daywise-container">
+  {pkg.dayWise.map((day, dayIndex) => (
+    <div key={day._id} className="editable-field">
+      <label className="input-label">Day {day.day}</label>
+      <div className="field-control">
+        {editMode[`${index}-day-${dayIndex}`] ? (
+          <>
+            <textarea
+              value={day.description || ""}
+              onChange={(e) => handleInputChange(index, `dayWise[${dayIndex}].description`, e.target.value)}
+            />
+            <div className="buttons">
+              <button onClick={() => toggleEditMode(index, `day-${dayIndex}`)} title="Cancel">✖</button>
+              <button onClick={() => handleUpdate(index, `day-${dayIndex}`)} title="Update">✔</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <textarea value={day.description} readOnly />
+            <span onClick={() => toggleEditMode(index, `day-${dayIndex}`)} title="Edit">✎</span>
+          </>
+        )}
+      </div>
+    </div>
+  ))}
+</div>
+
+
+              </div>
             ))}
-          </ul>
-        </div>
-        <div>
-          <h5>❌ Exclusions <span className="edit-icon" onClick={() => toggleEdit('exclusion')}>✏️</span></h5>
-          <ul>
-            {formData.exclusion?.map((exc, i) => (
-              <li key={i}>
-                <input
-                  value={exc}
-                  readOnly={!editMode.exclusion}
-                  onChange={(e) => handleArrayChange('exclusion', i, e.target.value)}
-                />
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section className="section-box">
-        <h4>📄 Terms & Conditions</h4>
-        <ul>
-          <li>
-            <strong>Cancellation:</strong>
-            <input
-              value={formData.termsAndConditions?.cancellation}
-              readOnly={!editMode.cancellation}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  termsAndConditions: {
-                    ...prev.termsAndConditions,
-                    cancellation: e.target.value,
-                  },
-                }))
-              }
-            />
-            <span className="edit-icon" onClick={() => toggleEdit('cancellation')}>✏️</span>
-          </li>
-          <li>
-            <strong>Refund:</strong>
-            <input
-              value={formData.termsAndConditions?.refund}
-              readOnly={!editMode.refund}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  termsAndConditions: {
-                    ...prev.termsAndConditions,
-                    refund: e.target.value,
-                  },
-                }))
-              }
-            />
-            <span className="edit-icon" onClick={() => toggleEdit('refund')}>✏️</span>
-          </li>
-          <li>
-            <strong>Booking Policy:</strong>
-            <input
-              value={formData.termsAndConditions?.bookingPolicy}
-              readOnly={!editMode.bookingPolicy}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  termsAndConditions: {
-                    ...prev.termsAndConditions,
-                    bookingPolicy: e.target.value,
-                  },
-                }))
-              }
-            />
-            <span className="edit-icon" onClick={() => toggleEdit('bookingPolicy')}>✏️</span>
-          </li>
-        </ul>
-      </section>
-
-      <section className="section-box gallery">
-        <h4>📸 Gallery</h4>
-        <div className="gallery-grid">
-          {formData.images?.map((img, i) => (
-            <img key={i} src={img} alt={`img-${i}`} />
-          ))}
-        </div>
-      </section>
-
-      <div className="footer-actions">
-        <button onClick={() => navigate(-1)}>⬅ Back</button>
-        <button className="btn-primary" onClick={handleUpdate}>Update</button>
+          </div>
+        )}
       </div>
     </div>
   );
-};
-
-export default UpdatePage;
+}

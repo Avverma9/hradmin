@@ -52,7 +52,7 @@ export const tourById = createAsyncThunk("tour/tourById", async (id, { rejectWit
 
 export const tourUpdate = createAsyncThunk("tour/tourUpdate", async ({ id, data }, { rejectWithValue }) => {
     try {
-        const response = await axios.put(`${localUrl}/update-tour/data/${id}`, data, {
+        const response = await axios.patch(`${localUrl}/update-tour/data/${id}`, data, {
             headers: {
                 Authorization: token,
             },
