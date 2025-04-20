@@ -199,7 +199,7 @@ export default function TourUpdate() {
                   onToggleEdit={toggleEditMode}
               />
               <EditableField
-                  label="Price ($)"
+                  label="Package Price"
                   value={editableData.price}
                   fieldName="price"
                   isEditing={!!editMode["price"]}

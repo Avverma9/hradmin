@@ -61,8 +61,8 @@ function EditableField({
             {type === 'date' ? (value ? new Date(value).toLocaleDateString() : 'N/A') : (value || 'N/A')}
           </Typography>
           <Tooltip title={`Edit ${label}`}>
-            <IconButton onClick={() => onToggleEdit(fieldName)} size="small">
-              <EditIcon color="primary" />
+            <IconButton onClick={() => onToggleEdit(fieldName)} size="xsmall">
+              <EditIcon color="black" />
             </IconButton>
           </Tooltip>
         </Box>
