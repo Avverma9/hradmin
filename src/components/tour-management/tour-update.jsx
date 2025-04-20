@@ -207,6 +207,7 @@ export default function TourUpdate() {
                   onToggleEdit={toggleEditMode}
                   type="number"
               />
+              
                <EditableField
                   label="Nights"
                   value={editableData.nights}
