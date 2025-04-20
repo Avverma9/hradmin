@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { tourById, tourUpdate } from "../redux/reducers/tour/tour";
 import './listModal.css';
+import { Typography } from "@mui/material";
 
 export default function TourUpdate() {
   const { editData } = useSelector((state) => state?.tour);
@@ -43,6 +44,7 @@ export default function TourUpdate() {
   return (
     <div>
      <h3>Update tour package details !</h3>
+     <Typography>Important ! - Every field is editable click on edit icon and proceed</Typography>
       <div className="travel-packages">
         {editableData && editableData.length > 0 && (
           <div className="package-card">
