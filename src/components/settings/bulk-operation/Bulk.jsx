@@ -34,6 +34,7 @@ import {
 import { useLoader } from "../../../../utils/loader";
 import { applyCoupon } from "src/components/redux/reducers/coupon";
 import HotelTable from "./hotel-table";
+import { executeBulkAction } from "./bulkUtils";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   backgroundColor: theme.palette.secondary.light,
@@ -184,54 +185,15 @@ const Bulk = () => {
   };
 
   const executeAction = async () => {
-    const ids = Array.from(selectedHotels);
-    if (ids.length === 0) return toast.warning("No hotels selected.");
-
-    if (action === "export") {
-      exportToExcel();
-      return;
-    }
-
-    if (action === "applyCoupon") {
-      if (!couponCode) return toast.warning("Please enter a coupon code.");
-      if (!selectedRoomType) return toast.warning("Please select a room type.");
-
-      showLoader();
-      try {
-        const selectedData = data.filter((hotel) =>
-          ids.includes(hotel.hotelId),
-        );
-        const roomIds = [];
-
-        selectedData.forEach((hotel) => {
-          hotel.rooms?.forEach((room) => {
-            if (room.type === selectedRoomType) {
-              roomIds.push(room.roomId);
-            }
-          });
-        });
-
-        if (roomIds.length === 0) {
-          toast.warning("No rooms found for selected room type.");
-          return;
-        }
-
-        const payload = {
-          couponCode,
-          hotelIds: ids,
-          roomIds,
-        };
-
-        await dispatch(applyCoupon(payload)).unwrap();
-        toast.success("Coupon applied successfully!");
-      } catch (error) {
-        toast.error(error?.message || error?.error || "Failed to apply coupon");
-      } finally {
-        hideLoader();
-      }
-    }
+    await executeBulkAction({
+      action,
+      selectedHotels,
+      data,
+      couponCode,
+      selectedRoomType,
+      dispatch,
+    });
   };
-
   return (
     <div>
       <Typography variant="h4" sx={{ mb: 2 }}>

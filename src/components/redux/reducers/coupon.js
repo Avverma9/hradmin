@@ -96,9 +96,11 @@ export const applyCoupon = createAsyncThunk(
       });
 
       notify(response.status);
+      toast.info(response.data.message);
       return response.data;
     } catch (error) {
       console.error("Error in applyCoupon thunk:", error);
+      const errorMessage = error.response?.data?.message || error.message;
       toast.error(`Error: ${errorMessage}`);
       return rejectWithValue(error.response?.data || errorMessage);
     }
