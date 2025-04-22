@@ -1,29 +1,32 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import axios from 'axios';
-import { localUrl, notify, token } from '../../../../utils/util';
-import { toast } from 'react-toastify';
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import axios from "axios";
+import { localUrl, notify, token } from "../../../../utils/util";
+import { toast } from "react-toastify";
 
 export const removeCoupon = createAsyncThunk(
-  'coupon/removeCoupon',
+  "coupon/removeCoupon",
   async (roomId, { rejectWithValue }) => {
     try {
-      const response = await axios.patch(`${localUrl}/remove/coupon/before-time-from-hotel`, {
-        roomId,
-        headers: {
-          Authorization: token,
+      const response = await axios.patch(
+        `${localUrl}/remove/coupon/before-time-from-hotel`,
+        {
+          roomId,
+          headers: {
+            Authorization: token,
+          },
         },
-      });
+      );
       return response.data;
     } catch (error) {
       const errorMessage = error.message;
       toast.error(`Error: ${errorMessage}`);
       return rejectWithValue(errorMessage);
     }
-  }
+  },
 );
 
 export const getAllCoupons = createAsyncThunk(
-  'hotel/getAllCoupons',
+  "hotel/getAllCoupons",
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(`${localUrl}/coupon/get/all`, {
@@ -38,11 +41,11 @@ export const getAllCoupons = createAsyncThunk(
       toast.error(`Error: ${errorMessage}`);
       return rejectWithValue(errorMessage);
     }
-  }
+  },
 );
 
 export const createCoupon = createAsyncThunk(
-  'hotel/createCoupon',
+  "hotel/createCoupon",
   async (postData, { rejectWithValue }) => {
     try {
       const response = await axios.post(
@@ -56,42 +59,53 @@ export const createCoupon = createAsyncThunk(
           headers: {
             Authorization: token,
           },
-        }
+        },
       );
-      toast.success(`Kindly note down your coupon code: ${response?.data?.coupon.couponCode}`);
+      toast.success(
+        `Kindly note down your coupon code: ${response?.data?.coupon.couponCode}`,
+      );
       return response.data;
     } catch (error) {
       const errorMessage = error.message;
       toast.error(`Error: ${errorMessage}`);
       return rejectWithValue(errorMessage);
     }
-  }
+  },
 );
 
 export const applyCoupon = createAsyncThunk(
-  'hotel/applyCoupon',
-  async ({ couponCode, hotelId, roomId }, { rejectWithValue }) => {
+  "hotel/applyCoupon",
+  async ({ couponCode, hotelIds, roomIds }, { getState, rejectWithValue }) => {
     try {
-      const response = await axios.patch(
-        `${localUrl}/apply/a/coupon-to-room?hotelId=${hotelId}&roomId=${roomId}&couponCode=${couponCode}`,
-        {
-          headers: {
-            Authorization: token,
-          },
-        }
-      );
+      if (!token) {
+        toast.error("Authentication token missing. Please log in again.");
+        return rejectWithValue("Authentication token is missing.");
+      }
+
+      const url = `${localUrl}/apply/a/coupon-to-room`;
+      const requestData = {
+        couponCode,
+        hotelIds,
+        roomIds,
+      };
+      const response = await axios.patch(url, requestData, {
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+      });
+
       notify(response.status);
       return response.data;
     } catch (error) {
-      const errorMessage = error.message;
+      console.error("Error in applyCoupon thunk:", error);
       toast.error(`Error: ${errorMessage}`);
-      return rejectWithValue(errorMessage);
+      return rejectWithValue(error.response?.data || errorMessage);
     }
-  }
+  },
 );
-
 const couponSlice = createSlice({
-  name: 'coupon',
+  name: "coupon",
   initialState: {
     coupon: [],
     loading: false,

@@ -64,6 +64,23 @@ export const getHotelsByFilters = createAsyncThunk('hotel/getHotelsByFilters', a
         return rejectWithValue(errorMessage);
     }
 });
+
+
+export const getHotelsCity = createAsyncThunk('hotel/getHotelsCity', async (city, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(`${localUrl}/get-hotels-all/city`, {
+            headers: {
+                Authorization: token,
+            },
+        });
+        //   notify(response.status);
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+});
 export const addFood = createAsyncThunk('hotel/addFood', async (formData, { rejectWithValue }) => {
     try {
         const response = axios.post(`${localUrl}/add/food-to/your-hotel`, formData, {
@@ -104,6 +121,7 @@ const hotelSlice = createSlice({
         byQuery: [],
         byFilter: [],
         byId: [],
+        byCity: [],
         coupon: [],
         loading: false,
         error: null,
@@ -128,7 +146,10 @@ const hotelSlice = createSlice({
             })
             .addCase(deleteFood.fulfilled, (state, action) => {
                 state.addFood = action.payload;
-            });
+            })
+            .addCase(getHotelsCity.fulfilled, (state, action) => {
+                state.byCity = action.payload;
+            })
     },
 });
 

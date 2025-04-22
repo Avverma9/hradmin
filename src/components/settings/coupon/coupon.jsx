@@ -61,8 +61,8 @@ export default function Coupon() {
   const [coupons, setCoupons] = useState([]);
 
   const dispatch = useDispatch();
-  const allHotelsData = useSelector((state) => 
-    (state.hotel.data || []).filter((hotel) => hotel.isAccepted !== false)
+  const allHotelsData = useSelector((state) =>
+    (state.hotel.data || []).filter((hotel) => hotel.isAccepted !== false),
   );
   const byFilterData = useSelector((state) => state.hotel.byFilter || []);
   const { showLoader, hideLoader } = useLoader();
@@ -159,10 +159,25 @@ export default function Coupon() {
   };
 
   const handleApplyCoupon = useCallback(
-    async (hotelId, roomId) => {
+    async (hotelId, roomId) => { // यहाँ सिंगल hotelId और roomId आते हैं
       showLoader();
       try {
-        await dispatch(applyCoupon({ couponCode, hotelId, roomId })).unwrap();
+        // लॉग करें कि कौन सी IDs प्राप्त हुईं
+        console.log(`handleApplyCoupon received: hotelId=${[hotelId]}, roomId=${[roomId]}`);
+
+        // पेलोड बनाएं जिसमें IDs को ऐरे में रैप किया गया हो
+        const payload = {
+            couponCode,
+            hotelIds: [hotelId], // hotelId को ऐरे में डालें
+            roomIds: [roomId]    // roomId को ऐरे में डालें
+        };
+
+        // लॉग करें कि वास्तव में क्या भेजा जा रहा है
+        console.log("Dispatching applyCoupon with payload:", payload);
+
+        // dispatch को अपडेटेड पेलोड भेजें
+        await dispatch(applyCoupon(payload)).unwrap();
+
         toast.success("Coupon applied successfully!");
         handleCloseCouponModal();
       } catch (error) {
@@ -174,7 +189,8 @@ export default function Coupon() {
         hideLoader();
       }
     },
-    [dispatch, showLoader, hideLoader, couponCode, handleCloseCouponModal],
+    // निर्भरताएँ वही रहेंगी
+    [dispatch, showLoader, hideLoader, couponCode, handleCloseCouponModal]
   );
 
   const handleOpenModal = (hotel) => {
