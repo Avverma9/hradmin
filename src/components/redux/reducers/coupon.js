@@ -106,10 +106,33 @@ export const applyCoupon = createAsyncThunk(
     }
   },
 );
+
+
+export const getCouponAppliedHotels = createAsyncThunk(
+  "hotel/getCouponAppliedHotels",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${localUrl}/get-hotel-list/filter-by-applied-coupons`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        },
+      );
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  },
+);
 const couponSlice = createSlice({
   name: "coupon",
   initialState: {
     coupon: [],
+    applied:[],
     loading: false,
     error: null,
   },
@@ -123,7 +146,10 @@ const couponSlice = createSlice({
       })
       .addCase(applyCoupon.fulfilled, (state, action) => {
         state.apply = action.payload;
-      });
+      })
+      .addCase(getCouponAppliedHotels.fulfilled, (state, action) => {
+        state.applied = action.payload;
+      })
   },
 });
 

@@ -32,7 +32,10 @@ import {
   getHotelsCity,
 } from "src/components/redux/reducers/hotel";
 import { useLoader } from "../../../../utils/loader";
-import { applyCoupon } from "src/components/redux/reducers/coupon";
+import {
+  applyCoupon,
+  getCouponAppliedHotels,
+} from "src/components/redux/reducers/coupon";
 import HotelTable from "./hotel-table";
 import { executeBulkAction } from "./bulkUtils";
 
@@ -52,6 +55,7 @@ const Bulk = () => {
   const data = useSelector((state) => state.hotel.data);
   const byCity = useSelector((state) => state.hotel.byCity);
   const byFilter = useSelector((state) => state.hotel.byFilter);
+  const applied = useSelector((state) => state.coupon.applied);
   const dispatch = useDispatch();
   const { showLoader, hideLoader } = useLoader();
 
@@ -80,8 +84,16 @@ const Bulk = () => {
   useEffect(() => {
     getAllHotelsData();
     dispatch(getHotelsCity());
+    dispatch(getCouponAppliedHotels());
   }, [dispatch]);
 
+  const getAppliedCouponHotels = async () => {
+    try {
+      await dispatch(getCouponAppliedHotels());
+    } catch (error) {
+      toast.error("Failed to fetch hotels with applied coupons.");
+    }
+  };
   useEffect(() => {
     if (action === "applyCoupon" && selectedHotels.size > 0) {
       const selectedData = data.filter((hotel) =>
@@ -96,6 +108,10 @@ const Bulk = () => {
         });
       });
       setAvailableRoomTypes(Array.from(roomTypes));
+    }
+
+    if (action === "removeCoupon") {
+      getAppliedCouponHotels();
     }
   }, [action, selectedHotels, data]);
 
@@ -116,14 +132,16 @@ const Bulk = () => {
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value.toLowerCase());
   };
-
   const handleCityChange = async (event) => {
     setSelectedCity(event.target.value);
     await dispatch(getHotelsByFilters(event.target.value));
   };
-
   const hotelToShow =
-    selectedCity !== "All City" && selectedCity ? byFilter?.data : data;
+  action === "removeCoupon"
+    ? applied // Show only hotels with coupons applied
+    : selectedCity !== "All City" && selectedCity
+      ? byFilter?.data
+      : data;
 
   const filteredData = hotelToShow?.filter((hotel) => {
     const matchesSearchQuery =
@@ -146,11 +164,6 @@ const Bulk = () => {
     page * rowsPerPage + rowsPerPage,
   );
 
-  const getMinRoomPrice = (rooms) => {
-    if (!rooms || rooms.length === 0) return 0;
-    return Math.min(...rooms.map((room) => room.price)).toFixed(2);
-  };
-
   const handleHotelSelect = (hotelId) => {
     setSelectedHotels((prev) => {
       const newSelection = new Set(prev);
@@ -169,19 +182,6 @@ const Bulk = () => {
     } else {
       setSelectedHotels(new Set(paginatedData.map((hotel) => hotel.hotelId)));
     }
-  };
-
-  const exportToExcel = () => {
-    const ids = Array.from(selectedHotels);
-    if (ids.length === 0) return toast.warning("No hotels selected.");
-    const selectedData = data.filter((hotel) =>
-      selectedHotels.has(hotel.hotelId),
-    );
-    const ws = XLSX.utils.json_to_sheet(selectedData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Selected Hotels");
-    XLSX.writeFile(wb, "Selected_Hotels.xlsx");
-    toast.success("Exported selected hotels to Excel.");
   };
 
   const executeAction = async () => {
@@ -299,6 +299,7 @@ const Bulk = () => {
         >
           Not Accepted
         </Button>
+        <Button sx={{ minWidth: 50 }}>Applied Coupon</Button>
       </ButtonGroup>
       <HotelTable
         data={paginatedData}
