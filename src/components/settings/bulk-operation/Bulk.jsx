@@ -30,10 +30,10 @@ import {
   getAllHotels,
   getHotelsByFilters,
   getHotelsCity,
-
 } from "src/components/redux/reducers/hotel";
 import { useLoader } from "../../../../utils/loader";
 import { applyCoupon } from "src/components/redux/reducers/coupon";
+import HotelTable from "./hotel-table";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   backgroundColor: theme.palette.secondary.light,
@@ -70,7 +70,6 @@ const Bulk = () => {
     try {
       await dispatch(getAllHotels());
     } catch (error) {
-      console.error("Error fetching hotels:", error);
       toast.error("Failed to fetch hotels.");
     } finally {
       setLoading(false);
@@ -87,9 +86,7 @@ const Bulk = () => {
       const selectedData = data.filter((hotel) =>
         selectedHotels.has(hotel.hotelId),
       );
-
       const roomTypes = new Set();
-
       selectedData.forEach((hotel) => {
         hotel.rooms?.forEach((room) => {
           if (room.type) {
@@ -97,10 +94,23 @@ const Bulk = () => {
           }
         });
       });
-
       setAvailableRoomTypes(Array.from(roomTypes));
     }
   }, [action, selectedHotels, data]);
+
+  useEffect(() => {
+    if (data?.length > 0) {
+      const allRoomTypes = new Set();
+      data.forEach((hotel) => {
+        hotel.rooms?.forEach((room) => {
+          if (room.type) {
+            allRoomTypes.add(room.type);
+          }
+        });
+      });
+      setAvailableRoomTypes(Array.from(allRoomTypes));
+    }
+  }, [data]);
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value.toLowerCase());
@@ -111,7 +121,8 @@ const Bulk = () => {
     await dispatch(getHotelsByFilters(event.target.value));
   };
 
-  const hotelToShow = selectedCity ? byFilter?.data : data;
+  const hotelToShow =
+    selectedCity !== "All City" && selectedCity ? byFilter?.data : data;
 
   const filteredData = hotelToShow?.filter((hotel) => {
     const matchesSearchQuery =
@@ -121,7 +132,12 @@ const Bulk = () => {
     const matchesAcceptedFilter =
       isAcceptedFilter === null || hotel.isAccepted === isAcceptedFilter;
 
-    return matchesSearchQuery && matchesAcceptedFilter;
+    const matchesRoomType =
+      action !== "applyCoupon" ||
+      !selectedRoomType ||
+      hotel.rooms?.some((room) => room.type === selectedRoomType);
+
+    return matchesSearchQuery && matchesAcceptedFilter && matchesRoomType;
   });
 
   const paginatedData = filteredData?.slice(
@@ -157,15 +173,12 @@ const Bulk = () => {
   const exportToExcel = () => {
     const ids = Array.from(selectedHotels);
     if (ids.length === 0) return toast.warning("No hotels selected.");
-
     const selectedData = data.filter((hotel) =>
       selectedHotels.has(hotel.hotelId),
     );
-
     const ws = XLSX.utils.json_to_sheet(selectedData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Selected Hotels");
-
     XLSX.writeFile(wb, "Selected_Hotels.xlsx");
     toast.success("Exported selected hotels to Excel.");
   };
@@ -181,12 +194,13 @@ const Bulk = () => {
 
     if (action === "applyCoupon") {
       if (!couponCode) return toast.warning("Please enter a coupon code.");
-      if (!selectedRoomType)
-        return toast.warning("Please select a room type.");
+      if (!selectedRoomType) return toast.warning("Please select a room type.");
 
       showLoader();
       try {
-        const selectedData = data.filter((hotel) => ids.includes(hotel.hotelId));
+        const selectedData = data.filter((hotel) =>
+          ids.includes(hotel.hotelId),
+        );
         const roomIds = [];
 
         selectedData.forEach((hotel) => {
@@ -211,16 +225,11 @@ const Bulk = () => {
         await dispatch(applyCoupon(payload)).unwrap();
         toast.success("Coupon applied successfully!");
       } catch (error) {
-        console.error("Error applying coupon:", error);
-        toast.error(
-          error?.message || error?.error || "Failed to apply coupon",
-        );
+        toast.error(error?.message || error?.error || "Failed to apply coupon");
       } finally {
         hideLoader();
       }
     }
-
-    // Implement other actions (remove, accept, etc.) here...
   };
 
   return (
@@ -245,6 +254,7 @@ const Bulk = () => {
           onChange={handleCityChange}
           variant="outlined"
         >
+          <MenuItem value="All City">All City</MenuItem>
           {byCity.map((city) => (
             <MenuItem key={city} value={city}>
               {city}
@@ -321,52 +331,18 @@ const Bulk = () => {
         <Button sx={{ minWidth: 50 }} onClick={() => setIsAcceptedFilter(true)}>
           Accepted
         </Button>
-        <Button sx={{ minWidth: 50 }} onClick={() => setIsAcceptedFilter(false)}>
+        <Button
+          sx={{ minWidth: 50 }}
+          onClick={() => setIsAcceptedFilter(false)}
+        >
           Not Accepted
         </Button>
       </ButtonGroup>
-
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <TableContainer component={Paper} sx={{ marginTop: 2 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <StyledTableCell>Select</StyledTableCell>
-                <StyledTableCell>Hotel Name</StyledTableCell>
-                <StyledTableCell>Owner Name</StyledTableCell>
-                <StyledTableCell>Email</StyledTableCell>
-                <StyledTableCell>Published</StyledTableCell>
-                <StyledTableCell>Min Room Price ($)</StyledTableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedData?.map((hotel) => (
-                <StyledTableRow
-                  key={hotel.hotelId}
-                  selected={selectedHotels.has(hotel.hotelId)}
-                >
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedHotels.has(hotel.hotelId)}
-                      onChange={() => handleHotelSelect(hotel.hotelId)}
-                    />
-                  </TableCell>
-                  <TableCell>{hotel.hotelName}</TableCell>
-                  <TableCell>{hotel.hotelOwnerName}</TableCell>
-                  <TableCell>{hotel.hotelEmail}</TableCell>
-                  <TableCell>
-                    {new Date(hotel.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>{getMinRoomPrice(hotel.rooms)}</TableCell>
-                </StyledTableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-
+      <HotelTable
+        data={paginatedData}
+        selectedHotels={selectedHotels}
+        handleHotelSelect={handleHotelSelect}
+      />
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
