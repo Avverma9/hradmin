@@ -228,7 +228,7 @@ export default function TourUpdate() {
     return ( <Box sx={{ border: '1px dotted', borderColor: 'grey.500', borderRadius: '4px', p: 1.5, mb: 0.5, maxWidth: '100%', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}> <Typography variant="body2" sx={{ lineHeight: 1.6 }}>{text}</Typography> </Box> );
   };
 
-
+console.log("ediatable data", editableData);
   return (
     <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, maxWidth: 900, margin: "auto", mt: 4, mb: 4 }}>
         <Typography variant="h5" gutterBottom component="h2"> Update Tour Package Details for ({editableData?.travelAgencyName}) </Typography>

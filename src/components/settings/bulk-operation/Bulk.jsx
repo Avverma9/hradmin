@@ -2,29 +2,18 @@
 import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
 import React, { useState, useEffect } from "react";
-
-import { styled } from "@mui/material/styles";
 import {
-  Table,
-  Paper,
   Button,
   Select,
-  TableRow,
-  Checkbox,
   MenuItem,
-  TableBody,
-  TableCell,
-  TableHead,
   TextField,
   Typography,
   InputLabel,
   ButtonGroup,
   FormControl,
-  TableContainer,
   TablePagination,
 } from "@mui/material";
 
-import { localUrl } from "../../../../utils/util";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getAllHotels,
@@ -33,23 +22,12 @@ import {
 } from "src/components/redux/reducers/hotel";
 import { useLoader } from "../../../../utils/loader";
 import {
-  applyCoupon,
   getCouponAppliedHotels,
 } from "src/components/redux/reducers/coupon";
 import HotelTable from "./hotel-table";
 import { executeBulkAction } from "./bulkUtils";
 
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  backgroundColor: theme.palette.secondary.light,
-  color: theme.palette.common.white,
-}));
 
-const StyledTableRow = styled(TableRow)(({ theme, selected }) => ({
-  backgroundColor: selected ? theme.palette.action.selected : "inherit",
-  "&:nth-of-type(odd)": {
-    backgroundColor: theme.palette.action.hover,
-  },
-}));
 
 const Bulk = () => {
   const data = useSelector((state) => state.hotel.data);
@@ -137,11 +115,11 @@ const Bulk = () => {
     await dispatch(getHotelsByFilters(event.target.value));
   };
   const hotelToShow =
-  action === "removeCoupon"
-    ? applied // Show only hotels with coupons applied
-    : selectedCity !== "All City" && selectedCity
-      ? byFilter?.data
-      : data;
+    action === "removeCoupon"
+      ? applied // Show only hotels with coupons applied
+      : selectedCity !== "All City" && selectedCity
+        ? byFilter?.data
+        : data;
 
   const filteredData = hotelToShow?.filter((hotel) => {
     const matchesSearchQuery =
@@ -299,7 +277,6 @@ const Bulk = () => {
         >
           Not Accepted
         </Button>
-        <Button sx={{ minWidth: 50 }}>Applied Coupon</Button>
       </ButtonGroup>
       <HotelTable
         data={paginatedData}

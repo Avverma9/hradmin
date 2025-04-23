@@ -128,6 +128,31 @@ export const getCouponAppliedHotels = createAsyncThunk(
     }
   },
 );
+
+
+export const removeBulkCoupon = createAsyncThunk(
+  "hotel/removeBulkCoupon",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await axios.patch(
+        `${localUrl}/remove-bulk-coupons-from-hotels/by-hotel/id`,
+        payload, // send the correct payload here
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status);
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 const couponSlice = createSlice({
   name: "coupon",
   initialState: {
