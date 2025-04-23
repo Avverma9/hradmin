@@ -10,9 +10,11 @@ import {
   TableRow,
   Checkbox,
   Paper,
+  Button,
 } from "@mui/material";
 
 import { styled } from "@mui/material/styles";
+
 const HotelTable = ({ selectedHotels, handleHotelSelect, data }) => {
   const StyledTableCell = styled(TableCell)(({ theme }) => ({
     backgroundColor: theme.palette.secondary.light,
@@ -25,12 +27,24 @@ const HotelTable = ({ selectedHotels, handleHotelSelect, data }) => {
       backgroundColor: theme.palette.action.hover,
     },
   }));
+
+  const ViewButton = styled(Button)(({ theme }) => ({
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.common.white,
+    "&:hover": {
+      backgroundColor: theme.palette.primary.dark,
+    },
+  }));
+
   const getMinRoomPrice = (rooms) => {
     if (!rooms || rooms.length === 0) return 0;
     return Math.min(...rooms.map((room) => room.price)).toFixed(2);
   };
 
-  console.log("data", data);
+  const viewHotel = (id) => {
+    window.location.href = `view-hotel-details/${id}`;
+  };
+
   return (
     <TableContainer component={Paper} sx={{ marginTop: 2 }}>
       <Table>
@@ -39,9 +53,10 @@ const HotelTable = ({ selectedHotels, handleHotelSelect, data }) => {
             <StyledTableCell>Select</StyledTableCell>
             <StyledTableCell>Hotel Name</StyledTableCell>
             <StyledTableCell>Owner Name</StyledTableCell>
-            <StyledTableCell>Email</StyledTableCell>
-            <StyledTableCell>Published</StyledTableCell>
-            <StyledTableCell>Min Room Price ($)</StyledTableCell>
+            <StyledTableCell>On front</StyledTableCell>
+            <StyledTableCell>Status</StyledTableCell>
+            <StyledTableCell>Min Room Price</StyledTableCell>
+            <StyledTableCell>Action</StyledTableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -58,11 +73,16 @@ const HotelTable = ({ selectedHotels, handleHotelSelect, data }) => {
               </TableCell>
               <TableCell>{hotel.hotelName}</TableCell>
               <TableCell>{hotel.hotelOwnerName}</TableCell>
-              <TableCell>{hotel.hotelEmail}</TableCell>
+              <TableCell>{hotel?.onFront ? "Yes" : "No"}</TableCell>
               <TableCell>
-                {new Date(hotel.createdAt).toLocaleDateString()}
+                {hotel.isAccepted ? "Accepted" : "Not Accepted"}
               </TableCell>
               <TableCell>{getMinRoomPrice(hotel.rooms)}</TableCell>
+              <TableCell>
+                <ViewButton size="small" onClick={() => viewHotel(hotel?.hotelId)}>
+                  View
+                </ViewButton>
+              </TableCell>
             </StyledTableRow>
           ))}
         </TableBody>

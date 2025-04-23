@@ -26,9 +26,6 @@ import {
 } from "src/components/redux/reducers/coupon";
 import HotelTable from "./hotel-table";
 import { executeBulkAction } from "./bulkUtils";
-
-
-
 const Bulk = () => {
   const data = useSelector((state) => state.hotel.data);
   const byCity = useSelector((state) => state.hotel.byCity);
@@ -36,7 +33,6 @@ const Bulk = () => {
   const applied = useSelector((state) => state.coupon.applied);
   const dispatch = useDispatch();
   const { showLoader, hideLoader } = useLoader();
-
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [isAcceptedFilter, setIsAcceptedFilter] = useState(null);
@@ -170,6 +166,7 @@ const Bulk = () => {
       couponCode,
       selectedRoomType,
       dispatch,
+      showLoader, hideLoader
     });
   };
   return (
@@ -213,7 +210,7 @@ const Bulk = () => {
           <MenuItem value="">None</MenuItem>
           <MenuItem value="remove">Remove Hotels</MenuItem>
           <MenuItem value="accept">Accept Hotels</MenuItem>
-          <MenuItem value="move">Move to Front Page</MenuItem>
+          <MenuItem value="moveFrom">Move to Front Page</MenuItem>
           <MenuItem value="removeFront">Remove from Front Page</MenuItem>
           <MenuItem value="applyCoupon">Apply Coupon</MenuItem>
           <MenuItem value="removeCoupon">Remove Coupon</MenuItem>
