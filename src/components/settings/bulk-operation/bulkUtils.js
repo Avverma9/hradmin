@@ -4,12 +4,14 @@ import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
 import { applyCoupon, removeBulkCoupon } from "src/components/redux/reducers/coupon";
 import { changeHotelStatus } from "src/components/redux/reducers/bulk";
+import { notify } from "../../../../utils/util";
 export const executeBulkAction = async ({
   action,
   selectedHotels,
   data,
   showLoader,
   hideLoader,
+  reloadPage,
   couponCode,
   selectedRoomType,
   dispatch,
@@ -31,8 +33,10 @@ export const executeBulkAction = async ({
       toast.success("Hotels removed successfully!");
     } catch (error) {
       toast.error("Failed to remove hotels.");
-    }finally{
+    } finally {
+      reloadPage()
       hideLoader()
+
     }
   }
 
@@ -42,10 +46,14 @@ export const executeBulkAction = async ({
       isAccepted: true,
     };
     try {
+      showLoader()
       await dispatch(changeHotelStatus(payload)).unwrap();
       toast.success("Hotels accepted successfully!");
     } catch (error) {
       toast.error("Failed to accept hotels.");
+    } finally {
+      reloadPage()
+      hideLoader()
     }
   }
 
@@ -55,10 +63,14 @@ export const executeBulkAction = async ({
       onFront: true,
     };
     try {
+      showLoader()
       await dispatch(changeHotelStatus(payload)).unwrap();
       toast.success("Hotels moved to front successfully!");
     } catch (error) {
       toast.error("Failed to move hotels to front.");
+    } finally {
+      hideLoader()
+      reloadPage()
     }
   }
 
@@ -68,10 +80,15 @@ export const executeBulkAction = async ({
       onFront: false,
     };
     try {
+      showLoader()
       await dispatch(changeHotelStatus(payload)).unwrap();
       toast.success("Hotels removed from front successfully!");
     } catch (error) {
       toast.error("Failed to remove hotels from front.");
+    }
+    finally {
+      hideLoader()
+      reloadPage()
     }
   }
 
@@ -100,6 +117,7 @@ export const executeBulkAction = async ({
           if (room.type === selectedRoomType) {
             roomIds.push(room.roomId);
           }
+         
         });
       });
 
@@ -113,11 +131,15 @@ export const executeBulkAction = async ({
         hotelIds: ids,
         roomIds,
       };
-
+      showLoader()
       await dispatch(applyCoupon(payload)).unwrap();
       toast.success("Coupon applied successfully!");
     } catch (error) {
       toast.error("Failed to apply coupon.");
+    }
+    finally {
+      hideLoader()
+      reloadPage()
     }
   }
 
@@ -126,10 +148,14 @@ export const executeBulkAction = async ({
       hotelIds: ids,
     };
     try {
+      showLoader()
       await dispatch(removeBulkCoupon(payload)).unwrap();
       toast.success("Coupons removed successfully!");
     } catch (error) {
       toast.error("Failed to remove coupons.");
+    } finally {
+      hideLoader()
+      reloadPage()
     }
   }
 };
