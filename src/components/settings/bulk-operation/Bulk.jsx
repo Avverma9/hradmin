@@ -36,7 +36,6 @@ const Bulk = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [isAcceptedFilter, setIsAcceptedFilter] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [selectedHotels, setSelectedHotels] = useState(new Set());
   const [action, setAction] = useState("");
   const [couponCode, setCouponCode] = useState("");
@@ -47,13 +46,15 @@ const Bulk = () => {
 
   const getAllHotelsData = async () => {
     try {
+      showLoader()
       await dispatch(getAllHotels());
     } catch (error) {
       toast.error("Failed to fetch hotels.");
     } finally {
-      setLoading(false);
+      hideLoader();
     }
   };
+
 
   useEffect(() => {
     getAllHotelsData();
@@ -107,8 +108,16 @@ const Bulk = () => {
     setSearchQuery(event.target.value.toLowerCase());
   };
   const handleCityChange = async (event) => {
-    setSelectedCity(event.target.value);
-    await dispatch(getHotelsByFilters(event.target.value));
+    try {
+      setSelectedCity(event.target.value);
+      showLoader()
+      await dispatch(getHotelsByFilters(event.target.value));
+    } catch (error) {
+      console.error("It seems an error", error)
+    } finally {
+      hideLoader()
+    }
+
   };
   const hotelToShow =
     action === "removeCoupon"
@@ -157,7 +166,9 @@ const Bulk = () => {
       setSelectedHotels(new Set(paginatedData.map((hotel) => hotel.hotelId)));
     }
   };
-
+  const reloadPage = () => {
+    window.location.reload();
+  };
   const executeAction = async () => {
     await executeBulkAction({
       action,
@@ -166,6 +177,7 @@ const Bulk = () => {
       couponCode,
       selectedRoomType,
       dispatch,
+      reloadPage,
       showLoader, hideLoader
     });
   };
