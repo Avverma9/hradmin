@@ -109,6 +109,8 @@ export const executeBulkAction = async ({
     }
 
     try {
+
+   
       const selectedData = data.filter(hotel => ids.includes(hotel.hotelId));
       const roomIds = [];
 
@@ -139,7 +141,7 @@ export const executeBulkAction = async ({
     }
     finally {
       hideLoader()
-      reloadPage()
+      // reloadPage()
     }
   }
 

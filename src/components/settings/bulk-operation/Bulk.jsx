@@ -1,7 +1,6 @@
 /* eslint-disable consistent-return */
-import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Button,
   Select,
@@ -12,6 +11,8 @@ import {
   ButtonGroup,
   FormControl,
   TablePagination,
+  Box,
+  Grid,
 } from "@mui/material";
 
 import { useDispatch, useSelector } from "react-redux";
@@ -22,10 +23,14 @@ import {
 } from "src/components/redux/reducers/hotel";
 import { useLoader } from "../../../../utils/loader";
 import {
+  createCoupon,
+  getAllCoupons,
   getCouponAppliedHotels,
 } from "src/components/redux/reducers/coupon";
 import HotelTable from "./hotel-table";
 import { executeBulkAction } from "./bulkUtils";
+import CreateCouponModal from "../coupon/create-coupon";
+import AvailableCouponsModal from "../coupon/available-coupons";
 const Bulk = () => {
   const data = useSelector((state) => state.hotel.data);
   const byCity = useSelector((state) => state.hotel.byCity);
@@ -33,11 +38,21 @@ const Bulk = () => {
   const applied = useSelector((state) => state.coupon.applied);
   const dispatch = useDispatch();
   const { showLoader, hideLoader } = useLoader();
+  const [openCreateCouponModal, setOpenCreateCouponModal] = useState(false);
+  const [couponName, setCouponName] = useState("");
+  const [discountPrice, setDiscountPrice] = useState("");
+  const [validity, setValidity] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [isAcceptedFilter, setIsAcceptedFilter] = useState(null);
   const [selectedHotels, setSelectedHotels] = useState(new Set());
   const [action, setAction] = useState("");
+  const [openModal, setOpenModal] = useState(false);
+  const [openCouponModal, setOpenCouponModal] = useState(false);
+  const [openAvailableCouponsModal, setOpenAvailableCouponsModal] =
+    useState(false);
+
+  const [coupons, setCoupons] = useState([]);
   const [couponCode, setCouponCode] = useState("");
   const [selectedRoomType, setSelectedRoomType] = useState("");
   const [availableRoomTypes, setAvailableRoomTypes] = useState([]);
@@ -55,7 +70,6 @@ const Bulk = () => {
     }
   };
 
-
   useEffect(() => {
     getAllHotelsData();
     dispatch(getHotelsCity());
@@ -69,6 +83,7 @@ const Bulk = () => {
       toast.error("Failed to fetch hotels with applied coupons.");
     }
   };
+
   useEffect(() => {
     if (action === "applyCoupon" && selectedHotels.size > 0) {
       const selectedData = data.filter((hotel) =>
@@ -107,6 +122,7 @@ const Bulk = () => {
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value.toLowerCase());
   };
+
   const handleCityChange = async (event) => {
     try {
       setSelectedCity(event.target.value);
@@ -119,6 +135,7 @@ const Bulk = () => {
     }
 
   };
+
   const hotelToShow =
     action === "removeCoupon"
       ? applied // Show only hotels with coupons applied
@@ -181,130 +198,229 @@ const Bulk = () => {
       showLoader, hideLoader
     });
   };
+
+
+  useEffect(() => {
+    fetchCoupons();
+  }, []);
+  const fetchCoupons = useCallback(async () => {
+    showLoader();
+    try {
+      const response = await dispatch(getAllCoupons()).unwrap();
+      setCoupons(response || []);
+    } catch (error) {
+      console.error("Error fetching coupons:", error);
+      toast.error("Failed to fetch coupons.");
+    } finally {
+      hideLoader();
+    }
+  }, [dispatch, showLoader, hideLoader]);
+
+  const resetCouponForm = () => {
+    setCouponName("");
+    setDiscountPrice("");
+    setValidity("");
+  };
+
+  const handleOpenAvailableCouponsModal = async () => {
+    await fetchCoupons();
+    setOpenAvailableCouponsModal(true);
+  };
+
+  const handleCloseAvailableCouponsModal = () => {
+    setOpenAvailableCouponsModal(false);
+  };
+
+  const handleCloseCreateCouponModal = () => {
+    setOpenCreateCouponModal(false);
+  };
+
+  const handleOpenCreateCouponModal = () => {
+    resetCouponForm();
+    setOpenCreateCouponModal(true);
+  };
+
+  const handleCreateCoupon = async (e) => {
+    e.preventDefault();
+    if (!couponName || !discountPrice || !validity) {
+      toast.warn("Please fill in all coupon details.");
+      return;
+    }
+    const formattedValidity = new Date(validity).toISOString().split("T")[0];
+    const postData = {
+      couponName,
+      discountPrice: Number(discountPrice),
+      validity: formattedValidity,
+    };
+
+    showLoader();
+    try {
+      await dispatch(createCoupon(postData)).unwrap();
+      toast.success("Coupon created successfully!");
+      handleCloseCreateCouponModal();
+      resetCouponForm();
+      fetchCoupons();
+    } catch (error) {
+      console.error("Error creating coupon:", error);
+      const errorMessage =
+        error?.message || error?.error || "Failed to create coupon";
+      toast.error(`Error: ${errorMessage}`);
+    } finally {
+      hideLoader();
+    }
+  };
+
+  const copyToClipboard = useCallback((text) => {
+    navigator.clipboard.writeText(text).then(
+      () => toast.success("Coupon code copied to clipboard"),
+      () => toast.error("Failed to copy coupon code"),
+    );
+  }, []);
+
   return (
-    <div>
-      <Typography variant="h4" sx={{ mb: 2 }}>
+    <Box p={3}>
+      <Typography variant="h4" gutterBottom>
         Hotel Management
       </Typography>
 
-      <TextField
-        label="Search..."
-        variant="outlined"
-        value={searchQuery}
-        onChange={handleSearchChange}
-        sx={{ ml: 2, mb: 2, width: "100px", height: "20px" }}
-      />
-
-      <FormControl sx={{ ml: 2, mb: 2, width: "150px" }}>
-        <InputLabel id="city-select-label">Search by City</InputLabel>
-        <Select
-          labelId="city-select-label"
-          value={selectedCity}
-          onChange={handleCityChange}
-          variant="outlined"
-        >
-          <MenuItem value="All City">All City</MenuItem>
-          {byCity.map((city) => (
-            <MenuItem key={city} value={city}>
-              {city}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      <FormControl variant="outlined" sx={{ ml: 2, mb: 2, minWidth: 120 }}>
-        <InputLabel>Action</InputLabel>
-        <Select
-          value={action}
-          onChange={(e) => setAction(e.target.value)}
-          label="Action"
-        >
-          <MenuItem value="">None</MenuItem>
-          <MenuItem value="remove">Remove Hotels</MenuItem>
-          <MenuItem value="accept">Accept Hotels</MenuItem>
-          <MenuItem value="moveFrom">Move to Front Page</MenuItem>
-          <MenuItem value="removeFront">Remove from Front Page</MenuItem>
-          <MenuItem value="applyCoupon">Apply Coupon</MenuItem>
-          <MenuItem value="removeCoupon">Remove Coupon</MenuItem>
-          <MenuItem value="export">Export Selected</MenuItem>
-          <MenuItem value="delete">Delete Permanently</MenuItem>
-        </Select>
-      </FormControl>
-
-      {action === "applyCoupon" && (
-        <>
+      {/* Filter & Action Controls */}
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={12} md={3}>
           <TextField
-            label="Coupon Code"
+            label="Search"
             variant="outlined"
-            value={couponCode}
-            onChange={(e) => setCouponCode(e.target.value)}
-            sx={{ ml: 2, mb: 2, width: "150px" }}
+            fullWidth
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
           />
-          <FormControl sx={{ ml: 2, mb: 2, width: "150px" }}>
-            <InputLabel id="room-type-label">Room Type</InputLabel>
-            <Select
-              labelId="room-type-label"
-              value={selectedRoomType}
-              onChange={(e) => setSelectedRoomType(e.target.value)}
-              label="Room Type"
-            >
-              {availableRoomTypes.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <FormControl fullWidth>
+            <InputLabel>City</InputLabel>
+            <Select value={selectedCity} onChange={handleCityChange} label="City">
+              <MenuItem value="All City">All City</MenuItem>
+              {byCity.map((city) => (
+                <MenuItem key={city} value={city}>
+                  {city}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
-        </>
-      )}
+        </Grid>
 
-      <ButtonGroup variant="contained" sx={{ ml: 2, mb: 2 }} size="small">
-        <Button sx={{ minWidth: 100 }} onClick={executeAction}>
-          {action === "export" ? "Export Selected" : "Execute Action"}
-        </Button>
-        <Button
-          sx={{ minWidth: 100 }}
-          variant="outlined"
-          onClick={handleSelectAll}
-        >
-          {selectedHotels?.size === paginatedData?.length
-            ? "Deselect All"
-            : "Select All"}
-        </Button>
-      </ButtonGroup>
 
-      <ButtonGroup variant="contained" sx={{ ml: 2, mb: 2 }} size="small">
-        <Button sx={{ minWidth: 50 }} onClick={() => setIsAcceptedFilter(null)}>
-          All
-        </Button>
-        <Button sx={{ minWidth: 50 }} onClick={() => setIsAcceptedFilter(true)}>
-          Accepted
-        </Button>
-        <Button
-          sx={{ minWidth: 50 }}
-          onClick={() => setIsAcceptedFilter(false)}
-        >
-          Not Accepted
-        </Button>
-      </ButtonGroup>
-      <HotelTable
-        data={paginatedData}
-        selectedHotels={selectedHotels}
-        handleHotelSelect={handleHotelSelect}
+        <Grid item xs={12} md={3}>
+          <FormControl fullWidth>
+            <InputLabel>Action</InputLabel>
+            <Select value={action} onChange={(e) => setAction(e.target.value)} label="Action">
+              <MenuItem value="">None</MenuItem>
+              <MenuItem value="remove">Remove Hotels</MenuItem>
+              <MenuItem value="accept">Accept Hotels</MenuItem>
+              <MenuItem value="moveFrom">Move to Front Page</MenuItem>
+              <MenuItem value="removeFront">Remove from Front Page</MenuItem>
+              <MenuItem value="applyCoupon">Apply Coupon</MenuItem>
+              <MenuItem value="removeCoupon">Remove Coupon</MenuItem>
+              <MenuItem value="export">Export Selected</MenuItem>
+              <MenuItem value="delete">Delete Permanently</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {action === "applyCoupon" && (
+          <>
+            <Grid item xs={12} md={2}>
+              <TextField
+                label="Coupon Code"
+                variant="outlined"
+                fullWidth
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={2}>
+              <FormControl fullWidth>
+                <InputLabel>Room Type</InputLabel>
+                <Select
+                  value={selectedRoomType}
+                  onChange={(e) => setSelectedRoomType(e.target.value)}
+                  label="Room Type"
+                >
+                  {availableRoomTypes.map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {type}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </>
+        )}
+      </Grid>
+
+      {/* Action Buttons */}
+      <Box mt={2}>
+        <ButtonGroup variant="contained">
+          <Button onClick={executeAction}>
+            {action === "export" ? "Export Selected" : "Execute Action"}
+          </Button>
+          <Button variant="outlined" onClick={handleSelectAll}>
+            {selectedHotels?.size === paginatedData?.length
+              ? "Deselect All"
+              : "Select All"}
+          </Button>
+        </ButtonGroup>
+
+        <ButtonGroup variant="contained" sx={{ ml: 2 }}>
+          <Button onClick={() => setIsAcceptedFilter(null)}>All</Button>
+          <Button onClick={() => setIsAcceptedFilter(true)}>Accepted</Button>
+          <Button onClick={() => setIsAcceptedFilter(false)}>Not Accepted</Button>
+          <Button onClick={handleOpenCreateCouponModal}>Create Coupon</Button>
+          <Button onClick={handleOpenAvailableCouponsModal}>See Coupons</Button>
+        </ButtonGroup>
+      </Box>
+      {/* Hotel Table */}
+      <Box mt={3}>
+        <HotelTable
+          data={paginatedData}
+          selectedHotels={selectedHotels}
+          handleHotelSelect={handleHotelSelect}
+        />
+
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredData?.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={(e, newPage) => setPage(newPage)}
+          onRowsPerPageChange={(e) => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+        />
+      </Box>
+
+      <CreateCouponModal
+        open={openCreateCouponModal}
+        handleClose={handleCloseCreateCouponModal}
+        handleCreateCoupon={handleCreateCoupon}
+        couponName={couponName}
+        setCouponName={setCouponName}
+        discountPrice={discountPrice}
+        setDiscountPrice={setDiscountPrice}
+        validity={validity}
+        setValidity={setValidity}
       />
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
-        component="div"
-        count={filteredData?.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={(event, newPage) => setPage(newPage)}
-        onRowsPerPageChange={(event) => {
-          setRowsPerPage(parseInt(event.target.value, 10));
-          setPage(0);
-        }}
+
+      <AvailableCouponsModal
+        open={openAvailableCouponsModal}
+        handleClose={handleCloseAvailableCouponsModal}
+        coupons={coupons}
+        copyToClipboard={copyToClipboard}
       />
-    </div>
+    </Box>
   );
 };
 
