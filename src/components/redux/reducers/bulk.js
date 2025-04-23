@@ -16,7 +16,7 @@ export const changeHotelStatus = createAsyncThunk("bulk/changeHotelStatus", asyn
         );
         notify(response.status);
         return response.data;
-   
+
     } catch (error) {
         const errorMessage = error.response?.data?.message || error.message;
         toast.error(`Error: ${errorMessage}`);
@@ -24,7 +24,27 @@ export const changeHotelStatus = createAsyncThunk("bulk/changeHotelStatus", asyn
     }
 }
 );
-
+export const bulkDelete = createAsyncThunk("bulk/bulkDelete", async (payload, { rejectWithValue }) => {
+    try {
+        const response = await axios.delete(
+            `${localUrl}/delete-bulk-hotels-from-list-of-hotels/by-ids`,
+            {
+                data: payload,
+                headers: {
+                    Authorization: token,
+                },
+            }
+        );
+        notify(response.status);
+        return response.data;
+    }
+    catch (error) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+}
+);
 const bulkSlice = createSlice({
     name: "bulk",
     initialState: {
@@ -41,19 +61,15 @@ const bulkSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(changeHotelStatus.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-                state.success = null;
-            })
             .addCase(changeHotelStatus.fulfilled, (state, action) => {
                 state.loading = false;
                 state.success = action.payload.message || "Bulk operation successful!";
             })
-            .addCase(changeHotelStatus.rejected, (state, action) => {
+            .addCase(bulkDelete.fulfilled, (state, action) => {
                 state.loading = false;
-                state.error = action.payload || "Bulk operation failed!";
-            });
+                state.success = action.payload.message || "Bulk operation successful!";
+            })
     },
 });
 
+export default bulkSlice.reducer;

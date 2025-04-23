@@ -13,6 +13,7 @@ import {
   TablePagination,
   Box,
   Grid,
+  Autocomplete,
 } from "@mui/material";
 
 import { useDispatch, useSelector } from "react-redux";
@@ -283,85 +284,103 @@ const Bulk = () => {
         Hotel Management
       </Typography>
 
-      {/* Filter & Action Controls */}
-      <Grid container spacing={2} alignItems="center">
-        <Grid item xs={12} md={3}>
-          <TextField
-            label="Search"
-            variant="outlined"
-            fullWidth
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
-          />
+      {/* Filter & Input Controls */}
+      <Box
+        mt={2}
+        p={2}
+        sx={{
+          border: '2px dotted #1976d2',
+          borderRadius: '8px',
+          mb: 2,
+        }}
+      >
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={3}>
+            <TextField
+              label="Search hotel ..."
+              variant="outlined"
+              fullWidth
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={3}>
+            <Autocomplete
+              options={["All City", ...byCity]}
+              value={selectedCity}
+              onChange={(event, newValue) => handleCityChange({ target: { value: newValue } })}
+              renderInput={(params) => (
+                <TextField {...params} label="Filter by city" variant="outlined" fullWidth />
+              )}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={3}>
+            <FormControl fullWidth>
+              <InputLabel>Action</InputLabel>
+              <Select value={action} onChange={(e) => setAction(e.target.value)} label="Action">
+                <MenuItem value="">None</MenuItem>
+                <MenuItem value="remove">Remove Hotels</MenuItem>
+                <MenuItem value="accept">Accept Hotels</MenuItem>
+                <MenuItem value="moveFrom">Move to Front Page</MenuItem>
+                <MenuItem value="removeFront">Remove from Front Page</MenuItem>
+                <MenuItem value="applyCoupon">Apply Coupon</MenuItem>
+                <MenuItem value="removeCoupon">Remove Coupon</MenuItem>
+                <MenuItem value="export">Export Selected</MenuItem>
+                <MenuItem value="delete">Delete Permanently</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {action === "applyCoupon" && (
+            <>
+              <Grid item xs={12} md={2}>
+                <TextField
+                  label="Coupon Code"
+                  variant="outlined"
+                  fullWidth
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={2}>
+                <FormControl fullWidth>
+                  <InputLabel>Select Room Type</InputLabel>
+                  <Select
+                    value={selectedRoomType}
+                    onChange={(e) => setSelectedRoomType(e.target.value)}
+                    label="Room Type"
+                  >
+                    {availableRoomTypes.map((type) => (
+                      <MenuItem key={type} value={type}>
+                        {type}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </>
+          )}
         </Grid>
-
-        <Grid item xs={12} md={3}>
-          <FormControl fullWidth>
-            <InputLabel>City</InputLabel>
-            <Select value={selectedCity} onChange={handleCityChange} label="City">
-              <MenuItem value="All City">All City</MenuItem>
-              {byCity.map((city) => (
-                <MenuItem key={city} value={city}>
-                  {city}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-
-        <Grid item xs={12} md={3}>
-          <FormControl fullWidth>
-            <InputLabel>Action</InputLabel>
-            <Select value={action} onChange={(e) => setAction(e.target.value)} label="Action">
-              <MenuItem value="">None</MenuItem>
-              <MenuItem value="remove">Remove Hotels</MenuItem>
-              <MenuItem value="accept">Accept Hotels</MenuItem>
-              <MenuItem value="moveFrom">Move to Front Page</MenuItem>
-              <MenuItem value="removeFront">Remove from Front Page</MenuItem>
-              <MenuItem value="applyCoupon">Apply Coupon</MenuItem>
-              <MenuItem value="removeCoupon">Remove Coupon</MenuItem>
-              <MenuItem value="export">Export Selected</MenuItem>
-              <MenuItem value="delete">Delete Permanently</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-
-        {action === "applyCoupon" && (
-          <>
-            <Grid item xs={12} md={2}>
-              <TextField
-                label="Coupon Code"
-                variant="outlined"
-                fullWidth
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={2}>
-              <FormControl fullWidth>
-                <InputLabel>Room Type</InputLabel>
-                <Select
-                  value={selectedRoomType}
-                  onChange={(e) => setSelectedRoomType(e.target.value)}
-                  label="Room Type"
-                >
-                  {availableRoomTypes.map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {type}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </>
-        )}
-      </Grid>
+      </Box>
 
       {/* Action Buttons */}
-      <Box mt={2}>
-        <ButtonGroup variant="contained">
+      <Box
+        mt={2}
+        p={2}
+        sx={{
+          border: '2px dotted #1976d2',
+          borderRadius: '8px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 2,
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <ButtonGroup variant="contained" sx={{ flexWrap: 'wrap' }}>
           <Button onClick={executeAction}>
             {action === "export" ? "Export Selected" : "Execute Action"}
           </Button>
@@ -372,7 +391,7 @@ const Bulk = () => {
           </Button>
         </ButtonGroup>
 
-        <ButtonGroup variant="contained" sx={{ ml: 2 }}>
+        <ButtonGroup variant="contained" sx={{ flexWrap: 'wrap' }}>
           <Button onClick={() => setIsAcceptedFilter(null)}>All</Button>
           <Button onClick={() => setIsAcceptedFilter(true)}>Accepted</Button>
           <Button onClick={() => setIsAcceptedFilter(false)}>Not Accepted</Button>
@@ -380,6 +399,7 @@ const Bulk = () => {
           <Button onClick={handleOpenAvailableCouponsModal}>See Coupons</Button>
         </ButtonGroup>
       </Box>
+
       {/* Hotel Table */}
       <Box mt={3}>
         <HotelTable

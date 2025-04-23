@@ -27,9 +27,6 @@ const CreateCouponModal = ({
     <DialogTitle>Create a New Coupon</DialogTitle>
     <DialogContent>
       <Box component="form" onSubmit={handleCreateCoupon} sx={{ my: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Create a New Coupon
-        </Typography>
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6}>
             <TextField
