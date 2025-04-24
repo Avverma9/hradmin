@@ -131,7 +131,7 @@ export default function Coupon() {
         roomIds: [roomIds],
       }
       await dispatch(applyCoupon(payload)).unwrap();
-      // window.location.reload();
+      window.location.reload();
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to apply coupon';
       toast.error(errorMessage);

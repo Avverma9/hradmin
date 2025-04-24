@@ -3,27 +3,7 @@ import axios from "axios";
 import { localUrl, notify, token } from "../../../../utils/util";
 import { toast } from "react-toastify";
 
-export const removeCoupon = createAsyncThunk(
-  "coupon/removeCoupon",
-  async (roomId, { rejectWithValue }) => {
-    try {
-      const response = await axios.patch(
-        `${localUrl}/remove/coupon/before-time-from-hotel`,
-        {
-          roomId,
-          headers: {
-            Authorization: token,
-          },
-        },
-      );
-      return response.data;
-    } catch (error) {
-      const errorMessage = error.message;
-      toast.error(`Error: ${errorMessage}`);
-      return rejectWithValue(errorMessage);
-    }
-  },
-);
+
 
 export const getAllCoupons = createAsyncThunk(
   "hotel/getAllCoupons",

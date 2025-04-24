@@ -52,7 +52,6 @@ export default function Coupon() {
     useState(false);
   const [openCreateCouponModal, setOpenCreateCouponModal] = useState(false);
   const [viewCoupons, setViewCoupons] = useState(false);
-
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchTerm, setSearchTerm] = useState("");
@@ -164,27 +163,17 @@ export default function Coupon() {
   };
 
   const handleApplyCoupon = useCallback(
-    async (hotelId, roomId) => { // यहाँ सिंगल hotelId और roomId आते हैं
+    async (hotelId, roomId) => {
       showLoader();
       try {
-        // लॉग करें कि कौन सी IDs प्राप्त हुईं
-        console.log(`handleApplyCoupon received: hotelId=${[hotelId]}, roomId=${[roomId]}`);
-
-        // पेलोड बनाएं जिसमें IDs को ऐरे में रैप किया गया हो
         const payload = {
-            couponCode,
-            hotelIds: [hotelId], // hotelId को ऐरे में डालें
-            roomIds: [roomId]    // roomId को ऐरे में डालें
+          couponCode,
+          hotelIds: [hotelId],
+          roomIds: [roomId]
         };
-
-        // लॉग करें कि वास्तव में क्या भेजा जा रहा है
-        console.log("Dispatching applyCoupon with payload:", payload);
-
-        // dispatch को अपडेटेड पेलोड भेजें
+        showLoader()
         await dispatch(applyCoupon(payload)).unwrap();
-
-        toast.success("Coupon applied successfully!");
-        handleCloseCouponModal();
+        window.location.reload();
       } catch (error) {
         const errorMessage =
           error?.message || error?.error || "Failed to apply coupon";
@@ -379,14 +368,7 @@ export default function Coupon() {
       >
         View Available Coupons
       </Button>
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={handleOpenViewCoupon}
-        sx={{ mb: 2 }}
-      >
-        View Applied Coupons
-      </Button>
+    
 
       <div style={{ display: "flex", gap: "16px", marginBottom: "16px" }}>
         <TextField
@@ -429,10 +411,6 @@ export default function Coupon() {
         validity={validity}
         setValidity={setValidity}
       />
-      <AppliedCouponModal
-        open={viewCoupons}
-        handleClose={handleCloseViewCoupon}
-      />
 
       <hr />
       <Typography variant="h5" gutterBottom>
@@ -457,7 +435,7 @@ export default function Coupon() {
                   {selectedCity || searchTerm
                     ? "No hotels found matching your criteria."
                     : !Array.isArray(allHotelsData) ||
-                        allHotelsData.length === 0
+                      allHotelsData.length === 0
                       ? "Loading hotels..."
                       : "No hotels found."}
                 </TableCell>

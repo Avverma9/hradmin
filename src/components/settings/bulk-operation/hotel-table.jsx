@@ -71,7 +71,24 @@ const HotelTable = ({ selectedHotels, handleHotelSelect, data }) => {
                   onChange={() => handleHotelSelect(hotel.hotelId)}
                 />
               </TableCell>
-              <TableCell>{hotel.hotelName}</TableCell>
+              <TableCell>
+                {hotel.hotelName}
+                {hotel.rooms?.some((room) => room.isOffer) && (
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      marginLeft: 8,
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      backgroundColor: '#2196f3',
+                    }}
+                    title="Offer Available"
+                  />
+                )}
+              </TableCell>
+
+
               <TableCell>{hotel.hotelOwnerName}</TableCell>
               <TableCell>{hotel?.onFront ? "Yes" : "No"}</TableCell>
               <TableCell>
