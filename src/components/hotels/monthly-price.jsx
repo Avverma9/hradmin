@@ -29,6 +29,7 @@ import {
   CardContent,
   TableContainer,
   InputAdornment,
+  Grid,
 } from '@mui/material';
 
 import { localUrl } from '../../../utils/util';
@@ -164,121 +165,101 @@ export default function MonthlyPrice() {
         border: '1px solid #ddd',
         borderRadius: 2,
         boxShadow: 2,
-        width: '100%',
+        maxWidth: 1000,
         mx: 'auto',
       }}
     >
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="h6" component="h2" gutterBottom>
+          <Typography variant="h6" gutterBottom>
             Please Read Before Filling Out This Form
           </Typography>
-          <Typography variant="body2" gutterBottom>
-            You can set prices for a specific room in your hotel for a particular date range.
-            Specify the price for each date, and you also have the option to remove it in advance if
-            needed.
-          </Typography>
-          <Typography variant="body2" gutterBottom>
-            If you want to see the monthly data of a hotel, please select a hotel first to view the
-            details.
+          <Typography variant="body2" color="text.secondary">
+            Set room prices for selected hotels across date ranges. Select hotel, room, and enter pricing details below.
           </Typography>
         </CardContent>
       </Card>
-      <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
+
+      <Typography variant="h5" sx={{ mb: 2 }}>
         Set Monthly Price
       </Typography>
-      <form onSubmit={handleSubmit}>
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="hotel-select-label">Select Hotel</InputLabel>
-          <Select
-            labelId="hotel-select-label"
-            value={selectedHotel}
-            onChange={handleHotelChange}
-            label="Select Hotel"
-            sx={{ borderRadius: 1 }}
-          >
-            {hotels.length > 0 &&
-              hotels.map((hotel) => (
-                <MenuItem key={hotel.hotelId} value={hotel.hotelId}>
-                  {hotel.hotelName}
-                </MenuItem>
-              ))}
-          </Select>
-        </FormControl>
 
-        {/* Room Selection */}
-        {selectedHotel && (
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel id="room-select-label">Select Room</InputLabel>
-            <Select
-              labelId="room-select-label"
-              value={selectedRoom}
-              onChange={handleRoomChange}
-              label="Select Room"
-              sx={{ borderRadius: 1 }}
-            >
-              {hotels
-                .find((h) => h.hotelId === selectedHotel)
-                ?.rooms.map((room) => (
-                  <MenuItem key={room.roomId} value={room.roomId}>
-                    {room.type}
+      <form onSubmit={handleSubmit}>
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Select Hotel</InputLabel>
+              <Select value={selectedHotel} onChange={handleHotelChange} label="Select Hotel">
+                {hotels.map((hotel) => (
+                  <MenuItem key={hotel.hotelId} value={hotel.hotelId}>
+                    {hotel.hotelName}
                   </MenuItem>
                 ))}
-            </Select>
-          </FormControl>
-        )}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Select Room</InputLabel>
+              <Select value={selectedRoom} onChange={handleRoomChange} label="Select Room">
+                {hotels
+                  .find((h) => h.hotelId === selectedHotel)
+                  ?.rooms.map((room) => (
+                    <MenuItem key={room.roomId} value={room.roomId}>
+                      {room.type}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
 
         <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <DatePicker
-            label="Start Date"
-            value={startDate}
-            onChange={handleStartDateChange}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                sx={{ mb: 2 }}
-                InputProps={{ sx: { width: '100%' } }}
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            <Grid item xs={12} sm={4}>
+              <DatePicker
+                label="Start Date"
+                value={startDate}
+                onChange={handleStartDateChange}
+                renderInput={(params) => <TextField {...params} fullWidth size="small" />}
               />
-            )}
-          />
-          <DatePicker
-            label="End Date"
-            value={endDate}
-            onChange={handleEndDateChange}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                sx={{ mb: 2 }}
-                InputProps={{ sx: { width: '100%' } }}
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <DatePicker
+                label="End Date"
+                value={endDate}
+                onChange={handleEndDateChange}
+                renderInput={(params) => <TextField {...params} fullWidth size="small" />}
               />
-            )}
-          />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                label="Set Price"
+                type="number"
+                value={monthPrice}
+                onChange={handleMonthPriceChange}
+                fullWidth
+                size="small"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <FaRupeeSign />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+          </Grid>
         </LocalizationProvider>
-        <hr />
-        <TextField
-          label="Set Price"
-          type="number"
-          value={monthPrice}
-          onChange={handleMonthPriceChange}
-          fullWidth
-          sx={{ mb: 2 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <FaRupeeSign />
-              </InputAdornment>
-            ),
-          }}
-        />
-        <Button variant="contained" type="submit" fullWidth>
+
+        <Button variant="contained" type="submit" fullWidth sx={{ mt: 1 }}>
           Set Monthly Price
         </Button>
       </form>
 
-      <TableContainer component={Paper} sx={{ mt: 3 }}>
-        <Table>
+      <TableContainer component={Paper} sx={{ mt: 4 }}>
+        <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>Hotel</TableCell>
@@ -290,7 +271,7 @@ export default function MonthlyPrice() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {data && data.length > 0 ? (
+            {data?.length > 0 ? (
               data.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>{item.hotelId}</TableCell>
@@ -305,6 +286,7 @@ export default function MonthlyPrice() {
                       variant="outlined"
                       color="error"
                       onClick={() => handleDelete(item.hotelId)}
+                      size="small"
                     >
                       Delete
                     </Button>

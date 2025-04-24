@@ -33,7 +33,7 @@ import { getHotelByQuery } from 'src/components/redux/reducers/hotel';
 
 export default function Coupon() {
   const hotels = useSelector((state) => state.hotel.byQuery);
-  const coupons = useSelector((state) => state.hotel.coupon);
+  const [coupons, setCoupons] = useState([]);
   const [couponName, setCouponName] = useState('');
   const [discountPrice, setDiscountPrice] = useState('');
   const [validity, setValidity] = useState('');
@@ -56,8 +56,9 @@ export default function Coupon() {
   }, [dispatch]);
 
   const fetchHotels = async () => {
-    showLoader();
+
     try {
+      showLoader();
       await dispatch(getHotelByQuery(hotelEmail));
     } catch (error) {
       console.error('Error fetching hotels:', error);
@@ -70,7 +71,8 @@ export default function Coupon() {
   const fetchCoupons = async () => {
     showLoader();
     try {
-      await dispatch(getAllCoupons());
+      const response = await dispatch(getAllCoupons()).unwrap();
+      setCoupons(response || []);
     } catch (error) {
       console.error('Error fetching coupons:', error);
       toast.error('Failed to fetch coupons');
@@ -120,11 +122,16 @@ export default function Coupon() {
     setValidity('');
     handleCloseCreateCouponModal();
   };
-  const handleApplyCoupon = async (hotelId, roomId) => {
+  const handleApplyCoupon = async (hotelIds, roomIds) => {
     showLoader();
     try {
-      await dispatch(applyCoupon({ couponCode, hotelId, roomId }));
-      window.location.reload();
+      const payload ={
+        couponCode,
+        hotelIds: [hotelIds],
+        roomIds: [roomIds],
+      }
+      await dispatch(applyCoupon(payload)).unwrap();
+      // window.location.reload();
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to apply coupon';
       toast.error(errorMessage);
@@ -170,10 +177,7 @@ export default function Coupon() {
     setOpenCreateCouponModal(false);
   };
 
-  // Opening the applied coupons modal
-  const handleOpenViewCoupon = () => {
-    setViewCoupons(true);
-  };
+
 
   const handleCloseViewCoupon = () => {
     setViewCoupons(false);
@@ -268,14 +272,6 @@ export default function Coupon() {
       >
         View Available Coupons
       </Button>
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={handleOpenViewCoupon} // Open applied coupons modal
-        sx={{ ml: 2 }}
-      >
-        View Applied Coupons
-      </Button>
 
       <TextField
         label="Search Hotels"
@@ -330,7 +326,23 @@ export default function Coupon() {
                     }}
                   />
                 </TableCell>
-                <TableCell>{hotel.hotelName}</TableCell>
+                <TableCell>
+                  {hotel.hotelName}
+                  {hotel.rooms?.some((room) => room.isOffer) && (
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        marginLeft: 8,
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        backgroundColor: '#2196f3',
+                      }}
+                      title="Offer Available"
+                    />
+                  )}
+                </TableCell>
+
                 <TableCell>{hotel.hotelOwnerName}</TableCell>
                 <TableCell>{hotel.city}</TableCell>
                 <TableCell>

@@ -75,7 +75,7 @@ export const createCoupon = createAsyncThunk(
 
 export const applyCoupon = createAsyncThunk(
   "hotel/applyCoupon",
-  async ({ couponCode, hotelIds, roomIds }, { getState, rejectWithValue }) => {
+  async (payload, { getState, rejectWithValue }) => {
     try {
       if (!token) {
         toast.error("Authentication token missing. Please log in again.");
@@ -83,12 +83,8 @@ export const applyCoupon = createAsyncThunk(
       }
 
       const url = `${localUrl}/apply/a/coupon-to-room`;
-      const requestData = {
-        couponCode,
-        hotelIds,
-        roomIds,
-      };
-      const response = await axios.patch(url, requestData, {
+     
+      const response = await axios.patch(url, payload, {
         headers: {
           Authorization: token,
           "Content-Type": "application/json",

@@ -141,6 +141,7 @@ export const executeBulkAction = async ({
   }
 
   if (action === "removeCoupon") {
+    
     const payload = {
       hotelIds: ids,
     };

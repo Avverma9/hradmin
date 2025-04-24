@@ -102,33 +102,30 @@ const Bulk = () => {
     }
 
   };
+  const hotelsData = action === "removeCoupon" ? applied : data;
 
   const hotelToShow =
-    action === "removeCoupon"
-      ? applied // Show only hotels with coupons applied
-      : selectedCity !== "All City" && selectedCity
-        ? byFilter?.data
-        : data;
-
+    selectedCity && selectedCity !== "All City" ? byFilter?.data : hotelsData;
+  
   const filteredData = hotelToShow?.filter((hotel) => {
     const matchesSearchQuery =
-      hotel.hotelOwnerName.toLowerCase().includes(searchQuery) ||
-      hotel.hotelName.toLowerCase().includes(searchQuery);
-
+      hotel?.hotelOwnerName?.toLowerCase().includes(searchQuery) ||
+      hotel?.hotelName?.toLowerCase().includes(searchQuery);
+  
     const matchesAcceptedFilter =
-      isAcceptedFilter === null || hotel.isAccepted === isAcceptedFilter;
-
+      isAcceptedFilter === null || hotel?.isAccepted === isAcceptedFilter;
+  
     const matchesRoomType =
       action !== "applyCoupon" ||
       !selectedRoomType ||
-      hotel.rooms?.some((room) => room.type === selectedRoomType);
-
+      hotel?.rooms?.some((room) => room?.type === selectedRoomType);
+  
     return matchesSearchQuery && matchesAcceptedFilter && matchesRoomType;
-  });
-
-  const paginatedData = filteredData?.slice(
+  }) || [];
+  
+  const paginatedData = filteredData.slice(
     page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage,
+    page * rowsPerPage + rowsPerPage
   );
 
   const handleHotelSelect = (hotelId) => {
