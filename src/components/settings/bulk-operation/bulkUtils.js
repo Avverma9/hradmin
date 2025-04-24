@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
 import { applyCoupon, removeBulkCoupon } from "src/components/redux/reducers/coupon";
 import { bulkDelete, changeHotelStatus } from "src/components/redux/reducers/bulk";
-import { notify } from "../../../../utils/util";
+
 export const executeBulkAction = async ({
   action,
   selectedHotels,
@@ -17,6 +17,7 @@ export const executeBulkAction = async ({
   dispatch,
 }) => {
   const ids = Array.from(selectedHotels);
+
   if (ids.length === 0) {
     toast.warning("No hotels selected.");
     return;
@@ -28,15 +29,14 @@ export const executeBulkAction = async ({
       isAccepted: false,
     };
     try {
-      showLoader()
+      showLoader();
       await dispatch(changeHotelStatus(payload)).unwrap();
       toast.success("Hotels removed successfully!");
     } catch (error) {
       toast.error("Failed to remove hotels.");
     } finally {
-      reloadPage()
-      hideLoader()
-
+      reloadPage();
+      hideLoader();
     }
   }
 
@@ -46,14 +46,14 @@ export const executeBulkAction = async ({
       isAccepted: true,
     };
     try {
-      showLoader()
+      showLoader();
       await dispatch(changeHotelStatus(payload)).unwrap();
       toast.success("Hotels accepted successfully!");
     } catch (error) {
       toast.error("Failed to accept hotels.");
     } finally {
-      reloadPage()
-      hideLoader()
+      reloadPage();
+      hideLoader();
     }
   }
 
@@ -63,14 +63,14 @@ export const executeBulkAction = async ({
       onFront: true,
     };
     try {
-      showLoader()
+      showLoader();
       await dispatch(changeHotelStatus(payload)).unwrap();
       toast.success("Hotels moved to front successfully!");
     } catch (error) {
       toast.error("Failed to move hotels to front.");
     } finally {
-      hideLoader()
-      reloadPage()
+      hideLoader();
+      reloadPage();
     }
   }
 
@@ -80,15 +80,14 @@ export const executeBulkAction = async ({
       onFront: false,
     };
     try {
-      showLoader()
+      showLoader();
       await dispatch(changeHotelStatus(payload)).unwrap();
       toast.success("Hotels removed from front successfully!");
     } catch (error) {
       toast.error("Failed to remove hotels from front.");
-    }
-    finally {
-      hideLoader()
-      reloadPage()
+    } finally {
+      hideLoader();
+      reloadPage();
     }
   }
 
@@ -106,15 +105,16 @@ export const executeBulkAction = async ({
       toast.warning("Please select a room type.");
       return;
     }
+
     try {
-      const selectedData = data.filter(hotel => ids.includes(hotel.hotelId));
+      const selectedData = data.filter((hotel) => ids.includes(hotel.hotelId));
       const roomIds = [];
-      selectedData.forEach(hotel => {
-        hotel.rooms?.forEach(room => {
+
+      selectedData.forEach((hotel) => {
+        hotel.rooms?.forEach((room) => {
           if (room.type === selectedRoomType) {
             roomIds.push(room.roomId);
           }
-
         });
       });
 
@@ -122,20 +122,21 @@ export const executeBulkAction = async ({
         toast.warning("No rooms found for selected room type.");
         return;
       }
+
       const payload = {
         couponCode,
         hotelIds: ids,
         roomIds,
       };
-      showLoader()
+
+      showLoader();
       await dispatch(applyCoupon(payload)).unwrap();
       toast.success("Coupon applied successfully!");
     } catch (error) {
       toast.error("Failed to apply coupon.");
-    }
-    finally {
-      hideLoader()
-      reloadPage()
+    } finally {
+      hideLoader();
+      reloadPage();
     }
   }
 
@@ -144,36 +145,71 @@ export const executeBulkAction = async ({
       hotelIds: ids,
     };
     try {
-      showLoader()
+      showLoader();
       await dispatch(removeBulkCoupon(payload)).unwrap();
       toast.success("Coupons removed successfully!");
     } catch (error) {
       toast.error("Failed to remove coupons.");
     } finally {
-      hideLoader()
-      reloadPage()
+      hideLoader();
+      reloadPage();
     }
   }
+
   if (action === "delete") {
     const payload = {
       hotelIds: ids,
     };
     try {
-      showLoader()
+      showLoader();
       await dispatch(bulkDelete(payload)).unwrap();
       toast.success("Hotels deleted successfully!");
     } catch (error) {
       toast.error("Failed to delete hotels.");
     } finally {
-      hideLoader()
-      reloadPage()
+      hideLoader();
+      reloadPage();
     }
   }
+
+  const getAppliedCouponHotels = async () => {
+    try {
+      await dispatch(getCouponAppliedHotels());
+    } catch (error) {
+      toast.error("Failed to fetch hotels with applied coupons.");
+    }
+  };
+
+  useEffect(() => {
+    if (action === "applyCoupon" && selectedHotels.size > 0) {
+      const selectedData = data.filter((hotel) =>
+        selectedHotels.has(hotel.hotelId)
+      );
+
+      const roomTypes = new Set();
+
+      selectedData.forEach((hotel) => {
+        hotel.rooms?.forEach((room) => {
+          if (room.type) {
+            roomTypes.add(room.type);
+          }
+        });
+      });
+
+      setAvailableRoomTypes(Array.from(roomTypes));
+    }
+
+    if (action === "removeCoupon") {
+      getAppliedCouponHotels();
+    }
+  }, [action, selectedHotels, data]);
 };
 
 // Export helper
 const exportToExcel = (selectedHotels, data) => {
-  const selectedData = data.filter(hotel => selectedHotels.includes(hotel.hotelId));
+  const selectedData = data.filter((hotel) =>
+    selectedHotels.includes(hotel.hotelId)
+  );
   const ws = XLSX.utils.json_to_sheet(selectedData);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Selected Hotels");

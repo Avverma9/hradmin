@@ -48,8 +48,6 @@ const Bulk = () => {
   const [isAcceptedFilter, setIsAcceptedFilter] = useState(null);
   const [selectedHotels, setSelectedHotels] = useState(new Set());
   const [action, setAction] = useState("");
-  const [openModal, setOpenModal] = useState(false);
-  const [openCouponModal, setOpenCouponModal] = useState(false);
   const [openAvailableCouponsModal, setOpenAvailableCouponsModal] =
     useState(false);
 
@@ -77,35 +75,6 @@ const Bulk = () => {
     dispatch(getCouponAppliedHotels());
   }, [dispatch]);
 
-  const getAppliedCouponHotels = async () => {
-    try {
-      await dispatch(getCouponAppliedHotels());
-    } catch (error) {
-      toast.error("Failed to fetch hotels with applied coupons.");
-    }
-  };
-
-  useEffect(() => {
-    if (action === "applyCoupon" && selectedHotels.size > 0) {
-      const selectedData = data.filter((hotel) =>
-        selectedHotels.has(hotel.hotelId),
-      );
-      const roomTypes = new Set();
-      selectedData.forEach((hotel) => {
-        hotel.rooms?.forEach((room) => {
-          if (room.type) {
-            roomTypes.add(room.type);
-          }
-        });
-      });
-      setAvailableRoomTypes(Array.from(roomTypes));
-    }
-
-    if (action === "removeCoupon") {
-      getAppliedCouponHotels();
-    }
-  }, [action, selectedHotels, data]);
-
   useEffect(() => {
     if (data?.length > 0) {
       const allRoomTypes = new Set();
@@ -120,9 +89,6 @@ const Bulk = () => {
     }
   }, [data]);
 
-  const handleSearchChange = (event) => {
-    setSearchQuery(event.target.value.toLowerCase());
-  };
 
   const handleCityChange = async (event) => {
     try {
@@ -243,11 +209,15 @@ const Bulk = () => {
 
   const handleCreateCoupon = async (e) => {
     e.preventDefault();
+
     if (!couponName || !discountPrice || !validity) {
       toast.warn("Please fill in all coupon details.");
       return;
     }
-    const formattedValidity = new Date(validity).toISOString().split("T")[0];
+
+    // Format the datetime-local input to full ISO string
+    const formattedValidity = new Date(validity).toISOString(); // Full ISO with time
+
     const postData = {
       couponName,
       discountPrice: Number(discountPrice),
@@ -255,6 +225,7 @@ const Bulk = () => {
     };
 
     showLoader();
+
     try {
       await dispatch(createCoupon(postData)).unwrap();
       toast.success("Coupon created successfully!");
@@ -270,6 +241,7 @@ const Bulk = () => {
       hideLoader();
     }
   };
+
 
   const copyToClipboard = useCallback((text) => {
     navigator.clipboard.writeText(text).then(

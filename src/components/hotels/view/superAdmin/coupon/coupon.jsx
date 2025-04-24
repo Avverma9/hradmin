@@ -81,15 +81,34 @@ export default function Coupon() {
 
   const handleCreateCoupon = async (e) => {
     e.preventDefault();
-    const formattedValidity = new Date(validity).toISOString().split('T')[0];
-    const postData = { couponName, discountPrice, validity: formattedValidity };
+
+    if (!couponName || !discountPrice || !validity) {
+      toast.warn("Please fill in all coupon details.");
+      return;
+    }
+
+    // Format the datetime-local input to full ISO string
+    const formattedValidity = new Date(validity).toISOString(); // Full ISO with time
+
+    const postData = {
+      couponName,
+      discountPrice: Number(discountPrice),
+      validity: formattedValidity,
+    };
+
     showLoader();
+
     try {
       await dispatch(createCoupon(postData)).unwrap();
+      toast.success("Coupon created successfully!");
+      handleCloseCreateCouponModal();
       resetCouponForm();
-      fetchCoupons(); // Refresh coupons after creating a new one
+      fetchCoupons();
     } catch (error) {
-      toast.error(error);
+      console.error("Error creating coupon:", error);
+      const errorMessage =
+        error?.message || error?.error || "Failed to create coupon";
+      toast.error(`Error: ${errorMessage}`);
     } finally {
       hideLoader();
     }

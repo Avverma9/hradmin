@@ -130,11 +130,15 @@ export default function Coupon() {
 
   const handleCreateCoupon = async (e) => {
     e.preventDefault();
+
     if (!couponName || !discountPrice || !validity) {
       toast.warn("Please fill in all coupon details.");
       return;
     }
-    const formattedValidity = new Date(validity).toISOString().split("T")[0];
+
+    // Format the datetime-local input to full ISO string
+    const formattedValidity = new Date(validity).toISOString(); // Full ISO with time
+
     const postData = {
       couponName,
       discountPrice: Number(discountPrice),
@@ -142,6 +146,7 @@ export default function Coupon() {
     };
 
     showLoader();
+
     try {
       await dispatch(createCoupon(postData)).unwrap();
       toast.success("Coupon created successfully!");
