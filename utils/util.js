@@ -1,3 +1,4 @@
+import { set } from 'lodash';
 import { toast } from 'react-toastify';
 
 export const searchQuery = [
@@ -7,8 +8,8 @@ export const searchQuery = [
     { name: 'Dashboard Users', path: '/dashboard-user' },
 ];
 
-export const localUrl = 'https://hotel-backend-tge7.onrender.com';
-// export const localUrl = 'http://localhost:5000';
+// export const localUrl = 'https://hotel-backend-tge7.onrender.com';
+export const localUrl = 'http://localhost:5000';
 export const hotelEmail = localStorage.getItem('user_email');
 export const role = localStorage.getItem('user_role');
 export const userId = localStorage.getItem('user_id');
@@ -82,3 +83,10 @@ export const showSnackbar = (message, type = 'default') => {
             toast(message, config);
     }
 };
+
+
+export const reloadPage=()=>{
+    setTimeout(() => {
+        window.location.reload();
+}, 1500);
+}

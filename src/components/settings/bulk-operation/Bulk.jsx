@@ -56,11 +56,11 @@ const Bulk = () => {
   const [selectedRoomType, setSelectedRoomType] = useState("");
   const [availableRoomTypes, setAvailableRoomTypes] = useState([]);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
 
   const getAllHotelsData = async () => {
     try {
-      showLoader()
+      showLoader();
       await dispatch(getAllHotels());
     } catch (error) {
       toast.error("Failed to fetch hotels.");
@@ -89,43 +89,42 @@ const Bulk = () => {
     }
   }, [data]);
 
-
   const handleCityChange = async (event) => {
     try {
       setSelectedCity(event.target.value);
-      showLoader()
+      showLoader();
       await dispatch(getHotelsByFilters(event.target.value));
     } catch (error) {
-      console.error("It seems an error", error)
+      console.error("It seems an error", error);
     } finally {
-      hideLoader()
+      hideLoader();
     }
-
   };
   const hotelsData = action === "removeCoupon" ? applied : data;
 
   const hotelToShow =
     selectedCity && selectedCity !== "All City" ? byFilter?.data : hotelsData;
-  
-  const filteredData = hotelToShow?.filter((hotel) => {
-    const matchesSearchQuery =
-      hotel?.hotelOwnerName?.toLowerCase().includes(searchQuery) ||
-      hotel?.hotelName?.toLowerCase().includes(searchQuery);
-  
-    const matchesAcceptedFilter =
-      isAcceptedFilter === null || hotel?.isAccepted === isAcceptedFilter;
-  
-    const matchesRoomType =
-      action !== "applyCoupon" ||
-      !selectedRoomType ||
-      hotel?.rooms?.some((room) => room?.type === selectedRoomType);
-  
-    return matchesSearchQuery && matchesAcceptedFilter && matchesRoomType;
-  }) || [];
-  
+
+  const filteredData =
+    hotelToShow?.filter((hotel) => {
+      const matchesSearchQuery =
+        hotel?.hotelOwnerName?.toLowerCase().includes(searchQuery) ||
+        hotel?.hotelName?.toLowerCase().includes(searchQuery);
+
+      const matchesAcceptedFilter =
+        isAcceptedFilter === null || hotel?.isAccepted === isAcceptedFilter;
+
+      const matchesRoomType =
+        action !== "applyCoupon" ||
+        !selectedRoomType ||
+        hotel?.rooms?.some((room) => room?.type === selectedRoomType);
+
+      return matchesSearchQuery && matchesAcceptedFilter && matchesRoomType;
+    }) || [];
+
   const paginatedData = filteredData.slice(
     page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
+    page * rowsPerPage + rowsPerPage,
   );
 
   const handleHotelSelect = (hotelId) => {
@@ -159,10 +158,10 @@ const Bulk = () => {
       selectedRoomType,
       dispatch,
       reloadPage,
-      showLoader, hideLoader
+      showLoader,
+      hideLoader,
     });
   };
-
 
   useEffect(() => {
     fetchCoupons();
@@ -212,13 +211,15 @@ const Bulk = () => {
       return;
     }
 
-    // Format the datetime-local input to full ISO string
-    const formattedValidity = new Date(validity).toISOString(); // Full ISO with time
+    // Parse validity and add +5:30 offset (in milliseconds)
+    const originalDate = new Date(validity);
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in ms
+    const adjustedDate = new Date(originalDate.getTime() + istOffset);
 
     const postData = {
       couponName,
       discountPrice: Number(discountPrice),
-      validity: formattedValidity,
+      validity: adjustedDate.toISOString(), // or keep as Date object if your backend accepts it
     };
 
     showLoader();
@@ -239,7 +240,6 @@ const Bulk = () => {
     }
   };
 
-
   const copyToClipboard = useCallback((text) => {
     navigator.clipboard.writeText(text).then(
       () => toast.success("Coupon code copied to clipboard"),
@@ -258,8 +258,8 @@ const Bulk = () => {
         mt={2}
         p={2}
         sx={{
-          border: '2px dotted #1976d2',
-          borderRadius: '8px',
+          border: "2px dotted #1976d2",
+          borderRadius: "8px",
           mb: 2,
         }}
       >
@@ -278,9 +278,16 @@ const Bulk = () => {
             <Autocomplete
               options={["All City", ...byCity]}
               value={selectedCity}
-              onChange={(event, newValue) => handleCityChange({ target: { value: newValue } })}
+              onChange={(event, newValue) =>
+                handleCityChange({ target: { value: newValue } })
+              }
               renderInput={(params) => (
-                <TextField {...params} label="Filter by city" variant="outlined" fullWidth />
+                <TextField
+                  {...params}
+                  label="Filter by city"
+                  variant="outlined"
+                  fullWidth
+                />
               )}
             />
           </Grid>
@@ -288,7 +295,11 @@ const Bulk = () => {
           <Grid item xs={12} md={3}>
             <FormControl fullWidth>
               <InputLabel>Action</InputLabel>
-              <Select value={action} onChange={(e) => setAction(e.target.value)} label="Action">
+              <Select
+                value={action}
+                onChange={(e) => setAction(e.target.value)}
+                label="Action"
+              >
                 <MenuItem value="">None</MenuItem>
                 <MenuItem value="remove">Remove Hotels</MenuItem>
                 <MenuItem value="accept">Accept Hotels</MenuItem>
@@ -316,12 +327,13 @@ const Bulk = () => {
 
               <Grid item xs={12} md={2}>
                 <FormControl fullWidth>
-                  <InputLabel>Select Room Type</InputLabel>
+                  <InputLabel>Select Room</InputLabel>
                   <Select
                     value={selectedRoomType}
                     onChange={(e) => setSelectedRoomType(e.target.value)}
                     label="Room Type"
                   >
+                    <MenuItem> None </MenuItem>
                     {availableRoomTypes.map((type) => (
                       <MenuItem key={type} value={type}>
                         {type}
@@ -340,16 +352,16 @@ const Bulk = () => {
         mt={2}
         p={2}
         sx={{
-          border: '2px dotted #1976d2',
-          borderRadius: '8px',
-          display: 'flex',
-          flexWrap: 'wrap',
+          border: "2px dotted #1976d2",
+          borderRadius: "8px",
+          display: "flex",
+          flexWrap: "wrap",
           gap: 2,
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
-        <ButtonGroup variant="contained" sx={{ flexWrap: 'wrap' }}>
+        <ButtonGroup variant="contained" sx={{ flexWrap: "wrap" }}>
           <Button onClick={executeAction}>
             {action === "export" ? "Export Selected" : "Execute Action"}
           </Button>
@@ -360,10 +372,12 @@ const Bulk = () => {
           </Button>
         </ButtonGroup>
 
-        <ButtonGroup variant="contained" sx={{ flexWrap: 'wrap' }}>
+        <ButtonGroup variant="contained" sx={{ flexWrap: "wrap" }}>
           <Button onClick={() => setIsAcceptedFilter(null)}>All</Button>
           <Button onClick={() => setIsAcceptedFilter(true)}>Accepted</Button>
-          <Button onClick={() => setIsAcceptedFilter(false)}>Not Accepted</Button>
+          <Button onClick={() => setIsAcceptedFilter(false)}>
+            Not Accepted
+          </Button>
           <Button onClick={handleOpenCreateCouponModal}>Create Coupon</Button>
           <Button onClick={handleOpenAvailableCouponsModal}>See Coupons</Button>
         </ButtonGroup>
@@ -378,7 +392,7 @@ const Bulk = () => {
         />
 
         <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
+          rowsPerPageOptions={[25, 50, 100, 200, 300]}
           component="div"
           count={filteredData?.length}
           rowsPerPage={rowsPerPage}

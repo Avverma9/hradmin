@@ -2,8 +2,15 @@
 
 import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
-import { applyCoupon, removeBulkCoupon } from "src/components/redux/reducers/coupon";
-import { bulkDelete, changeHotelStatus } from "src/components/redux/reducers/bulk";
+import {
+  applyCoupon,
+  removeBulkCoupon,
+} from "src/components/redux/reducers/coupon";
+import {
+  bulkDelete,
+  changeHotelStatus,
+} from "src/components/redux/reducers/bulk";
+import { reloadPage } from "../../../../utils/util";
 
 export const executeBulkAction = async ({
   action,
@@ -11,7 +18,6 @@ export const executeBulkAction = async ({
   data,
   showLoader,
   hideLoader,
-  reloadPage,
   couponCode,
   selectedRoomType,
   dispatch,
@@ -35,8 +41,8 @@ export const executeBulkAction = async ({
     } catch (error) {
       toast.error("Failed to remove hotels.");
     } finally {
-      reloadPage();
       hideLoader();
+      reloadPage()
     }
   }
 
@@ -52,8 +58,8 @@ export const executeBulkAction = async ({
     } catch (error) {
       toast.error("Failed to accept hotels.");
     } finally {
-      reloadPage();
       hideLoader();
+      reloadPage()
     }
   }
 
@@ -70,7 +76,7 @@ export const executeBulkAction = async ({
       toast.error("Failed to move hotels to front.");
     } finally {
       hideLoader();
-      reloadPage();
+      reloadPage()
     }
   }
 
@@ -87,7 +93,7 @@ export const executeBulkAction = async ({
       toast.error("Failed to remove hotels from front.");
     } finally {
       hideLoader();
-      reloadPage();
+      reloadPage()
     }
   }
 
@@ -101,15 +107,9 @@ export const executeBulkAction = async ({
       toast.warning("Please enter a coupon code.");
       return;
     }
-    if (!selectedRoomType) {
-      toast.warning("Please select a room type.");
-      return;
-    }
-
     try {
       const selectedData = data.filter((hotel) => ids.includes(hotel.hotelId));
       const roomIds = [];
-
       selectedData.forEach((hotel) => {
         hotel.rooms?.forEach((room) => {
           if (room.type === selectedRoomType) {
@@ -117,11 +117,6 @@ export const executeBulkAction = async ({
           }
         });
       });
-
-      if (roomIds.length === 0) {
-        toast.warning("No rooms found for selected room type.");
-        return;
-      }
 
       const payload = {
         couponCode,
@@ -131,17 +126,15 @@ export const executeBulkAction = async ({
 
       showLoader();
       await dispatch(applyCoupon(payload)).unwrap();
-      toast.success("Coupon applied successfully!");
     } catch (error) {
       toast.error("Failed to apply coupon.");
     } finally {
       hideLoader();
-      reloadPage();
+      reloadPage()
     }
   }
 
   if (action === "removeCoupon") {
-    
     const payload = {
       hotelIds: ids,
     };
@@ -153,7 +146,7 @@ export const executeBulkAction = async ({
       toast.error("Failed to remove coupons.");
     } finally {
       hideLoader();
-      reloadPage();
+      reloadPage()
     }
   }
 
@@ -169,7 +162,7 @@ export const executeBulkAction = async ({
       toast.error("Failed to delete hotels.");
     } finally {
       hideLoader();
-      reloadPage();
+      reloadPage()
     }
   }
 
@@ -184,7 +177,7 @@ export const executeBulkAction = async ({
   useEffect(() => {
     if (action === "applyCoupon" && selectedHotels.size > 0) {
       const selectedData = data.filter((hotel) =>
-        selectedHotels.has(hotel.hotelId)
+        selectedHotels.has(hotel.hotelId),
       );
 
       const roomTypes = new Set();
@@ -209,7 +202,7 @@ export const executeBulkAction = async ({
 // Export helper
 const exportToExcel = (selectedHotels, data) => {
   const selectedData = data.filter((hotel) =>
-    selectedHotels.includes(hotel.hotelId)
+    selectedHotels.includes(hotel.hotelId),
   );
   const ws = XLSX.utils.json_to_sheet(selectedData);
   const wb = XLSX.utils.book_new();

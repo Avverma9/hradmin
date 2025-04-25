@@ -135,13 +135,15 @@ export default function Coupon() {
       return;
     }
 
-    // Format the datetime-local input to full ISO string
-    const formattedValidity = new Date(validity).toISOString(); // Full ISO with time
+    // Parse validity and add +5:30 offset (in milliseconds)
+    const originalDate = new Date(validity);
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in ms
+    const adjustedDate = new Date(originalDate.getTime() + istOffset);
 
     const postData = {
       couponName,
       discountPrice: Number(discountPrice),
-      validity: formattedValidity,
+      validity: adjustedDate.toISOString(),
     };
 
     showLoader();
@@ -169,9 +171,9 @@ export default function Coupon() {
         const payload = {
           couponCode,
           hotelIds: [hotelId],
-          roomIds: [roomId]
+          roomIds: [roomId],
         };
-        showLoader()
+        showLoader();
         await dispatch(applyCoupon(payload)).unwrap();
         window.location.reload();
       } catch (error) {
@@ -184,7 +186,7 @@ export default function Coupon() {
       }
     },
     // निर्भरताएँ वही रहेंगी
-    [dispatch, showLoader, hideLoader, couponCode, handleCloseCouponModal]
+    [dispatch, showLoader, hideLoader, couponCode, handleCloseCouponModal],
   );
 
   const handleOpenModal = (hotel) => {
@@ -368,7 +370,6 @@ export default function Coupon() {
       >
         View Available Coupons
       </Button>
-    
 
       <div style={{ display: "flex", gap: "16px", marginBottom: "16px" }}>
         <TextField
@@ -435,7 +436,7 @@ export default function Coupon() {
                   {selectedCity || searchTerm
                     ? "No hotels found matching your criteria."
                     : !Array.isArray(allHotelsData) ||
-                      allHotelsData.length === 0
+                        allHotelsData.length === 0
                       ? "Loading hotels..."
                       : "No hotels found."}
                 </TableCell>

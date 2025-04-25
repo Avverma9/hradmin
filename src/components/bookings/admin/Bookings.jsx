@@ -12,7 +12,6 @@ import {
   Container,
   TextField,
   Typography,
-
 } from "@mui/material";
 
 import { fDate } from "../../../../utils/format-time";
@@ -36,6 +35,10 @@ export default function BookingsView() {
   const filtered = useSelector((state) => state.booking.filtered);
   const search = useSelector((state) => state.booking.search);
   const { showLoader, hideLoader } = useLoader();
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 25,
+  });
 
   const bookings = search.length ? search : filtered;
   const bookingCount = bookings.length;
@@ -87,8 +90,6 @@ export default function BookingsView() {
     checkOutDate: booking.checkOutDate,
     createdAt: fDate(booking.createdAt),
   }));
-
-  const paginationModel = { page: 0, pageSize: 10 };
 
   useEffect(() => {
     fetchData();
@@ -178,7 +179,8 @@ export default function BookingsView() {
           rows={rows}
           columns={columns}
           paginationModel={paginationModel}
-          pageSizeOptions={[5, 10]}
+          onPaginationModelChange={(model) => setPaginationModel(model)}
+          pageSizeOptions={[25, 50, 100]}
           checkboxSelection
           sx={{ border: 0 }}
         />

@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect } from "react";
+import PropTypes from "prop-types";
 import {
   Box,
   Grid,
@@ -8,14 +8,7 @@ import {
   TextField,
   DialogTitle,
   DialogContent,
-} from '@mui/material';
-
-const getDefaultDateTime = () => {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const offset = now.getTimezoneOffset() * 60000;
-  return new Date(now - offset).toISOString().slice(0, 16);
-};
+} from "@mui/material";
 
 const CreateCouponModal = ({
   open,
@@ -29,19 +22,26 @@ const CreateCouponModal = ({
   setValidity,
 }) => {
   useEffect(() => {
-    if (!validity && open) {
-      setValidity(getDefaultDateTime());
+    if (open && !validity) {
+      const now = new Date();
+      const localISOTime = new Date(
+        now.getTime() - now.getTimezoneOffset() * 60000,
+      )
+        .toISOString()
+        .slice(0, 16); // 'YYYY-MM-DDTHH:mm'
+      setValidity(localISOTime);
     }
   }, [open, validity, setValidity]);
-
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ pb: 1, fontWeight: 600, fontSize: 18 }}>Create a New Coupon</DialogTitle>
+      <DialogTitle sx={{ pb: 1, fontWeight: 600, fontSize: 18 }}>
+        Create a New Coupon
+      </DialogTitle>
       <DialogContent sx={{ pt: 1 }}>
         <Box
           component="form"
           onSubmit={handleCreateCoupon}
-          sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
         >
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
@@ -79,11 +79,23 @@ const CreateCouponModal = ({
             </Grid>
           </Grid>
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1 }}>
-            <Button type="submit" variant="contained" size="small" color="primary">
+          <Box
+            sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 1 }}
+          >
+            <Button
+              type="submit"
+              variant="contained"
+              size="small"
+              color="primary"
+            >
               Create
             </Button>
-            <Button onClick={handleClose} variant="outlined" size="small" color="secondary">
+            <Button
+              onClick={handleClose}
+              variant="outlined"
+              size="small"
+              color="secondary"
+            >
               Cancel
             </Button>
           </Box>

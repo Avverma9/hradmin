@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import { localUrl, notify, token } from "../../../../utils/util";
+import { localUrl, notify, showSnackbar, token } from "../../../../utils/util";
 import { toast } from "react-toastify";
 
 
@@ -72,8 +72,7 @@ export const applyCoupon = createAsyncThunk(
       });
 
       notify(response.status);
-      toast.info(response.data.message);
-      return response.data;
+      showSnackbar(response.data.message);
     } catch (error) {
       console.error("Error in applyCoupon thunk:", error);
       const errorMessage = error.response?.data?.message || error.message;
