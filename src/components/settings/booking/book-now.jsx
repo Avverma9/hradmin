@@ -112,6 +112,7 @@ const BookNow = () => {
                         email={hotelById?.hotelEmail}
                         owner={hotelById?.hotelOwnerName}
                         address={hotelById?.destination}
+                        city={hotelById?.city}
                         food={selectedFoods}
                     />
                 </div>
