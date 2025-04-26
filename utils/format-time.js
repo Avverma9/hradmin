@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 import { format, getTime, formatDistanceToNow } from 'date-fns';
-
+import moment from 'moment-timezone';
 // ----------------------------------------------------------------------
 
 export function fDate(date, newFormat) {
@@ -26,6 +26,20 @@ export function fDateTime(date, newFormat) {
 
   return date ? format(new Date(date), fm) : '';
 }
+
+export function indianTime(date, newFormat) {
+  if (!date) return '';
+
+  // Parse the date in UTC and convert to IST (Indian Standard Time)
+  const istDate = moment(date).tz('Asia/Kolkata').subtract(5, 'hours').subtract(30, 'minutes');
+
+  // Format the date as needed (day, month, year, hour, minute, AM/PM)
+  const formatted = istDate.format('DD MMM YYYY hh:mm A');
+
+  return formatted;
+}
+
+
 
 export function fTimestamp(date) {
   return date ? getTime(new Date(date)) : '';

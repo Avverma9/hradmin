@@ -130,7 +130,7 @@ export const executeBulkAction = async ({
       toast.error("Failed to apply coupon.");
     } finally {
       hideLoader();
-      reloadPage()
+      // reloadPage()
     }
   }
 

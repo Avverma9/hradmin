@@ -18,7 +18,7 @@ import {
   DialogContent,
 } from '@mui/material';
 
-import { fDateTime } from '../../../../utils/format-time';
+import { fDateTime, indianTime } from '../../../../utils/format-time';
 
 const AvailableCouponsModal = ({ open, handleClose, coupons, copyToClipboard }) => (
   <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
@@ -51,7 +51,7 @@ const AvailableCouponsModal = ({ open, handleClose, coupons, copyToClipboard }) 
               <TableRow key={coupon._id}>
                 <TableCell>{coupon.couponName}</TableCell>
                 <TableCell>{coupon.discountPrice}</TableCell>
-                <TableCell>{fDateTime(coupon.validity)}</TableCell>
+                <TableCell>{indianTime(coupon.validity)}</TableCell>
                 <TableCell>{coupon.couponCode}</TableCell>
                 <TableCell>
                   <IconButton color="primary" onClick={() => copyToClipboard(coupon.couponCode)}>
