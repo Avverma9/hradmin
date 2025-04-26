@@ -90,13 +90,12 @@ const HotelAvailability = () => {
   };
 
   const filteredHotels = hotels
-  .filter(
-    (hotel) =>
-      hotel.hotelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      hotel.hotelId.toString().includes(searchTerm)
-  )
-  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
+    .filter(
+      (hotel) =>
+        hotel.hotelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        hotel.hotelId.toString().includes(searchTerm),
+    )
+    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -106,7 +105,7 @@ const HotelAvailability = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-console.log("filteredHotels", filteredHotels);
+  console.log("filteredHotels", filteredHotels);
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Paper style={{ padding: 20 }}>
@@ -228,9 +227,13 @@ console.log("filteredHotels", filteredHotels);
                       {hotel.hotelName} ({hotel.city})
                     </Link>
                   </TableCell>
-                  <TableCell>{hotel.totalRooms}</TableCell>
-                  <TableCell>{hotel.bookedRooms}</TableCell>
-                  <TableCell>{hotel.availableRooms}</TableCell>
+                  <TableCell>
+                    {hotel.totalRooms && hotel.totalRooms !== "null"
+                      ? hotel.totalRooms
+                      : hotel.initialAvailableRooms}
+                  </TableCell>
+                  <TableCell>{hotel?.bookingSummary?.Confirmed}</TableCell>
+                  <TableCell>{hotel?.actualAvailableRooms}</TableCell>
                   <TableCell>
                     <Button
                       variant="contained"

@@ -1,83 +1,100 @@
+import React from "react";
 import {
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Grid,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import React from "react";
 
-export default function BookedRoomData({
-    selectedHotel,
-    openDialog,
-    onClose,
-}) {
+export default function BookedRoomData({ selectedHotel, openDialog, onClose }) {
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+
+  // Fallback for totalRooms if value is "null"
+  const totalRooms =
+    selectedHotel?.totalRooms === "null"
+      ? selectedHotel?.initialAvailableRooms
+      : selectedHotel?.totalRooms;
+
+  const bookingSummary = selectedHotel?.bookingSummary || {};
+
   return (
-    <Dialog open={openDialog} onClose={onClose}>
-      <DialogTitle>{selectedHotel?.hotelName}</DialogTitle>
-      <DialogContent>
+    <Dialog
+      open={openDialog}
+      onClose={onClose}
+      fullWidth
+      maxWidth="md"
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          p: 2,
+        },
+      }}
+    >
+      <DialogTitle sx={{ fontWeight: "bold", pb: 1 }}>
+        {selectedHotel?.hotelName}
+      </DialogTitle>
+
+      <DialogContent dividers>
+        {selectedHotel?.note && (
+          <Typography variant="body2" color="text.secondary" mb={2}>
+            {selectedHotel?.note}
+          </Typography>
+        )}
+
         <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <Typography variant="body1">Total Rooms:</Typography>
-            <Typography variant="body2">{selectedHotel?.totalRooms}</Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="body1">Booked Rooms:</Typography>
-            <Typography variant="body2">
-              {selectedHotel?.bookedRooms}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="body1">Available Rooms:</Typography>
-            <Typography variant="body2">
-              {selectedHotel?.availableRooms}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="body1">Cancelled Booking:</Typography>
-            <Typography variant="body2">
-              {selectedHotel?.cancelledRooms}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="body1">Checked In Booking:</Typography>
-            <Typography variant="body2">
-              {selectedHotel?.checkedInRooms}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="body1">Checked Out Booking:</Typography>
-            <Typography variant="body2">
-              {selectedHotel?.checkedOutRooms}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="body1">No Show Booking:</Typography>
-            <Typography variant="body2">
-              {selectedHotel?.noShowRooms}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="body1">Failed Booking:</Typography>
-            <Typography variant="body2">
-              {selectedHotel?.failedRooms}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="body1">Pending Booking:</Typography>
-            <Typography variant="body2">
-              {selectedHotel?.pendingRooms}
-            </Typography>
-          </Grid>
+          <InfoItem label="Total Rooms" value={totalRooms} />
+          <InfoItem label="Booked Rooms" value={bookingSummary?.Confirmed} />
+          <InfoItem
+            label="Available Rooms"
+            value={selectedHotel?.actualAvailableRooms}
+          />
+          <InfoItem
+            label="Cancelled Booking"
+            value={bookingSummary?.Cancelled}
+          />
+          <InfoItem
+            label="Checked In Booking"
+            value={bookingSummary?.["Checked-in"]}
+          />
+          <InfoItem
+            label="Checked Out Booking"
+            value={bookingSummary?.["Checked-out"]}
+          />
+          <InfoItem
+            label="No Show Booking"
+            value={bookingSummary?.["No-show"]}
+          />
+          <InfoItem label="Failed Booking" value={bookingSummary?.Failed} />
+          <InfoItem label="Pending Booking" value={bookingSummary?.Pending} />
         </Grid>
       </DialogContent>
+
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        <Button onClick={onClose} variant="contained" color="primary">
           Close
         </Button>
       </DialogActions>
     </Dialog>
+  );
+}
+
+// Reusable sub-component for displaying label/value pairs
+function InfoItem({ label, value }) {
+  return (
+    <Grid item xs={12} sm={6} md={4}>
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+      <Typography variant="body2" fontWeight={500}>
+        {value ?? "--"}
+      </Typography>
+    </Grid>
   );
 }
