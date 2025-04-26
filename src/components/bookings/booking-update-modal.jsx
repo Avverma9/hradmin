@@ -1,85 +1,85 @@
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-unused-vars */
-import PropTypes from 'prop-types';
-import React, { useState, useEffect } from 'react';
+import PropTypes from "prop-types";
+import React, { useState, useEffect } from "react";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { TimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import {
+  Box,
+  Grid,
+  Modal,
+  Button,
+  MenuItem,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import { updateBooking } from "../redux/reducers/booking";
 
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { TimePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { Box, Grid, Modal, Button, MenuItem, TextField, Typography } from '@mui/material';
-
-import { localUrl } from '../../../utils/util';
-import { useDispatch, useSelector } from 'react-redux';
-import { toast } from 'react-toastify';
-import { updateBooking } from '../redux/reducers/booking';
-
-// Styles for the modal
 const modalStyle = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: '90%',
-  maxWidth: 800,
-  bgcolor: 'background.paper',
-  borderRadius: 1,
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: "95%",
+  maxWidth: 720,
+  bgcolor: "background.paper",
+  borderRadius: 2,
   boxShadow: 24,
-  p: 4,
-  maxHeight: '80vh', // Set max height to 80% of viewport height
-  overflowY: 'auto', // Enable vertical scrolling if content overflows
+  p: 3,
+  maxHeight: "90vh",
+  overflowY: "auto",
 };
 
 const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
   const [formData, setFormData] = useState({
-    checkInDate: '',
-    checkOutDate: '',
-    price: '',
+    checkInDate: "",
+    checkOutDate: "",
+    price: "",
     checkInTime: null,
     checkOutTime: null,
-    bookingStatus: '',
-    numRooms: '',
-    guests: '',
+    bookingStatus: "",
+    numRooms: "",
+    guests: "",
   });
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const updated = useSelector((state) => state.booking.updated);
 
-  // Update form data when bookingData changes
   useEffect(() => {
     if (bookingData) {
-      console.log('Received bookingData:', bookingData);
       setFormData({
-        checkInDate: bookingData.checkInDate || '',
-        checkOutDate: bookingData.checkOutDate || '',
-        checkInTime: bookingData.checkInTime ? new Date(bookingData.checkInTime) : null,
-        checkOutTime: bookingData.checkOutTime ? new Date(bookingData.checkOutTime) : null,
-        price: bookingData.price || '',
-        bookingStatus: bookingData.status || '',
-        numRooms: bookingData.numRooms || '',
-        guests: bookingData.guests || '',
+        checkInDate: bookingData.checkInDate || "",
+        checkOutDate: bookingData.checkOutDate || "",
+        checkInTime: bookingData.checkInTime
+          ? new Date(bookingData.checkInTime)
+          : null,
+        checkOutTime: bookingData.checkOutTime
+          ? new Date(bookingData.checkOutTime)
+          : null,
+        price: bookingData.price || "",
+        bookingStatus: bookingData.status || "",
+        numRooms: bookingData.numRooms || "",
+        guests: bookingData.guests || "",
       });
     }
   }, [bookingData]);
-  
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  // Handle time changes
   const handleTimeChange = (name) => (time) => {
     setFormData((prevData) => ({ ...prevData, [name]: time }));
   };
-  console.log('selected bboking', bookingData.bookingId);
 
-  // Handle form submission
   const handleSave = async () => {
     setLoading(true);
     try {
       await dispatch(
         updateBooking({
-          bookingId: bookingData.bookingId, // Wrap bookingId in an object
+          bookingId: bookingData.bookingId,
           updatedData: {
             ...formData,
             checkInTime: formData.checkInTime?.toISOString(),
@@ -87,14 +87,17 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
           },
         })
       );
-      onSave(updated); // Call the onSave callback with the updated booking data
-      onClose(); // Close the modal
+      onSave(updated);
+      onClose();
     } catch (error) {
-      console.error('Error updating booking:', error);
+      console.error("Error updating booking:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  const isDisabled =
+    bookingData?.status === "Cancelled" || bookingData?.status === "Checked-out";
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -104,8 +107,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
         </Typography>
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <Grid container spacing={2}>
-            {/* First Row */}
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Check-in Date"
@@ -114,10 +116,11 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
                 value={formData.checkInDate}
                 onChange={handleChange}
                 InputLabelProps={{ shrink: true }}
-                margin="normal"
+                margin="dense"
+                disabled={isDisabled}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Check-out Date"
@@ -126,30 +129,53 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
                 value={formData.checkOutDate}
                 onChange={handleChange}
                 InputLabelProps={{ shrink: true }}
-                margin="normal"
+                margin="dense"
+                disabled={isDisabled}
               />
             </Grid>
 
-            {/* Second Row */}
-            <Grid item xs={12} sm={6}>
-              <TimePicker
-                label="Check-in Time"
-                value={formData.checkInTime}
-                onChange={handleTimeChange('checkInTime')}
-                renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TimePicker
-                label="Check-out Time"
-                value={formData.checkOutTime}
-                onChange={handleTimeChange('checkOutTime')}
-                renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
-              />
-            </Grid>
+            {formData.bookingStatus === "Checked-in" && (
+              <Grid item xs={12} md={6}>
+                <TimePicker
+                  label="Check-in Time"
+                  value={formData.checkInTime}
+                  onChange={handleTimeChange("checkInTime")}
+                  disabled={isDisabled}
+                  renderInput={(params) => (
+                    <TextField {...params} fullWidth margin="dense" />
+                  )}
+                />
+              </Grid>
+            )}
 
-            {/* Third Row */}
-            <Grid item xs={12} sm={6}>
+            {formData.bookingStatus === "Checked-out" && (
+              <>
+                <Grid item xs={12} md={6}>
+                  <TimePicker
+                    label="Check-in Time"
+                    value={formData.checkInTime}
+                    onChange={handleTimeChange("checkInTime")}
+                    disabled={isDisabled}
+                    renderInput={(params) => (
+                      <TextField {...params} fullWidth margin="dense" />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TimePicker
+                    label="Check-out Time"
+                    value={formData.checkOutTime}
+                    onChange={handleTimeChange("checkOutTime")}
+                    disabled={isDisabled}
+                    renderInput={(params) => (
+                      <TextField {...params} fullWidth margin="dense" />
+                    )}
+                  />
+                </Grid>
+              </>
+            )}
+
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 select
@@ -157,7 +183,8 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
                 name="bookingStatus"
                 value={formData.bookingStatus}
                 onChange={handleChange}
-                margin="normal"
+                margin="dense"
+                disabled={isDisabled}
               >
                 <MenuItem value="Confirmed">Confirmed</MenuItem>
                 <MenuItem value="Pending">Pending</MenuItem>
@@ -167,7 +194,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
                 <MenuItem value="Checked-out">Checked out</MenuItem>
               </TextField>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Price"
@@ -175,12 +202,12 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
-                margin="normal"
+                margin="dense"
+                disabled={isDisabled}
               />
             </Grid>
 
-            {/* Fourth Row */}
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Number of Rooms"
@@ -188,10 +215,11 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
                 name="numRooms"
                 value={formData.numRooms}
                 onChange={handleChange}
-                margin="normal"
+                margin="dense"
+                disabled={isDisabled}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Number of Guests"
@@ -199,18 +227,23 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
                 name="guests"
                 value={formData.guests}
                 onChange={handleChange}
-                margin="normal"
+                margin="dense"
+                disabled={isDisabled}
               />
             </Grid>
           </Grid>
         </LocalizationProvider>
-
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <Button onClick={onClose} sx={{ mr: 1 }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+          <Button onClick={onClose} sx={{ mr: 2 }} size="small">
             Cancel
           </Button>
-          <Button variant="contained" onClick={handleSave} disabled={loading}>
-            {loading ? 'Saving...' : 'Save'}
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={loading || isDisabled}
+            size="small"
+          >
+            {loading ? "Saving..." : "Save"}
           </Button>
         </Box>
       </Box>
@@ -218,7 +251,6 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
   );
 };
 
-// Define prop types
 BookingUpdateModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
@@ -229,7 +261,7 @@ BookingUpdateModal.propTypes = {
     checkInTime: PropTypes.string,
     checkOutTime: PropTypes.string,
     price: PropTypes.number.isRequired,
-    bookingStatus: PropTypes.string.isRequired,
+    status: PropTypes.string.isRequired,
     numRooms: PropTypes.number.isRequired,
     guests: PropTypes.number.isRequired,
   }).isRequired,

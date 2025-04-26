@@ -1,21 +1,18 @@
-import axios from "axios";
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { Link } from "react-router-dom";
-import { isSameDay } from "date-fns";
-
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import {
   Grid,
-  Table,
   Paper,
   Button,
+  Table,
   TableRow,
   TextField,
   TableBody,
   TableCell,
   TableHead,
-  InputBase,
   Typography,
   TableContainer,
   TablePagination,
@@ -24,16 +21,18 @@ import {
   MenuItem,
   InputLabel,
   FormControl,
+  InputBase,
 } from "@mui/material";
-
-import { localUrl } from "../../../../utils/util";
-import BookedRoomData from "./booked-room-data";
 import { useDispatch, useSelector } from "react-redux";
+
 import { getHotelsCity } from "src/components/redux/reducers/hotel";
+import BookedRoomData from "./booked-room-data";
+import { localUrl } from "../../../../utils/util";
 
 const HotelAvailability = () => {
-  const [fromDate, setFromDate] = useState(null);
-  const [toDate, setToDate] = useState(null);
+  const today = new Date();
+  const [fromDate, setFromDate] = useState(today);
+  const [toDate, setToDate] = useState(today);
   const [hotels, setHotels] = useState([]);
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -42,27 +41,30 @@ const HotelAvailability = () => {
   const [selectedCity, setSelectedCity] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
+
   const dispatch = useDispatch();
   const { byCity } = useSelector((state) => state.hotel);
+
   useEffect(() => {
     dispatch(getHotelsCity());
   }, [dispatch]);
 
+  const formatDate = (date) => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   const fetchHotels = async () => {
     if (!fromDate || !toDate) {
-      alert("Please select both from date and to date.");
+      alert("Please select both from and to dates.");
       return;
     }
 
-    const formatDate = (date) => {
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, "0");
-      const dd = String(date.getDate()).padStart(2, "0");
-      return `${yyyy}-${mm}-${dd}`;
-    };
-
     const from = formatDate(fromDate);
     const to = formatDate(toDate);
+
     setLoading(true);
     try {
       const response = await axios.get(
@@ -105,7 +107,7 @@ const HotelAvailability = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-  console.log("filteredHotels", filteredHotels);
+
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Paper style={{ padding: 20 }}>
@@ -116,12 +118,9 @@ const HotelAvailability = () => {
         <Typography variant="body1" gutterBottom>
           Please select a start date and an end date.
           <br />
-          After selecting your dates, click on "View Availability" to see the
-          list of hotels.
+          Click "Check" to view hotel availability.
           <br />
-          To view more details about a specific hotel, click on the hotel name.
-          <br />
-          You can also click "View More" to see booked rooms and booking status.
+          Click on a hotel name or "View More" for details.
         </Typography>
 
         <Grid container spacing={2} alignItems="center">
@@ -162,10 +161,16 @@ const HotelAvailability = () => {
               label="From Date"
               value={fromDate}
               onChange={(newValue) => {
-                setFromDate(newValue);
-                if (toDate && isSameDay(newValue, toDate)) {
-                  setToDate(null);
+                const today = new Date();
+                if (newValue < today) {
+                  alert("From Date cannot be before today's date.");
+                  return;
                 }
+                if (toDate && newValue > toDate) {
+                  alert("From Date cannot be after To Date.");
+                  return;
+                }
+                setFromDate(newValue);
               }}
               renderInput={(params) => <TextField {...params} />}
               minDate={new Date()}
@@ -177,7 +182,11 @@ const HotelAvailability = () => {
               label="To Date"
               value={toDate}
               onChange={(newValue) => {
-               setToDate(newValue);
+                if (fromDate && newValue < fromDate) {
+                  alert("To Date cannot be before From Date.");
+                  return;
+                }
+                setToDate(newValue);
               }}
               renderInput={(params) => <TextField {...params} />}
               minDate={fromDate || new Date()}

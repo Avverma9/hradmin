@@ -12,6 +12,7 @@ import {
   Container,
   TextField,
   Typography,
+  MenuItem,
 } from "@mui/material";
 
 import { fDate } from "../../../../utils/format-time";
@@ -22,6 +23,7 @@ import {
   fetchFilteredBookings,
   searchBooking,
 } from "src/components/redux/reducers/booking";
+import { getHotelsCity } from "src/components/redux/reducers/hotel";
 
 export default function BookingsView() {
   const [bookingId, setBookingId] = useState("");
@@ -29,7 +31,8 @@ export default function BookingsView() {
   const [filterDate, setFilterDate] = useState("");
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [openModal, setOpenModal] = useState(false);
-
+  const { byCity } = useSelector((state) => state.hotel);
+  const [selectedCity, setSelectedCity] = useState("");
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const filtered = useSelector((state) => state.booking.filtered);
@@ -39,19 +42,11 @@ export default function BookingsView() {
     page: 0,
     pageSize: 25,
   });
-
   const bookings = search.length ? search : filtered;
   const bookingCount = bookings.length;
+  dispatch({ type: "booking/clearSearch" }); // 👈 Create this reducer to reset search
 
   const columns = [
-    { field: "bookingId", headerName: "Booking ID", width: 150 },
-    { field: "user", headerName: "User", width: 150 },
-    { field: "status", headerName: "Status", width: 110 },
-    { field: "source", headerName: "Source", width: 130 },
-    { field: "mop", headerName: "Payment Mode", width: 130 },
-    { field: "checkInDate", headerName: "Check-In Date", width: 180 },
-    { field: "checkOutDate", headerName: "Check-Out Date", width: 180 },
-    { field: "createdAt", headerName: "Created At", width: 180 },
     {
       field: "actions",
       headerName: "Actions",
@@ -77,6 +72,14 @@ export default function BookingsView() {
         </div>
       ),
     },
+    { field: "bookingId", headerName: "Booking ID", width: 150 },
+    { field: "user", headerName: "User", width: 150 },
+    { field: "status", headerName: "Status", width: 110 },
+    { field: "source", headerName: "Source", width: 130 },
+    { field: "mop", headerName: "Payment Mode", width: 130 },
+    { field: "checkInDate", headerName: "Check-In Date", width: 180 },
+    { field: "checkOutDate", headerName: "Check-Out Date", width: 180 },
+    { field: "createdAt", headerName: "Created At", width: 180 },
   ];
 
   const rows = bookings?.map((booking) => ({
@@ -89,11 +92,20 @@ export default function BookingsView() {
     checkInDate: booking.checkInDate,
     checkOutDate: booking.checkOutDate,
     createdAt: fDate(booking.createdAt),
+    roomDetails: booking.roomDetails,
+    foodDetails: booking.foodDetails,
+    price: booking.price,
+    numRooms: booking.numRooms,
+    guests: booking.guests,
   }));
 
   useEffect(() => {
     fetchData();
-  }, [status, filterDate]);
+  }, [status, filterDate, selectedCity]);
+
+  useEffect(() => {
+    dispatch(getHotelsCity());
+  }, [dispatch]);
 
   const fetchData = async () => {
     showLoader();
@@ -101,6 +113,8 @@ export default function BookingsView() {
       const queryParams = new URLSearchParams();
       if (status) queryParams.append("bookingStatus", status);
       if (filterDate) queryParams.append("date", filterDate);
+      if (selectedCity) queryParams.append("hotelCity", selectedCity);
+
       await dispatch(fetchFilteredBookings(queryParams.toString()));
     } catch (error) {
       console.error("Error:", error);
@@ -156,7 +170,23 @@ export default function BookingsView() {
               onChange={(e) => setBookingId(e.target.value)}
             />
           </Grid>
-
+          <Grid item xs={12} md={3}>
+            <TextField
+              fullWidth
+              select
+              label="Filter by City"
+              variant="outlined"
+              value={selectedCity}
+              onChange={(e) => setSelectedCity(e.target.value)}
+            >
+              <MenuItem value="">All Cities</MenuItem>
+              {byCity.map((city, index) => (
+                <MenuItem key={index} value={city}>
+                  {city}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
           <Grid item xs={12} md={9}>
             <Grid container spacing={2} alignItems="center">
               <Grid item>

@@ -73,6 +73,7 @@ export default function BookedRoomData({ selectedHotel, openDialog, onClose }) {
           />
           <InfoItem label="Failed Booking" value={bookingSummary?.Failed} />
           <InfoItem label="Pending Booking" value={bookingSummary?.Pending} />
+          <InfoItem label="Booked before listing" value={selectedHotel?.bookedFromOthers} />
         </Grid>
       </DialogContent>
 
