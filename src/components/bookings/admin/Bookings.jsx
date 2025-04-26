@@ -16,7 +16,6 @@ import {
 } from "@mui/material";
 
 import { fDate } from "../../../../utils/format-time";
-import BookingUpdateModal from "../booking-update-modal";
 import { useDispatch, useSelector } from "react-redux";
 import { useLoader } from "../../../../utils/loader";
 import {
@@ -24,6 +23,7 @@ import {
   searchBooking,
 } from "src/components/redux/reducers/booking";
 import { getHotelsCity } from "src/components/redux/reducers/hotel";
+import AdminBookingUpdateModal from "./admin-booking-update";
 
 export default function BookingsView() {
   const [bookingId, setBookingId] = useState("");
@@ -89,8 +89,8 @@ export default function BookingsView() {
     status: booking.bookingStatus,
     source: booking.bookingSource || "Site",
     mop: booking.pm || "Offline",
-    checkInDate: booking.checkInDate,
-    checkOutDate: booking.checkOutDate,
+    checkInDate: fDate(booking.checkInDate),
+    checkOutDate: fDate(booking.checkOutDate),
     createdAt: fDate(booking.createdAt),
     roomDetails: booking.roomDetails,
     foodDetails: booking.foodDetails,
@@ -219,7 +219,7 @@ export default function BookingsView() {
       <Container maxWidth="auto" sx={{ marginTop: "40px" }}>
         {/* Booking Update Modal */}
         {selectedBooking && (
-          <BookingUpdateModal
+          <AdminBookingUpdateModal
             open={openModal}
             onClose={() => setOpenModal(false)}
             bookingData={selectedBooking}

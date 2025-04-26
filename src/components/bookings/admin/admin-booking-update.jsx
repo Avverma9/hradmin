@@ -14,7 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { updateBooking } from "../redux/reducers/booking";
+import { updateBooking } from "src/components/redux/reducers/booking";
 
 const modalStyle = {
   position: "absolute",
@@ -31,7 +31,7 @@ const modalStyle = {
   overflowY: "auto",
 };
 
-const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
+const AdminBookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
   const [formData, setFormData] = useState({
     checkInDate: "",
     checkOutDate: "",
@@ -45,7 +45,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const updated = useSelector((state) => state.booking.updated);
-  const role = localStorage.getItem("user_role");
+
   useEffect(() => {
     if (bookingData) {
       setFormData({
@@ -85,7 +85,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
             checkInTime: formData.checkInTime?.toISOString(),
             checkOutTime: formData.checkOutTime?.toISOString(),
           },
-        }),
+        })
       );
       onSave(updated);
       onClose();
@@ -97,10 +97,8 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
   };
 
   const isDisabled =
-  bookingData?.status === "Cancelled" ||
-  bookingData?.status === "Checked-out";
-  const disableSpecificFields = role === "PMS" || role === "TMS";
-  
+    bookingData?.status === "Cancelled" || bookingData?.status === "Checked-out";
+
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={modalStyle}>
@@ -205,7 +203,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
                 value={formData.price}
                 onChange={handleChange}
                 margin="dense"
-                disabled={disableSpecificFields}
+                disabled={isDisabled}
               />
             </Grid>
 
@@ -218,7 +216,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
                 value={formData.numRooms}
                 onChange={handleChange}
                 margin="dense"
-                disabled={disableSpecificFields}
+                disabled={isDisabled}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -230,7 +228,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
                 value={formData.guests}
                 onChange={handleChange}
                 margin="dense"
-                disabled={disableSpecificFields}
+                disabled={isDisabled}
               />
             </Grid>
           </Grid>
@@ -253,7 +251,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
   );
 };
 
-BookingUpdateModal.propTypes = {
+AdminBookingUpdateModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   bookingData: PropTypes.shape({
@@ -270,4 +268,4 @@ BookingUpdateModal.propTypes = {
   onSave: PropTypes.func.isRequired,
 };
 
-export default BookingUpdateModal;
+export default AdminBookingUpdateModal;

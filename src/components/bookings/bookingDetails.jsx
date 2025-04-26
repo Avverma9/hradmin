@@ -36,6 +36,7 @@ const BookingDetail = () => {
   const dispatch = useDispatch();
   const filtered = useSelector((state) => state.booking.filtered);
   const { showLoader, hideLoader } = useLoader();
+  
   const useStyles = makeStyles((theme) => ({
     paper: {
       padding: theme.spacing(3),
@@ -54,7 +55,9 @@ const BookingDetail = () => {
     },
   }));
   const classes = useStyles();
-
+  const visibleTo = () => {
+    role === "PMS" || role === "TMS";
+  };
   useEffect(() => {
     const fetchBookingData = async () => {
       showLoader();

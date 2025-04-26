@@ -12,7 +12,6 @@ import {
   Container,
   TextField,
   Typography,
-
 } from "@mui/material";
 
 import { fDate } from "../../../../utils/format-time";
@@ -30,25 +29,16 @@ export default function SuperAdminBookingsView() {
   const [filterDate, setFilterDate] = useState("");
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [openModal, setOpenModal] = useState(false);
-
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const filtered = useSelector((state) => state.booking.filtered);
   const search = useSelector((state) => state.booking.search);
   const { showLoader, hideLoader } = useLoader();
-
+  const role = localStorage.getItem("user_role");
   const bookings = search.length ? search : filtered;
   const bookingCount = bookings.length;
-  const hotelEmail = localStorage.getItem('user_email');
+  const hotelEmail = localStorage.getItem("user_email");
   const columns = [
-    { field: "bookingId", headerName: "Booking ID", width: 150 },
-    { field: "user", headerName: "User", width: 150 },
-    { field: "status", headerName: "Status", width: 110 },
-    { field: "source", headerName: "Source", width: 130 },
-    { field: "mop", headerName: "Payment Mode", width: 130 },
-    { field: "checkInDate", headerName: "Check-In Date", width: 180 },
-    { field: "checkOutDate", headerName: "Check-Out Date", width: 180 },
-    { field: "createdAt", headerName: "Created At", width: 180 },
     {
       field: "actions",
       headerName: "Actions",
@@ -74,6 +64,14 @@ export default function SuperAdminBookingsView() {
         </div>
       ),
     },
+    { field: "bookingId", headerName: "Booking ID", width: 150 },
+    { field: "user", headerName: "User", width: 150 },
+    { field: "status", headerName: "Status", width: 110 },
+    { field: "source", headerName: "Source", width: 130 },
+    { field: "mop", headerName: "Payment Mode", width: 130 },
+    { field: "checkInDate", headerName: "Check-In Date", width: 180 },
+    { field: "checkOutDate", headerName: "Check-Out Date", width: 180 },
+    { field: "createdAt", headerName: "Created At", width: 180 },
   ];
 
   const rows = bookings?.map((booking) => ({
@@ -83,9 +81,14 @@ export default function SuperAdminBookingsView() {
     status: booking.bookingStatus,
     source: booking.bookingSource || "Site",
     mop: booking.pm || "Offline",
-    checkInDate: booking.checkInDate,
-    checkOutDate: booking.checkOutDate,
+    checkInDate: fDate(booking.checkInDate),
+    checkOutDate: fDate(booking.checkOutDate),
     createdAt: fDate(booking.createdAt),
+    roomDetails: booking.roomDetails,
+    foodDetails: booking.foodDetails,
+    price: booking.price,
+    numRooms: booking.numRooms,
+    guests: booking.guests,
   }));
 
   const paginationModel = { page: 0, pageSize: 10 };
@@ -100,13 +103,12 @@ export default function SuperAdminBookingsView() {
     try {
       await dispatch(fetchFilteredBookings(filters));
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Something went wrong');
+      console.error("Error:", error);
+      toast.error("Something went wrong");
     } finally {
       hideLoader();
     }
   };
-
 
   const handleSearch = async () => {
     showLoader();
@@ -135,7 +137,9 @@ export default function SuperAdminBookingsView() {
   };
 
   const handleRefresh = () => window.location.reload();
-
+  const visibleTo = () => role === "Developer" || role === "TMS";
+  const disableEditFields = visibleTo();
+  
   return (
     <div>
       <Typography variant="h4" gutterBottom>
@@ -177,7 +181,8 @@ export default function SuperAdminBookingsView() {
           rows={rows}
           columns={columns}
           paginationModel={paginationModel}
-          pageSizeOptions={[5, 10]}
+          onPaginationModelChange={(model) => setPaginationModel(model)}
+          pageSizeOptions={[25, 50, 100]}
           checkboxSelection
           sx={{ border: 0 }}
         />
@@ -188,6 +193,7 @@ export default function SuperAdminBookingsView() {
         {selectedBooking && (
           <BookingUpdateModal
             open={openModal}
+            editFields={disableEditFields}
             onClose={() => setOpenModal(false)}
             bookingData={selectedBooking}
             onSave={handleSave}
