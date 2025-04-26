@@ -1,15 +1,15 @@
 /* eslint-disable no-shadow */
-import { CiUser } from 'react-icons/ci';
-import { LuHotel } from 'react-icons/lu';
-import { FaPhone } from 'react-icons/fa';
-import React, { useState, useEffect } from 'react';
-import { IoMailOpenOutline } from 'react-icons/io5';
-import { LiaRupeeSignSolid } from 'react-icons/lia';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { MdAccessTime, MdOutlineHouse } from 'react-icons/md';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLoader } from '../../../utils/loader';
-import { makeStyles } from '@mui/styles';
+import { CiUser } from "react-icons/ci";
+import { LuHotel } from "react-icons/lu";
+import { FaPhone } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { IoMailOpenOutline } from "react-icons/io5";
+import { LiaRupeeSignSolid } from "react-icons/lia";
+import { useLocation, useNavigate } from "react-router-dom";
+import { MdAccessTime, MdOutlineHouse } from "react-icons/md";
+import { useDispatch, useSelector } from "react-redux";
+import { useLoader } from "../../../utils/loader";
+import { makeStyles } from "@mui/styles";
 import {
   Box,
   Grid,
@@ -20,33 +20,33 @@ import {
   Container,
   Typography,
   LinearProgress,
-} from '@mui/material';
+} from "@mui/material";
 
-import { localUrl } from '../../../utils/util';
-import { fDate, fDateTime } from '../../../utils/format-time';
-import { fetchFilteredBookings } from '../redux/reducers/booking';
+import { localUrl } from "../../../utils/util";
+import { fDate, fDateTime } from "../../../utils/format-time";
+import { fetchFilteredBookings } from "../redux/reducers/booking";
 
 const BookingDetail = () => {
   const navigate = useNavigate();
   const [booking, setBooking] = useState([]);
   const location = useLocation();
   const path = location.pathname;
-  const segments = path.split('/');
+  const segments = path.split("/");
   const bookingId = segments[segments.length - 1];
   const dispatch = useDispatch();
   const filtered = useSelector((state) => state.booking.filtered);
   const { showLoader, hideLoader } = useLoader();
-  
+  const role = localStorage.getItem("user_role");
   const useStyles = makeStyles((theme) => ({
     paper: {
       padding: theme.spacing(3),
       marginBottom: theme.spacing(3),
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
     },
     section: {
       marginBottom: theme.spacing(3),
       padding: theme.spacing(2),
-      border: '1px solid #ccc',
+      border: "1px solid #ccc",
       borderRadius: theme.shape.borderRadius,
     },
     avatar: {
@@ -64,7 +64,7 @@ const BookingDetail = () => {
       try {
         await dispatch(fetchFilteredBookings(`bookingId=${bookingId}`));
       } catch (error) {
-        console.error('Error fetching bookings:', error);
+        console.error("Error fetching bookings:", error);
       } finally {
         hideLoader();
       }
@@ -78,7 +78,7 @@ const BookingDetail = () => {
     }
   }, [filtered]);
   const handleBack = () => {
-    navigate(-1); // Go back to the previous location
+    navigate(-1);
   };
 
   if (filtered?.length < 0) {
@@ -125,7 +125,7 @@ const BookingDetail = () => {
                   {booking?.price}
                 </Typography>
               </Grid>
-              <Divider sx={{ margin: '16px 0' }} />
+              <Divider sx={{ margin: "16px 0" }} />
               <Typography variant="subtitle1">
                 <CiUser /> Customer Name
               </Typography>
@@ -136,24 +136,28 @@ const BookingDetail = () => {
                 <LuHotel /> Hotel Name
               </Typography>
               <Typography variant="body2" gutterBottom>
-                {booking?.hotelName}
+                {booking?.hotelDetails?.hotelName}
               </Typography>
               <Typography variant="subtitle1">Hotel Owner Name:</Typography>
               <Typography variant="body2" gutterBottom>
-                {booking?.hotelOwnerName}
+                {booking?.hotelDetails?.hotelOwnerName}
               </Typography>
-              <Typography variant="subtitle1">
-                <IoMailOpenOutline /> Email
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                {booking?.user?.email}
-              </Typography>
-              <Typography variant="subtitle1">
-                <FaPhone /> Mobile
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                {booking?.user?.mobile}
-              </Typography>
+              {(role !== "PMS" || role !== "TMS") && (
+                <>
+                  <Typography variant="subtitle1">
+                    <IoMailOpenOutline /> Email
+                  </Typography>
+                  <Typography variant="body2" gutterBottom>
+                    {booking?.user?.email}
+                  </Typography>
+                  <Typography variant="subtitle1">
+                    <FaPhone /> Mobile
+                  </Typography>
+                  <Typography variant="body2" gutterBottom>
+                    {booking?.user?.mobile}
+                  </Typography>
+                </>
+              )}
             </Box>
           </Grid>
 
@@ -185,13 +189,13 @@ const BookingDetail = () => {
                 <MdAccessTime /> Check in time
               </Typography>
               <Typography variant="body2" gutterBottom>
-                {fDateTime(booking?.checkInTime) || 'Not Checked in'}
+                {fDateTime(booking?.checkInTime) || "Not Checked in"}
               </Typography>
               <Typography variant="subtitle1">
                 <MdAccessTime /> Check out time
               </Typography>
               <Typography variant="body2" gutterBottom>
-                {fDateTime(booking?.checkOutTime) || 'Not Checked out'}
+                {fDateTime(booking?.checkOutTime) || "Not Checked out"}
               </Typography>
             </Box>
           </Grid>
@@ -213,8 +217,12 @@ const BookingDetail = () => {
                       <Typography variant="body2">
                         Type: {room?.type} <MdOutlineHouse />
                       </Typography>
-                      <Typography variant="body2">Bed Type: {room?.bedTypes}</Typography>
-                      <Typography variant="body2">Price: {room?.price}</Typography>
+                      <Typography variant="body2">
+                        Bed Type: {room?.bedTypes}
+                      </Typography>
+                      <Typography variant="body2">
+                        Price: {room?.price}
+                      </Typography>
                       {index !== booking.roomDetails.length - 1 && <Divider />}
                     </Box>
                   ))}
@@ -224,9 +232,15 @@ const BookingDetail = () => {
                   {booking?.foodDetails?.map((food, index) => (
                     <Box key={index} marginTop={1}>
                       <Typography variant="subtitle1">Food Details:</Typography>
-                      <Typography variant="body2">Food Name: {food?.name}</Typography>
-                      <Typography variant="body2">Price: {food?.price}</Typography>
-                      <Typography variant="body2">Quantity: {food?.quantity}</Typography>
+                      <Typography variant="body2">
+                        Food Name: {food?.name}
+                      </Typography>
+                      <Typography variant="body2">
+                        Price: {food?.price}
+                      </Typography>
+                      <Typography variant="body2">
+                        Quantity: {food?.quantity}
+                      </Typography>
                       {index !== booking.foodDetails.length - 1 && <Divider />}
                     </Box>
                   ))}
