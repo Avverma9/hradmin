@@ -41,7 +41,7 @@ const HotelAvailability = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const dispatch = useDispatch();
   const { byCity } = useSelector((state) => state.hotel);
   useEffect(() => {
@@ -177,11 +177,7 @@ const HotelAvailability = () => {
               label="To Date"
               value={toDate}
               onChange={(newValue) => {
-                if (newValue && fromDate && isSameDay(fromDate, newValue)) {
-                  alert("Start date and end date cannot be the same.");
-                  return;
-                }
-                setToDate(newValue);
+               setToDate(newValue);
               }}
               renderInput={(params) => <TextField {...params} />}
               minDate={fromDate || new Date()}
@@ -250,7 +246,7 @@ const HotelAvailability = () => {
         </TableContainer>
 
         <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
+          rowsPerPageOptions={[25, 50, 100]}
           component="div"
           count={hotels.length}
           rowsPerPage={rowsPerPage}
