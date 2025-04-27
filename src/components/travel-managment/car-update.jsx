@@ -30,6 +30,7 @@ export default function CarUpdate({ car, onClose, open }) {
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
   const [year, setYear] = useState("");
+  const [carNumber, setCarNumber] = useState("");
   const [images, setImages] = useState([]);
   const [price, setPrice] = useState("");
   const [from, setFrom] = useState("");
@@ -58,24 +59,16 @@ export default function CarUpdate({ car, onClose, open }) {
     setImages(e.target.files);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setOpenDialog(true);
-  };
-
-  const handleDialogClose = () => {
-    setOpenDialog(false);
-  };
-
-  const handleDialogConfirm = async () => {
-    setOpenDialog(false);
     const formData = new FormData();
 
     // Append updated data or retain existing data as fallback
     formData.append("make", make || car.make);
     formData.append("model", model || car.model);
     formData.append("year", year || car.year);
+    formData.append("carNumber", car.carNumber);
     formData.append("price", price || car.price);
     formData.append("from", from || car.from);
     formData.append("to", to || car.to);
@@ -112,6 +105,15 @@ export default function CarUpdate({ car, onClose, open }) {
     await dispatch(updateCar({ id: car._id, data: formData }));
   };
 
+  const handleDialogClose = () => {
+    setOpenDialog(false);
+  };
+
+  const handleDialogConfirm = async () => {
+    setOpenDialog(false);
+  
+  };
+
   useEffect(() => {
     const fetchCarData = async () => {
       try {
@@ -144,6 +146,7 @@ export default function CarUpdate({ car, onClose, open }) {
     fetchCarData();
   }, []);
 
+
   useEffect(() => {
     if (make) {
       setFilteredModels(allCarData.filter((car) => car.make === make));
@@ -157,15 +160,40 @@ export default function CarUpdate({ car, onClose, open }) {
     setShowSeatConfig(false); // Hide the seat configuration when seater is selected
   };
 
+  useEffect(() => {
+    if (car) {
+      setMake(car.make || "");
+      setModel(car.model || "");
+      setYear(car.year || "");
+      setCarNumber(car.carNumber || "");
+      setImages([]); // Optional: fresh upload only
+      setPrice(car.price || "");
+      setFrom(car.from || "");
+      setTo(car.to || "");
+      setAvailableFrom(car.availableFrom || "");
+      setAvailableTo(car.availableTo || "");
+      setPerPersonCost(car.perPersonCost || "");
+      setSeater(car.seater || "");
+      setExtraKm(car.extraKm || "");
+      setColor(car.color || "");
+      setMileage(car.mileage || "");
+      setFuelType(car.fuelType || "");
+      setTransmission(car.transmission || "");
+      setRunningStatus(car.runningStatus || "");
+      setIsAvailable(car.isAvailable !== undefined ? car.isAvailable : true);
+    }
+  }, [car]);
+  
+  
   return (
     <Dialog onClose={onClose} open={open} maxWidth="xl">
       <DialogContent sx={{ width: "80vw", p: 3 }}>
         <Box
           sx={{
-            border: "2px dotted #000", 
-            borderRadius: 1, 
-            padding: "8px", 
-            display: "inline-block", 
+            border: "2px dotted #000",
+            borderRadius: 1,
+            padding: "8px",
+            display: "inline-block",
           }}
         >
           <Typography variant="p5" align="center" gutterBottom>
@@ -183,7 +211,7 @@ export default function CarUpdate({ car, onClose, open }) {
           {/* Basic Car Info */}
           <Grid item xs={12} sm={4}>
             <Autocomplete
-              value={make || car?.make}
+              value={make}
               onChange={(e, newValue) => setMake(newValue)}
               options={makes}
               renderInput={(params) => (
@@ -199,12 +227,16 @@ export default function CarUpdate({ car, onClose, open }) {
           </Grid>
 
           <Grid item xs={12} sm={4}>
-            <TextField
-              label="Model"
+            <Autocomplete
+              value={model}
+              onChange={(e, newValue) => setModel(newValue)}
+              options={filteredModels.map((car) => car.model)}
+              renderInput={(params) => (
+                <TextField {...params} label="Model" variant="outlined" />
+              )}
               fullWidth
-              variant="outlined"
-              value={model || car?.model}
-              onChange={(e) => setModel(e.target.value)}
+              margin="normal"
+              freeSolo
             />
           </Grid>
 
@@ -214,8 +246,19 @@ export default function CarUpdate({ car, onClose, open }) {
               fullWidth
               type="number"
               variant="outlined"
-              value={year || car?.year}
+              value={year}
               onChange={(e) => setYear(e.target.value)}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Car Number"
+              fullWidth
+              type="text"
+              variant="outlined"
+              value={carNumber}
+              onChange={(e) => setCarNumber(e.target.value)}
             />
           </Grid>
 
@@ -224,7 +267,7 @@ export default function CarUpdate({ car, onClose, open }) {
             <FormControl fullWidth>
               <InputLabel>Color</InputLabel>
               <Select
-                value={color || car?.color}
+                value={color}
                 onChange={(e) => setColor(e.target.value)}
                 label="Color"
               >
@@ -243,7 +286,7 @@ export default function CarUpdate({ car, onClose, open }) {
             <FormControl fullWidth>
               <InputLabel>Seater</InputLabel>
               <Select
-                value={seater || car?.seater || ""}
+                value={seater}
                 onChange={handleSeaterChange}
                 label="Seater"
               >
@@ -265,7 +308,7 @@ export default function CarUpdate({ car, onClose, open }) {
             <FormControl fullWidth>
               <InputLabel>Fuel Type</InputLabel>
               <Select
-                value={fuelType || car?.fuelType}
+                value={fuelType}
                 onChange={(e) => setFuelType(e.target.value)}
                 label="Fuel Type"
               >
@@ -283,7 +326,7 @@ export default function CarUpdate({ car, onClose, open }) {
             <FormControl fullWidth>
               <InputLabel>Transmission</InputLabel>
               <Select
-                value={transmission || car?.transmission}
+                value={transmission}
                 onChange={(e) => setTransmission(e.target.value)}
                 label="Transmission"
               >
@@ -299,7 +342,7 @@ export default function CarUpdate({ car, onClose, open }) {
               fullWidth
               type="number"
               variant="outlined"
-              value={mileage || car?.mileage}
+              value={mileage}
               onChange={(e) => setMileage(e.target.value)}
               InputProps={{
                 startAdornment: (
@@ -315,7 +358,7 @@ export default function CarUpdate({ car, onClose, open }) {
             <TextField
               label="Pickup Location"
               fullWidth
-              value={from || car?.from}
+              value={from}
               onChange={(e) => setFrom(e.target.value)}
               InputProps={{
                 startAdornment: (
@@ -331,7 +374,7 @@ export default function CarUpdate({ car, onClose, open }) {
             <TextField
               label="Drop Location"
               fullWidth
-              value={to || car?.to}
+              value={to}
               onChange={(e) => setTo(e.target.value)}
               InputProps={{
                 startAdornment: (
@@ -349,7 +392,7 @@ export default function CarUpdate({ car, onClose, open }) {
               label="Available From"
               type="date"
               fullWidth
-              value={availableFrom || car?.availableFrom}
+              value={availableFrom}
               onChange={(e) => setAvailableFrom(e.target.value)}
               InputLabelProps={{ shrink: true }}
             />
@@ -360,7 +403,7 @@ export default function CarUpdate({ car, onClose, open }) {
               label="Available To"
               type="date"
               fullWidth
-              value={availableTo || car?.availableTo}
+              value={availableTo}
               onChange={(e) => setAvailableTo(e.target.value)}
               InputLabelProps={{ shrink: true }}
             />
@@ -372,7 +415,7 @@ export default function CarUpdate({ car, onClose, open }) {
               label="Full Ride Price"
               type="number"
               fullWidth
-              value={price || car?.price}
+              value={price}
               onChange={(e) => setPrice(e.target.value)}
               InputProps={{
                 startAdornment: (
@@ -389,7 +432,7 @@ export default function CarUpdate({ car, onClose, open }) {
               label="Per Person Cost"
               type="number"
               fullWidth
-              value={perPersonCost || car?.perPersonCost}
+              value={perPersonCost}
               onChange={(e) => setPerPersonCost(e.target.value)}
               InputProps={{
                 startAdornment: (
@@ -405,7 +448,7 @@ export default function CarUpdate({ car, onClose, open }) {
             <TextField
               label="Extra KM Charge"
               fullWidth
-              value={extraKm || car?.extraKm}
+              value={extraKm}
               onChange={(e) => setExtraKm(e.target.value)}
             />
             {extraKm === "" && (

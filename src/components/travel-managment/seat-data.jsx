@@ -19,21 +19,22 @@ export default function SeatData({ open, onClose, id }) {
   const dispatch = useDispatch();
   const seatData = useSelector((state) => state.car.seatsData);
   const [selectedSeat, setSelectedSeat] = useState(null);
-
   const [customerName, setCustomerName] = useState("");
+  const [customerMobile, setCustomerMobile] = useState("");
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+
   const GST_RATE = 0.18;
   const GST_THRESHOLD = 1000;
 
   useEffect(() => {
-    if (id) {
+    if (id && open) {
       dispatch(getSeatsData(id));
     }
-  }, [id, dispatch]);
+  }, [id, open, dispatch]);
 
   const handleSeatClick = (seat) => {
     if (!seat.isBooked) {
-      setSelectedSeat(selectedSeat?._id === seat._id ? null : seat); // Toggle selection
+      setSelectedSeat(selectedSeat?._id === seat._id ? null : seat);
     }
   };
 
@@ -50,17 +51,24 @@ export default function SeatData({ open, onClose, id }) {
           seatId: selectedSeat._id,
           carId: id,
           bookedBy: customerName,
-        }),
+          customerMobile: customerMobile,
+        })
       );
       setSelectedSeat(null);
       setCustomerName("");
+      setCustomerMobile("");
       setIsBookingDialogOpen(false);
     }
   };
 
-  // GST Calculation
-  const gstAmount = selectedSeat ? selectedSeat.seatPrice * GST_RATE : 0;
-  const totalPrice = selectedSeat ? selectedSeat.seatPrice + gstAmount : 0;
+  const gstAmount =
+    selectedSeat && selectedSeat.seatPrice > GST_THRESHOLD
+      ? selectedSeat.seatPrice * GST_RATE
+      : 0;
+
+  const totalPrice = selectedSeat
+    ? selectedSeat.seatPrice + gstAmount
+    : 0;
 
   return (
     <>
@@ -75,54 +83,51 @@ export default function SeatData({ open, onClose, id }) {
         >
           <Typography>Select Available Seats</Typography>
         </Box>
+
         <DialogContent>
           <div className="seat-container">
-            {seatData &&
-              Array.isArray(seatData) &&
-              seatData?.map((car) =>
-                car.seats.map((data) => (
+            {Array.isArray(seatData) &&
+              seatData.map((car) =>
+                car.seats.map((seat) => (
                   <div
-                    key={data._id}
+                    key={seat._id}
                     className={`seat ${
-                      data.isBooked
+                      seat.isBooked
                         ? "booked"
-                        : selectedSeat?._id === data._id
-                          ? "selected"
-                          : "available"
+                        : selectedSeat?._id === seat._id
+                        ? "selected"
+                        : "available"
                     }`}
-                    onClick={() => handleSeatClick(data)}
+                    onClick={() => handleSeatClick(seat)}
                   >
                     <FaChair className="seat-icon" />
-                    <div className="seat-type">{data.seatType}</div>
-                    <div className="seat-number">Seat: {data.seatNumber}</div>
-                    <div className="seat-price">₹{data.seatPrice}</div>
-                    {data.isBooked && <div className="booked-by">Booked</div>}
+                    <div className="seat-type">{seat.seatType}</div>
+                    <div className="seat-number">Seat: {seat.seatNumber}</div>
+                    <div className="seat-price">₹{seat.seatPrice}</div>
+                    {seat.isBooked && <div className="booked-by">Booked</div>}
                   </div>
-                )),
+                ))
               )}
           </div>
 
-          {/* GST Details Section (Only Show When Seat Data Exists & a Seat is Selected) */}
           {selectedSeat && (
             <Paper elevation={3} className="gst-details">
               <Typography variant="h6" className="gst-title">
                 🧾 Pricing Breakdown
               </Typography>
               <div className="gst-row">
-                <Typography variant="body1">💺 Seat Price:</Typography>
-                <Typography variant="body1">
-                  ₹{selectedSeat.seatPrice}
-                </Typography>
+                <Typography>💺 Seat Price:</Typography>
+                <Typography>₹{selectedSeat.seatPrice}</Typography>
               </div>
               <div className="gst-row">
-                <Typography variant="body1">🧮 GST (18%):</Typography>
-                <Typography variant="body1">₹{gstAmount.toFixed(2)}</Typography>
+                <Typography>🧮 GST (18%):</Typography>
+                <Typography>₹{gstAmount.toFixed(2)}</Typography>
               </div>
               <div className="gst-row total">
                 <Typography variant="h6">💰 Total Price:</Typography>
                 <Typography variant="h6">₹{totalPrice.toFixed(2)}</Typography>
               </div>
-              <Typography variant="body2" className="gst-note">
+              <Typography className="gst-note">
                 * GST is applied at 18% if the price exceeds ₹{GST_THRESHOLD}.
               </Typography>
             </Paper>
@@ -143,18 +148,25 @@ export default function SeatData({ open, onClose, id }) {
         </DialogActions>
       </Dialog>
 
-      {/* Booking Dialog */}
       <Dialog
         open={isBookingDialogOpen}
         onClose={() => setIsBookingDialogOpen(false)}
       >
-        <DialogTitle>Enter Customer Name</DialogTitle>
+        <DialogTitle>Enter Customer Details</DialogTitle>
         <DialogContent>
           <TextField
             label="Customer Name"
             fullWidth
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
+            margin="dense"
+          />
+          <TextField
+            label="Customer Mobile"
+            fullWidth
+            value={customerMobile}
+            onChange={(e) => setCustomerMobile(e.target.value)}
+            margin="dense"
           />
         </DialogContent>
         <DialogActions>
@@ -170,7 +182,6 @@ export default function SeatData({ open, onClose, id }) {
           </Button>
         </DialogActions>
       </Dialog>
-
     </>
   );
 }

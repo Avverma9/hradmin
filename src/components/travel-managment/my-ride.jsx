@@ -142,8 +142,8 @@ const MyCar = () => {
                       <FaMapMarkerAlt /> Drop: {car?.to}
                     </div>
                     <div>
-                      <AiOutlineCalendar /> From {fDate(car?.availableFrom)} to{" "}
-                      {fDate(car?.availableTo)}
+                      <AiOutlineCalendar /> From {(car?.availableFrom)} to{" "}
+                      {(car?.availableTo)}
                     </div>
                   </div>
                 </div>

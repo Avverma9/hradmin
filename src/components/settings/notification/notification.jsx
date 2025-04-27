@@ -1,6 +1,6 @@
-import axios from 'axios';
-import { toast } from 'react-toastify';
-import React, { useState, useEffect } from 'react';
+import axios from "axios";
+import { toast } from "react-toastify";
+import React, { useState, useEffect } from "react";
 
 import {
   Table,
@@ -19,15 +19,15 @@ import {
   DialogContent,
   TableContainer,
   CircularProgress,
-} from '@mui/material';
+} from "@mui/material";
 
-import { localUrl } from '../../../../utils/util';
+import { localUrl } from "../../../../utils/util";
 
-import { fDateTime } from '../../../../utils/format-time';
+import { fDateTime } from "../../../../utils/format-time";
 
-import WhoSeen from './who-seen';
-import UserNotification from './user-notification-modal';
-import GlobalNotification from './global-notification-modal';
+import WhoSeen from "./who-seen";
+import UserNotification from "./user-notification-modal";
+import GlobalNotification from "./global-notification-modal";
 
 const Notification = () => {
   const [notifications, setNotifications] = useState({ User: [], Global: [] });
@@ -40,10 +40,12 @@ const Notification = () => {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await axios.get(`${localUrl}/find/all/by/list/of/user/for/notification`);
+        const response = await axios.get(
+          `${localUrl}/find/all/by/list/of/user/for/notification`,
+        );
         setNotifications(response.data);
       } catch (error) {
-        console.error('Error fetching notifications:', error);
+        console.error("Error fetching notifications:", error);
       } finally {
         setLoading(false);
       }
@@ -60,8 +62,10 @@ const Notification = () => {
   const handleOpenWhoSeen = (ids) => {
     const seenUserIds = ids.filter(
       (id) =>
-        notifications.User.some((notification) => notification.seenBy[id] === true) ||
-        notifications.Global.some((notification) => notification.seenBy[id])
+        notifications.User.some(
+          (notification) => notification.seenBy[id] === true,
+        ) ||
+        notifications.Global.some((notification) => notification.seenBy[id]),
     );
     setUserIds(seenUserIds);
     setOpenWhoSeen(true);
@@ -72,36 +76,36 @@ const Notification = () => {
   const handleDeleteGlobalById = async (notificationId) => {
     try {
       const response = await axios.delete(
-        `${localUrl}/find/all/by/list/of/user/for/notification/and-delete-global/${notificationId}`
+        `${localUrl}/find/all/by/list/of/user/for/notification/and-delete-global/${notificationId}`,
       );
       if (response.status === 200) {
-        toast.success('Deleted a global notification');
+        toast.success("Deleted a global notification");
         setNotifications((prev) => ({
           ...prev,
           Global: prev.Global.filter((notif) => notif._id !== notificationId),
         }));
       }
     } catch (error) {
-      console.error('Error deleting global notification:', error);
-      toast.error('Failed to delete global notification');
+      console.error("Error deleting global notification:", error);
+      toast.error("Failed to delete global notification");
     }
   };
 
   const handleDeleteUserById = async (notificationId) => {
     try {
       const response = await axios.delete(
-        `${localUrl}/find/all/by/list/of/user/for/notification/and-delete/user/${notificationId}`
+        `${localUrl}/find/all/by/list/of/user/for/notification/and-delete/user/${notificationId}`,
       );
       if (response.status === 200) {
-        toast.success('Deleted a user notification');
+        toast.success("Deleted a user notification");
         setNotifications((prev) => ({
           ...prev,
           User: prev.User.filter((notif) => notif._id !== notificationId),
         }));
       }
     } catch (error) {
-      console.error('Error deleting user notification:', error);
-      toast.error('Failed to delete user notification');
+      console.error("Error deleting user notification:", error);
+      toast.error("Failed to delete user notification");
     }
   };
 
@@ -122,7 +126,16 @@ const Notification = () => {
             data.map((notification) => (
               <TableRow key={notification._id}>
                 <TableCell>{notification.name}</TableCell>
-                <TableCell>{notification.message}</TableCell>
+                <TableCell
+                  style={{
+                    maxWidth: "200px", // Adjust the width as needed
+                    overflow: "auto",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {notification.message}
+                </TableCell>
                 <TableCell>{fDateTime(notification.createdAt)}</TableCell>
                 <TableCell>
                   <Button
@@ -134,7 +147,7 @@ const Notification = () => {
                   </Button>
                 </TableCell>
                 <TableCell>
-                  {type === 'User' ? (
+                  {type === "User" ? (
                     <Button
                       variant="contained"
                       color="error"
@@ -165,17 +178,17 @@ const Notification = () => {
       </Table>
     </TableContainer>
   );
-  console.log('here is userIds ', userIds);
+  console.log("here is userIds ", userIds);
 
   return (
     <Container maxWidth="lg">
       <div
         style={{
-          border: '1px solid #FF5733', // Change this color as needed
-          borderRadius: '4px',
-          padding: '10px',
-          display: 'inline-block', // Adjust width to text size
-          marginBottom: '20px',
+          border: "1px solid #FF5733", // Change this color as needed
+          borderRadius: "4px",
+          padding: "10px",
+          display: "inline-block", // Adjust width to text size
+          marginBottom: "20px",
         }}
       >
         <Typography variant="h5" gutterBottom>
@@ -184,8 +197,10 @@ const Notification = () => {
       </div>
 
       <Typography variant="body1" gutterBottom>
-        There are two types of notification 1st user notification 2nd Global notification , <hr />
-        In User notification you can send notification to a particular partner <hr />
+        There are two types of notification 1st user notification 2nd Global
+        notification , <hr />
+        In User notification you can send notification to a particular partner{" "}
+        <hr />
         In Global notification you can send notification to all partner , <hr />
         View seen by button is used to check who seen your notification
       </Typography>
@@ -216,11 +231,11 @@ const Notification = () => {
         <DialogTitle>
           <div
             style={{
-              border: '1px solid #FF5733', // Change this color as needed
-              borderRadius: '4px',
-              padding: '10px',
-              display: 'inline-block', // Adjust width to text size
-              marginBottom: '10px', // Optional, adjust spacing as needed
+              border: "1px solid #FF5733", // Change this color as needed
+              borderRadius: "4px",
+              padding: "10px",
+              display: "inline-block", // Adjust width to text size
+              marginBottom: "10px", // Optional, adjust spacing as needed
             }}
           >
             User Notification
@@ -247,11 +262,11 @@ const Notification = () => {
         <DialogTitle>
           <div
             style={{
-              border: '1px solid #FF5733', // Change this color as needed
-              borderRadius: '4px',
-              padding: '10px',
-              display: 'inline-block', // Adjust width to text size
-              marginBottom: '10px', // Optional, adjust spacing as needed
+              border: "1px solid #FF5733", // Change this color as needed
+              borderRadius: "4px",
+              padding: "10px",
+              display: "inline-block", // Adjust width to text size
+              marginBottom: "10px", // Optional, adjust spacing as needed
             }}
           >
             Global Notification
@@ -272,10 +287,10 @@ const Notification = () => {
       {loading ? (
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '60vh',
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "60vh",
           }}
         >
           <CircularProgress />
@@ -286,18 +301,22 @@ const Notification = () => {
           <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
             User Notifications
           </Typography>
-          {renderTable(notifications.User, 'User')}
+          {renderTable(notifications.User, "User")}
 
           {/* Render Global Notifications Table */}
           <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
             Global Notifications
           </Typography>
-          {renderTable(notifications.Global, 'Global')}
+          {renderTable(notifications.Global, "Global")}
         </>
       )}
 
       {/* Render Who Seen Modal */}
-      <WhoSeen open={openWhoSeen} onClose={handleCloseWhoSeen} userIds={userIds} />
+      <WhoSeen
+        open={openWhoSeen}
+        onClose={handleCloseWhoSeen}
+        userIds={userIds}
+      />
 
       <Divider sx={{ mt: 4 }} />
     </Container>

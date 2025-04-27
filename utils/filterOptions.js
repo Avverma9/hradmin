@@ -1,4 +1,23 @@
+import { useDispatch } from "react-redux";
 import { role } from "./util";
+import { useEffect } from "react";
+import { getTravelAmenities } from "src/components/redux/reducers/additional";
+
+// Custom Hook to fetch and export travelAmenities
+export const TravelAmenties = () => {
+  const dispatch = useDispatch();
+
+  // Getting the travelAmenities data from the Redux store
+  const { travelAmenities } = useSelector((state) => state.additional);
+
+  useEffect(() => {
+    // Dispatching action to get travel amenities
+    dispatch(getTravelAmenities());
+  }, [dispatch]);
+
+  // Returning travelAmenities to be used anywhere else
+  return travelAmenities;
+};
 
 export const roomTypes = [
   "Single Room",
@@ -108,25 +127,6 @@ export const allAmenities = [
   { name: "Kitchen", id: "kitchen" },
 ];
 
-export const TravelAmenties = [
-  "Flight Reservations",
-  "Hotel Booking",
-  "Cruise Bookings",
-  "Train/Bus Tickets",
-  "Airport Transfers",
-  "Sightseeing Transport",
-  "Visa Assistance",
-  "Travel Insurance",
-  "Tour Guide Services",
-  "Car Rental",
-  "24x7 Support",
-  "Customized Packages",
-  "Event Travel Coordination",
-  "Foreign Exchange",
-  "Mobile Travel App",
-  "Luxury Coach Booking",
-  "Destination Wedding Planning",
-];
 
 export const paths = [
   { title: "Dashboard", path: "/dashboard", role: "PMS" },

@@ -23,11 +23,13 @@ import { userId } from "../../../utils/util";
 import { PhotoCamera, Speed } from "@mui/icons-material";
 import { FaIndianRupeeSign } from "react-icons/fa6";
 import { FaLocationArrow } from "react-icons/fa";
+import { TravelAmenties } from "../../../utils/filterOptions";
 
 export default function CarForm() {
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
   const [year, setYear] = useState("");
+  const [carNumber, setNumber] = useState("");
   const [images, setImages] = useState([]);
   const [price, setPrice] = useState("");
   const [from, setFrom] = useState("");
@@ -102,6 +104,7 @@ export default function CarForm() {
     formData.append("extraKm", extraKm);
     formData.append("runningStatus", runningStatus);
     formData.append("year", year);
+    formData.append("carNumber", carNumber);
     formData.append("price", price);
     formData.append("from", from);
     formData.append("availableFrom", availableFrom);
@@ -185,6 +188,7 @@ export default function CarForm() {
     ]);
   };
 
+
   return (
     <Card sx={{ margin: "0 auto", padding: 3 }}>
       {" "}
@@ -239,6 +243,19 @@ export default function CarForm() {
                 margin="normal"
               />
             </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <TextField
+                label="Car Number"
+                variant="outlined"
+                fullWidth
+                type="number"
+                value={carNumber}
+                onChange={(e) => setNumber(e.target.value)}
+                margin="normal"
+              />
+            </Grid>
+
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth margin="normal">
                 <InputLabel>Color</InputLabel>

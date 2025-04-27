@@ -17,7 +17,6 @@ import { format } from "date-fns"; // Import format from date-fns
 import SeatData from "./seat-data";
 import { FaLocationArrow, FaMapMarkerAlt } from "react-icons/fa";
 import { AiOutlineCalendar } from "react-icons/ai";
-import { fDate } from "../../../utils/format-time";
 
 const Cars = () => {
   const dispatch = useDispatch();
@@ -324,8 +323,8 @@ const Cars = () => {
                         <FaMapMarkerAlt /> Drop: {car?.to}
                       </div>
                       <div>
-                        <AiOutlineCalendar /> From {fDate(car?.availableFrom)}{" "}
-                        to {fDate(car?.availableTo)}
+                        <AiOutlineCalendar /> From {(car?.availableFrom)}{" "}
+                        to {(car?.availableTo)}
                       </div>
                     </div>
                   </div>
