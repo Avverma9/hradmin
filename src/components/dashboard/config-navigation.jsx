@@ -115,7 +115,7 @@ const getNavConfig = async () => {
             children: [
                 { title: 'Complaints', path: '/your-complaints', icon: icons.complaints },
                 { title: 'Your Hotel', icon: icons.hotels, path: '/your-hotels' },
-                { title: 'Set Monthly Price', icon: icons.setMonthlyPrice, path: '/hotels/monthly-price' },
+                { title: 'Set Monthly Price', icon: icons.setMonthlyPrice, path: '/hotels/monthly-price-pms' },
                 { title: 'Manage Coupons', path: '/apply-pms-coupon', icon: icons.coupon },
             ],
         },

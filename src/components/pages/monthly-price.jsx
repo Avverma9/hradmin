@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-import MonthlyPrice from '../hotels/monthly-price';
+import MonthlyPrice from '../settings/monthly/monthly-price';
 
 // ----------------------------------------------------------------------
 

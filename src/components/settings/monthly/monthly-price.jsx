@@ -32,8 +32,8 @@ import {
   Grid,
 } from '@mui/material';
 
-import { localUrl } from '../../../utils/util';
-import { fDate } from '../../../utils/format-time';
+import { localUrl } from '../../../../utils/util';
+import { fDate } from '../../../../utils/format-time';
 
 export default function MonthlyPrice() {
   const [startDate, setStartDate] = useState(null);
