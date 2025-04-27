@@ -1,51 +1,66 @@
 /* eslint-disable import/no-extraneous-dependencies */
-import PropTypes from 'prop-types';
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PiBathtubThin } from 'react-icons/pi';
-import { IoFastFoodSharp } from 'react-icons/io5';
-import { FaPersonCircleCheck } from 'react-icons/fa6';
-import { FcHome, FcViewDetails } from 'react-icons/fc';
+import PropTypes from "prop-types";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { PiBathtubThin } from "react-icons/pi";
+import { IoFastFoodSharp } from "react-icons/io5";
+import { FaPersonCircleCheck } from "react-icons/fa6";
+import { FcHome, FcViewDetails } from "react-icons/fc";
 
-import { styled } from '@mui/system';
-import { Box, Link, Card, Stack, Button, Tooltip, IconButton } from '@mui/material';
+import { styled } from "@mui/system";
+import {
+  Box,
+  Link,
+  Card,
+  Stack,
+  Button,
+  Tooltip,
+  IconButton,
+  Chip,
+} from "@mui/material";
 
-import Label from '../../../stuff/label';
+import Label from "../../../stuff/label";
 
-import AddFoodModal from '../../manage-foods'; // Import the AddFoodModal component
-import Amenities from '../../manage-amenties';
-import AddRoomModal from '../../manage-rooms';
-import BasicDetails from '../../basic-details';
+import AddFoodModal from "../../manage-foods"; // Import the AddFoodModal component
+import Amenities from "../../manage-amenties";
+import AddRoomModal from "../../manage-rooms";
+import BasicDetails from "../../basic-details";
 
 // Styled component for the action button container
-const ActionButtonContainer = styled('div')(({ theme }) => ({
-  position: 'relative',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
+const ActionButtonContainer = styled("div")(({ theme }) => ({
+  position: "relative",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
   height: 48,
   marginTop: theme.spacing(2),
-  '&:hover .action-buttons': {
+  "&:hover .action-buttons": {
     opacity: 1,
   },
 }));
 
 // Styled component for the action buttons
-const ActionButtonOverlay = styled('div')(({ theme }) => ({
-  position: 'absolute',
+const ActionButtonOverlay = styled("div")(({ theme }) => ({
+  position: "absolute",
   bottom: 0,
   left: 0,
   right: 0,
   backgroundColor: theme.palette.background.paper,
   padding: theme.spacing(1),
   boxShadow: theme.shadows[4],
-  display: 'flex',
-  justifyContent: 'center',
+  display: "flex",
+  justifyContent: "center",
   gap: theme.spacing(1),
   zIndex: 10,
 }));
 
-function ShopProductCard({ product, onAddFood, onUpdateAmenities, onAddRoom, onBasicDetails }) {
+function ShopProductCard({
+  product,
+  onAddFood,
+  onUpdateAmenities,
+  onAddRoom,
+  onBasicDetails,
+}) {
   const navigate = useNavigate();
   const [isModalOpen, setModalOpen] = useState(false);
   const [isAmenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
@@ -104,8 +119,8 @@ function ShopProductCard({ product, onAddFood, onUpdateAmenities, onAddRoom, onB
         zIndex: 9,
         top: 16,
         right: 16,
-        position: 'absolute',
-        textTransform: 'uppercase',
+        position: "absolute",
+        textTransform: "uppercase",
       }}
     >
       {product?.price}
@@ -121,8 +136,8 @@ function ShopProductCard({ product, onAddFood, onUpdateAmenities, onAddRoom, onB
         top: 0,
         width: 1,
         height: 1,
-        objectFit: 'cover',
-        position: 'absolute',
+        objectFit: "cover",
+        position: "absolute",
       }}
     />
   );
@@ -130,7 +145,7 @@ function ShopProductCard({ product, onAddFood, onUpdateAmenities, onAddRoom, onB
   return (
     <>
       <Card onClick={() => viewDetails(product.hotelId)}>
-        <Box sx={{ pt: '100%', position: 'relative' }}>
+        <Box sx={{ pt: "100%", position: "relative" }}>
           {product.price && renderStatus}
           {renderImg}
         </Box>
@@ -142,8 +157,12 @@ function ShopProductCard({ product, onAddFood, onUpdateAmenities, onAddRoom, onB
           <Link color="inherit" underline="hover" variant="subtitle2" noWrap>
             <FaPersonCircleCheck /> Owner - {product?.hotelOwnerName}
           </Link>
-          <Button variant="outlined" color={product?.isAccepted ? 'success' : 'warning'} noWrap>
-            {product?.isAccepted === true ? 'Live' : 'Needs approval'}
+          <Button
+            variant="outlined"
+            color={product?.isAccepted ? "success" : "warning"}
+            noWrap
+          >
+            {product?.isAccepted === true ? "Live" : "Needs approval"}
           </Button>
         </Stack>
 
@@ -201,7 +220,20 @@ function ShopProductCard({ product, onAddFood, onUpdateAmenities, onAddRoom, onB
           </ActionButtonOverlay>
         </ActionButtonContainer>
       </Card>
-
+      {product?.rooms.some((room) => room.isOffer) && (
+        <Tooltip title="Offer Running">
+          <Chip
+            size="small"
+            label="Offer"
+            color="primary"
+            sx={{
+              ml: 1,
+              height: "20px",
+              fontSize: "0.7rem",
+            }}
+          />
+        </Tooltip>
+      )}
       {/* AddFoodModal Component */}
       <AddFoodModal
         open={isModalOpen}

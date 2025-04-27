@@ -19,6 +19,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Tooltip,
 } from "@mui/material";
 
 import {
@@ -465,7 +466,26 @@ export default function Coupon() {
                       }}
                     />
                   </TableCell>
-                  <TableCell>{hotel.hotelName}</TableCell>
+                  <TableCell>
+                    {hotel.hotelName}
+                    {hotel.rooms?.some((room) => room.isOffer) && (
+                      <Tooltip title="Offer available" arrow>
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: "8px",
+                            height: "8px",
+                            backgroundColor: "blue",
+                            borderRadius: "50%",
+                            marginLeft: "8px",
+                            verticalAlign: "middle",
+                            cursor: "pointer",
+                          }}
+                        ></span>
+                      </Tooltip>
+                    )}
+                  </TableCell>
+
                   <TableCell>{hotel.hotelOwnerName}</TableCell>
                   <TableCell>{hotel.city}</TableCell>
                   <TableCell>

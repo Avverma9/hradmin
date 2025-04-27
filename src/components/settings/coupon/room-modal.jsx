@@ -1,8 +1,7 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { useDispatch } from 'react-redux';
-import { IoMdClose } from 'react-icons/io';
-
+import React from "react";
+import PropTypes from "prop-types";
+import { useDispatch } from "react-redux";
+import { IoMdClose } from "react-icons/io";
 import {
   Table,
   Dialog,
@@ -16,18 +15,24 @@ import {
   DialogTitle,
   DialogActions,
   DialogContent,
-} from '@mui/material';
+  Tooltip,
+  Chip,
+} from "@mui/material";
+import { fDateTime, indianTime } from "../../../../utils/format-time";
+import { removeBulkCoupon } from "src/components/redux/reducers/coupon";
+import { useLoader } from "../../../../utils/loader";
 
-import { fDateTime } from '../../../../utils/format-time';
-import { removeBulkCoupon } from 'src/components/redux/reducers/coupon';
-import { useLoader } from '../../../../utils/loader';
-
-const RoomModal = ({ open, handleClose, selectedHotel, handleOpenCouponModal }) => {
+const RoomModal = ({
+  open,
+  handleClose,
+  selectedHotel,
+  handleOpenCouponModal,
+}) => {
   const dispatch = useDispatch();
   const { showLoader, hideLoader } = useLoader();
+
   const removeCoupon = async () => {
     try {
-
       const payload = {
         hotelIds: [selectedHotel.hotelId],
       };
@@ -35,7 +40,7 @@ const RoomModal = ({ open, handleClose, selectedHotel, handleOpenCouponModal }) 
       await dispatch(removeBulkCoupon(payload)).unwrap();
       window.location.reload();
     } catch (error) {
-      console.error('Failed to remove coupon:', error);
+      console.error("Failed to remove coupon:", error);
     } finally {
       hideLoader();
     }
@@ -43,58 +48,93 @@ const RoomModal = ({ open, handleClose, selectedHotel, handleOpenCouponModal }) 
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
-      <DialogTitle>
-        Rooms of {selectedHotel?.hotelName}
+      <DialogTitle sx={{ pb: 1, pr: 6 }}>
+        <Typography variant="h6">Rooms - {selectedHotel?.hotelName}</Typography>
         <IconButton
           edge="end"
-          color="inherit"
           onClick={handleClose}
           aria-label="close"
-          sx={{ position: 'absolute', right: 8, top: 8 }}
+          sx={{ position: "absolute", right: 8, top: 8 }}
         >
           <IoMdClose />
         </IconButton>
       </DialogTitle>
-      <DialogContent>
+
+      <DialogContent sx={{ px: 2 }}>
         {selectedHotel?.rooms && selectedHotel.rooms.length > 0 ? (
-          <Table>
+          <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Type</TableCell>
-                <TableCell>Bed Types</TableCell>
+                <TableCell>Bed</TableCell>
                 <TableCell>Price</TableCell>
-                <TableCell>Count Rooms</TableCell>
-                <TableCell>Offer Price Less</TableCell>
-                <TableCell>Offer Expiry</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell>Rooms</TableCell>
+                <TableCell>Offer ₹</TableCell>
+                <TableCell>Expires</TableCell>
+                <TableCell align="center">Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {selectedHotel.rooms.map((room) => (
-                <TableRow key={room.roomId}>
-                  <TableCell>{room.type}</TableCell>
-                  <TableCell>{room.bedTypes}</TableCell>
-                  <TableCell>{room.price}</TableCell>
+                <TableRow key={room.roomId} hover>
+                  <TableCell
+                    sx={{
+                      maxWidth: 150,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    <Typography variant="body2">
+                      {room.type}
+                      {room.isOffer && (
+                        <Tooltip title="Offer Running">
+                          <Chip
+                            size="small"
+                            label="Offer"
+                            color="primary"
+                            sx={{
+                              ml: 1,
+                              height: "20px",
+                              fontSize: "0.7rem",
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>{room.bedTypes || "-"}</TableCell>
+                  <TableCell>₹{room.price}</TableCell>
                   <TableCell>{room.countRooms}</TableCell>
-                  <TableCell>{room.offerPriceLess}</TableCell>
-                  <TableCell>{fDateTime(room.offerExp)}</TableCell>
                   <TableCell>
+                    {room.isOffer ? `₹${room.offerPriceLess}` : "-"}
+                  </TableCell>
+                  <TableCell>
+                    {room.isOffer ? indianTime(room.offerExp) : "-"}
+                  </TableCell>
+                  <TableCell align="center">
                     {room.isOffer ? (
-                      <Button
-                        variant="contained"
-                        color="error"
-                        onClick={removeCoupon}
-                      >
-                        Remove
-                      </Button>
+                      <Tooltip title="Remove Offer">
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          onClick={removeCoupon}
+                        >
+                          Remove
+                        </Button>
+                      </Tooltip>
                     ) : (
-                      <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={() => handleOpenCouponModal(room)}
-                      >
-                        Apply
-                      </Button>
+                      <Tooltip title="Apply Offer">
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="success"
+                          onClick={() => handleOpenCouponModal(room)}
+                        >
+                          Apply
+                        </Button>
+                      </Tooltip>
                     )}
                   </TableCell>
                 </TableRow>
@@ -102,11 +142,14 @@ const RoomModal = ({ open, handleClose, selectedHotel, handleOpenCouponModal }) 
             </TableBody>
           </Table>
         ) : (
-          <Typography>No rooms available</Typography>
+          <Typography variant="body2" color="textSecondary">
+            No rooms available.
+          </Typography>
         )}
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} color="primary">
+
+      <DialogActions sx={{ pr: 2, pb: 2 }}>
+        <Button onClick={handleClose} variant="outlined" color="primary">
           Close
         </Button>
       </DialogActions>
@@ -118,11 +161,13 @@ RoomModal.propTypes = {
   open: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
   selectedHotel: PropTypes.shape({
-    hotelId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    hotelId: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+      .isRequired,
     hotelName: PropTypes.string,
     rooms: PropTypes.arrayOf(
       PropTypes.shape({
-        roomId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+        roomId: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+          .isRequired,
         type: PropTypes.string,
         bedTypes: PropTypes.string,
         price: PropTypes.number,
@@ -130,7 +175,7 @@ RoomModal.propTypes = {
         offerPriceLess: PropTypes.number,
         offerExp: PropTypes.string,
         isOffer: PropTypes.bool,
-      })
+      }),
     ),
   }),
   handleOpenCouponModal: PropTypes.func.isRequired,

@@ -106,6 +106,7 @@ export const bookSeat = createAsyncThunk('car/bookSeat', async (data, { rejectWi
             },
         });
         notify(response?.status);
+        
         return response.data;
     } catch (error) {
         const errorMessage = error.response?.data?.message || error.message;

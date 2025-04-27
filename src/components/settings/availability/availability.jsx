@@ -215,16 +215,23 @@ const HotelAvailability = () => {
             <TableHead>
               <TableRow>
                 <TableCell>Hotel Name</TableCell>
-                <TableCell>Total Rooms</TableCell>
-                <TableCell>Booked Rooms</TableCell>
-                <TableCell>Available Rooms</TableCell>
+                <TableCell>Total </TableCell>
+                <TableCell>Booked</TableCell>
+                <TableCell>Booked Before Listing</TableCell>
+                <TableCell>Available </TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredHotels.map((hotel) => (
                 <TableRow key={hotel.hotelId}>
-                  <TableCell>
+                  <TableCell
+                    style={{
+                      maxWidth: 200,
+                      whiteSpace: "normal",
+                      wordBreak: "break-word",
+                    }}
+                  >
                     <Link
                       to={`/view-hotel-details/${hotel.hotelId}`}
                       style={{ textDecoration: "none", color: "inherit" }}
@@ -232,12 +239,22 @@ const HotelAvailability = () => {
                       {hotel.hotelName} ({hotel.city})
                     </Link>
                   </TableCell>
+
                   <TableCell>
                     {hotel.totalRooms && hotel.totalRooms !== "null"
                       ? hotel.totalRooms
                       : hotel.initialAvailableRooms}
                   </TableCell>
                   <TableCell>{hotel?.bookingSummary?.Confirmed}</TableCell>
+                  <TableCell
+                    style={{
+                      maxWidth: 100,
+                      whiteSpace: "normal",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {hotel?.bookedFromOthers || 0}{" "}
+                  </TableCell>
                   <TableCell>{hotel?.actualAvailableRooms}</TableCell>
                   <TableCell>
                     <Button

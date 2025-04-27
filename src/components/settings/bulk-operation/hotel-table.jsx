@@ -11,6 +11,8 @@ import {
   Checkbox,
   Paper,
   Button,
+  Tooltip,
+  Chip,
 } from "@mui/material";
 
 import { styled } from "@mui/material/styles";
@@ -74,17 +76,18 @@ const HotelTable = ({ selectedHotels, handleHotelSelect, data }) => {
               <TableCell>
                 {hotel.hotelName}
                 {hotel.rooms?.some((room) => room.isOffer) && (
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      marginLeft: 8,
-                      width: 10,
-                      height: 10,
-                      borderRadius: '50%',
-                      backgroundColor: '#2196f3',
-                    }}
-                    title="Offer Available"
-                  />
+                   <Tooltip title="Offer Running">
+                   <Chip
+                     size="small"
+                     label="Offer"
+                     color="primary"
+                     sx={{
+                       ml: 1,
+                       height: "20px",
+                       fontSize: "0.7rem",
+                     }}
+                   />
+                 </Tooltip>
                 )}
               </TableCell>
 

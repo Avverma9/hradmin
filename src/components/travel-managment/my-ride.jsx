@@ -10,7 +10,7 @@ import CarUpdate from "./car-update";
 import { FaLocationArrow, FaMapMarkerAlt } from "react-icons/fa";
 import { AiOutlineCalendar } from "react-icons/ai";
 import { fDate } from "../../../utils/format-time";
-import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { DialogTitle, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import SeatConfigUpdate from "./update-seats";
 
 const MyCar = () => {
@@ -100,7 +100,6 @@ const MyCar = () => {
                   </div>
                 )}
               </div>
-
               {/* Car Content */}
               <div className="car-content">
                 <img
@@ -158,7 +157,19 @@ const MyCar = () => {
                   ))}
                 </div>
               </div>
-
+              <DialogTitle> Seats →
+             Available:{" "}
+              {
+                car?.seatConfig.filter(
+                  (seat) => !seat.bookedBy || seat.bookedBy.trim() === "",
+                ).length
+              }{" "}
+              / Booked:{" "}
+              {
+                car?.seatConfig.filter(
+                  (seat) => seat.bookedBy && seat.bookedBy.trim() !== "",
+                ).length
+              }</DialogTitle>
               {/* Car Footer */}
               <div className="car-footer">
                 {/* Status Select */}
@@ -180,11 +191,17 @@ const MyCar = () => {
                 </FormControl>
 
                 {/* Update Button */}
-                <button className="book-now" onClick={() => handleUpdateCar(car)}>
+                <button
+                  className="book-now"
+                  onClick={() => handleUpdateCar(car)}
+                >
                   Update Car
                 </button>
 
-                <button className="book-now" onClick={() => handleUpdateSeats(car)}>
+                <button
+                  className="book-now"
+                  onClick={() => handleUpdateSeats(car)}
+                >
                   Update Seats
                 </button>
               </div>
@@ -201,12 +218,20 @@ const MyCar = () => {
 
       {/* Car Update Modal */}
       {openCarUpdate && selectedCar && (
-        <CarUpdate open={openCarUpdate} onClose={handleCloseCarUpdate} car={selectedCar} />
+        <CarUpdate
+          open={openCarUpdate}
+          onClose={handleCloseCarUpdate}
+          car={selectedCar}
+        />
       )}
 
       {/* Seat Config Update Modal */}
       {openSeatConfig && selectedCar && (
-        <SeatConfigUpdate open={openSeatConfig} onClose={handleCloseSeatConfig} car={selectedCar} />
+        <SeatConfigUpdate
+          open={openSeatConfig}
+          onClose={handleCloseSeatConfig}
+          car={selectedCar}
+        />
       )}
     </div>
   );

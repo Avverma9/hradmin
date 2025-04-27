@@ -1,28 +1,31 @@
-import PropTypes from 'prop-types';
-import axios from 'axios';
-import { toast } from 'react-toastify';
-import { HiOutlineDocumentText } from 'react-icons/hi';
-import React, { useState, useEffect } from 'react';
-import { FaBed, FaReply, FaUtensils, FaCalendarAlt, FaMoneyBillWave } from 'react-icons/fa';
-import { MdCancel, MdCheckCircle } from 'react-icons/md';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Row, Col, Button } from 'react-bootstrap';
-import { IoReturnUpBack, IoTrashOutline, IoMailOpenOutline } from 'react-icons/io5';
-import { GrStatusGood } from 'react-icons/gr';
-import { styled, Container, IconButton, LinearProgress } from '@mui/material';
-import { role, localUrl } from '../../../../utils/util';
-import { Edit } from '@mui/icons-material';
-import AddFoodModal from '../manage-foods'; // Import the AddFoodModal component
+import PropTypes from "prop-types";
+import axios from "axios";
+import { toast } from "react-toastify";
+import React, { useState, useEffect } from "react";
 
-import './hotelDetails.css';
-import Amenities from '../manage-amenties';
-import AddRoomModal from '../manage-rooms';
-import BasicDetails from '../basic-details';
-import Reviews from './superAdmin/reviews';
-import RoomCarousel from '../rooms-carousel';
-import FoodCarousel from '../foods-carousel';
-import HotelCarousel from '../hotel-images';
-import { useLoader } from '../../../../utils/loader';
+import { useLocation, useNavigate } from "react-router-dom";
+import { Row, Col, Button } from "react-bootstrap";
+import {
+  IoReturnUpBack,
+  IoTrashOutline,
+  IoMailOpenOutline,
+} from "react-icons/io5";
+import { GrStatusGood } from "react-icons/gr";
+import { styled, Container, IconButton, LinearProgress } from "@mui/material";
+import { role, localUrl } from "../../../../utils/util";
+import { Edit } from "@mui/icons-material";
+import AddFoodModal from "../manage-foods"; // Import the AddFoodModal component
+
+import "./hotelDetails.css";
+import Amenities from "../manage-amenties";
+import AddRoomModal from "../manage-rooms";
+import BasicDetails from "../basic-details";
+import Reviews from "./superAdmin/reviews";
+import RoomCarousel from "../rooms-carousel";
+import FoodCarousel from "../foods-carousel";
+import HotelCarousel from "../hotel-images";
+import { useLoader } from "../../../../utils/loader";
+import Policies from "../policies";
 
 export default function HotelDetails({
   product,
@@ -37,7 +40,7 @@ export default function HotelDetails({
   const [amenitiesToShow, setAmenitiesToShow] = useState([]);
   const path = location.pathname;
   const { showLoader, hideLoader } = useLoader();
-  const hotelId = path.substring(path.lastIndexOf('/') + 1);
+  const hotelId = path.substring(path.lastIndexOf("/") + 1);
   const [isModalOpen, setModalOpen] = useState(false);
   const [hotel, setHotel] = useState(null);
   const [isAmenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
@@ -86,12 +89,16 @@ export default function HotelDetails({
     const fetchHotelDetails = async () => {
       try {
         showLoader();
-        const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
+        const response = await axios.get(
+          `${localUrl}/hotels/get-by-id/${hotelId}`,
+        );
         setHotel(response.data);
-        const allAmenities = response.data.amenities.flatMap((a) => a.amenities);
+        const allAmenities = response.data.amenities.flatMap(
+          (a) => a.amenities,
+        );
         setAmenitiesToShow(allAmenities.slice(0, 10));
       } catch (error) {
-        console.error('Error fetching hotel details:', error);
+        console.error("Error fetching hotel details:", error);
       } finally {
         hideLoader();
       }
@@ -133,12 +140,19 @@ export default function HotelDetails({
       await axios.patch(`${localUrl}/hotels/update/${hotelId}`, {
         isAccepted: newAcceptanceState,
       });
-      toast.success(newAcceptanceState ? 'Hotel accepted successfully' : 'Hotel removed from live');
-      const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
+      toast.success(
+        newAcceptanceState
+          ? "Hotel accepted successfully"
+          : "Hotel removed from live",
+      );
+      const response = await axios.get(
+        `${localUrl}/hotels/get-by-id/${hotelId}`,
+      );
       setHotel(response.data);
     } catch (error) {
       const errorMessage =
-        error.response?.data?.message || 'An error occurred while updating the hotel status';
+        error.response?.data?.message ||
+        "An error occurred while updating the hotel status";
       toast.error(`Error updating hotel status: ${errorMessage}`);
     } finally {
       hideLoader();
@@ -154,13 +168,18 @@ export default function HotelDetails({
         onFront: onFrontPage,
       });
       toast.success(
-        onFrontPage ? 'Hotel is now on the front page' : 'Hotel removed from the front page'
+        onFrontPage
+          ? "Hotel is now on the front page"
+          : "Hotel removed from the front page",
       );
-      const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
+      const response = await axios.get(
+        `${localUrl}/hotels/get-by-id/${hotelId}`,
+      );
       setHotel(response.data);
     } catch (error) {
       const errorMessage =
-        error.response?.data?.message || 'An error occurred while updating the front page status';
+        error.response?.data?.message ||
+        "An error occurred while updating the front page status";
       toast.error(`Error updating front page status: ${errorMessage}`);
     } finally {
       hideLoader();
@@ -168,11 +187,11 @@ export default function HotelDetails({
   };
 
   // -------------------------------------------------------------------------------------------
-  const FlexContainer = styled('div')({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginBottom: '16px',
+  const FlexContainer = styled("div")({
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    marginBottom: "16px",
   });
   const handleAddRoom = (roomData) => {
     onAddRoom(product.hotelId, roomData); // Pass hotelId and foodData to the onAddFood function
@@ -205,10 +224,12 @@ export default function HotelDetails({
   const handleDeleteHotel = async (hotelId) => {
     try {
       showLoader();
-      const response = await axios.delete(`${localUrl}/delete/hotels/by/${hotelId}`);
+      const response = await axios.delete(
+        `${localUrl}/delete/hotels/by/${hotelId}`,
+      );
       if (response.status === 200) {
-        toast.success('Selected hotel is deleted now !');
-        navigate('/hotels');
+        toast.success("Selected hotel is deleted now !");
+        navigate("/hotels");
       }
     } catch (error) {
       console.error(error);
@@ -224,10 +245,10 @@ export default function HotelDetails({
           <IoReturnUpBack /> Back
         </button>
         {/* only authorized roles will see this buttons for use */}
-        {(role === 'Developer' || role === 'Admin') && (
+        {(role === "Developer" || role === "Admin") && (
           <>
             <button
-              style={{ backgroundColor: 'white' }}
+              style={{ backgroundColor: "white" }}
               onClick={() => handleToggleFrontPage(hotel?.onFront)}
               className="custom-button"
             >
@@ -242,7 +263,7 @@ export default function HotelDetails({
               )}
             </button>
             <button
-              style={{ backgroundColor: 'white' }}
+              style={{ backgroundColor: "white" }}
               onClick={() => handleApproveHotel(hotel?.isAccepted)}
               className="custom-button"
             >
@@ -256,7 +277,10 @@ export default function HotelDetails({
                 </>
               )}
             </button>
-            <button className="custom-button" onClick={() => handleDeleteHotel(hotel?.hotelId)}>
+            <button
+              className="custom-button"
+              onClick={() => handleDeleteHotel(hotel?.hotelId)}
+            >
               X Delete
             </button>
             <button
@@ -274,9 +298,9 @@ export default function HotelDetails({
       <h4
         className="main-header"
         style={{
-          display: 'flex',
-          justifyContent: 'center',
-          marginBottom: '16px',
+          display: "flex",
+          justifyContent: "center",
+          marginBottom: "16px",
         }}
       >
         {hotel.hotelName}
@@ -287,17 +311,23 @@ export default function HotelDetails({
       <hr />
 
       {/* ---------------------------------------basic detaisl------------------------------------- */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <h3 style={{ margin: 0 }} className="heading-text">
           Basic Details
         </h3>
         <IconButton
           style={{
-            backgroundColor: '#007bff', // Same color as the button
-            color: 'white',
-            marginLeft: '1rem',
-            borderRadius: '50%', // Circular shape
-            padding: '10px', // Adjust padding for circular appearance
+            backgroundColor: "#007bff", // Same color as the button
+            color: "white",
+            marginLeft: "1rem",
+            borderRadius: "50%", // Circular shape
+            padding: "10px", // Adjust padding for circular appearance
           }}
           onClick={(e) => {
             e.stopPropagation(); // Prevent the card click event from firing
@@ -343,17 +373,23 @@ export default function HotelDetails({
       </div>
       <br />
       {/* ---------------------------------Room details ------------------------------- */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <h3 style={{ margin: 0 }} className="heading-text">
           Room Types
         </h3>
         <IconButton
           style={{
-            backgroundColor: '#007bff',
-            color: 'white',
-            marginLeft: '1rem',
-            borderRadius: '50%', // Circular shape
-            padding: '10px', // Adjust padding for the circular appearance
+            backgroundColor: "#007bff",
+            color: "white",
+            marginLeft: "1rem",
+            borderRadius: "50%", // Circular shape
+            padding: "10px", // Adjust padding for the circular appearance
           }}
           onClick={(e) => {
             e.stopPropagation(); // Prevent the card click event from firing
@@ -367,17 +403,23 @@ export default function HotelDetails({
       <RoomCarousel limitedRoom={limitedRoom} />
       <br />
       {/* ----------------------------------------------food details--------------------------------- */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <h3 style={{ margin: 0 }} className="heading-text">
           Foods
         </h3>
         <IconButton
           style={{
-            backgroundColor: '#007bff',
-            color: 'white',
-            marginLeft: '1rem',
-            borderRadius: '50%', // Circular shape
-            padding: '10px', // Adjust padding for the circular appearance
+            backgroundColor: "#007bff",
+            color: "white",
+            marginLeft: "1rem",
+            borderRadius: "50%", // Circular shape
+            padding: "10px", // Adjust padding for the circular appearance
           }}
           onClick={() => {
             handleOpenModal(); // Function to open the modal for managing foods
@@ -392,9 +434,9 @@ export default function HotelDetails({
       {hotel?.foods?.length > 0 && (
         <Button
           style={{
-            backgroundColor: 'rgba(171, 171, 171, 0.13)',
-            color: 'black',
-            marginLeft: '1rem',
+            backgroundColor: "rgba(171, 171, 171, 0.13)",
+            color: "black",
+            marginLeft: "1rem",
           }}
           variant="contained"
           onClick={() => {
@@ -410,21 +452,21 @@ export default function HotelDetails({
       {/* -----------------------------------------amenities details--------------------------------- */}
       <div
         style={{
-          border: '1px solid #000', // Thicker border and darker color
-          borderRadius: '8px', // Rounded corners
-          padding: '16px', // Padding inside the div
-          margin: '16px 0', // Margin outside the div
-          backgroundColor: '#fff', // Background color should contrast with the border
-          boxSizing: 'border-box', // Include padding and border in total size
+          border: "1px solid #000", // Thicker border and darker color
+          borderRadius: "8px", // Rounded corners
+          padding: "16px", // Padding inside the div
+          margin: "16px 0", // Margin outside the div
+          backgroundColor: "#fff", // Background color should contrast with the border
+          boxSizing: "border-box", // Include padding and border in total size
         }}
       >
         {/* Header Section */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '1rem',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "1rem",
           }}
         >
           <h3 style={{ margin: 0 }} className="heading-text">
@@ -432,11 +474,11 @@ export default function HotelDetails({
           </h3>
           <IconButton
             style={{
-              backgroundColor: '#007bff', // Same color as the button
-              color: 'white',
-              marginLeft: '1rem',
-              borderRadius: '50%', // Circular shape
-              padding: '10px', // Adjust padding for circular appearance
+              backgroundColor: "#007bff", // Same color as the button
+              color: "white",
+              marginLeft: "1rem",
+              borderRadius: "50%", // Circular shape
+              padding: "10px", // Adjust padding for circular appearance
             }}
             onClick={() => handleOpenAmenities()} // Function to open the amenities modal
           >
@@ -448,9 +490,9 @@ export default function HotelDetails({
         <div
           className="amenities-list"
           style={{
-            display: 'grid',
-            gap: '1rem',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            display: "grid",
+            gap: "1rem",
+            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
           }}
         >
           {amenitiesToShow.map((amenityName, index) => (
@@ -458,13 +500,13 @@ export default function HotelDetails({
               key={index}
               className="amenity-item"
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '0.5rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                backgroundColor: '#f9f9f9',
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "0.5rem",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                backgroundColor: "#f9f9f9",
               }}
             >
               <p style={{ margin: 0 }}>{amenityName}</p>
@@ -473,10 +515,14 @@ export default function HotelDetails({
         </div>
         <hr />
         {!showAllAmenities &&
-          amenitiesToShow.length < hotel.amenities.flatMap((a) => a.amenities).length && (
+          amenitiesToShow.length <
+            hotel.amenities.flatMap((a) => a.amenities).length && (
             <Button
               onClick={() => setShowAllAmenities(true)}
-              style={{ backgroundColor: 'rgb(171 171 171 / 13%)', color: 'black' }}
+              style={{
+                backgroundColor: "rgb(171 171 171 / 13%)",
+                color: "black",
+              }}
               className="mt-2"
             >
               Show More ...
@@ -485,7 +531,10 @@ export default function HotelDetails({
         {showAllAmenities && (
           <Button
             onClick={() => setShowAllAmenities(false)}
-            style={{ backgroundColor: 'rgb(171 171 171 / 13%)', color: 'black' }}
+            style={{
+              backgroundColor: "rgb(171 171 171 / 13%)",
+              color: "black",
+            }}
             className="mt-2"
           >
             Show Less ...
@@ -495,428 +544,7 @@ export default function HotelDetails({
       <br />
 
       {/* ------------------------------------policies details---------------------------------------- */}
-      <h3 className="heading-text">Policies</h3>
-      {hotel?.policies && hotel?.policies.length > 0 ? (
-        hotel?.policies.map((policy) => (
-          <div key={policy._id} className="policy-card">
-            <div className="policy-card-body">
-              {policy.hotelsPolicy && (
-                <div className="policy-item">
-                  <HiOutlineDocumentText className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Hotels Policy</span>
-                    <span className="policy-value">{policy.hotelsPolicy}</span>
-                  </div>
-                </div>
-              )}
-              {policy.checkInPolicy && (
-                <div className="policy-item">
-                  <FaCalendarAlt className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Check-In Policy</span>
-                    <span className="policy-value">{policy.checkInPolicy}</span>
-                  </div>
-                </div>
-              )}
-              {policy.checkOutPolicy && (
-                <div className="policy-item">
-                  <FaCalendarAlt className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Check-Out Policy</span>
-                    <span className="policy-value">{policy.checkOutPolicy}</span>
-                  </div>
-                </div>
-              )}
-              {policy.outsideFoodPolicy && (
-                <div className="policy-item">
-                  <FaUtensils className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Outside Food Policy</span>
-                    <span className="policy-value">{policy.outsideFoodPolicy}</span>
-                  </div>
-                </div>
-              )}
-              {policy.cancellationPolicy && (
-                <div className="policy-item">
-                  <FaReply className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Cancellation Policy</span>
-                    <span className="policy-value">{policy.cancellationPolicy}</span>
-                  </div>
-                </div>
-              )}
-              {policy.paymentMode && (
-                <div className="policy-item">
-                  <FaMoneyBillWave className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Payment Mode</span>
-                    <span className="policy-value">{policy.paymentMode}</span>
-                  </div>
-                </div>
-              )}
-              {policy.petsAllowed && (
-                <div className="policy-item">
-                  {policy.petsAllowed === 'Yes' ? (
-                    <MdCheckCircle className="policy-icon" />
-                  ) : (
-                    <MdCancel className="policy-icon" />
-                  )}
-                  <div className="policy-content">
-                    <span className="policy-key">Pets Allowed</span>
-                    <span className="policy-value">{policy.petsAllowed}</span>
-                  </div>
-                </div>
-              )}
-              {policy.bachelorAllowed && (
-                <div className="policy-item">
-                  {policy.bachelorAllowed === 'Yes' ? (
-                    <MdCheckCircle className="policy-icon" />
-                  ) : (
-                    <MdCancel className="policy-icon" />
-                  )}
-                  <div className="policy-content">
-                    <span className="policy-key">Bachelor Allowed</span>
-                    <span className="policy-value">{policy.bachelorAllowed}</span>
-                  </div>
-                </div>
-              )}
-              {policy.smokingAllowed && (
-                <div className="policy-item">
-                  {policy.smokingAllowed === 'Yes' ? (
-                    <MdCheckCircle className="policy-icon" />
-                  ) : (
-                    <MdCancel className="policy-icon" />
-                  )}
-                  <div className="policy-content">
-                    <span className="policy-key">Smoking Allowed</span>
-                    <span className="policy-value">{policy.smokingAllowed}</span>
-                  </div>
-                </div>
-              )}
-              {policy.alcoholAllowed && (
-                <div className="policy-item">
-                  {policy.alcoholAllowed === 'Yes' ? (
-                    <MdCheckCircle className="policy-icon" />
-                  ) : (
-                    <MdCancel className="policy-icon" />
-                  )}
-                  <div className="policy-content">
-                    <span className="policy-key">Alcohol Allowed</span>
-                    <span className="policy-value">{policy.alcoholAllowed}</span>
-                  </div>
-                </div>
-              )}
-              {policy.unmarriedCouplesAllowed && (
-                <div className="policy-item">
-                  {policy.unmarriedCouplesAllowed === 'Yes' ? (
-                    <MdCheckCircle className="policy-icon" />
-                  ) : (
-                    <MdCancel className="policy-icon" />
-                  )}
-                  <div className="policy-content">
-                    <span className="policy-key">Unmarried Couples Allowed</span>
-                    <span className="policy-value">{policy.unmarriedCouplesAllowed}</span>
-                  </div>
-                </div>
-              )}
-              {policy.internationalGuestAllowed && (
-                <div className="policy-item">
-                  {policy.internationalGuestAllowed === 'Yes' ? (
-                    <MdCheckCircle className="policy-icon" />
-                  ) : (
-                    <MdCancel className="policy-icon" />
-                  )}
-                  <div className="policy-content">
-                    <span className="policy-key">International Guest Allowed</span>
-                    <span className="policy-value">{policy.internationalGuestAllowed}</span>
-                  </div>
-                </div>
-              )}
-              {policy.returnPolicy && (
-                <div className="policy-item">
-                  <FaReply className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Return Policy</span>
-                    <span className="policy-value">{policy.returnPolicy}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onDoubleSharing && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On Season Double Sharing</span>
-                    <span className="policy-value">{policy.onDoubleSharing}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onQuadSharing && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On Season Quad Sharing</span>
-                    <span className="policy-value">{policy.onQuadSharing}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onBulkBooking && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On Season Bulk Booking</span>
-                    <span className="policy-value">{policy.onBulkBooking}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onTrippleSharing && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On Season Triple Sharing</span>
-                    <span className="policy-value">{policy.onTrippleSharing}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onMoreThanFour && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On Season More Than Four</span>
-                    <span className="policy-value">{policy.onMoreThanFour}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offDoubleSharing && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season Double Sharing</span>
-                    <span className="policy-value">{policy.offDoubleSharing}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offQuadSharing && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season Quad Sharing</span>
-                    <span className="policy-value">{policy.offQuadSharing}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offBulkBooking && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season Bulk Booking:</span>
-                    <span className="policy-value">{policy.offBulkBooking}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offTrippleSharing && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season Triple Sharing</span>
-                    <span className="policy-value">{policy.offTrippleSharing}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offMoreThanFour && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season More Than Four</span>
-                    <span className="policy-value">{policy.offMoreThanFour}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onDoubleSharingAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On Season Double Sharing Ap</span>
-                    <span className="policy-value">{policy.onDoubleSharingAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onQuadSharingAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On Season Quad Sharing Ap</span>
-                    <span className="policy-value">{policy.onQuadSharingAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onBulkBookingAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On Season Bulk Booking Ap</span>
-                    <span className="policy-value">{policy.onBulkBookingAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onTrippleSharingAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On Season Triple Sharing Ap</span>
-                    <span className="policy-value">{policy.onTrippleSharingAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onMoreThanFourAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On Season More Than Four Ap</span>
-                    <span className="policy-value">{policy.onMoreThanFourAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offDoubleSharingAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season Double Sharing Ap</span>
-                    <span className="policy-value">{policy.offDoubleSharingAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offQuadSharingAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season Quad Sharing Ap</span>
-                    <span className="policy-value">{policy.offQuadSharingAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offBulkBookingAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season Bulk Booking Ap</span>
-                    <span className="policy-value">{policy.offBulkBookingAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offTrippleSharingAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season Triple Sharing Ap</span>
-                    <span className="policy-value">{policy.offTrippleSharingAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offMoreThanFourAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season More Than Four Ap</span>
-                    <span className="policy-value">{policy.offMoreThanFourAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onDoubleSharingMAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On Season Double Sharing M.A.P</span>
-                    <span className="policy-value">{policy.onDoubleSharingMAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onQuadSharingMAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On Season Quad Sharing M.A.P</span>
-                    <span className="policy-value">{policy.onQuadSharingMAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onBulkBookingMAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On Season Bulk Booking M.A.P</span>
-                    <span className="policy-value">{policy.onBulkBookingMAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onTrippleSharingMAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On Season Triple Sharing M.A.P</span>
-                    <span className="policy-value">{policy.onTrippleSharingMAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.onMoreThanFourMAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">On More Than Four M.A.P</span>
-                    <span className="policy-value">{policy.onMoreThanFourMAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offDoubleSharingMAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season Double Sharing M.A.P</span>
-                    <span className="policy-value">{policy.offDoubleSharingMAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offQuadSharingMAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season Quad Sharing M.A.P</span>
-                    <span className="policy-value">{policy.offQuadSharingMAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offBulkBookingMAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season Bulk Booking M.A.P</span>
-                    <span className="policy-value">{policy.offBulkBookingMAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offTrippleSharingMAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season Triple Sharing M.A.P</span>
-                    <span className="policy-value">{policy.offTrippleSharingMAp}</span>
-                  </div>
-                </div>
-              )}
-              {policy.offMoreThanFourMAp && (
-                <div className="policy-item">
-                  <FaBed className="policy-icon" />
-                  <div className="policy-content">
-                    <span className="policy-key">Off Season More Than Four M.A.P</span>
-                    <span className="policy-value">{policy.offMoreThanFourMAp}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        ))
-      ) : (
-        <p>No policies available.</p>
-      )}
+      <Policies hotel={hotel} />
       <AddFoodModal
         open={isModalOpen}
         onClose={handleCloseModal}

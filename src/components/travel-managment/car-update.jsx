@@ -68,7 +68,6 @@ export default function CarUpdate({ car, onClose, open }) {
     setOpenDialog(false);
   };
 
-
   const handleDialogConfirm = async () => {
     setOpenDialog(false);
     const formData = new FormData();
@@ -158,332 +157,315 @@ export default function CarUpdate({ car, onClose, open }) {
     setShowSeatConfig(false); // Hide the seat configuration when seater is selected
   };
 
-
   return (
-    <Dialog onClose={onClose} open={open} maxWidth="xl" >
-      <DialogContent sx={{ width: "80vw" }}>
-        <Card >
-          <Typography variant="h5" gutterBottom textAlign="center">
-            Update details
+    <Dialog onClose={onClose} open={open} maxWidth="xl">
+      <DialogContent sx={{ width: "80vw", p: 3 }}>
+        <Box
+          sx={{
+            border: "2px dotted #000", 
+            borderRadius: 1, 
+            padding: "8px", 
+            display: "inline-block", 
+          }}
+        >
+          <Typography variant="p5" align="center" gutterBottom>
+            Update Car Details
           </Typography>
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={onClose}
-            sx={{ marginBottom: 1 }}
-          >
+        </Box>
+
+        <Box display="flex" justifyContent="flex-end" mb={2}>
+          <Button variant="outlined" color="primary" onClick={onClose}>
             Close
           </Button>
-          <CardContent>
-            <Card>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={4}>
-                  <Autocomplete
-                    value={make || car?.make} // Use the car prop as a fallback
-                    onChange={(event, newValue) => setMake(newValue)}
-                    options={makes}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Make"
-                        variant="outlined"
-                        defaultValue={car?.make} // Set the previous value from the car prop
-                      />
-                    )}
-                    fullWidth
-                    margin="normal"
-                    freeSolo
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    label="Model"
-                    variant="outlined"
-                    fullWidth
-                    value={model || car?.model} // Use the car prop as a fallback
-                    onChange={(e) => setModel(e.target.value)}
-                    margin="normal"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    label="Year"
-                    variant="outlined"
-                    fullWidth
-                    type="number"
-                    value={year || car?.year} // Use the car prop as a fallback
-                    onChange={(e) => setYear(e.target.value)}
-                    margin="normal"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Color</InputLabel>
-                    <Select
-                      value={color || car?.color} // Use the car prop as a fallback
-                      onChange={(e) => setColor(e.target.value)}
-                      label="Color"
-                    >
-                      {["Red", "Blue", "Black", "White", "Silver", "Green"].map(
-                        (color) => (
-                          <MenuItem key={color} value={color}>
-                            {color}
-                          </MenuItem>
-                        ),
-                      )}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel id="seater-label">Seater</InputLabel>
-                    <Select
-                      labelId="seater-label"
-                      value={seater || (car && car.seater) || ''} // added empty string to handle undefined car.seater.
-                      onChange={handleSeaterChange}
-                      label="Seater"
-                    >
-                      {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
-                        <MenuItem key={value} value={value}>
-                          {value}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {seater === "" && (
-                      <FormHelperText error>
-                        Please select the number of seats
-                      </FormHelperText>
-                    )}
-                  </FormControl>
-                </Grid>
+        </Box>
 
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Fuel Type</InputLabel>
-                    <Select
-                      value={fuelType || car?.fuelType} // Use the car prop as a fallback
-                      onChange={(e) => setFuelType(e.target.value)}
-                      label="Fuel Type"
-                    >
-                      {["Petrol", "Diesel", "Electric", "Hybrid"].map(
-                        (type) => (
-                          <MenuItem key={type} value={type}>
-                            {type}
-                          </MenuItem>
-                        ),
-                      )}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Transmission</InputLabel>
-                    <Select
-                      value={transmission || car?.transmission} // Use the car prop as a fallback
-                      onChange={(e) => setTransmission(e.target.value)}
-                      label="Transmission"
-                    >
-                      <MenuItem value="Automatic">Automatic</MenuItem>
-                      <MenuItem value="Manual">Manual</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    label="Mileage (KM/L)"
-                    variant="outlined"
-                    fullWidth
-                    type="number"
-                    value={mileage || car?.mileage} // Use the car prop as a fallback
-                    onChange={(e) => setMileage(e.target.value)}
-                    margin="normal"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Speed />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    label="Pickup Location"
-                    variant="outlined"
-                    fullWidth
-                    type="text"
-                    value={from || car?.from}
-                    onChange={(e) => setFrom(e.target.value)}
-                    margin="normal"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <FaLocationArrow />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>{" "}
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    label="Drop Location"
-                    variant="outlined"
-                    fullWidth
-                    type="text"
-                    value={to || car?.to}
-                    onChange={(e) => setTo(e.target.value)}
-                    margin="normal"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <FaLocationArrow />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    label="Available From"
-                    type="date"
-                    value={availableFrom || car?.availableFrom}
-                    placeholder={car?.availableFrom}
-                    onChange={(e) => setAvailableFrom(e.target.value)}
-                    margin="normal"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    label="Available To"
-                    type="date"
-                    value={availableTo || car?.availableTo}
-                    placeholder={
-                      car?.isAvailable ? "Available" : "Not Available"
-                    }
-                    onChange={(e) => setAvailableTo(e.target.value)}
-                    margin="normal"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    label="Full ride price"
-                    variant="outlined"
-                    fullWidth
-                    type="number"
-                    value={price || car?.price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    margin="normal"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <FaIndianRupeeSign />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    label="Per Person Cost"
-                    type="number"
-                    value={perPersonCost || car?.perPersonCost}
-                    onChange={(e) => setPerPersonCost(e.target.value)}
-                    margin="normal"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <FaIndianRupeeSign />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    label="Extra KM Charge"
-                    variant="outlined"
-                    fullWidth
-                    value={extraKm || car?.extraKm}
-                    onChange={(e) => setExtraKm(e.target.value)}
-                    margin="normal"
-                  />
-                  {extraKm === "" && (
-                    <FormHelperText error>
-                      Please mention Per extra KM Charge in INR
-                    </FormHelperText>
-                  )}
-                </Grid>
-                {/* Fifth Row (Image upload) */}
-                <Grid item xs={12}>
-                  <Box sx={{ marginBottom: 1 }}>
-                    <input
-                      type="file"
-                      id="carImages"
-                      accept="image/*"
-                      multiple
-                      onChange={handleFileChange}
-                      style={{ display: "none" }}
-                    />
-                    <label htmlFor="carImages">
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        component="span"
-                        fullWidth
-                        sx={{ padding: "10px", textAlign: "center" }}
-                        startIcon={<PhotoCamera />}
-                      >
-                        Select Car Images
-                      </Button>
-                    </label>
-                    {images.length > 0 && (
-                      <Box sx={{ marginTop: 1, textAlign: "center" }}>
-                        {Array.from(images).map((image, index) => (
-                          <img
-                            key={index}
-                            src={URL.createObjectURL(image)}
-                            alt={`Car Image ${index}`}
-                            style={{
-                              width: "80px",
-                              height: "80px",
-                              objectFit: "cover",
-                              borderRadius: "8px",
-                              margin: "5px",
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    )}
-                  </Box>
-                </Grid>
-              </Grid>
+        <Grid container spacing={2}>
+          {/* Basic Car Info */}
+          <Grid item xs={12} sm={4}>
+            <Autocomplete
+              value={make || car?.make}
+              onChange={(e, newValue) => setMake(newValue)}
+              options={makes}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Make"
+                  variant="outlined"
+                  fullWidth
+                />
+              )}
+              freeSolo
+            />
+          </Grid>
 
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-                sx={{ marginTop: 2 }}
-                onClick={handleSubmit}
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Model"
+              fullWidth
+              variant="outlined"
+              value={model || car?.model}
+              onChange={(e) => setModel(e.target.value)}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Year"
+              fullWidth
+              type="number"
+              variant="outlined"
+              value={year || car?.year}
+              onChange={(e) => setYear(e.target.value)}
+            />
+          </Grid>
+
+          {/* Color, Seater, Fuel Type */}
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth>
+              <InputLabel>Color</InputLabel>
+              <Select
+                value={color || car?.color}
+                onChange={(e) => setColor(e.target.value)}
+                label="Color"
               >
-                Update
+                {["Red", "Blue", "Black", "White", "Silver", "Green"].map(
+                  (clr) => (
+                    <MenuItem key={clr} value={clr}>
+                      {clr}
+                    </MenuItem>
+                  ),
+                )}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth>
+              <InputLabel>Seater</InputLabel>
+              <Select
+                value={seater || car?.seater || ""}
+                onChange={handleSeaterChange}
+                label="Seater"
+              >
+                {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((s) => (
+                  <MenuItem key={s} value={s}>
+                    {s}
+                  </MenuItem>
+                ))}
+              </Select>
+              {seater === "" && (
+                <FormHelperText error>
+                  Please select the number of seats
+                </FormHelperText>
+              )}
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth>
+              <InputLabel>Fuel Type</InputLabel>
+              <Select
+                value={fuelType || car?.fuelType}
+                onChange={(e) => setFuelType(e.target.value)}
+                label="Fuel Type"
+              >
+                {["Petrol", "Diesel", "Electric", "Hybrid"].map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* Transmission, Mileage, Location */}
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth>
+              <InputLabel>Transmission</InputLabel>
+              <Select
+                value={transmission || car?.transmission}
+                onChange={(e) => setTransmission(e.target.value)}
+                label="Transmission"
+              >
+                <MenuItem value="Automatic">Automatic</MenuItem>
+                <MenuItem value="Manual">Manual</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Mileage (KM/L)"
+              fullWidth
+              type="number"
+              variant="outlined"
+              value={mileage || car?.mileage}
+              onChange={(e) => setMileage(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Speed />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Pickup Location"
+              fullWidth
+              value={from || car?.from}
+              onChange={(e) => setFrom(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <FaLocationArrow />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Drop Location"
+              fullWidth
+              value={to || car?.to}
+              onChange={(e) => setTo(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <FaLocationArrow />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          {/* Dates */}
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Available From"
+              type="date"
+              fullWidth
+              value={availableFrom || car?.availableFrom}
+              onChange={(e) => setAvailableFrom(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Available To"
+              type="date"
+              fullWidth
+              value={availableTo || car?.availableTo}
+              onChange={(e) => setAvailableTo(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+
+          {/* Pricing */}
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Full Ride Price"
+              type="number"
+              fullWidth
+              value={price || car?.price}
+              onChange={(e) => setPrice(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <FaIndianRupeeSign />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Per Person Cost"
+              type="number"
+              fullWidth
+              value={perPersonCost || car?.perPersonCost}
+              onChange={(e) => setPerPersonCost(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <FaIndianRupeeSign />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Extra KM Charge"
+              fullWidth
+              value={extraKm || car?.extraKm}
+              onChange={(e) => setExtraKm(e.target.value)}
+            />
+            {extraKm === "" && (
+              <FormHelperText error>
+                Please mention Extra KM Charge
+              </FormHelperText>
+            )}
+          </Grid>
+
+          {/* Image Upload */}
+          <Grid item xs={12}>
+            <input
+              type="file"
+              id="carImages"
+              accept="image/*"
+              multiple
+              onChange={handleFileChange}
+              style={{ display: "none" }}
+            />
+            <label htmlFor="carImages">
+              <Button
+                variant="outlined"
+                color="primary"
+                component="span"
+                fullWidth
+                startIcon={<PhotoCamera />}
+              >
+                Select Car Images
               </Button>
-            </Card>
-          </CardContent>
-          <AlertDialog
-            open={openDialog}
-            onClose={handleDialogClose}
-            onConfirm={handleDialogConfirm}
-            title="Confirm Car Submission"
-            message="Are you sure you want to add this car?"
-          />
-        </Card>
+            </label>
+            {images.length > 0 && (
+              <Box sx={{ mt: 1, display: "flex", justifyContent: "center" }}>
+                {Array.from(images).map((image, index) => (
+                  <img
+                    key={index}
+                    src={URL.createObjectURL(image)}
+                    alt={`Car Image ${index}`}
+                    style={{
+                      width: "80px",
+                      height: "80px",
+                      objectFit: "cover",
+                      borderRadius: "8px",
+                      margin: "5px",
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
+          </Grid>
+        </Grid>
+
+        <Button
+          variant="contained"
+          color="primary"
+          fullWidth
+          sx={{ mt: 2 }}
+          onClick={handleSubmit}
+        >
+          Update
+        </Button>
       </DialogContent>
     </Dialog>
   );

@@ -12,13 +12,14 @@ import {
   TextField,
   Typography,
   Paper,
+  Box,
 } from "@mui/material";
 
 export default function SeatData({ open, onClose, id }) {
   const dispatch = useDispatch();
   const seatData = useSelector((state) => state.car.seatsData);
   const [selectedSeat, setSelectedSeat] = useState(null);
-  
+
   const [customerName, setCustomerName] = useState("");
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const GST_RATE = 0.18;
@@ -49,7 +50,7 @@ export default function SeatData({ open, onClose, id }) {
           seatId: selectedSeat._id,
           carId: id,
           bookedBy: customerName,
-        })
+        }),
       );
       setSelectedSeat(null);
       setCustomerName("");
@@ -64,7 +65,16 @@ export default function SeatData({ open, onClose, id }) {
   return (
     <>
       <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-        <DialogTitle>Select Available Seats</DialogTitle>
+        <Box
+          sx={{
+            border: "2px dotted #000",
+            borderRadius: 1,
+            padding: "8px",
+            display: "inline-block",
+          }}
+        >
+          <Typography>Select Available Seats</Typography>
+        </Box>
         <DialogContent>
           <div className="seat-container">
             {seatData &&
@@ -73,12 +83,13 @@ export default function SeatData({ open, onClose, id }) {
                 car.seats.map((data) => (
                   <div
                     key={data._id}
-                    className={`seat ${data.isBooked
+                    className={`seat ${
+                      data.isBooked
                         ? "booked"
                         : selectedSeat?._id === data._id
                           ? "selected"
                           : "available"
-                      }`}
+                    }`}
                     onClick={() => handleSeatClick(data)}
                   >
                     <FaChair className="seat-icon" />
@@ -87,19 +98,21 @@ export default function SeatData({ open, onClose, id }) {
                     <div className="seat-price">₹{data.seatPrice}</div>
                     {data.isBooked && <div className="booked-by">Booked</div>}
                   </div>
-                ))
+                )),
               )}
           </div>
 
           {/* GST Details Section (Only Show When Seat Data Exists & a Seat is Selected) */}
-          {selectedSeat  && (
+          {selectedSeat && (
             <Paper elevation={3} className="gst-details">
               <Typography variant="h6" className="gst-title">
                 🧾 Pricing Breakdown
               </Typography>
               <div className="gst-row">
                 <Typography variant="body1">💺 Seat Price:</Typography>
-                <Typography variant="body1">₹{selectedSeat.seatPrice}</Typography>
+                <Typography variant="body1">
+                  ₹{selectedSeat.seatPrice}
+                </Typography>
               </div>
               <div className="gst-row">
                 <Typography variant="body1">🧮 GST (18%):</Typography>
@@ -114,7 +127,6 @@ export default function SeatData({ open, onClose, id }) {
               </Typography>
             </Paper>
           )}
-
         </DialogContent>
 
         <DialogActions>
@@ -146,10 +158,7 @@ export default function SeatData({ open, onClose, id }) {
           />
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => setIsBookingDialogOpen(false)}
-            color="primary"
-          >
+          <Button onClick={() => setIsBookingDialogOpen(false)} color="primary">
             Cancel
           </Button>
           <Button
@@ -161,6 +170,7 @@ export default function SeatData({ open, onClose, id }) {
           </Button>
         </DialogActions>
       </Dialog>
+
     </>
   );
 }

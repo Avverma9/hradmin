@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 
 import { localUrl } from '../../../../utils/util';
-import { fDateTime } from '../../../../utils/format-time';
+import { fDateTime, indianTime } from '../../../../utils/format-time';
 
 const AppliedCouponModal = ({ open, handleClose }) => {
   const [coupons, setCoupons] = useState([]);
@@ -96,7 +96,7 @@ const AppliedCouponModal = ({ open, handleClose }) => {
                 <TableRow key={`${coupon.id}-${index}`}>
                   <TableCell>{coupon.couponCode}</TableCell>
                   <TableCell>{coupon.discountPrice}</TableCell>
-                  <TableCell>{fDateTime(coupon.validity)}</TableCell>
+                  <TableCell>{indianTime(coupon.validity)}</TableCell>
                   <TableCell>
                     <Button
                       variant="outlined"

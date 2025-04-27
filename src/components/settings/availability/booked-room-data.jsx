@@ -49,7 +49,7 @@ export default function BookedRoomData({ selectedHotel, openDialog, onClose }) {
         )}
 
         <Grid container spacing={2}>
-          <InfoItem label="Total Rooms" value={totalRooms} />
+          <InfoItem label="Total Rooms" value={totalRooms === null ? selectedHotel?.actualAvailableRooms : totalRooms } />
           <InfoItem label="Booked Rooms" value={bookingSummary?.Confirmed} />
           <InfoItem
             label="Available Rooms"

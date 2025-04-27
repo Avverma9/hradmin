@@ -49,7 +49,7 @@ const WhoSeen = ({ open, onClose, userIds }) => {
           setLoading(false);
         }
       } else {
-        setLoading(false); // If there are no userIds, stop loading
+        setLoading(false);
       }
     };
 

@@ -4,7 +4,7 @@ import { FaRupeeSign } from "react-icons/fa";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import { Box, Grid, Typography, IconButton } from "@mui/material";
+import { Box, Grid, Typography, IconButton, Tooltip, Chip } from "@mui/material";
 
 const RoomCarousel = ({ limitedRoom }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -81,17 +81,18 @@ const RoomCarousel = ({ limitedRoom }) => {
                     >
                       {room.type}
                       {room.isOffer && (
-                        <span
-                          style={{
-                            marginLeft: 8,
-                            width: 10,
-                            height: 10,
-                            borderRadius: "50%",
-                            backgroundColor: "#2196f3",
-                            display: "inline-block",
-                          }}
-                          title="Offer Available"
-                        />
+                         <Tooltip title="Offer Running">
+                         <Chip
+                           size="small"
+                           label="Offer"
+                           color="primary"
+                           sx={{
+                             ml: 1,
+                             height: "20px",
+                             fontSize: "0.7rem",
+                           }}
+                         />
+                       </Tooltip>
                       )}
                     </Typography>
 
