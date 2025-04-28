@@ -32,11 +32,11 @@ export default function CarForm() {
   const [carNumber, setNumber] = useState("");
   const [images, setImages] = useState([]);
   const [price, setPrice] = useState("");
-  const [from, setFrom] = useState("");
-  const [availableFrom, setAvailableFrom] = useState("");
-  const [availableTo, setAvailableTo] = useState("");
+  const [pickupP, setPickupP] = useState("");
+  const [pickupD, setPickupD] = useState("");
+  const [dropD, setDropD] = useState("");
   const [perPersonCost, setPerPersonCost] = useState("");
-  const [to, setTo] = useState("");
+  const [dropP, setDropP] = useState("");
   const [seater, setSeater] = useState("");
   const [extraKm, setExtraKm] = useState("");
   const [runningStatus, setRunningStatus] = useState("");
@@ -106,11 +106,11 @@ export default function CarForm() {
     formData.append("year", year);
     formData.append("carNumber", carNumber);
     formData.append("price", price);
-    formData.append("from", from);
-    formData.append("availableFrom", availableFrom);
-    formData.append("availableTo", availableTo);
+    formData.append("pickupP", pickupP); 
+    formData.append("dropP", dropP);
+    formData.append("pickupD", pickupD);
+    formData.append("dropD", dropD);
     formData.append("perPersonCost", perPersonCost);
-    formData.append("to", to);
     formData.append("color", color);
     formData.append("mileage", mileage);
     formData.append("fuelType", fuelType);
@@ -249,7 +249,7 @@ export default function CarForm() {
                 label="Car Number"
                 variant="outlined"
                 fullWidth
-                type="number"
+                type="text"
                 value={carNumber}
                 onChange={(e) => setNumber(e.target.value)}
                 margin="normal"
@@ -461,8 +461,8 @@ export default function CarForm() {
                 variant="outlined"
                 fullWidth
                 type="text"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
+                value={pickupP}
+                onChange={(e) => setPickupP(e.target.value)}
                 margin="normal"
                 InputProps={{
                   startAdornment: (
@@ -479,8 +479,8 @@ export default function CarForm() {
                 variant="outlined"
                 fullWidth
                 type="text"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
+                value={dropP}
+                onChange={(e) => setDropP(e.target.value)}
                 margin="normal"
                 InputProps={{
                   startAdornment: (
@@ -495,8 +495,8 @@ export default function CarForm() {
               <TextField
                 label="Available From"
                 type="date"
-                value={availableFrom}
-                onChange={(e) => setAvailableFrom(e.target.value)}
+                value={pickupD}
+                onChange={(e) => setPickupD(e.target.value)}
                 margin="normal"
                 InputLabelProps={{
                   shrink: true,
@@ -507,8 +507,8 @@ export default function CarForm() {
               <TextField
                 label="Available To"
                 type="date"
-                value={availableTo}
-                onChange={(e) => setAvailableTo(e.target.value)}
+                value={dropD}
+                onChange={(e) => setDropD(e.target.value)}
                 margin="normal"
                 InputLabelProps={{
                   shrink: true,

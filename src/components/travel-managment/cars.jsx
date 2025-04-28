@@ -25,8 +25,8 @@ const Cars = () => {
   const [selectedCarId, setSelectedCarId] = useState(null); // Track selected car ID
 
   const filterList = useSelector((state) => state.car.data);
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [pickupP, sePickupP] = useState("");
+  const [dropP, setDropP] = useState("");
   const [filters, setFilters] = useState({
     make: [],
     fuelType: [],
@@ -80,7 +80,7 @@ const Cars = () => {
 
   const handleSearch = async () => {
     // Check if either pickup and drop locations are empty or dates are empty
-    if ((!from || !to) && (!fromDate || !toDate)) {
+    if ((!pickupP || !dropP) && (!fromDate || !toDate)) {
       return; // Don't make API call if both location and dates are empty
     }
 
@@ -90,10 +90,10 @@ const Cars = () => {
 
     // Construct the API URL with location and date filters
     const queryParams = [
-      from && `from=${from}`,
-      to && `to=${to}`,
-      formattedFromDate && `availableFrom=${formattedFromDate}`,
-      formattedToDate && `availableTo=${formattedToDate}`,
+      pickupP && `pickupP=${pickupP}`,
+      dropP && `dropP=${dropP}`,
+      formattedFromDate && `pickupD=${formattedFromDate}`,
+      formattedToDate && `dropD=${formattedToDate}`,
     ]
       .filter(Boolean)
       .join("&");
@@ -118,8 +118,8 @@ const Cars = () => {
             variant="outlined"
             fullWidth
             margin="normal"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
+            value={pickupP}
+            onChange={(e) => sePickupP(e.target.value)}
             sx={{
               width: "200px",
               height: "40px",
@@ -132,8 +132,8 @@ const Cars = () => {
             variant="outlined"
             fullWidth
             margin="normal"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
+            value={dropP}
+            onChange={(e) => setDropP(e.target.value)}
             sx={{
               width: "200px",
               height: "40px",
@@ -317,14 +317,14 @@ const Cars = () => {
                         <BsPersonCircle /> Per Person: ₹{car?.perPersonCost}
                       </div>
                       <div>
-                        <FaLocationArrow /> Pickup: {car?.from}
+                        <FaLocationArrow /> Pickup: {car?.pickupP}
                       </div>
                       <div>
-                        <FaMapMarkerAlt /> Drop: {car?.to}
+                        <FaMapMarkerAlt /> Drop: {car?.dropP}
                       </div>
                       <div>
-                        <AiOutlineCalendar /> From {(car?.availableFrom)}{" "}
-                        to {(car?.availableTo)}
+                        <AiOutlineCalendar /> From {(car?.pickupD)}{" "}
+                        to {(car?.dropD)}
                       </div>
                     </div>
                   </div>
@@ -356,7 +356,12 @@ const Cars = () => {
                   >
                     Book Now
                   </button>
-                </div>
+                </div> <SeatData
+                  open={openSeatData}
+                  carData={car}
+                  onClose={handleSeatDataClose}
+                  id={selectedCarId}
+                />
               </div>
             ))
           ) : (
@@ -368,11 +373,7 @@ const Cars = () => {
           )}
         </main>
       </div>
-      <SeatData
-        open={openSeatData}
-        onClose={handleSeatDataClose}
-        id={selectedCarId}
-      />
+
     </div>
   );
 };

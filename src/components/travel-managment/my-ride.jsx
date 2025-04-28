@@ -136,14 +136,14 @@ const MyCar = () => {
                       <BsPersonCircle /> Per Person: ₹{car?.perPersonCost}
                     </div>
                     <div>
-                      <FaLocationArrow /> Pickup: {car?.from}
+                      <FaLocationArrow /> Pickup: {car?.pickupP}
                     </div>
                     <div>
-                      <FaMapMarkerAlt /> Drop: {car?.to}
+                      <FaMapMarkerAlt /> Drop: {car?.dropP}
                     </div>
                     <div>
-                      <AiOutlineCalendar /> From {(car?.availableFrom)} to{" "}
-                      {(car?.availableTo)}
+                      <AiOutlineCalendar /> From {(car?.pickupD)} to{" "}
+                      {(car?.dropD)}
                     </div>
                   </div>
                 </div>

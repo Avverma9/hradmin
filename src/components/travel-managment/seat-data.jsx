@@ -14,8 +14,9 @@ import {
   Paper,
   Box,
 } from "@mui/material";
+import { drop } from "lodash";
 
-export default function SeatData({ open, onClose, id }) {
+export default function SeatData({ open, onClose, id ,carData}) {
   const dispatch = useDispatch();
   const seatData = useSelector((state) => state.car.seatsData);
   const [selectedSeat, setSelectedSeat] = useState(null);
@@ -44,6 +45,7 @@ export default function SeatData({ open, onClose, id }) {
     }
   };
 
+  console.log("Selected Seat:", carData);
   const handleBooking = async () => {
     if (selectedSeat && customerName) {
       await dispatch(
@@ -91,13 +93,12 @@ export default function SeatData({ open, onClose, id }) {
                 car.seats.map((seat) => (
                   <div
                     key={seat._id}
-                    className={`seat ${
-                      seat.isBooked
-                        ? "booked"
-                        : selectedSeat?._id === seat._id
+                    className={`seat ${seat.isBooked
+                      ? "booked"
+                      : selectedSeat?._id === seat._id
                         ? "selected"
                         : "available"
-                    }`}
+                      }`}
                     onClick={() => handleSeatClick(seat)}
                   >
                     <FaChair className="seat-icon" />

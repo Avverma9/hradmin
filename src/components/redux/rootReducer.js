@@ -10,6 +10,7 @@ import carOwnerReducer from './reducers/travel/carOwner';
 import tourReducer from './reducers/tour/tour';
 import bulkReducer from './reducers/bulk';
 import additionalReducer from './reducers/additional';
+import travelBookingReducer from './reducers/travel/booking';
 import { add } from 'lodash';
 // Combine reducers into a rootReducer
 const rootReducer = combineReducers({
@@ -23,5 +24,6 @@ const rootReducer = combineReducers({
     tour: tourReducer,
     bulk: bulkReducer,
     additional: additionalReducer,
+    travelBooking: travelBookingReducer,
 });
 export default rootReducer;

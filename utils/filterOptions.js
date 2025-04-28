@@ -166,4 +166,5 @@ export const paths = [
     path: "/send-notification-to-all",
     role: "Admin",
   },
+  { title: "My Bookings", path: "/travel-bookings", role: "TMS" },
 ];

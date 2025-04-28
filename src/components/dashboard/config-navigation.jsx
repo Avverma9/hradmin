@@ -57,7 +57,7 @@ const fetchMenuItems = async () => {
         return response.data.menuItems.map((item) => item.toLowerCase());
     } catch (error) {
         console.error("Error fetching menu items:", error);
-        return []; // Return an empty array if the request fails
+        return [];
     }
 };
 
@@ -99,6 +99,7 @@ const getNavConfig = async () => {
                 { title: 'My Ride', path: '/your-car-details/owner-car', icon: icons.addCar },
                 { title: 'Add Owner', path: '/add-an-car-owner', icon: icons.owner },
                 { title: 'Car Owner', path: '/cars-owner', icon: icons.ownerList },
+                { title: 'My Bookings', path: '/travel-bookings', icon: icons.bookings },
             ],
         },
         {
@@ -135,6 +136,7 @@ const getNavConfig = async () => {
                 { title: 'Change banner', path: '/change-banner', icon: icons.banner },
                 { title: 'Apply Coupons (Single Use)', path: '/apply-coupon', icon: icons.coupon },
                 { title: 'Push notification', path: '/send-notification-to-all', icon: icons.notification },
+                { title: "Travel Bookings", path: '/travel-bookings/list' }
             ],
         },
     ];
