@@ -167,4 +167,5 @@ export const paths = [
     role: "Admin",
   },
   { title: "My Bookings", path: "/travel-bookings", role: "TMS" },
+  {title:"User Coupon", path:"/user-coupon"}
 ];
