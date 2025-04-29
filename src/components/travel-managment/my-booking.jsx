@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchTravelBookings } from "../redux/reducers/travel/booking";
-import TravelBookingsTable from "./Table";
+import TravelBookingsTable from "./bookings-table";
 import { Box, Divider, Typography } from "@mui/material";
 
 export default function MyTravelBookingTMS() {
@@ -46,6 +46,7 @@ export default function MyTravelBookingTMS() {
           Error: {error}
         </Typography>
       )}
+
 
       <TravelBookingsTable
         bookings={travelBookings}

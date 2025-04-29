@@ -100,7 +100,7 @@ export const getSeatsData = createAsyncThunk('car/getSeatsData', async (id, { re
 
 export const bookSeat = createAsyncThunk('car/bookSeat', async (data, { rejectWithValue }) => {
     try {
-        const response = await axios.post(`${localUrl}/create-travel/booking`, data, {
+        const response = await axios.post(`${localUrl}/travel/create-travel/booking`, data, {
             headers: {
                 Authorization: token,
             },

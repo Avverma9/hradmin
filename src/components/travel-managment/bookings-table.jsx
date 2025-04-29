@@ -10,24 +10,56 @@ import {
   Paper,
   Button,
   Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
 } from "@mui/material";
+import BookingDetails from "./bookings-view";
+import { fDate } from "../../../utils/format-time";
+import UpdateBookingModal from "./update-booking";
+import { useDispatch } from "react-redux";
+import { updateTravelBooking } from "../redux/reducers/travel/booking";
 
-const TravelBookingsTable = ({ bookings, onView, onUpdate }) => {
+const TravelBookingsTable = ({ bookings }) => {
+  const dispatch = useDispatch();
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
 
-  // Pagination logic
   const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
-    const value = parseInt(event.target.value, 10);
-    setRowsPerPage(value);
+    setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const handleView = (booking) => {
+    setSelectedBooking(booking);
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedBooking(null);
+  };
+
+  const handleUpdateClick = (booking) => {
+    setSelectedBooking(booking);
+    setUpdateModalOpen(true);
+  };
+
+  const handleCloseUpdateModal = () => {
+    setUpdateModalOpen(false);
+    setSelectedBooking(null);
+  };
+
+  const handleUpdateBooking = async (updatedData) => {
+    await dispatch(updateTravelBooking({ id: updatedData._id, data: updatedData }));
   };
 
   const paginatedBookings =
     rowsPerPage > 0
       ? bookings.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-      : bookings; // For "All" (when rowsPerPage is -1)
+      : bookings;
 
   return (
     <>
@@ -48,7 +80,7 @@ const TravelBookingsTable = ({ bookings, onView, onUpdate }) => {
         >
           <TableHead>
             <TableRow>
-              {["Booking ID", "Booked By", "Mobile", "Seat No.", "Actions"].map(
+              {["Booking ID", "Booked By", "Mobile", "Booking Date", "Actions"].map(
                 (head) => (
                   <TableCell
                     key={head}
@@ -86,14 +118,14 @@ const TravelBookingsTable = ({ bookings, onView, onUpdate }) => {
                   {booking.customerMobile}
                 </TableCell>
                 <TableCell align="center" sx={{ border: "1px solid #ddd" }}>
-                  {booking.seatNumber}
+                  {fDate(booking.bookingDate)}
                 </TableCell>
                 <TableCell align="center" sx={{ border: "1px solid #ddd" }}>
                   <Button
                     variant="outlined"
                     color="primary"
                     size="small"
-                    onClick={() => onView(booking)}
+                    onClick={() => handleView(booking)}
                     sx={{
                       mr: 1,
                       minWidth: 64,
@@ -107,7 +139,7 @@ const TravelBookingsTable = ({ bookings, onView, onUpdate }) => {
                     variant="contained"
                     color="secondary"
                     size="small"
-                    onClick={() => onUpdate(booking)}
+                    onClick={() => handleUpdateClick(booking)}
                     sx={{
                       minWidth: 64,
                       borderRadius: 3,
@@ -146,6 +178,30 @@ const TravelBookingsTable = ({ bookings, onView, onUpdate }) => {
         rowsPerPageOptions={[25, 50, 100, { label: "All", value: -1 }]}
         labelRowsPerPage="Rows per page"
       />
+
+      {/* Booking Details Dialog */}
+      <Dialog
+        open={!!selectedBooking && !updateModalOpen}
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        {selectedBooking && !updateModalOpen && (
+          <BookingDetails
+            booking={selectedBooking}
+            onClose={handleCloseDialog}
+          />
+        )}
+      </Dialog>
+
+      {/* Update Booking Modal */}
+      {selectedBooking && updateModalOpen && (
+        <UpdateBookingModal
+          booking={selectedBooking}
+          onUpdate={handleUpdateBooking}
+          onClose={handleCloseUpdateModal}
+        />
+      )}
     </>
   );
 };

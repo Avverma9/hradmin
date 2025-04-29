@@ -2,7 +2,14 @@ import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllOwner } from "../redux/reducers/travel/carOwner";
-import { Paper, Button } from "@mui/material";
+import {
+  Paper,
+  Button,
+  Box,
+  Typography,
+  TextField,
+  Modal,
+} from "@mui/material";
 import "./owner-list.css";
 
 const OwnerList = () => {
@@ -53,43 +60,36 @@ const OwnerList = () => {
     link.download = "DL_Image.jpg";
     link.click();
   };
+
   const columns = [
-    // { field: 'id', headerName: 'ID', width: 70 },
-    { field: "name", headerName: "Name", width: 200 },
-    { field: "role", headerName: "Role", width: 150 },
-    { field: "mobile", headerName: "Mobile", width: 180 },
-    { field: "email", headerName: "Email", width: 220 },
-    { field: "dl", headerName: "DL", width: 150 },
-    { field: "city", headerName: "City", width: 150 },
-    { field: "state", headerName: "State", width: 150 },
-    { field: "address", headerName: "Address", width: 250 },
-    { field: "pinCode", headerName: "Pin Code", width: 150 },
+    { field: "name", headerName: "Name", width: 160 },
+    { field: "role", headerName: "Role", width: 120 },
+    { field: "mobile", headerName: "Mobile", width: 140 },
+    { field: "email", headerName: "Email", width: 180 },
+    { field: "dl", headerName: "DL", width: 120 },
+    { field: "city", headerName: "City", width: 120 },
+    { field: "state", headerName: "State", width: 120 },
+    { field: "pinCode", headerName: "Pin Code", width: 100 },
     {
       field: "actions",
       headerName: "Actions",
-      width: 180,
-      renderCell: (params) => {
-        return (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={(event) => {
-              event.stopPropagation(); // Prevent row selection on button click
-              handleViewDlImage(params.row.dlImage[0]);
-            }}
-            
-          >
-            View DL Image
-          </Button>
-        );
-      },
+      width: 140,
+      renderCell: (params) => (
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={(event) => {
+            event.stopPropagation();
+            handleViewDlImage(params.row.dlImage[0]);
+          }}
+        >
+          View DL
+        </Button>
+      ),
     },
   ];
 
-  const paginationModel = { page: 0, pageSize: 20 };
-
-  // Prepare the filteredOwners data for the DataGrid
-  const rows = filteredOwners.map((owner, index) => ({
+  const rows = filteredOwners.map((owner) => ({
     id: owner._id,
     name: owner.name,
     role: owner.role,
@@ -104,50 +104,81 @@ const OwnerList = () => {
   }));
 
   return (
-    <div className="owner-list">
-      <h2
-        style={{
+    <Box sx={{ padding: 3 }}>
+      <Typography
+        variant="h6"
+        sx={{
+          mb: 2,
           textAlign: "center",
-          backgroundColor: "#f0f0f0",
-          border: "1px solid #ccc",
-          padding: "10px",
-          fontSize: "14px",
+          backgroundColor: "#f5f5f5",
+          padding: 2,
+          borderRadius: 1,
+          border: "1px solid #ddd",
+          fontSize: "1rem",
         }}
       >
-       The following list contains detailed information about the car owners. Each owner is categorized by their personal details, including the car they own, and additional information that helps provide a comprehensive view of each owner.
-      </h2>
-      <Paper sx={{ width: "100%" }}>
+        List of registered car owners with associated documents and contact details.
+      </Typography>
+
+      <Box sx={{ mb: 2, textAlign: "right" }}>
+        <TextField
+          label="Search by Mobile or DL"
+          variant="outlined"
+          size="small"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          sx={{ width: 300 }}
+        />
+      </Box>
+
+      <Paper elevation={3}>
         <DataGrid
           rows={rows}
           columns={columns}
-          initialState={{ pagination: { paginationModel } }}
-          pageSizeOptions={[5, 10, 20, 30, 40]}
+          initialState={{
+            pagination: {
+              paginationModel: { pageSize: 10, page: 0 },
+            },
+          }}
+          pageSizeOptions={[10, 20, 30]}
           checkboxSelection
-          sx={{ border: 0 }}
+          sx={{ height: 600, border: 0 }}
         />
       </Paper>
 
-      {/* View DL Image Modal */}
-      {selectedDlImage && (
-        <div className="view-dl-image active">
-          <div className="modal-content">
-            <button className="close-btn" onClick={closeDlImage}>
-              &times;
-            </button>
-            <img src={selectedDlImage} alt="DL" />
-            <div className="modal-actions">
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => handleDownloadImage(selectedDlImage)}
-              >
-                Download Image
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      {/* Modal for DL Image */}
+      <Modal open={!!selectedDlImage} onClose={closeDlImage}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: "white",
+            boxShadow: 24,
+            p: 3,
+            borderRadius: 1,
+            maxWidth: 500,
+            textAlign: "center",
+          }}
+        >
+          <img
+            src={selectedDlImage}
+            alt="DL"
+            style={{ width: "100%", maxHeight: "400px", objectFit: "contain" }}
+          />
+          <Box sx={{ mt: 2 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => handleDownloadImage(selectedDlImage)}
+            >
+              Download DL Image
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+    </Box>
   );
 };
 

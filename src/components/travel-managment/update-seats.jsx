@@ -35,14 +35,22 @@ export default function SeatConfigUpdate({ open, onClose, car }) {
   const handleSeatChange = (index, field, value) => {
     setLocalSeatConfig((prev) => {
       const updatedConfig = [...prev];
-      updatedConfig[index] = {
-        ...updatedConfig[index],
-        [field]: field === "seatPrice" ? value : value.toString(),
-      };
+      const seat = { ...updatedConfig[index] };
+  
+      if (field === "isBooked") {
+        seat[field] = value;
+        if (!value) seat.bookedBy = ""; // clear bookedBy if seat is made available
+      } else if (field === "seatPrice") {
+        seat[field] = value;
+      } else {
+        seat[field] = value.toString();
+      }
+  
+      updatedConfig[index] = seat;
       return updatedConfig;
     });
   };
-
+  
   const addNewSeat = () => {
     setLocalSeatConfig([
       ...localSeatConfig,

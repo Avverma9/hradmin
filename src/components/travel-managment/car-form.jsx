@@ -14,6 +14,8 @@ import {
   Autocomplete,
   FormHelperText,
   Grid,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -29,7 +31,7 @@ export default function CarForm() {
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
   const [year, setYear] = useState("");
-  const [carNumber, setNumber] = useState("");
+  const [vehicleNumber, setVehicleNumber] = useState("");
   const [images, setImages] = useState([]);
   const [price, setPrice] = useState("");
   const [pickupP, setPickupP] = useState("");
@@ -104,9 +106,9 @@ export default function CarForm() {
     formData.append("extraKm", extraKm);
     formData.append("runningStatus", runningStatus);
     formData.append("year", year);
-    formData.append("carNumber", carNumber);
+    formData.append("vehicleNumber", vehicleNumber);
     formData.append("price", price);
-    formData.append("pickupP", pickupP); 
+    formData.append("pickupP", pickupP);
     formData.append("dropP", dropP);
     formData.append("pickupD", pickupD);
     formData.append("dropD", dropD);
@@ -173,7 +175,44 @@ export default function CarForm() {
       [field]: value,
     };
     setSeatConfig(updatedSeatsData);
+     // Automatically update full ride price based on seat prices
+     if (field === "seatPrice") {
+      updateFullRidePrice(updatedSeatsData);
+    }
   };
+
+  const updateFullRidePrice = (currentSeatConfig) => {
+    if (currentSeatConfig.length > 0) {
+      const nonAcSeats = currentSeatConfig.filter(
+        (seat) => seat.seatType === "Non-AC" && seat.seatPrice !== ""
+      );
+
+      if (nonAcSeats.length > 0) {
+        const minNonAcPrice = Math.min(
+          ...nonAcSeats.map((seat) => Number(seat.seatPrice))
+        );
+        setPrice(String(minNonAcPrice));
+      } else {
+        const acSeats = currentSeatConfig.filter(
+          (seat) => seat.seatType === "AC" && seat.seatPrice !== ""
+        );
+        if (acSeats.length > 0) {
+          const minAcPrice = Math.min(
+            ...acSeats.map((seat) => Number(seat.seatPrice))
+          );
+          setPrice(String(minAcPrice));
+        } else {
+          setPrice(""); // No seat prices entered
+        }
+      }
+    } else {
+      setPrice(""); // No seats configured
+    }
+  };
+
+  useEffect(() => {
+    updateFullRidePrice(seatConfig);
+  }, [seatConfig]);
 
   const addNewSeat = () => {
     setSeatConfig([
@@ -250,8 +289,8 @@ export default function CarForm() {
                 variant="outlined"
                 fullWidth
                 type="text"
-                value={carNumber}
-                onChange={(e) => setNumber(e.target.value)}
+                value={vehicleNumber}
+                onChange={(e) => setVehicleNumber(e.target.value)}
                 margin="normal"
               />
             </Grid>
@@ -493,43 +532,49 @@ export default function CarForm() {
             </Grid>
             <Grid item xs={12} sm={4}>
               <TextField
-                label="Available From"
-                type="date"
+                label="Pickup Date & Time"
+                type="datetime-local"
                 value={pickupD}
                 onChange={(e) => setPickupD(e.target.value)}
                 margin="normal"
+                fullWidth
                 InputLabelProps={{
                   shrink: true,
                 }}
               />
             </Grid>
+
             <Grid item xs={12} sm={4}>
               <TextField
-                label="Available To"
-                type="date"
+                label="Drop Date & Time"
+                type="datetime-local"
                 value={dropD}
                 onChange={(e) => setDropD(e.target.value)}
                 margin="normal"
+                fullWidth
                 InputLabelProps={{
                   shrink: true,
                 }}
               />
             </Grid>
+
             <Grid item xs={12} sm={4}>
               <TextField
-                label="Full ride price"
-                variant="outlined"
-                fullWidth
-                type="number"
+                label={
+                  <span style={{ display: 'flex', alignItems: 'center' }}>
+                    Full Ride Price
+                    <Tooltip title="This value is calculated automatically based on distance, duration, and car type.">
+                      <IconButton size="small" style={{ marginLeft: 4 }}>
+                        ⓘ
+                      </IconButton>
+                    </Tooltip>
+                  </span>
+                }
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
                 margin="normal"
+                fullWidth
                 InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <FaIndianRupeeSign />
-                    </InputAdornment>
-                  ),
+                  readOnly: true, // optional, if you want it to be non-editable
                 }}
               />
             </Grid>
