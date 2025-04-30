@@ -144,7 +144,7 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
 
     [dispatch, showLoader, hideLoader, couponCode],
   );
-  return (
+  return ( 
     <div className="booking-details">
       <div className="login-banner">
         <span className="login-text">Booking Summary</span>
