@@ -3,7 +3,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./BookingDetails.css";
 import { toast } from "react-toastify";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { createBooking } from "src/components/redux/reducers/booking";
 import { useLoader } from "../../../../utils/loader";
 import { applyCoupon } from "src/components/redux/reducers/userCoupon/coupon";
@@ -17,10 +17,12 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
   const [inDate, setInDate] = useState(null);
   const [outDate, setOutDate] = useState(null);
   const dispatch = useDispatch();
-  const { showLoader, hideLoader } = useLoader()
+  const { apply } = useSelector((state) => state.userCoupon);
+  const { showLoader, hideLoader } = useLoader();
   const [numRooms, setNumRooms] = useState(1);
   const [guests, setGuests] = useState(1);
-
+  const [discountPrice, setDiscountPrice] = useState("");
+  const [discountPercentage, setDiscountPercentage] = useState("");
   const foodItems = Array.isArray(food) ? food[food.length - 1] : food;
   const roomItems = Array.isArray(room) ? room[room.length - 1] : room;
 
@@ -46,12 +48,13 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
   const foodPrice = parseFloat(foodItems?.price || 0);
   const roomPrice = parseFloat(roomItems?.price || 0);
   const totalPricePerDay = (foodPrice + roomPrice) * numRooms;
+  const finalPrice = totalPricePerDay - (discountPrice || 0);
 
   const calculateTotalPrice = () => {
     if (!inDate || !outDate) return 0;
     const timeDifference = outDate.getTime() - inDate.getTime();
     const daysDifference = Math.ceil(timeDifference / (1000 * 3600 * 24));
-    return totalPricePerDay * daysDifference;
+    return finalPrice * daysDifference;
   };
 
   const updateRoomCount = (newGuests) => {
@@ -92,7 +95,7 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
       hotelOwnerName: owner,
       destination: address,
       hotelCity: city,
-      bookingSource: "Panel"
+      bookingSource: "Panel",
     };
 
     const userData = { userId, hotelId };
@@ -126,25 +129,26 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
           couponCode,
           hotelIds: [hotelId],
           roomIds: [roomId],
-          userIds: userId
+          userIds: userId,
         };
         showLoader();
-        await dispatch(applyCoupon(payload)).unwrap();
-
+        const response = await dispatch(applyCoupon(payload)).unwrap();
+        const discountPrice = response?.[0]?.discountPrice;
+        const discountPercentage = Math.floor(
+          (discountPrice / response?.[0]?.originalPrice) * 100,
+        );
+        setDiscountPercentage(discountPercentage);
+        setDiscountPrice(discountPrice);
       } catch (error) {
-        const errorMessage =
-          error?.message || error?.error || "Failed to apply coupon";
-        console.error("Error applying coupon:", error);
-        toast.error(`Error: ${errorMessage}`);
+        const errorMessage = console.error("Error applying coupon:", error);
       } finally {
         hideLoader();
-        reloadPage()
       }
     },
 
     [dispatch, showLoader, hideLoader, couponCode],
   );
-  return ( 
+  return (
     <div className="booking-details">
       <div className="login-banner">
         <span className="login-text">Booking Summary</span>
@@ -152,8 +156,8 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
       <div className="price-summary">
         <div className="price-header">
           <span className="final-price">₹{roomItems?.price * numRooms}</span>
-          <span className="original-price">₹4785</span>
-          <span className="discount">78% off</span>
+          <span className="original-price">₹{discountPrice}</span>
+          <span className="discount">{discountPercentage}% off</span>
         </div>
         <span className="tax-info">+ taxes & fees: ₹226</span>
 
@@ -165,20 +169,20 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
             <span className="date-text">
               {inDate
                 ? inDate.toLocaleDateString("en-IN", {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "short",
-                })
+                    weekday: "short",
+                    day: "numeric",
+                    month: "short",
+                  })
                 : "Select Start Date"}
             </span>
             <span> - </span>
             <span className="date-text">
               {outDate
                 ? outDate.toLocaleDateString("en-IN", {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "short",
-                })
+                    weekday: "short",
+                    day: "numeric",
+                    month: "short",
+                  })
                 : "Select End Date"}
             </span>
           </div>
@@ -225,8 +229,10 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
                 placeholder="Enter Coupon Code"
                 className="coupon-input-field"
               />
-              <button onClick={() => handleApplyCoupon(hotelId, roomItems?.roomId)} className="apply-button">
-
+              <button
+                onClick={() => handleApplyCoupon(hotelId, roomItems?.roomId)}
+                className="apply-button"
+              >
                 <span>&#10003;</span>
               </button>
             </div>
@@ -238,8 +244,8 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
       </div>
       <div className="price-breakdown">
         <div className="savings">
-          <span>Your Savings</span>
-          <span className="savings-amount">₹2077</span>
+          <span>Your Savings {discountPrice}</span>
+          <span className="savings-amount"></span>
         </div>
         {foodItems && (
           <div className="addon">
