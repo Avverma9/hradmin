@@ -13,6 +13,8 @@ import {
   InputLabel,
   FormControl
 } from '@mui/material';
+import { useLoader } from '../../../utils/loader';
+import { reloadPage } from '../../../utils/util';
 
 const UpdateBookingModal = ({ booking, onClose, onUpdate }) => {
   const [formData, setFormData] = useState({
@@ -24,8 +26,9 @@ const UpdateBookingModal = ({ booking, onClose, onUpdate }) => {
     dropP: booking.dropP,
     pickupD: booking.pickupD,
     dropD: booking.dropD,
-    seats: booking.seats, // Array of seat _ids
+    seats: booking.seats,
   });
+  const { showLoader, hideLoader } = useLoader()
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -35,22 +38,31 @@ const UpdateBookingModal = ({ booking, onClose, onUpdate }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const updatedBooking = {
-      ...booking,
-      id: formData.id,
-      bookedBy: formData.bookedBy,
-      customerMobile: formData.customerMobile,
-      vehicleNumber: formData.vehicleNumber,
-      pickupP: formData.pickupP,
-      dropP: formData.dropP,
-      pickupD: new Date(formData.pickupD),
-      dropD: new Date(formData.dropD),
-      seats: formData.seats,
-    };
-    onUpdate(updatedBooking); // Call parent handler
-    onClose(); // Close modal
+    showLoader();
+    try {
+      const updatedBooking = {
+        ...booking,
+        id: formData.id,
+        bookedBy: formData.bookedBy,
+        customerMobile: formData.customerMobile,
+        vehicleNumber: formData.vehicleNumber,
+        pickupP: formData.pickupP,
+        dropP: formData.dropP,
+        pickupD: new Date(formData.pickupD),
+        dropD: new Date(formData.dropD),
+        seats: formData.seats,
+      };
+
+      await onUpdate(updatedBooking);
+      onClose();
+    } catch (err) {
+      console.error("Failed to update booking:", err);
+    } finally {
+      hideLoader();
+      reloadPage()
+    }
   };
 
   return (
@@ -157,15 +169,15 @@ const UpdateBookingModal = ({ booking, onClose, onUpdate }) => {
                     selected
                       .map(
                         (id) =>
-                          booking.seatsData.find((seat) => seat._id === id)
+                          booking.availableSeatsOnCar.find((seat) => seat._id === id)
                             ?.seatType || id
                       )
                       .join(', ')
                   }
                 >
-                  {booking.seatsData.map((seat) => (
+                  {booking.availableSeatsOnCar.map((seat) => (
                     <MenuItem key={seat._id} value={seat._id}>
-                    {seat.seatType} - Seat #{seat.seatNumber} - ₹{seat.seatPrice}
+                      {seat.seatType} - Seat #{seat.seatNumber} - ₹{seat.seatPrice}
                     </MenuItem>
                   ))}
                 </Select>

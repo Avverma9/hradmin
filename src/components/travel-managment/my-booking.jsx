@@ -3,15 +3,31 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchTravelBookings } from "../redux/reducers/travel/booking";
 import TravelBookingsTable from "./bookings-table";
 import { Box, Divider, Typography } from "@mui/material";
+import { useLoader } from "../../../utils/loader";
 
 export default function MyTravelBookingTMS() {
   const dispatch = useDispatch();
+  const { showLoader, hideLoader } = useLoader();
+
   const { travelBookings, loading, error } = useSelector(
     (state) => state.travelBooking
   );
 
   useEffect(() => {
-    dispatch(fetchTravelBookings());
+    const loadBookings = async () => {
+      if (!travelBookings || travelBookings.length === 0) {
+        showLoader();
+        try {
+          await dispatch(fetchTravelBookings()).unwrap(); 
+        } catch (err) {
+          console.error("Failed to fetch bookings:", err);
+        } finally {
+          hideLoader();
+        }
+      }
+    };
+
+    loadBookings();
   }, [dispatch]);
 
   const handleViewBookings = (booking) => {
@@ -47,9 +63,8 @@ export default function MyTravelBookingTMS() {
         </Typography>
       )}
 
-
       <TravelBookingsTable
-        bookings={travelBookings}
+        bookings={travelBookings || []}
         onView={handleViewBookings}
         onUpdate={handleUpdateBookings}
       />

@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-import { ListTravel } from '../../settings/travel';
+import { ListTravel } from '../../settings/travelPlacesHeader';
 
 // ----------------------------------------------------------------------
 
