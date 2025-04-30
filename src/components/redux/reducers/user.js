@@ -29,18 +29,29 @@ export const findUser = createAsyncThunk('user/findUser', async (mobile, { rejec
   }
 });
 
-export const fetchBulkUser = createAsyncThunk('user/fetchBulkUser', async (payload, { rejectWithValue }) => {
-  try {
-    const response = await axios.post(`${localUrl}/get-user-data/in-bulk`, payload, {
-      headers: { Authorization: token },
-    });
-    return response?.data?.data;
-  } catch (error) {
-    const errorMessage = error.response?.data?.message || error.message;
-    toast.error(`Error: ${errorMessage}`);
-    return rejectWithValue(errorMessage);
+export const fetchBulkUser = createAsyncThunk(
+  'user/fetchBulkUser',
+  async (userIds, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${localUrl}/get-user-data/in-bulk`,
+        { userIds }, // body
+        {
+          headers: {
+            Authorization: token,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return response?.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
   }
-});
+);
 
 const userSlice = createSlice({
   name: 'user',
@@ -75,17 +86,12 @@ const userSlice = createSlice({
         state.error = action.payload;
         state.userData = [];
       })
-      .addCase(fetchBulkUser.pending, (state) => {
-        state.loading = true;
-      })
       .addCase(fetchBulkUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.userData = action.payload;
+        state.userData = action.payload.users; // ✅ extract only the `users` array
       })
-      .addCase(fetchBulkUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      });
+      
+      
   },
 });
 

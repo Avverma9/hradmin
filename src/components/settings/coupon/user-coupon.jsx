@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import {
   Box,
@@ -32,13 +32,12 @@ export default function UserCoupon() {
   const [discountPrice, setDiscountPrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const [validity, setValidity] = useState("");
-
   const [coupons, setCoupons] = useState([]);
   const [openCreateCouponModal, setOpenCreateCouponModal] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
-
-  const [selectedUserList, setSelectedUserList] = useState([]);
   const [showUserModal, setShowUserModal] = useState(false);
+
+  const { userData } = useSelector((state) => state.user);
 
   const resetCouponForm = () => {
     setCouponName("");
@@ -120,17 +119,23 @@ export default function UserCoupon() {
     );
   };
 
-  const handleShowUserModal = async (userIds = []) => {
-    if (!userIds.length) return;
+  const handleShowUserModal = async (userIds) => {
+    if (!userIds || userIds.length === 0) return;
 
     try {
-      const response = await dispatch(fetchBulkUser({ userIds })).unwrap();
-      setSelectedUserList(response || []);
-      setShowUserModal(true);
+      const resultAction = await dispatch(fetchBulkUser(userIds));
+      const response = resultAction.payload;
+
+      if (response?.users?.length > 0) {
+        setShowUserModal(true);
+      } else {
+        toast.warn("No user details found.");
+      }
     } catch (error) {
       toast.error("Failed to fetch user details.");
     }
   };
+
 
   return (
     <Box sx={{ p: 3 }}>
@@ -212,7 +217,7 @@ export default function UserCoupon() {
       <UserDetailsModal
         open={showUserModal}
         onClose={() => setShowUserModal(false)}
-        userList={selectedUserList}
+        userData={userData}
       />
     </Box>
   );

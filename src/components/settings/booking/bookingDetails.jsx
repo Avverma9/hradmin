@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./BookingDetails.css";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { createBooking } from "src/components/redux/reducers/booking";
+import { useLoader } from "../../../../utils/loader";
+import { applyCoupon } from "src/components/redux/reducers/userCoupon/coupon";
+import { reloadPage } from "../../../../utils/util";
 
 const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
   const [showDatePickers, setShowDatePickers] = useState(false);
@@ -14,7 +17,7 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
   const [inDate, setInDate] = useState(null);
   const [outDate, setOutDate] = useState(null);
   const dispatch = useDispatch();
-
+  const { showLoader, hideLoader } = useLoader()
   const [numRooms, setNumRooms] = useState(1);
   const [guests, setGuests] = useState(1);
 
@@ -89,7 +92,7 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
       hotelOwnerName: owner,
       destination: address,
       hotelCity: city,
-      bookingSource:"Panel"
+      bookingSource: "Panel"
     };
 
     const userData = { userId, hotelId };
@@ -115,11 +118,32 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
     }
   };
 
-  const handleApplyCoupon = () => {
-    console.log("Coupon Code:", couponCode);
-    setShowCouponInput(false); // Hide the input after applying coupon
-  };
+  const handleApplyCoupon = useCallback(
+    async (hotelId, roomId) => {
+      showLoader();
+      try {
+        const payload = {
+          couponCode,
+          hotelIds: [hotelId],
+          roomIds: [roomId],
+          userIds: userId
+        };
+        showLoader();
+        await dispatch(applyCoupon(payload)).unwrap();
 
+      } catch (error) {
+        const errorMessage =
+          error?.message || error?.error || "Failed to apply coupon";
+        console.error("Error applying coupon:", error);
+        toast.error(`Error: ${errorMessage}`);
+      } finally {
+        hideLoader();
+        reloadPage()
+      }
+    },
+
+    [dispatch, showLoader, hideLoader, couponCode],
+  );
   return (
     <div className="booking-details">
       <div className="login-banner">
@@ -141,20 +165,20 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
             <span className="date-text">
               {inDate
                 ? inDate.toLocaleDateString("en-IN", {
-                    weekday: "short",
-                    day: "numeric",
-                    month: "short",
-                  })
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                })
                 : "Select Start Date"}
             </span>
             <span> - </span>
             <span className="date-text">
               {outDate
                 ? outDate.toLocaleDateString("en-IN", {
-                    weekday: "short",
-                    day: "numeric",
-                    month: "short",
-                  })
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                })
                 : "Select End Date"}
             </span>
           </div>
@@ -201,7 +225,8 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
                 placeholder="Enter Coupon Code"
                 className="coupon-input-field"
               />
-              <button onClick={handleApplyCoupon} className="apply-button">
+              <button onClick={() => handleApplyCoupon(hotelId, roomItems?.roomId)} className="apply-button">
+
                 <span>&#10003;</span>
               </button>
             </div>
