@@ -77,7 +77,7 @@ const BookingDetails = ({ booking, onClose }) => {
                         ['Total Seats Booked', seatCount],
                         ['Total Price', `₹${totalPrice}`],
                         ['Booking Date', formatDateTime(bookingDate)],
-                    ].map(([label, value], index) => (
+                    ]?.map(([label, value], index) => (
                         <Grid item xs={12} sm={6} key={index}>
                             <Box
                                 sx={{
@@ -104,7 +104,7 @@ const BookingDetails = ({ booking, onClose }) => {
                     Seat Details
                 </Typography>
                 <Grid container spacing={2}>
-                    {seatsData.map((seat, index) => (
+                    {seatsData?.map((seat, index) => (
                         <Grid item xs={12} sm={6} key={seat._id}>
                             <Box
                                 sx={{

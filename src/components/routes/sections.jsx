@@ -38,6 +38,8 @@ const TourFormPage = lazy(() => import('src/components/pages/tour/tour-form'));
 const TourList = lazy(() => import('src/components/pages/tour/tour-list'));
 const TourUpdatePage = lazy(() => import('src/components/pages/tour/tour-update'));
 const TravelBookingTMS = lazy(() => import('src/components/pages/travel/travel-bookings'))
+const TravelBookingsAdmin = lazy(() => import('src/components/settings/travelBookings/travel-booking'))
+const UserCouponPage = lazy(() => import('src/components/pages/admin/user-coupon-page'));
 export default function Router() {
     const routes = useRoutes([
         {
@@ -87,6 +89,8 @@ export default function Router() {
                 { path: 'tour-list', element: <TourList /> },
                 { path: "tour-update/:id", element: <TourUpdatePage /> },
                 { path: "travel-bookings", element: <TravelBookingTMS /> },
+                { path: "admin-travel/bookings", element: <TravelBookingsAdmin /> },
+                { path: "user-coupon", element: <UserCouponPage /> },
                 { path: '*', element: <Navigate to="/404" replace /> },
             ],
         },

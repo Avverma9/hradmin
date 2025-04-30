@@ -1,24 +1,41 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchTravelBookingsTMS } from "../redux/reducers/travel/booking";
-import TravelBookingsTable from "./bookings-table";
-import { Box, Divider, Grid, TextField, Typography } from "@mui/material";
-import { useLoader } from "../../../utils/loader";
-import { userId } from "../../../utils/util";
+import { Box, Divider, Typography, TextField, Grid } from "@mui/material";
+import { useLoader } from "../../../../utils/loader";
+import { fetchTravelBookingsAdmin } from "src/components/redux/reducers/travel/booking";
+import TravelBookingsTable from "src/components/travel-managment/bookings-table";
 
-export default function MyTravelBookingTMS() {
+export default function TravelBookings() {
   const dispatch = useDispatch();
-  const [bookingIdSearch, setBookingIdSearch] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
   const { showLoader, hideLoader } = useLoader();
 
-  const { bookingsTMS, loading, error } = useSelector(
+  const { bookingsAdmin, loading, error } = useSelector(
     (state) => state.travelBooking
   );
 
+  const [bookingIdSearch, setBookingIdSearch] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
+  useEffect(() => {
+    const loadBookings = async () => {
+      if (!bookingsAdmin || bookingsAdmin.length === 0) {
+        showLoader();
+        try {
+          await dispatch(fetchTravelBookingsAdmin()).unwrap();
+        } catch (err) {
+          console.error("Failed to fetch bookings:", err);
+        } finally {
+          hideLoader();
+        }
+      }
+    };
+
+    loadBookings();
+  }, [dispatch]);
+
   // Filter by booking ID and pickup/drop date range
-  const filteredBookings = (bookingsTMS || []).filter((booking) => {
+  const filteredBookings = (bookingsAdmin || []).filter((booking) => {
     const matchesBookingId = booking.bookingId
       .toLowerCase()
       .includes(bookingIdSearch.toLowerCase());
@@ -35,24 +52,6 @@ export default function MyTravelBookingTMS() {
     return matchesBookingId && isWithinDateRange;
   });
 
-
-  useEffect(() => {
-    const loadBookings = async () => {
-      if (!bookingsTMS || bookingsTMS.length === 0) {
-        showLoader();
-        try {
-          await dispatch(fetchTravelBookingsTMS(userId)).unwrap();
-        } catch (err) {
-          console.error("Failed to fetch bookings:", err);
-        } finally {
-          hideLoader();
-        }
-      }
-    };
-
-    loadBookings();
-  }, [dispatch]);
-  console.log("here is bookings", bookingsTMS)
   return (
     <Box
       sx={{
@@ -67,7 +66,7 @@ export default function MyTravelBookingTMS() {
         variant="h5"
         sx={{ fontWeight: "bold", mb: 1, color: "#333" }}
       >
-        My Travel Bookings
+        Travel Bookings (Admin View)
       </Typography>
       <Divider sx={{ mb: 2 }} />
 
@@ -110,10 +109,7 @@ export default function MyTravelBookingTMS() {
         </Typography>
       )}
 
-      <TravelBookingsTable
-        bookings={bookingsTMS || []}
-
-      />
+      <TravelBookingsTable bookings={filteredBookings} />
     </Box>
   );
 }

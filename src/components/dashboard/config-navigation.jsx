@@ -136,8 +136,9 @@ const getNavConfig = async () => {
                 { title: 'Change banner', path: '/change-banner', icon: icons.banner },
                 { title: 'Apply Coupons (Single Use)', path: '/apply-coupon', icon: icons.coupon },
                 { title: 'Push notification', path: '/send-notification-to-all', icon: icons.notification },
-                { title: "Travel Bookings", path: '/travel-bookings/list' },
-                { title: "User Coupon", path: '/user-coupon' }
+                { title: "Travel Bookings", path: '/admin-travel/bookings', icon: icons.bookings },
+                { title: "User Coupon", path: '/user-coupon', icon: icons.coupon },
+
             ],
         },
     ];

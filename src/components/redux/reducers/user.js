@@ -3,17 +3,12 @@ import axios from 'axios';
 import { localUrl, token } from '../../../../utils/util';
 import { toast } from 'react-toastify';
 
-// Thunks for API calls
-
-// Fetch all users
 export const fetchUsers = createAsyncThunk('user/fetchUsers', async (_, { rejectWithValue }) => {
   try {
     const response = await axios.get(`${localUrl}/get/all-users-data/all-data`, {
-      headers: {
-        Authorization: token,
-      },
+      headers: { Authorization: token },
     });
-    return response?.data?.data; // Return the data to be used in fulfilled case
+    return response?.data?.data;
   } catch (error) {
     const errorMessage = error.response?.data?.message || error.message;
     toast.error(`Error: ${errorMessage}`);
@@ -21,15 +16,12 @@ export const fetchUsers = createAsyncThunk('user/fetchUsers', async (_, { reject
   }
 });
 
-// Find a specific user by mobile number
-export const findUser = createAsyncThunk('user/finduser', async (mobile, { rejectWithValue }) => {
+export const findUser = createAsyncThunk('user/findUser', async (mobile, { rejectWithValue }) => {
   try {
     const response = await axios.get(`${localUrl}/get/user/by/query?mobile=${mobile}`, {
-      headers: {
-        Authorization: token,
-      },
+      headers: { Authorization: token },
     });
-    return response?.data?.data; // Return the data to be used in fulfilled case
+    return response?.data?.data;
   } catch (error) {
     const errorMessage = error.response?.data?.message || error.message;
     toast.error(`Error: ${errorMessage}`);
@@ -37,44 +29,63 @@ export const findUser = createAsyncThunk('user/finduser', async (mobile, { rejec
   }
 });
 
-// Create the user slice
+export const fetchBulkUser = createAsyncThunk('user/fetchBulkUser', async (payload, { rejectWithValue }) => {
+  try {
+    const response = await axios.post(`${localUrl}/get-user-data/in-bulk`, payload, {
+      headers: { Authorization: token },
+    });
+    return response?.data?.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || error.message;
+    toast.error(`Error: ${errorMessage}`);
+    return rejectWithValue(errorMessage);
+  }
+});
+
 const userSlice = createSlice({
   name: 'user',
   initialState: {
-    userData: [],  // The user data
-    loading: false, // Loading state for API calls
-    error: null,    // Error state
+    userData: [],
+    loading: false,
+    error: null,
   },
-  reducers: {
-    // You can add reducers here to handle specific actions if needed
-  },
+  reducers: {},
   extraReducers: (builder) => {
-    // Fetch all users
-    builder.addCase(fetchUsers.pending, (state) => {
-      state.loading = true; // Set loading to true when the API call is pending
-    });
-    builder.addCase(fetchUsers.fulfilled, (state, action) => {
-      state.loading = false; // Set loading to false when the API call is successful
-      state.userData = action.payload; // Store the user data in the state
-    });
-    builder.addCase(fetchUsers.rejected, (state, action) => {
-      state.loading = false; // Set loading to false on failure
-      state.error = action.payload; // Store the error message in the state
-    });
-
-    // Find a specific user
-    builder.addCase(findUser.pending, (state) => {
-      state.loading = true; // Set loading to true when the API call is pending
-    });
-    builder.addCase(findUser.fulfilled, (state, action) => {
-      state.loading = false; // Set loading to false when the API call is successful
-      state.userData = action.payload; // Store the found user data in the state
-    });
-    builder.addCase(findUser.rejected, (state, action) => {
-      state.loading = false; // Set loading to false on failure
-      state.error = action.payload; // Store the error message in the state
-      state.userData = []; // Clear user data on failure to ensure no old data persists
-    });
+    builder
+      .addCase(fetchUsers.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchUsers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userData = action.payload;
+      })
+      .addCase(fetchUsers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(findUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(findUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userData = action.payload;
+      })
+      .addCase(findUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.userData = [];
+      })
+      .addCase(fetchBulkUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchBulkUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userData = action.payload;
+      })
+      .addCase(fetchBulkUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   },
 });
 

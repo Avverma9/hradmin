@@ -3,11 +3,30 @@ import axios from "axios";
 import { localUrl, notify, token } from "../../../../../utils/util";
 import { toast } from "react-toastify";
 
-export const fetchTravelBookings = createAsyncThunk(
-    "travel/fetchTravelBookings",
+export const fetchTravelBookingsAdmin = createAsyncThunk(
+    "travel/fetchTravelBookingsAdmin",
     async (_, { rejectWithValue }) => {
         try {
             const response = await axios.get(`${localUrl}/travel/get-travels-bookings`, {
+                headers: {
+                    Authorization: token,
+                },
+            });
+            notify(response?.status);
+            return response.data;
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || error.message;
+            toast.error(`Error: ${errorMessage}`);
+            return rejectWithValue(errorMessage);
+        }
+    }
+);
+
+export const fetchTravelBookingsTMS = createAsyncThunk(
+    "travel/fetchTravelBookingsTMS",
+    async (ownerId, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`${localUrl}/travel/get-bookings-by/owner/${ownerId}`, {
                 headers: {
                     Authorization: token,
                 },
@@ -54,16 +73,22 @@ export const updateTravelBooking = createAsyncThunk(
 const travelBookingSlice = createSlice({
     name: "travelBooking",
     initialState: {
-        travelBookings: [],
+        bookingsAdmin: [],
+        bookingsTMS: [],
         loading: false,
         error: null,
     },
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(fetchTravelBookings.fulfilled, (state, action) => {
+            .addCase(fetchTravelBookingsAdmin.fulfilled, (state, action) => {
                 state.loading = false;
-                state.travelBookings = action.payload;
+                state.bookingsAdmin = action.payload;
+                state.error = null;
+            })
+            .addCase(fetchTravelBookingsTMS.fulfilled, (state, action) => {
+                state.loading = false;
+                state.bookingsTMS = action.payload;
                 state.error = null;
             })
 
