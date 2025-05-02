@@ -91,6 +91,7 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
       roomDetails: room,
       price: calculateTotalPrice(),
       hotelName: hotel,
+      couponCode: couponCode,
       hotelEmail: email,
       hotelOwnerName: owner,
       destination: address,
