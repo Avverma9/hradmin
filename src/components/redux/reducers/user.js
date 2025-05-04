@@ -53,6 +53,30 @@ export const fetchBulkUser = createAsyncThunk(
   }
 );
 
+export const userDetails = createAsyncThunk(
+  'user/userDetails',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${localUrl}/get-all-users-booking-details/full-details`,
+        {
+          headers: {
+            Authorization: token,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return response?.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+
 const userSlice = createSlice({
   name: 'user',
   initialState: {
@@ -90,7 +114,10 @@ const userSlice = createSlice({
         state.loading = false;
         state.userData = action.payload.users; // ✅ extract only the `users` array
       })
-      
+      .addCase(userDetails.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userData = action.payload; // ✅ extract only the `users` array
+      })
       
   },
 });

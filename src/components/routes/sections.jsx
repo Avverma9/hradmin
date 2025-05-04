@@ -39,7 +39,7 @@ const TourList = lazy(() => import('src/components/pages/tour/tour-list'));
 const TourUpdatePage = lazy(() => import('src/components/pages/tour/tour-update'));
 const TravelBookingTMS = lazy(() => import('src/components/pages/travel/travel-bookings'))
 const TravelBookingsAdmin = lazy(() => import('src/components/settings/travelBookings/travel-booking'))
-const UserCouponPage = lazy(() => import('src/components/pages/admin/user-coupon-page'));
+const UserCouponPage = lazy(() => import('src/components/pages/admin/partner-coupon-page'));
 export default function Router() {
     const routes = useRoutes([
         {
