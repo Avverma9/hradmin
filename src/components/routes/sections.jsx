@@ -90,7 +90,7 @@ export default function Router() {
                 { path: "tour-update/:id", element: <TourUpdatePage /> },
                 { path: "travel-bookings", element: <TravelBookingTMS /> },
                 { path: "admin-travel/bookings", element: <TravelBookingsAdmin /> },
-                { path: "user-coupon", element: <UserCouponPage /> },
+                { path: "partner-coupon", element: <UserCouponPage /> },
                 { path: '*', element: <Navigate to="/404" replace /> },
             ],
         },

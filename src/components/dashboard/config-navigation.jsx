@@ -137,7 +137,7 @@ const getNavConfig = async () => {
                 { title: 'Apply Coupons (Single Use)', path: '/apply-coupon', icon: icons.coupon },
                 { title: 'Push notification', path: '/send-notification-to-all', icon: icons.notification },
                 { title: "Travel Bookings", path: '/admin-travel/bookings', icon: icons.bookings },
-                { title: "User Coupon", path: '/user-coupon', icon: icons.coupon },
+                { title: "Partner Coupon", path: '/partner-coupon', icon: icons.coupon },
 
             ],
         },
