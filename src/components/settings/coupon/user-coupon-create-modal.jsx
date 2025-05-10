@@ -33,7 +33,10 @@ const CreateCouponModal = ({
         .slice(0, 16); // format to 'YYYY-MM-DDTHH:mm'
       setValidity(localISOTime);
     }
-  }, [open, validity, setValidity]);
+    if (!quantity) {
+      setQuantity("1");
+    }
+  }, [open, validity, setValidity, quantity, setQuantity]);
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">

@@ -39,7 +39,9 @@ const TourList = lazy(() => import('src/components/pages/tour/tour-list'));
 const TourUpdatePage = lazy(() => import('src/components/pages/tour/tour-update'));
 const TravelBookingTMS = lazy(() => import('src/components/pages/travel/travel-bookings'))
 const TravelBookingsAdmin = lazy(() => import('src/components/settings/travelBookings/travel-booking'))
-const UserCouponPage = lazy(() => import('src/components/pages/admin/partner-coupon-page'));
+const PartnerCouponPage = lazy(() => import('src/components/pages/admin/partner-coupon-page'));
+const UserCouponPage = lazy(() => import('src/components/pages/admin/user-coupon-page'));
+
 export default function Router() {
     const routes = useRoutes([
         {
@@ -90,7 +92,9 @@ export default function Router() {
                 { path: "tour-update/:id", element: <TourUpdatePage /> },
                 { path: "travel-bookings", element: <TravelBookingTMS /> },
                 { path: "admin-travel/bookings", element: <TravelBookingsAdmin /> },
-                { path: "partner-coupon", element: <UserCouponPage /> },
+                { path: "partner-coupon", element: <PartnerCouponPage /> },
+                { path: "user-coupon", element: < UserCouponPage/> },
+
                 { path: '*', element: <Navigate to="/404" replace /> },
             ],
         },

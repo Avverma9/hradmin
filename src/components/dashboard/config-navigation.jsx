@@ -138,6 +138,7 @@ const getNavConfig = async () => {
                 { title: 'Push notification', path: '/send-notification-to-all', icon: icons.notification },
                 { title: "Travel Bookings", path: '/admin-travel/bookings', icon: icons.bookings },
                 { title: "Partner Coupon", path: '/partner-coupon', icon: icons.coupon },
+                { title: "User Coupon", path: '/user-coupon', icon: icons.coupon },
 
             ],
         },
