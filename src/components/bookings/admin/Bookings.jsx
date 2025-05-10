@@ -27,6 +27,7 @@ import AdminBookingUpdateModal from "./admin-booking-update";
 
 export default function BookingsView() {
   const [bookingId, setBookingId] = useState("");
+  const [couponCode, setCouponCode] = useState("")
   const [status, setStatus] = useState("");
   const [filterDate, setFilterDate] = useState("");
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -127,7 +128,13 @@ export default function BookingsView() {
   const handleSearch = async () => {
     showLoader();
     try {
-      await dispatch(searchBooking(bookingId));
+      if (bookingId) {
+        await dispatch(searchBooking({ bookingId }));
+      } else if (couponCode) {
+        await dispatch(searchBooking({ couponCode }));
+      } else {
+        toast.warn("Please enter a booking ID or coupon code");
+      }
     } catch (error) {
       console.error("Error:", error);
       toast.error("Search failed");
@@ -135,6 +142,7 @@ export default function BookingsView() {
       hideLoader();
     }
   };
+
 
   const handleView = (bookingId) =>
     navigate(`/your-booking-details/${bookingId}`);
@@ -168,6 +176,15 @@ export default function BookingsView() {
               variant="outlined"
               value={bookingId}
               onChange={(e) => setBookingId(e.target.value)}
+            />
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <TextField
+              fullWidth
+              label="Coupon Code"
+              variant="outlined"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value)}
             />
           </Grid>
           <Grid item xs={12} md={3}>

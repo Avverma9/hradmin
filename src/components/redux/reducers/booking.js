@@ -34,20 +34,32 @@ export const createBooking = createAsyncThunk('booking/createBooking', async ({ 
     }
 });
 
-export const searchBooking = createAsyncThunk('booking/searchBooking', async (bookingId, { rejectWithValue }) => {
-    try {
-        const response = await axios.get(`${localUrl}/get/all/filtered/booking/by/query?bookingId=${bookingId}`, {
-            headers: {
-                Authorization: token,
+export const searchBooking = createAsyncThunk(
+    'booking/searchBooking',
+    async ({ bookingId = '', couponCode = '' }, { rejectWithValue }) => {
+      try {
+        const response = await axios.get(
+          `${localUrl}/get/all/filtered/booking/by/query`,
+          {
+            params: {
+              bookingId,
+              couponCode,
             },
-        });
+            headers: {
+              Authorization: token,
+            },
+          }
+        );
+  
         return response.data;
-    } catch (error) {
+      } catch (error) {
         const errorMessage = error.response?.data?.message || error.message;
         toast.error(`Error: ${errorMessage}`);
         return rejectWithValue(errorMessage);
+      }
     }
-});
+  );
+  
 export const updateBooking = createAsyncThunk('booking/updateBooking', async ({ bookingId, updatedData }, { rejectWithValue }) => {
     try {
         const response = await axios.put(`${localUrl}/updatebooking/${bookingId}`, updatedData, {
