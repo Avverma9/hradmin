@@ -30,16 +30,19 @@ import {
   TableContainer,
   InputAdornment,
   Grid,
+  Autocomplete,
 } from '@mui/material';
 
 import { localUrl } from '../../../../utils/util';
 import { fDate } from '../../../../utils/format-time';
+import { useNavigate } from 'react-router-dom';
 
 export default function MonthlyPrice() {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [monthPrice, setMonthPrice] = useState('');
   const [data, setData] = useState([]);
+  const navigate = useNavigate()
   const [hotels, setHotels] = useState([]);
   const [selectedHotel, setSelectedHotel] = useState('');
   const [selectedRoom, setSelectedRoom] = useState(''); // New state for selected room
@@ -77,18 +80,14 @@ export default function MonthlyPrice() {
 
   const fetchMonthlyPriceData = async (hotelId) => {
     if (!hotelId) return;
-    try {
       const response = await axios.get(`${localUrl}/monthly-set-room-price/get/by/${hotelId}`);
       setData(response?.data);
-    } catch (error) {
-      toast.error("It seems there's an error fetching monthly price data", { autoClose: 3000 });
-    }
   };
 
   const handleHotelChange = async (event) => {
     const hotelId = event.target.value;
     setSelectedHotel(hotelId);
-    setSelectedRoom(''); // Reset selected room
+    setSelectedRoom('');
     await fetchMonthlyPriceData(hotelId);
   };
 
@@ -158,6 +157,10 @@ export default function MonthlyPrice() {
       toast.error("It seems there's an issue!", { autoClose: 3000 });
     }
   };
+
+  const openHotel = (id) => {
+    navigate(`/view-hotel-details/${id}`)
+  }
   return (
     <Box
       sx={{
@@ -188,14 +191,23 @@ export default function MonthlyPrice() {
         <Grid container spacing={2} sx={{ mb: 2 }}>
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth size="small">
-              <InputLabel>Select Hotel</InputLabel>
-              <Select value={selectedHotel} onChange={handleHotelChange} label="Select Hotel">
-                {hotels.map((hotel) => (
-                  <MenuItem key={hotel.hotelId} value={hotel.hotelId}>
-                    {hotel.hotelName}
-                  </MenuItem>
-                ))}
-              </Select>
+            
+              <Autocomplete
+                size="small"
+                fullWidth
+                options={hotels}
+                getOptionLabel={(option) => option.hotelName || ''}
+                value={hotels.find((h) => h.hotelId === selectedHotel) || null}
+                onChange={(event, newValue) => {
+                  if (newValue) {
+                    setSelectedHotel(newValue.hotelId);
+                    setSelectedRoom('');
+                    fetchMonthlyPriceData(newValue.hotelId);
+                  }
+                }}
+                renderInput={(params) => <TextField {...params} label="Select Hotel" />}
+              />
+
             </FormControl>
           </Grid>
 
@@ -274,8 +286,14 @@ export default function MonthlyPrice() {
             {data?.length > 0 ? (
               data.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell>{item.hotelId}</TableCell>
-                  <TableCell>{item.roomId}</TableCell>
+                  <TableCell
+                    onClick={() => openHotel(item.hotelId)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {item.hotelId}
+                  </TableCell>
+
+                  <TableCell >{item?.roomInfo}</TableCell>
                   <TableCell>{fDate(item.startDate)}</TableCell>
                   <TableCell>{fDate(item.endDate)}</TableCell>
                   <TableCell>

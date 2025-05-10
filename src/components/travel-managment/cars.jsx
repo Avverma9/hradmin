@@ -17,6 +17,7 @@ import { format } from "date-fns"; // Import format from date-fns
 import SeatData from "./seat-data";
 import { FaLocationArrow, FaMapMarkerAlt } from "react-icons/fa";
 import { AiOutlineCalendar } from "react-icons/ai";
+import { fDate, indianTime } from "../../../utils/format-time";
 
 const Cars = () => {
   const dispatch = useDispatch();
@@ -309,6 +310,7 @@ const Cars = () => {
                           <IoMdSpeedometer /> ₹{car?.extraKm} Extra Per Km
                         </div>
                       )}
+                      <div> Full Ride @₹{car?.price}</div>
                     </div>
 
                     {/* Right Side (4 details) */}
@@ -323,8 +325,8 @@ const Cars = () => {
                         <FaMapMarkerAlt /> Drop: {car?.dropP}
                       </div>
                       <div>
-                        <AiOutlineCalendar /> From {(car?.pickupD)}{" "}
-                        to {(car?.dropD)}
+                        <AiOutlineCalendar /> From {fDate(car?.pickupD)}{" "}
+                        to {fDate(car?.dropD)}
                       </div>
                     </div>
                   </div>

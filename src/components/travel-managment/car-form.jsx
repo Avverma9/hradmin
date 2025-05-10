@@ -175,8 +175,8 @@ export default function CarForm() {
       [field]: value,
     };
     setSeatConfig(updatedSeatsData);
-     // Automatically update full ride price based on seat prices
-     if (field === "seatPrice") {
+    // Automatically update full ride price based on seat prices
+    if (field === "seatPrice") {
       updateFullRidePrice(updatedSeatsData);
     }
   };
@@ -560,22 +560,11 @@ export default function CarForm() {
 
             <Grid item xs={12} sm={4}>
               <TextField
-                label={
-                  <span style={{ display: 'flex', alignItems: 'center' }}>
-                    Full Ride Price
-                    <Tooltip title="This value is calculated automatically based on distance, duration, and car type.">
-                      <IconButton size="small" style={{ marginLeft: 4 }}>
-                        ⓘ
-                      </IconButton>
-                    </Tooltip>
-                  </span>
-                }
+                label="Full Ride Price"
                 value={price}
+                onChange={(e) => setPrice(e.target.value)}
                 margin="normal"
                 fullWidth
-                InputProps={{
-                  readOnly: true, // optional, if you want it to be non-editable
-                }}
               />
             </Grid>
             <Grid item xs={12} sm={4}>
