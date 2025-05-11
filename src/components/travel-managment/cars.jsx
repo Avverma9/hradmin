@@ -76,7 +76,7 @@ const Cars = () => {
   const handleCarImage = (car) => {
     return car?.images && Array.isArray(car.images) && car.images.length > 0
       ? car.images[0]
-      : "/public/assets/car.png";
+      : "https://avverma.s3.ap-south-1.amazonaws.com/car.pn…6e3ff4aef5f2d59bf64a6f8c&X-Amz-SignedHeaders=host";
   };
 
   const handleSearch = async () => {
