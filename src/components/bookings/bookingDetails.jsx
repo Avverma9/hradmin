@@ -23,7 +23,7 @@ import {
 } from "@mui/material";
 
 import { localUrl } from "../../../utils/util";
-import { fDate, fDateTime } from "../../../utils/format-time";
+import { fDate, fDateTime, indianTime } from "../../../utils/format-time";
 import { fetchFilteredBookings } from "../redux/reducers/booking";
 
 const BookingDetail = () => {
@@ -173,6 +173,13 @@ const BookingDetail = () => {
               </Typography>
               <Typography variant="body2" gutterBottom>
                 {booking?.numRooms}- Room / {booking?.guests}- Guest
+              </Typography>
+              <hr />
+              <Typography variant="subtitle1">
+                <CiUser /> Booking {booking?.bookingStatus} on
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                {indianTime(booking?.updatedAt)}
               </Typography>
               <hr />
               <Typography variant="subtitle1">Booking Status:</Typography>

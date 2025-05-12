@@ -38,6 +38,10 @@ export default function SuperAdminBookingsView() {
   const bookings = search.length ? search : filtered;
   const bookingCount = bookings.length;
   const hotelEmail = localStorage.getItem("user_email");
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 25,
+  });
   const columns = [
     {
       field: "actions",
@@ -91,7 +95,7 @@ export default function SuperAdminBookingsView() {
     guests: booking.guests,
   }));
 
-  const paginationModel = { page: 0, pageSize: 10 };
+
 
   useEffect(() => {
     fetchData();
@@ -139,7 +143,7 @@ export default function SuperAdminBookingsView() {
   const handleRefresh = () => window.location.reload();
   const visibleTo = () => role === "Developer" || role === "TMS";
   const disableEditFields = visibleTo();
-  
+
   return (
     <div>
       <Typography variant="h4" gutterBottom>
@@ -176,17 +180,28 @@ export default function SuperAdminBookingsView() {
         </Grid>
       </Box>
 
-      <Paper sx={{ width: "100%" }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          paginationModel={paginationModel}
-          onPaginationModelChange={(model) => setPaginationModel(model)}
-          pageSizeOptions={[25, 50, 100]}
-          checkboxSelection
-          sx={{ border: 0 }}
-        />
-      </Paper>
+      <Box sx={{ height: 600, width: "100%" }}>
+        <Paper sx={{ width: "100%", height: "100%" }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            paginationModel={paginationModel}
+            onPaginationModelChange={(model) => setPaginationModel(model)}
+            pageSizeOptions={[25, 50, 100]}
+            checkboxSelection
+            sx={{
+              border: 0,
+              "& .MuiDataGrid-columnHeaders": {
+                position: "sticky",
+                top: 0,
+                zIndex: 1,
+                backgroundColor: "white", // or your theme
+              },
+            }}
+          />
+        </Paper>
+      </Box>
+
 
       <Container maxWidth="auto" sx={{ marginTop: "40px" }}>
         {/* Booking Update Modal */}

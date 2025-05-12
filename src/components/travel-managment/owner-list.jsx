@@ -39,8 +39,9 @@ const OwnerList = () => {
       setFilteredOwners(
         owners.filter(
           (owner) =>
-            owner.mobile?.toLowerCase().includes(lowercasedQuery) ||
-            owner.dl?.toLowerCase().includes(lowercasedQuery),
+            owner?.mobile?.toString().toLowerCase().includes(lowercasedQuery)
+            ||
+            owner?.dl?.toString().toLowerCase().includes(lowercasedQuery),
         ),
       );
     }

@@ -167,7 +167,7 @@ export default function BookingsView() {
       </Typography>
 
       {/* Filter controls */}
-      <Box sx={{ position: "sticky", top: 0, zIndex: 1, padding: "16px 0" }}>
+      <Box >
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={3}>
             <TextField
@@ -221,17 +221,28 @@ export default function BookingsView() {
         </Grid>
       </Box>
 
-      <Paper sx={{ width: "100%" }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          paginationModel={paginationModel}
-          onPaginationModelChange={(model) => setPaginationModel(model)}
-          pageSizeOptions={[25, 50, 100]}
-          checkboxSelection
-          sx={{ border: 0 }}
-        />
-      </Paper>
+      <Box sx={{ height: 600, width: "100%" }}>
+        <Paper sx={{ width: "100%", height: "100%" }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            paginationModel={paginationModel}
+            onPaginationModelChange={(model) => setPaginationModel(model)}
+            pageSizeOptions={[25, 50, 100]}
+            checkboxSelection
+            sx={{
+              border: 0,
+              "& .MuiDataGrid-columnHeaders": {
+                position: "sticky",
+                top: 0,
+                zIndex: 1,
+                backgroundColor: "white", // or your theme
+              },
+            }}
+          />
+        </Paper>
+      </Box>
+
 
       <Container maxWidth="auto" sx={{ marginTop: "40px" }}>
         {/* Booking Update Modal */}
