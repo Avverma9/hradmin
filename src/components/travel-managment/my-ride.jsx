@@ -24,11 +24,12 @@ const MyCar = () => {
     }
   }, [userId, dispatch]);
 
-  const handleCarImage = (car) => {
+ const handleCarImage = (car) => {
     return car?.images && Array.isArray(car.images) && car.images.length > 0
       ? car.images[0]
-      : "/public/assets/car.png";
+      : "https://avverma.s3.ap-south-1.amazonaws.com/car.png";
   };
+
 
   // Separate states for different modals
   const [openCarUpdate, setOpenCarUpdate] = useState(false);
@@ -142,8 +143,8 @@ const MyCar = () => {
                       <FaMapMarkerAlt /> Drop: {car?.dropP}
                     </div>
                     <div>
-                      <AiOutlineCalendar /> From {(car?.pickupD)} to{" "}
-                      {(car?.dropD)}
+                      <AiOutlineCalendar /> From {fDate(car?.pickupD)} to{" "}
+                      {fDate(car?.dropD)}
                     </div>
                   </div>
                 </div>
