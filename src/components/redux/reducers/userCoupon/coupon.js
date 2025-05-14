@@ -114,7 +114,6 @@ export const applyCoupon = createAsyncThunk(
 
       notify(response.status);
       showSnackbar(response.data.message);
-      console.log("inside redux", response.data);
       return response.data;
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message;
