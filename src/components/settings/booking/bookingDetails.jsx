@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { createBooking } from "src/components/redux/reducers/booking";
 import { useLoader } from "../../../../utils/loader";
-import { applyCoupon } from "src/components/redux/reducers/userCoupon/coupon";
+import { applyCoupon } from "src/components/redux/reducers/userAndPartnerCoupon/coupon";
 import { reloadPage } from "../../../../utils/util";
 
 const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
@@ -130,7 +130,7 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
           couponCode,
           hotelIds: [hotelId],
           roomIds: [roomId],
-          userIds: userId,
+          userIds: [userId],
         };
         showLoader();
         const response = await dispatch(applyCoupon(payload)).unwrap();

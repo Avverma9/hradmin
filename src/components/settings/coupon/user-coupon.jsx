@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import { CopyAll } from "@mui/icons-material";
 
-import { createUserCoupon, getAllUserCoupons } from "src/components/redux/reducers/userCoupon/coupon";
+import { createUserCoupon, getAllUserCoupons } from "src/components/redux/reducers/userAndPartnerCoupon/coupon";
 import { fetchBulkUser } from "src/components/redux/reducers/user";
 
 import CreateCouponModal from "./user-coupon-create-modal";

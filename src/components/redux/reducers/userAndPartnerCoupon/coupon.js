@@ -23,7 +23,7 @@ export const getAllCoupons = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `${localUrl}/user-coupon/coupon/get/all`,
+        `${localUrl}/partner-coupon/coupon/get/all`,
         getAuthHeaders()
       );
       return response.data;
@@ -57,7 +57,7 @@ export const createCoupon = createAsyncThunk(
   async (postData, { rejectWithValue }) => {
     try {
       const response = await axios.post(
-        `${localUrl}/user-coupon/coupon/create-a-new/coupon`,
+        `${localUrl}/partner-coupon/coupon/create-a-new/coupon`,
         {
           couponName: postData.couponName,
           discountPrice: postData.discountPrice,
@@ -108,7 +108,7 @@ export const applyCoupon = createAsyncThunk(
   "coupon/applyCoupon",
   async (payload, { rejectWithValue }) => {
     try {
-      const url = `${localUrl}/user-coupon/apply/a/coupon-to-room`;
+      const url = `${localUrl}/partner-coupon/apply/a/coupon-to-room`;
 
       const response = await axios.patch(url, payload, getAuthHeaders());
 

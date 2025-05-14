@@ -11,7 +11,7 @@ import tourReducer from './reducers/tour/tour';
 import bulkReducer from './reducers/bulk';
 import additionalReducer from './reducers/additional';
 import travelBookingReducer from './reducers/travel/booking';
-import userCouponReducer from './reducers/userCoupon/coupon'
+import userCouponReducer from './reducers/userAndPartnerCoupon/coupon'
 import { add } from 'lodash';
 // Combine reducers into a rootReducer
 const rootReducer = combineReducers({

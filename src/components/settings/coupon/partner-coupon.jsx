@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import { CopyAll } from "@mui/icons-material";
 
-import { createCoupon, getAllCoupons } from "src/components/redux/reducers/userCoupon/coupon";
+import { createCoupon, getAllCoupons } from "src/components/redux/reducers/userAndPartnerCoupon/coupon";
 import { fetchBulkUser } from "src/components/redux/reducers/user";
 
 import CreateCouponModal from "./user-coupon-create-modal";
@@ -196,10 +196,13 @@ export default function UserCoupon() {
                         disabled={!coupon.userIds || coupon.userIds.length === 0}
                         sx={{ textTransform: "none", p: 0, width: "fit-content" }}
                       >
-                        Used: {coupon.userIds?.length || 0}
+                        UsedBy: {coupon.userIds?.length || 0}
                       </Button>
                       <Typography variant="caption">
-                        Remaining: {coupon.quantity - (coupon.userIds?.length || 0)}
+                        Remaining: {coupon.quantity - (coupon.roomId?.length || 0)}
+                      </Typography>
+                      <Typography variant="caption">
+                        Total Coupon: {coupon.quantity}
                       </Typography>
                     </Box>
                   </TableCell>
