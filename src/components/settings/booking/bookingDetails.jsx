@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { createBooking } from "src/components/redux/reducers/booking";
 import { useLoader } from "../../../../utils/loader";
 import { applyCoupon } from "src/components/redux/reducers/userAndPartnerCoupon/coupon";
-import { reloadPage } from "../../../../utils/util";
+import { hotelEmail, reloadPage, userName } from "../../../../utils/util";
 
 const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
   const [showDatePickers, setShowDatePickers] = useState(false);
@@ -94,6 +94,10 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
       couponCode: couponCode,
       hotelEmail: email,
       hotelOwnerName: owner,
+      createdBy: {
+        user: userName,
+        email: hotelEmail
+      },
       destination: address,
       hotelCity: city,
       bookingSource: "Panel",
@@ -170,20 +174,20 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
             <span className="date-text">
               {inDate
                 ? inDate.toLocaleDateString("en-IN", {
-                    weekday: "short",
-                    day: "numeric",
-                    month: "short",
-                  })
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                })
                 : "Select Start Date"}
             </span>
             <span> - </span>
             <span className="date-text">
               {outDate
                 ? outDate.toLocaleDateString("en-IN", {
-                    weekday: "short",
-                    day: "numeric",
-                    month: "short",
-                  })
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                })
                 : "Select End Date"}
             </span>
           </div>

@@ -181,6 +181,12 @@ const BookingDetail = () => {
               <Typography variant="body2" gutterBottom>
                 {indianTime(booking?.updatedAt)}
               </Typography>
+              <Typography variant="subtitle1">
+                <CiUser /> Created/Updated By
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                {booking?.createdBy?.user} ({booking?.createdBy?.email})
+              </Typography>
               <hr />
               <Typography variant="subtitle1">Booking Status:</Typography>
               <Typography variant="body2" gutterBottom>

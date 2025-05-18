@@ -45,7 +45,10 @@ export default function BookingsView() {
   });
   const bookings = search.length ? search : filtered;
   const bookingCount = bookings.length;
-  dispatch({ type: "booking/clearSearch" }); // 👈 Create this reducer to reset search
+  useEffect(() => {
+    dispatch({ type: "booking/clearSearch" });
+  }, [dispatch]);
+
 
   const columns = [
     {
@@ -74,7 +77,8 @@ export default function BookingsView() {
       ),
     },
     { field: "bookingId", headerName: "Booking ID", width: 150 },
-    { field: "user", headerName: "User", width: 150 },
+    { field: "user", headerName: "User", width: 100 },
+    { field: "createdBy", headerName: "Created/Updated By", width: 250 },
     { field: "status", headerName: "Status", width: 110 },
     { field: "source", headerName: "Source", width: 130 },
     { field: "mop", headerName: "Payment Mode", width: 130 },
@@ -87,6 +91,7 @@ export default function BookingsView() {
     id: booking._id || booking.bookingId,
     bookingId: booking.bookingId,
     user: booking.user?.name,
+    createdBy: booking.createdBy?.user + " (" + booking.createdBy?.email + ")",
     status: booking.bookingStatus,
     source: booking.bookingSource || "Site",
     mop: booking.pm || "Offline",
