@@ -19,7 +19,7 @@ import { CopyAll } from "@mui/icons-material";
 import { createCoupon, getAllCoupons } from "src/components/redux/reducers/userAndPartnerCoupon/coupon";
 import { fetchBulkUser } from "src/components/redux/reducers/user";
 
-import CreateCouponModal from "./user-coupon-create-modal";
+import CreateCouponModal from "./partner-coupon-create-modal";
 import UserDetailsModal from "./user-details";
 import { useLoader } from "../../../../utils/loader";
 import { indianTime } from "../../../../utils/format-time";
@@ -33,9 +33,11 @@ export default function UserCoupon() {
   const [quantity, setQuantity] = useState("");
   const [validity, setValidity] = useState("");
   const [coupons, setCoupons] = useState([]);
+  const [filteredCoupons, setFilteredCoupons] = useState([]);
   const [openCreateCouponModal, setOpenCreateCouponModal] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [filterExpired, setFilterExpired] = useState(null); // Track the filter state
 
   const { userData } = useSelector((state) => state.user);
 
@@ -51,6 +53,7 @@ export default function UserCoupon() {
     try {
       const response = await dispatch(getAllCoupons()).unwrap();
       setCoupons(response || []);
+      setFilteredCoupons(response || []); // Set the initial filtered coupons
       setHasFetched(true);
     } catch (error) {
       console.error("Error fetching coupons:", error);
@@ -65,6 +68,16 @@ export default function UserCoupon() {
       fetchCoupons();
     }
   }, [fetchCoupons, hasFetched]);
+
+  useEffect(() => {
+    if (filterExpired === null) {
+      setFilteredCoupons(coupons); // No filter applied, show all coupons
+    } else {
+      setFilteredCoupons(
+        coupons.filter((coupon) => coupon.expired === filterExpired)
+      ); // Filter coupons based on expired status
+    }
+  }, [filterExpired, coupons]);
 
   const handleOpenCreateCouponModal = () => {
     resetCouponForm();
@@ -136,12 +149,38 @@ export default function UserCoupon() {
     }
   };
 
-
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 2 }}>
         <Button variant="contained" color="primary" onClick={handleOpenCreateCouponModal}>
           Create Coupon
+        </Button>
+      </Box>
+
+      {/* Filter buttons for Expired and Not Expired coupons */}
+      <Box sx={{ mb: 2 }}>
+        <Button
+          variant="outlined"
+          color={filterExpired === true ? "primary" : "default"}
+          onClick={() => setFilterExpired(true)}
+        >
+          Expired Coupons
+        </Button>
+        <Button
+          variant="outlined"
+          color={filterExpired === false ? "primary" : "default"}
+          onClick={() => setFilterExpired(false)}
+          sx={{ ml: 2 }}
+        >
+          Active Coupons
+        </Button>
+        <Button
+          variant="outlined"
+          color={filterExpired === null ? "primary" : "default"}
+          onClick={() => setFilterExpired(null)}
+          sx={{ ml: 2 }}
+        >
+          All Coupons
         </Button>
       </Box>
 
@@ -159,7 +198,7 @@ export default function UserCoupon() {
         setQuantity={setQuantity}
       />
 
-      {coupons.length > 0 ? (
+      {filteredCoupons.length > 0 ? (
         <TableContainer component={Paper}>
           <Table size="small">
             <TableHead>
@@ -173,7 +212,7 @@ export default function UserCoupon() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {coupons.map((coupon) => (
+              {filteredCoupons.map((coupon) => (
                 <TableRow key={coupon._id}>
                   <TableCell>{coupon.couponName}</TableCell>
                   <TableCell>
@@ -199,10 +238,7 @@ export default function UserCoupon() {
                         UsedBy: {coupon.userIds?.length || 0}
                       </Button>
                       <Typography variant="caption">
-                        Remaining: {coupon.quantity - (coupon.roomId?.length || 0)}
-                      </Typography>
-                      <Typography variant="caption">
-                        Total Coupon: {coupon.quantity}
+                        Remaining: {coupon.quantity - (coupon.userIds?.length || 0)}
                       </Typography>
                     </Box>
                   </TableCell>

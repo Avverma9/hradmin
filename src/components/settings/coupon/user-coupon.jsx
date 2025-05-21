@@ -13,6 +13,7 @@ import {
   TableRow,
   Paper,
   IconButton,
+  TextField,
 } from "@mui/material";
 import { CopyAll } from "@mui/icons-material";
 
@@ -29,6 +30,7 @@ export default function UserCoupon() {
   const { showLoader, hideLoader } = useLoader();
 
   const [couponName, setCouponName] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [discountPrice, setDiscountPrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const [validity, setValidity] = useState("");
@@ -36,6 +38,7 @@ export default function UserCoupon() {
   const [openCreateCouponModal, setOpenCreateCouponModal] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [filterExpired, setFilterExpired] = useState(false);  // New state for filtering expired coupons
 
   const { userData } = useSelector((state) => state.user);
 
@@ -136,13 +139,40 @@ export default function UserCoupon() {
     }
   };
 
+  // Filter coupons based on expired or active status
+const filteredCoupons = coupons.filter((coupon) => {
+  const matchesExpired = filterExpired ? coupon.expired : !coupon.expired;
+
+  const assignedToValue = coupon?.assignedTo || "";
+  const matchesSearch = assignedToValue
+    .toLowerCase()
+    .includes(searchTerm.toLowerCase());
+
+  return matchesExpired && matchesSearch;
+});
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
         <Button variant="contained" color="primary" onClick={handleOpenCreateCouponModal}>
           Create Coupon
         </Button>
+
+        {/* New Filter Button */}
+        <Button
+          variant="outlined"
+          color={filterExpired ? "error" : "primary"}
+          onClick={() => setFilterExpired(!filterExpired)}
+        >
+          {filterExpired ? "Show Active Coupons" : "Show Expired Coupons"}
+        </Button>
+         <TextField
+    label="Search by Assigned To"
+    variant="outlined"
+    size="small"
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+  />
       </Box>
 
       <CreateCouponModal
@@ -159,7 +189,7 @@ export default function UserCoupon() {
         setQuantity={setQuantity}
       />
 
-      {coupons.length > 0 ? (
+      {filteredCoupons.length > 0 ? (
         <TableContainer component={Paper}>
           <Table size="small">
             <TableHead>
@@ -167,7 +197,6 @@ export default function UserCoupon() {
                 <TableCell><strong>Coupon Name</strong></TableCell>
                 <TableCell><strong>Coupon Code</strong></TableCell>
                 <TableCell><strong>Assigned To</strong></TableCell>
-
                 <TableCell><strong>Discount Price</strong></TableCell>
                 <TableCell><strong>Quantity</strong></TableCell>
                 <TableCell><strong>Validity</strong></TableCell>
@@ -175,7 +204,7 @@ export default function UserCoupon() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {coupons.map((coupon) => (
+              {filteredCoupons.map((coupon) => (
                 <TableRow key={coupon._id}>
                   <TableCell>{coupon.couponName}</TableCell>
                   <TableCell>
