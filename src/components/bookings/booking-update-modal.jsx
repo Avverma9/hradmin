@@ -38,10 +38,6 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
     checkOutDate: "",
     price: "",
     checkInTime: null,
-    createdBy: {
-      user: userName,
-      email: hotelEmail
-    },
     checkOutTime: null,
     bookingStatus: "",
     numRooms: "",
@@ -89,6 +85,10 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
             ...formData,
             checkInTime: formData.checkInTime?.toISOString(),
             checkOutTime: formData.checkOutTime?.toISOString(),
+            createdBy: {
+              user: userName,
+              email: hotelEmail
+            },
           },
         }),
       );

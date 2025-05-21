@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { updateBooking } from "src/components/redux/reducers/booking";
+import { hotelEmail, userName } from "../../../../utils/util";
 
 const modalStyle = {
   position: "absolute",
@@ -84,6 +85,10 @@ const AdminBookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
             ...formData,
             checkInTime: formData.checkInTime?.toISOString(),
             checkOutTime: formData.checkOutTime?.toISOString(),
+            createdBy: {
+              user: userName,
+              email: hotelEmail
+            },
           },
         })
       );
