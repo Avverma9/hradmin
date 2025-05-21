@@ -40,7 +40,7 @@ export default function UserPage() {
   const [selected, setSelected] = useState([]);
   const [orderBy, setOrderBy] = useState('name');
   const [filterName, setFilterName] = useState('');
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [users, setUsers] = useState([]);
   const { showLoader, hideLoader } = useLoader();
   const [error, setError] = useState(null);

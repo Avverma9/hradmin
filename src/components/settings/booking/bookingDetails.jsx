@@ -113,10 +113,12 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
       foodDetails: food,
       roomDetails: room,
       price: calculateTotalPrice(),
+      discountPrice: discountPrice,
       hotelName: hotel,
       couponCode: couponCode,
       hotelEmail: email,
       hotelOwnerName: owner,
+      gstPrice: gstData?.gstPrice || 0,
       createdBy: {
         user: userName,
         email: hotelEmail
@@ -125,7 +127,6 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
       hotelCity: city,
       bookingSource: "Panel",
     };
-
     const userData = { userId, hotelId };
     dispatch(createBooking({ userData, bookingData })).unwrap();
   };
@@ -187,7 +188,16 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
           <span className="original-price">₹{discountPrice}</span>
           <span className="discount">{discountPercentage}% off</span>
         </div>
-        <span className="tax-info">+ taxes & fees: ₹226</span>
+        <span className="tax-info">({gstData?.gstPrice || 0}%) + taxes & fees: <span className="gst-amount">
+          ₹{(() => {
+            if (!inDate || !outDate) return 0;
+            const timeDiff = outDate.getTime() - inDate.getTime();
+            const days = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            const basePrice = finalPrice * days;
+            const gstPercent = parseFloat(gstData?.gstPrice || 0);
+            return Math.round((gstPercent / 100) * basePrice);
+          })()}
+        </span></span>
 
         <div className="booking-info">
           <div
@@ -269,10 +279,13 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
 
       </div>
       <div className="price-breakdown">
-        <div className="savings">
-          <span>Your Savings</span>
-          <span className="savings-amount">- ₹{discountPrice}</span> {/* Display savings with a negative sign */}
-        </div>
+        {
+          discountPrice && <div className="savings">
+            <span>Your Savings</span>
+            <span className="savings-amount">- ₹{discountPrice}</span> {/* Display savings with a negative sign */}
+          </div>
+        }
+
 
         {foodItems && (
           <div className="addon">

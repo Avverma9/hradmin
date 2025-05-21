@@ -17,9 +17,7 @@ import {
   Button,
   Avatar,
   Divider,
-  Container,
   Typography,
-  LinearProgress,
 } from "@mui/material";
 
 import { localUrl } from "../../../utils/util";
@@ -120,10 +118,60 @@ const BookingDetail = () => {
               </Grid>
 
               <Grid item>
-                <Typography variant="h6">
-                  Price <LiaRupeeSignSolid />
-                  {booking?.price}
-                </Typography>
+                <Box marginTop={1}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Pricing Summary
+                  </Typography>
+
+                  {/* Base Price incl GST */}
+                  <Typography variant="body2">
+                    Price (incl. GST): ₹{booking?.price}
+                  </Typography>
+
+                  {/* GST Amount */}
+                  {booking?.gstPrice ? (
+                    <Typography variant="body2">
+                      GST ({booking.gstPrice}%): ₹
+                      {(
+                        booking.price -
+                        booking.price / (1 + booking.gstPrice / 100)
+                      ).toFixed(2)}
+                    </Typography>
+                  ) : (
+                    <Typography variant="body2">GST: Not Applicable</Typography>
+                  )}
+
+                  {/* Food Price */}
+                  {booking?.foodDetails?.length > 0 && (
+                    <Typography variant="body2">
+                      Food Charges: ₹
+                      {booking.foodDetails.reduce((total, item) => total + item.price, 0)}
+                    </Typography>
+                  )}
+
+                  {/* Coupon Discount */}
+                  {booking?.discountPrice > 0 && (
+                    <Typography variant="body2" color="success.main">
+                      Coupon Discount: - ₹{booking?.discountPrice}
+                    </Typography>
+                  )}
+                  {/* Total Final Price */}
+                  <Typography variant="h6">
+                    Total : ₹
+                    {(() => {
+                      const gst = booking?.gstPrice
+                        ? booking.price -
+                        booking.price / (1 + booking.gstPrice / 100)
+                        : 0;
+                      const food = booking?.foodDetails?.reduce(
+                        (total, item) => total + item.price,
+                        0
+                      );
+                      const discount = booking?.discountPrice || 0;
+                      return (booking.price + food - discount).toFixed(2);
+                    })()}
+                  </Typography>
+                </Box>
               </Grid>
               <Divider sx={{ margin: "16px 0" }} />
               <Typography variant="subtitle1">
@@ -251,9 +299,6 @@ const BookingDetail = () => {
                       <Typography variant="body2">
                         Price: {food?.price}
                       </Typography>
-                      <Typography variant="body2">
-                        Quantity: {food?.quantity}
-                      </Typography>
                       {index !== booking.foodDetails.length - 1 && <Divider />}
                     </Box>
                   ))}
@@ -261,6 +306,7 @@ const BookingDetail = () => {
               </Box>
             </Box>
           </Grid>
+
         </Grid>
       </Paper>
     </Box>
