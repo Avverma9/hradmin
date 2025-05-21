@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { updateBooking } from "../redux/reducers/booking";
+import { hotelEmail, userName } from "../../../utils/util";
 
 const modalStyle = {
   position: "absolute",
@@ -37,6 +38,10 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
     checkOutDate: "",
     price: "",
     checkInTime: null,
+    createdBy: {
+      user: userName,
+      email: hotelEmail
+    },
     checkOutTime: null,
     bookingStatus: "",
     numRooms: "",
@@ -97,10 +102,10 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
   };
 
   const isDisabled =
-  bookingData?.status === "Cancelled" ||
-  bookingData?.status === "Checked-out";
+    bookingData?.status === "Cancelled" ||
+    bookingData?.status === "Checked-out";
   const disableSpecificFields = role === "PMS" || role === "TMS";
-  
+
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={modalStyle}>

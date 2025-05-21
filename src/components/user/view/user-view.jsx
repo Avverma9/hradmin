@@ -249,7 +249,14 @@ export default function UserPage() {
                   { id: 'status', label: 'Status' },
                   { id: '' },
                 ]}
+                sx={{
+                  position: 'sticky',
+                  top: 0,
+                  backgroundColor: 'background.paper',
+                  zIndex: 2,
+                }}
               />
+
               <TableBody>
                 {dataFiltered
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
@@ -285,7 +292,7 @@ export default function UserPage() {
           count={users.length}
           rowsPerPage={rowsPerPage}
           onPageChange={handleChangePage}
-          rowsPerPageOptions={[5, 10, 25]}
+          rowsPerPageOptions={[25, 50, 100, 150, 200, 300, 1000]}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Card>

@@ -16,19 +16,34 @@ export const fetchUsers = createAsyncThunk('user/fetchUsers', async (_, { reject
   }
 });
 
-export const findUser = createAsyncThunk('user/findUser', async (mobile, { rejectWithValue }) => {
-  try {
-    const response = await axios.get(`${localUrl}/get/user/by/query?mobile=${mobile}`, {
-      headers: { Authorization: token },
-    });
-    return response?.data?.data;
-  } catch (error) {
-    const errorMessage = error.response?.data?.message || error.message;
-    toast.error(`Error: ${errorMessage}`);
-    return rejectWithValue(errorMessage);
-  }
-});
+export const findUser = createAsyncThunk(
+  'user/findUser',
+  async (data, { rejectWithValue }) => {
+    try {
+      let queryParam = '';
+      if (data?.mobile) {
+        queryParam = `mobile=${data.mobile}`;
+      } else if (data?.email) {
+        queryParam = `email=${data.email}`;
+      } else {
+        throw new Error('Mobile or Email is required to search user.');
+      }
 
+      const response = await axios.get(
+        `${localUrl}/get/user/by/query?${queryParam}`,
+        {
+          headers: { Authorization: token },
+        }
+      );
+
+      return response?.data?.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
 export const fetchBulkUser = createAsyncThunk(
   'user/fetchBulkUser',
   async (userIds, { rejectWithValue }) => {
@@ -118,7 +133,7 @@ const userSlice = createSlice({
         state.loading = false;
         state.userData = action.payload; // ✅ extract only the `users` array
       })
-      
+
   },
 });
 

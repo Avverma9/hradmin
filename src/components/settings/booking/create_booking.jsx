@@ -39,8 +39,11 @@ export default function CreateBooking({ handleBack }) {
             setSnackbarOpen(true);
             return;
         }
+        const data = {
+            mobile: mobile,
+        }
         setShowHotel(false);
-        dispatch(findUser(mobile));
+        dispatch(findUser(data));
     };
 
     useEffect(() => {

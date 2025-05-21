@@ -166,6 +166,8 @@ export default function UserCoupon() {
               <TableRow>
                 <TableCell><strong>Coupon Name</strong></TableCell>
                 <TableCell><strong>Coupon Code</strong></TableCell>
+                <TableCell><strong>Assigned To</strong></TableCell>
+
                 <TableCell><strong>Discount Price</strong></TableCell>
                 <TableCell><strong>Quantity</strong></TableCell>
                 <TableCell><strong>Validity</strong></TableCell>
@@ -186,6 +188,7 @@ export default function UserCoupon() {
                       <CopyAll fontSize="small" />
                     </IconButton>
                   </TableCell>
+                  <TableCell>{coupon?.assignedTo}</TableCell>
                   <TableCell>₹{coupon.discountPrice}</TableCell>
                   <TableCell>
                     <Box sx={{ display: "flex", flexDirection: "column" }}>
