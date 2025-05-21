@@ -139,6 +139,7 @@ const getNavConfig = async () => {
                 { title: "Travel Bookings", path: '/admin-travel/bookings', icon: icons.bookings },
                 { title: "Partner Coupon", path: '/partner-coupon', icon: icons.coupon },
                 { title: "User Coupon", path: '/user-coupon', icon: icons.coupon },
+                { title: "GST", path: "/gst-page", icon: icons.settings },
 
             ],
         },

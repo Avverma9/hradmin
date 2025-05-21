@@ -12,6 +12,7 @@ import bulkReducer from './reducers/bulk';
 import additionalReducer from './reducers/additional';
 import travelBookingReducer from './reducers/travel/booking';
 import userCouponReducer from './reducers/userAndPartnerCoupon/coupon'
+import gstReducer from './reducers/gst';
 import { add } from 'lodash';
 // Combine reducers into a rootReducer
 const rootReducer = combineReducers({
@@ -26,6 +27,7 @@ const rootReducer = combineReducers({
     bulk: bulkReducer,
     additional: additionalReducer,
     travelBooking: travelBookingReducer,
-    userCoupon:userCouponReducer
+    userCoupon:userCouponReducer,
+    gst: gstReducer,
 });
 export default rootReducer;

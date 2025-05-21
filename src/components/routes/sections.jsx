@@ -42,7 +42,7 @@ const TravelBookingsAdmin = lazy(() => import('src/components/settings/travelBoo
 const PartnerCouponPage = lazy(() => import('src/components/pages/admin/partner-coupon-page'));
 const UserCouponPage = lazy(() => import('src/components/pages/admin/user-coupon-page'));
 const PMSMonthlyPricePage = lazy(() => import('src/components/pages/superAdmin/pms-coupon'));
-
+const GSTpage = lazy(() => import('src/components/pages/admin/gst-page'));
 export default function Router() {
     const routes = useRoutes([
         {
@@ -68,7 +68,7 @@ export default function Router() {
                 { path: 'bulk-data-processing', element: <BulkOperation /> },
                 { path: 'hotels/monthly-price', element: <MonthlyPricePage /> },
                 { path: 'hotels/monthly-price-pms', element: <PMSMonthlyPricePage /> },
-
+                { path: '/gst-page', element: <GSTpage /> },
                 { path: 'your-hotels', element: <YourHotelsPage /> },
                 { path: 'view-hotel-details/:hotelId', element: <HotelDetailsPage /> },
                 { path: 'all-bookings', element: <BookingsView /> },
@@ -96,7 +96,7 @@ export default function Router() {
                 { path: "travel-bookings", element: <TravelBookingTMS /> },
                 { path: "admin-travel/bookings", element: <TravelBookingsAdmin /> },
                 { path: "partner-coupon", element: <PartnerCouponPage /> },
-                { path: "user-coupon", element: < UserCouponPage/> },
+                { path: "user-coupon", element: < UserCouponPage /> },
 
                 { path: '*', element: <Navigate to="/404" replace /> },
             ],
