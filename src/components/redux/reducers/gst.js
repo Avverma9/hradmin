@@ -26,10 +26,13 @@ export const updateGst = createAsyncThunk(
 
 export const getGst = createAsyncThunk(
   "gst/getGst",
-  async (type) => {
-    await axios.get(`${localUrl}/gst/get-single-gst?type=${type}`, {
-      headers: { Authorization: token },
-    });
+  async (payload) => {
+    const response = await axios.get(
+      `${localUrl}/gst/get-single-gst?type=${payload?.type}&gstThreshold=${payload?.gstThreshold}`,
+      {
+        headers: { Authorization: token },
+      }
+    );
     return response.data;
   }
 );

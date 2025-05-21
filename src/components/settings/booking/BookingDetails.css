@@ -158,12 +158,6 @@
     margin-top: 15px;
 }
 
-.savings {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-    margin-bottom: 10px;
-}
 
 .addon {
     display: flex;
@@ -176,28 +170,10 @@
     color: #28a745;
     font-weight: 600;
 }
-.savings-amount {
-    font-size: 14px;
-    color: #28a745;
-    font-weight: 600;
-}
-
-.total-price {
-    display: flex;
-    justify-content: space-between;
-    font-size: 16px;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
 .price-amount {
     color: #333;
 }
 
-.taxes-info {
-    font-size: 12px;
-    color: #888;
-}
 
 .continue-button {
     background-color: #28a745;
@@ -465,3 +441,64 @@
 .cancel-button:hover {
     background-color: #c82333;
 }
+
+.savings {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  font-size: 16px;
+  color: #333;
+  border-bottom: 2px solid #ddd;
+  background-color: #f8f8f8; /* Light background to highlight the section */
+}
+
+.savings span {
+  font-weight: normal;
+}
+
+.savings .savings-amount {
+  font-weight: bold;
+  color: #e91e63; /* A vibrant color for the savings to make it stand out */
+  font-size: 18px;  /* Larger font for emphasis */
+}
+
+.total-price {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.total-price span {
+  font-weight: normal;
+}
+
+.total-price .price-amount {
+  font-weight: bold;
+  color: #333;
+  font-size: 18px;
+}
+
+.gst-info {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.gst-info .gst-amount {
+  font-weight: bold;
+  color: #e91e63; /* Color for GST amount */
+}
+
+.taxes-info {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+  margin-top: 10px;
+}
+

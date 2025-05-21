@@ -8,6 +8,7 @@ import { createBooking } from "src/components/redux/reducers/booking";
 import { useLoader } from "../../../../utils/loader";
 import { applyCoupon } from "src/components/redux/reducers/userAndPartnerCoupon/coupon";
 import { hotelEmail, reloadPage, userName } from "../../../../utils/util";
+import { getGst } from "src/components/redux/reducers/gst";
 
 const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
   const [showDatePickers, setShowDatePickers] = useState(false);
@@ -25,6 +26,7 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
   const [discountPercentage, setDiscountPercentage] = useState("");
   const foodItems = Array.isArray(food) ? food[food.length - 1] : food;
   const roomItems = Array.isArray(room) ? room[room.length - 1] : room;
+  const gstData = useSelector((state) => state.gst.gst);
 
   useEffect(() => {
     const today = new Date();
@@ -52,10 +54,31 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
 
   const calculateTotalPrice = () => {
     if (!inDate || !outDate) return 0;
+
     const timeDifference = outDate.getTime() - inDate.getTime();
     const daysDifference = Math.ceil(timeDifference / (1000 * 3600 * 24));
-    return finalPrice * daysDifference;
+    const basePrice = finalPrice * daysDifference;
+
+    const gstPercent = parseFloat(gstData?.gstPrice || 0); // fallback to 0 if undefined
+    const gstAmount = (gstPercent / 100) * basePrice;
+
+    return Math.round(basePrice + gstAmount);
   };
+
+  // Updating the GST when price, dates, or other values change
+  useEffect(() => {
+    if (!inDate || !outDate) return;
+
+    const gstThreshold = calculateTotalPrice();
+    if (gstThreshold > 0) {
+      const payload = {
+        type: "Hotel",
+        gstThreshold, // Now the threshold should have a value
+      };
+
+      dispatch(getGst(payload));
+    }
+  }, [dispatch, inDate, outDate, numRooms, discountPrice, food, room]);
 
   const updateRoomCount = (newGuests) => {
     let newNumRooms = numRooms;
@@ -243,15 +266,14 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
             </div>
           )}
         </div>
-        <span className="wizard-benefits">
-          Get additional benefits up to ₹1000
-        </span>
+
       </div>
       <div className="price-breakdown">
         <div className="savings">
-          <span>Your Savings {discountPrice}</span>
-          <span className="savings-amount"></span>
+          <span>Your Savings</span>
+          <span className="savings-amount">- ₹{discountPrice}</span> {/* Display savings with a negative sign */}
         </div>
+
         {foodItems && (
           <div className="addon">
             <span>{foodItems?.foodType}</span>
@@ -259,12 +281,28 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
           </div>
         )}
 
+        <div className="gst-info">
+          <span>+ GST ({gstData?.gstPrice || 0}%)</span>
+          <span className="gst-amount">
+            ₹{(() => {
+              if (!inDate || !outDate) return 0;
+              const timeDiff = outDate.getTime() - inDate.getTime();
+              const days = Math.ceil(timeDiff / (1000 * 3600 * 24));
+              const basePrice = finalPrice * days;
+              const gstPercent = parseFloat(gstData?.gstPrice || 0);
+              return Math.round((gstPercent / 100) * basePrice);
+            })()}
+          </span>
+        </div>
+
         <div className="total-price">
           <span>Total Price</span>
           <span className="price-amount">₹{calculateTotalPrice()}</span>
         </div>
+
         <span className="taxes-info">Including taxes & fees</span>
       </div>
+
       <button className="continue-button" onClick={handleBooking}>
         Continue to Book
       </button>

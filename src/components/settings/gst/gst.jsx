@@ -24,12 +24,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
     createGst,
     getGst,
+    getAllGst,
     updateGst,
 } from 'src/components/redux/reducers/gst';
 
 export default function Gst() {
     const dispatch = useDispatch();
     const gstData = useSelector((state) => state.gst.gst);
+    const gstList = useSelector((state) => state.gst.gstList);
 
     const [gst, setGst] = useState({
         gstPrice: '',
@@ -37,16 +39,22 @@ export default function Gst() {
         gstMaxThreshold: '',
         type: '',
     });
+
     const [openModal, setOpenModal] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [selectedType, setSelectedType] = useState('');
 
-    // Fetch GST when type is selected
+    useEffect(() => {
+        dispatch(getAllGst());
+    }, [dispatch]);
+
     useEffect(() => {
         if (selectedType) {
-            dispatch(getGst(selectedType));
+            const payload = { selectedType }
+            dispatch(getGst(payload));
         }
     }, [selectedType, dispatch]);
+
 
     const handleOpenCreate = () => {
         setIsEdit(false);
@@ -57,14 +65,6 @@ export default function Gst() {
             type: selectedType || '',
         });
         setOpenModal(true);
-    };
-
-    const handleOpenEdit = () => {
-        if (gstData) {
-            setIsEdit(true);
-            setGst(gstData);
-            setOpenModal(true);
-        }
     };
 
     const handleClose = () => {
@@ -90,7 +90,10 @@ export default function Gst() {
             dispatch(createGst(gst));
         }
         handleClose();
-        setTimeout(() => dispatch(getGst(selectedType)), 300);
+        setTimeout(() => {
+            dispatch(getAllGst());
+            if (selectedType) dispatch(getGst(selectedType));
+        }, 300);
     };
 
     return (
@@ -123,45 +126,43 @@ export default function Gst() {
                 </Button>
             </Box>
 
-            {/* GST Table */}
-            {gstData ? (
-                <TableContainer component={Paper} sx={{ marginTop: 3 }}>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>GST Price</TableCell>
-                                <TableCell>GST Min Threshold</TableCell>
-                                <TableCell>GST Max Threshold</TableCell>
-                                <TableCell>Type</TableCell>
-                                <TableCell>Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            <TableRow>
-                                <TableCell>{gstData.gstPrice}%</TableCell>
-                                <TableCell>{gstData.gstMinThreshold}</TableCell>
-                                <TableCell>{gstData.gstMaxThreshold}</TableCell>
-                                <TableCell>{gstData.type}</TableCell>
+            <TableContainer component={Paper} sx={{ marginTop: 3 }}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>GST Price</TableCell>
+                            <TableCell>GST Min Threshold</TableCell>
+                            <TableCell>GST Max Threshold</TableCell>
+                            <TableCell>Type</TableCell>
+                            <TableCell>Actions</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {(selectedType && gstData ? [gstData] : gstList)?.map((item) => (
+                            <TableRow key={item._id}>
+                                <TableCell>{item.gstPrice}%</TableCell>
+                                <TableCell>{item.gstMinThreshold}</TableCell>
+                                <TableCell>{item.gstMaxThreshold}</TableCell>
+                                <TableCell>{item.type}</TableCell>
                                 <TableCell>
                                     <Button
                                         variant="outlined"
                                         color="primary"
-                                        onClick={handleOpenEdit}
+                                        onClick={() => {
+                                            setIsEdit(true);
+                                            setGst(item);
+                                            setOpenModal(true);
+                                        }}
                                     >
                                         Update
                                     </Button>
                                 </TableCell>
                             </TableRow>
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            ) : selectedType ? (
-                <Typography variant="body1" mt={3}>
-                    No GST data found for type: <strong>{selectedType}</strong>
-                </Typography>
-            ) : null}
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
 
-            {/* Create / Update Modal */}
             <Dialog open={openModal} onClose={handleClose} fullWidth maxWidth="sm">
                 <DialogTitle>{isEdit ? 'Update GST' : 'Create GST'}</DialogTitle>
                 <form onSubmit={handleSubmit}>
@@ -196,15 +197,12 @@ export default function Gst() {
                             required
                             type="number"
                         />
-
-                        {/* Live GST amount display */}
                         {gst.gstMinThreshold && gst.gstPrice ? (
                             <Typography variant="caption" color="text.secondary">
                                 {gst.gstPrice}% of ₹{gst.gstMinThreshold} is ₹
                                 {(parseFloat(gst.gstMinThreshold) * parseFloat(gst.gstPrice) / 100).toFixed(2)}
                             </Typography>
                         ) : null}
-
                         <FormControl fullWidth margin="normal" required>
                             <InputLabel>Type</InputLabel>
                             <Select
