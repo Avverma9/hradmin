@@ -26,6 +26,7 @@ import {
     getGst,
     getAllGst,
     updateGst,
+    deleteGst,
 } from 'src/components/redux/reducers/gst';
 
 export default function Gst() {
@@ -91,10 +92,19 @@ export default function Gst() {
         }
         handleClose();
         setTimeout(() => {
-            dispatch(getAllGst());
-            if (selectedType) dispatch(getGst(selectedType));
+            window.location.reload();
         }, 300);
     };
+
+    const handleDelete = (id) => {
+        if (window.confirm('Are you sure you want to delete this GST?')) {
+            dispatch(deleteGst(id));
+            setTimeout(() => {
+                dispatch(getAllGst());
+                if (selectedType) dispatch(getGst(selectedType));
+            }, 300);
+        }
+    }
 
     return (
         <Box p={3}>
@@ -156,6 +166,15 @@ export default function Gst() {
                                     >
                                         Update
                                     </Button>
+
+                                    <Button
+                                        variant="outlined"
+                                        color="error"
+                                        onClick={() => handleDelete(item._id)}
+                                    >
+                                        Delete
+                                    </Button>
+
                                 </TableCell>
                             </TableRow>
                         ))}

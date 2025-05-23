@@ -1,30 +1,43 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { bookSeat, getSeatsData } from "../redux/reducers/travel/car";
+import { getGst } from "../redux/reducers/gst";
 import "./seat.css";
 import { FaChair } from "react-icons/fa";
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Paper, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 export default function SeatData({ open, onClose, id, carData }) {
   const dispatch = useDispatch();
   const seatData = useSelector((state) => state.car.seatsData);
+  const gstData = useSelector((state) => state.gst.gst);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [customerName, setCustomerName] = useState("");
   const [customerMobile, setCustomerMobile] = useState("");
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
 
-  const GST_RATE = 0.18;
-  const GST_THRESHOLD = 1000;
-
   useEffect(() => {
     if (id && open) {
+      const payload = {
+        type: "Travel",
+        gstThreshold: "", // optional or handled in backend
+      };
       dispatch(getSeatsData(id));
+      dispatch(getGst(payload));
     }
   }, [id, open, dispatch]);
 
   const handleSeatClick = (seat) => {
     if (seat.isBooked) return;
-
     const isSelected = selectedSeats.find((s) => s._id === seat._id);
     if (isSelected) {
       setSelectedSeats(selectedSeats.filter((s) => s._id !== seat._id));
@@ -45,7 +58,7 @@ export default function SeatData({ open, onClose, id, carData }) {
 
       await dispatch(
         bookSeat({
-          seats: seatIds, // update backend to accept multiple seatIds
+          seats: seatIds,
           carId: id,
           bookedBy: customerName,
           vehicleNumber: carData?.vehicleNumber,
@@ -60,15 +73,16 @@ export default function SeatData({ open, onClose, id, carData }) {
     }
   };
 
+  const gstPercentage = gstData?.gstPrice || 0;
   const basePrice = selectedSeats.reduce((sum, seat) => sum + seat.seatPrice, 0);
-  const gstAmount = basePrice > GST_THRESHOLD ? basePrice * GST_RATE : 0;
+  const gstAmount = basePrice * (gstPercentage / 100);
   const totalPrice = basePrice + gstAmount;
 
   return (
     <>
       <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-        <Box sx={{ border: "2px dotted #000", borderRadius: 1, p: 1, display: "inline-block" }}>
-          <Typography>Select Available Seats</Typography>
+        <Box sx={{ p: 2 }}>
+          <Typography variant="h6">Select Available Seats</Typography>
         </Box>
 
         <DialogContent>
@@ -109,7 +123,7 @@ export default function SeatData({ open, onClose, id, carData }) {
                 <Typography>₹{basePrice}</Typography>
               </div>
               <div className="gst-row">
-                <Typography>🧮 GST (18%):</Typography>
+                <Typography>🧮 GST ({gstPercentage}%):</Typography>
                 <Typography>₹{gstAmount.toFixed(2)}</Typography>
               </div>
               <div className="gst-row total">
@@ -117,7 +131,7 @@ export default function SeatData({ open, onClose, id, carData }) {
                 <Typography variant="h6">₹{totalPrice.toFixed(2)}</Typography>
               </div>
               <Typography className="gst-note">
-                * GST is applied at 18% if the total price exceeds ₹{GST_THRESHOLD}.
+                * GST is applied dynamically as per government rules.
               </Typography>
             </Paper>
           )}

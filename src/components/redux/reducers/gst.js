@@ -23,7 +23,18 @@ export const updateGst = createAsyncThunk(
     return response.data;
   }
 );
-
+export const deleteGst = createAsyncThunk(
+  "gst/deleteGst",
+  async (id) => {
+    const response = await axios.delete(
+      `${localUrl}/gst/delete-gst/${id}`,
+      {
+        headers: { Authorization: token },
+      }
+    );
+    return response.data;
+  }
+);
 export const getGst = createAsyncThunk(
   "gst/getGst",
   async (payload) => {
@@ -72,6 +83,10 @@ const gstSlice = createSlice({
       .addCase(updateGst.fulfilled, (state, action) => {
         state.gst = action.payload;
         showSnackbar("GST updated successfully", "success");
+      })
+      .addCase(deleteGst.fulfilled, (state, action) => {
+        state.gstList = state.gstList.filter((gst) => gst._id !== action.payload.id);
+        showSnackbar("GST deleted successfully", "success");
       })
       .addCase(getGst.fulfilled, (state, action) => {
         state.gst = action.payload;

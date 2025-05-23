@@ -279,7 +279,7 @@ export default function CarUpdate({ car, onClose, open }) {
           <Grid item xs={12} sm={4}>
             <TextField
               label="Available From"
-              type="date"
+              type="datetime-local"
               fullWidth
               value={pickupD}
               onChange={(e) => setPickupD(e.target.value)}
@@ -290,7 +290,7 @@ export default function CarUpdate({ car, onClose, open }) {
           <Grid item xs={12} sm={4}>
             <TextField
               label="Available To"
-              type="date"
+              type="datetime-local"
               fullWidth
               value={dropD}
               onChange={(e) => setDropD(e.target.value)}

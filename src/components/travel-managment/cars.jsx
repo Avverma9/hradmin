@@ -10,21 +10,22 @@ import axios from "axios";
 import { localUrl } from "../../../utils/util";
 import { CiSearch } from "react-icons/ci";
 import { RxCross1 } from "react-icons/rx";
-import { Button, DialogTitle, TextField, Typography } from "@mui/material";
+import { Button, TextField, Typography } from "@mui/material";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format } from "date-fns"; // Import format from date-fns
 import SeatData from "./seat-data";
 import { FaLocationArrow, FaMapMarkerAlt } from "react-icons/fa";
 import { AiOutlineCalendar } from "react-icons/ai";
-import { fDate, indianTime } from "../../../utils/format-time";
+import { indianTime } from "../../../utils/format-time";
+import { useLoader } from "../../../utils/loader";
 
 const Cars = () => {
   const dispatch = useDispatch();
   const [data, setData] = useState([]);
   const [openSeatData, setOpenSeatData] = useState(false);
   const [selectedCarId, setSelectedCarId] = useState(null); // Track selected car ID
-
+  const { showLoader, hideLoader } = useLoader()
   const filterList = useSelector((state) => state.car.data);
   const [pickupP, sePickupP] = useState("");
   const [dropP, setDropP] = useState("");
@@ -37,11 +38,20 @@ const Cars = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await dispatch(getAllCars());
-      setData(response.payload);
+      showLoader();
+      try {
+        const response = await dispatch(getAllCars());
+        setData(response.payload);
+      } catch (error) {
+        console.error("Failed to fetch cars:", error);
+      } finally {
+        hideLoader();
+      }
     };
+
     fetchData();
   }, [dispatch]);
+
 
   const handleFilterChange = async (key, value) => {
     const newFilters = { ...filters };
@@ -54,15 +64,23 @@ const Cars = () => {
     }
 
     setFilters(newFilters);
+    showLoader();
 
-    if (newFilters.make.length === 0 && newFilters.fuelType.length === 0) {
-      const response = await dispatch(getAllCars());
-      setData(response.payload);
-    } else {
-      const response = await dispatch(filterCar({ query: key, value }));
-      setData(response.payload);
+    try {
+      if (newFilters.make.length === 0 && newFilters.fuelType.length === 0) {
+        const response = await dispatch(getAllCars());
+        setData(response.payload);
+      } else {
+        const response = await dispatch(filterCar({ query: key, value }));
+        setData(response.payload);
+      }
+    } catch (error) {
+      console.error("Filter failed:", error);
+    } finally {
+      hideLoader();
     }
   };
+
 
   const handleSeatDataOpen = (carId) => {
     setSelectedCarId(carId); // Set the selected car ID
@@ -80,16 +98,11 @@ const Cars = () => {
   };
 
   const handleSearch = async () => {
-    // Check if either pickup and drop locations are empty or dates are empty
-    if ((!pickupP || !dropP) && (!fromDate || !toDate)) {
-      return; // Don't make API call if both location and dates are empty
-    }
+    if ((!pickupP || !dropP) && (!fromDate || !toDate)) return;
 
-    // Format dates to YYYY-MM-DD
     const formattedFromDate = fromDate ? format(fromDate, "yyyy-MM-dd") : "";
     const formattedToDate = toDate ? format(toDate, "yyyy-MM-dd") : "";
 
-    // Construct the API URL with location and date filters
     const queryParams = [
       pickupP && `pickupP=${pickupP}`,
       dropP && `dropP=${dropP}`,
@@ -99,11 +112,16 @@ const Cars = () => {
       .filter(Boolean)
       .join("&");
 
-    // Proceed with the API call
-    const response = await axios.get(
-      `${localUrl}/travel/filter-car/by-query?${queryParams}`,
-    );
-    setData(response.data);
+    showLoader();
+
+    try {
+      const response = await axios.get(`${localUrl}/travel/filter-car/by-query?${queryParams}`);
+      setData(response.data);
+    } catch (error) {
+      console.error("Search failed:", error);
+    } finally {
+      hideLoader();
+    }
   };
 
   const handleClear = () => {
@@ -113,73 +131,41 @@ const Cars = () => {
   return (
     <div className="cars-page">
       <header className="car-upper-header">
-        <div className="car-header-left">
+        <div className="car-header-row">
           <TextField
-            label="Pickup Location"
+            label="Pickup"
             variant="outlined"
-            fullWidth
-            margin="normal"
             value={pickupP}
             onChange={(e) => sePickupP(e.target.value)}
-            sx={{
-              width: "200px",
-              height: "40px",
-              marginBottom: "16px",
-            }}
+            sx={{ width: 140 }}
           />
 
           <TextField
-            label="Drop Location"
+            label="Drop"
             variant="outlined"
-            fullWidth
-            margin="normal"
             value={dropP}
             onChange={(e) => setDropP(e.target.value)}
-            sx={{
-              width: "200px",
-              height: "40px",
-              marginBottom: "16px",
-            }}
+            sx={{ width: 140 }}
           />
 
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
-              label="Pick From"
+              label="From"
               value={fromDate}
               onChange={(newValue) => setFromDate(newValue)}
               renderInput={(params) => (
-                <TextField
-                  {...params}
-                  variant="outlined"
-                  fullWidth
-                  margin="normal"
-                  placeholder="Pick From"
-                  sx={{
-                    width: "200px",
-                    height: "40px",
-                    marginBottom: "16px",
-                  }}
-                />
+                <TextField {...params} sx={{ width: 130 }} />
               )}
             />
+          </LocalizationProvider>
 
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
-              label="Pick To"
+              label="To"
               value={toDate}
               onChange={(newValue) => setToDate(newValue)}
               renderInput={(params) => (
-                <TextField
-                  {...params}
-                  variant="outlined"
-                  fullWidth
-                  margin="normal"
-                  placeholder="Pick To"
-                  sx={{
-                    width: "200px",
-                    height: "40px",
-                    marginBottom: "16px",
-                  }}
-                />
+                <TextField {...params} sx={{ width: 130 }} />
               )}
             />
           </LocalizationProvider>
@@ -189,19 +175,22 @@ const Cars = () => {
             color="primary"
             onClick={handleSearch}
             startIcon={<CiSearch />}
-            sx={{ marginTop: "16px" }}
-          />
+            sx={{ height: 40, fontSize: '12px', padding: '6px 12px' }}
+          >
+            Search
+          </Button>
 
           <Button
             variant="outlined"
             color="secondary"
             onClick={handleClear}
             startIcon={<RxCross1 />}
-            sx={{ marginTop: "16px" }}
-          />
+            sx={{ height: 40, fontSize: '12px', padding: '6px 12px' }}
+          >
+            Clear
+          </Button>
         </div>
       </header>
-
       <div className="car-layout">
         <aside className="car-sidebar">
           <div className="car-filter">
@@ -324,10 +313,11 @@ const Cars = () => {
                       <div>
                         <FaMapMarkerAlt /> Drop: {car?.dropP}
                       </div>
-                      <div>
-                        <AiOutlineCalendar /> From {fDate(car?.pickupD)}{" "}
-                        to {fDate(car?.dropD)}
+                      <div style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AiOutlineCalendar style={{ fontSize: '18px' }} />
+                        Pickup & drop time {indianTime(car?.pickupD)} to {indianTime(car?.dropD)}
                       </div>
+
                     </div>
                   </div>
 
