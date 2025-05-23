@@ -90,6 +90,10 @@ const getNavConfig = async () => {
             icon: icons.addBooking,
             path: '/booking-creation',
         },
+
+        { title: "Panel Booking", path: "/panel-booking", icon: icons.bookings },
+
+
         {
             title: 'travel',
             icon: icons.travel,

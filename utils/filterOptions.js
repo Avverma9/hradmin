@@ -171,4 +171,5 @@ export const paths = [
   { title: "User Coupon", path: "/partner-coupon", role: "Admin" },
   { title: "Travel Bookings", path: "/admin-travel/bookings", role: "Admin" },
   { title: "GST", path: "/gst-page", role: "Admin" },
+  { title: "Panel Booking", path: "/panel-booking", role: "Admin" },
 ];

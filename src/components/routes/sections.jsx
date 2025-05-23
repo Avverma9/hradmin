@@ -43,6 +43,7 @@ const PartnerCouponPage = lazy(() => import('src/components/pages/admin/partner-
 const UserCouponPage = lazy(() => import('src/components/pages/admin/user-coupon-page'));
 const PMSMonthlyPricePage = lazy(() => import('src/components/pages/superAdmin/pms-coupon'));
 const GSTpage = lazy(() => import('src/components/pages/admin/gst-page'));
+const PanelBookingPage = lazy(() => import('src/components/pages/panel-booking'));
 export default function Router() {
     const routes = useRoutes([
         {
@@ -77,6 +78,7 @@ export default function Router() {
                 { path: 'all-users', element: <UserDetails /> },
                 { path: 'all-reviews', element: <AllReviews /> },
                 { path: 'book-now-page/:hotelId', element: <BookNowPage /> },
+                { path: "panel-booking", element: <PanelBookingPage /> },
                 { path: 'your-cars', element: <CarsPage /> },
                 { path: 'cars-owner', element: <OwnerList /> },
                 { path: 'add-an-car-owner', element: <CarOwnerFormPage /> },
