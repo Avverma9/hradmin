@@ -28,7 +28,7 @@ import { indianTime } from "../../../../utils/format-time";
 export default function UserCoupon() {
   const dispatch = useDispatch();
   const { showLoader, hideLoader } = useLoader();
-
+  const [assignedTo, setAssignedTo] = useState("");
   const [couponName, setCouponName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [discountPrice, setDiscountPrice] = useState("");
@@ -45,6 +45,7 @@ export default function UserCoupon() {
   const resetCouponForm = () => {
     setCouponName("");
     setDiscountPrice("");
+    setAssignedTo("");
     setValidity("");
     setQuantity("");
   };
@@ -93,9 +94,11 @@ export default function UserCoupon() {
     const postData = {
       couponName,
       discountPrice: Number(discountPrice),
+      assignedTo, // ✅ This must come from props/state correctly
       quantity: Number(quantity),
       validity: adjustedDate.toISOString(),
     };
+
 
     showLoader();
     try {
@@ -140,16 +143,16 @@ export default function UserCoupon() {
   };
 
   // Filter coupons based on expired or active status
-const filteredCoupons = coupons.filter((coupon) => {
-  const matchesExpired = filterExpired ? coupon.expired : !coupon.expired;
+  const filteredCoupons = coupons.filter((coupon) => {
+    const matchesExpired = filterExpired ? coupon.expired : !coupon.expired;
 
-  const assignedToValue = coupon?.assignedTo || "";
-  const matchesSearch = assignedToValue
-    .toLowerCase()
-    .includes(searchTerm.toLowerCase());
+    const assignedToValue = coupon?.assignedTo || "";
+    const matchesSearch = assignedToValue
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
 
-  return matchesExpired && matchesSearch;
-});
+    return matchesExpired && matchesSearch;
+  });
 
   return (
     <Box sx={{ p: 3 }}>
@@ -166,13 +169,13 @@ const filteredCoupons = coupons.filter((coupon) => {
         >
           {filterExpired ? "Show Active Coupons" : "Show Expired Coupons"}
         </Button>
-         <TextField
-    label="Search by Assigned To"
-    variant="outlined"
-    size="small"
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-  />
+        <TextField
+          label="Search by Assigned To"
+          variant="outlined"
+          size="small"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </Box>
 
       <CreateCouponModal
@@ -187,6 +190,8 @@ const filteredCoupons = coupons.filter((coupon) => {
         setValidity={setValidity}
         quantity={quantity}
         setQuantity={setQuantity}
+        assignedTo={assignedTo}           // ✅ Pass this
+        setAssignedTo={setAssignedTo}     // ✅ And this
       />
 
       {filteredCoupons.length > 0 ? (

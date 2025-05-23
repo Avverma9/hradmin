@@ -87,6 +87,7 @@ export const createUserCoupon = createAsyncThunk(
         {
           couponName: postData.couponName,
           discountPrice: postData.discountPrice,
+          assignedTo: postData.assignedTo,
           validity: postData.validity,
           quantity: 1,
         },

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -26,16 +26,15 @@ const CreateCouponModal = ({
   setQuantity,
   validity,
   setValidity,
+  assignedTo,
+  setAssignedTo,
 }) => {
   const dispatch = useDispatch();
 
-  // State for assigned user
-  const [assignedTo, setAssignedTo] = useState("");
-  const [selectedUserEmail, setSelectedUserEmail] = useState("");
-
-  // All users for dropdown
-  const allUsers = useSelector((state) => state.user.userData || []);
-  const foundUser = useSelector((state) => state.user.userData);
+  // Fetch all users
+  const allUsers = useSelector((state) =>
+    Array.isArray(state.user.userData) ? state.user.userData : []
+  );
 
   useEffect(() => {
     if (open) {
@@ -43,7 +42,9 @@ const CreateCouponModal = ({
 
       if (!validity) {
         const now = new Date();
-        const localISOTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+        const localISOTime = new Date(
+          now.getTime() - now.getTimezoneOffset() * 60000
+        )
           .toISOString()
           .slice(0, 16);
         setValidity(localISOTime);
@@ -55,22 +56,17 @@ const CreateCouponModal = ({
     }
   }, [open]);
 
-  // Handle user selection or manual input
   const handleUserSelect = (event, newValue) => {
-    const email = typeof newValue === "string" ? newValue : newValue?.email;
-    setAssignedTo(email);
-
-    if (email) {
-      dispatch(findUser({ email })).then((action) => {
-        if (action.payload) {
-          setSelectedUserEmail(action.payload.email);
-        } else {
-          toast.error("User not found");
-          setSelectedUserEmail("");
-        }
-      });
+    if (typeof newValue === "string") {
+      setAssignedTo(newValue); // Assume user typed raw email
+    } else if (newValue && typeof newValue === "object" && newValue.email) {
+      setAssignedTo(newValue.email); // ✅ Set only email, not label
+    } else {
+      setAssignedTo(""); // fallback
     }
   };
+
+
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
@@ -100,10 +96,20 @@ const CreateCouponModal = ({
                     user.email.toLowerCase().includes(state.inputValue.toLowerCase())
                   )
                 }
+                inputValue={assignedTo}
                 onInputChange={(event, newInputValue) => {
-                  setAssignedTo(newInputValue);
+                  // Do nothing here to avoid setting full label
+                  // We'll handle this via onChange only
                 }}
-                onChange={handleUserSelect}
+                onChange={(event, newValue) => {
+                  if (typeof newValue === "string") {
+                    setAssignedTo(newValue); // user typed email
+                  } else if (newValue && newValue.email) {
+                    setAssignedTo(newValue.email); // ✅ only email
+                  } else {
+                    setAssignedTo("");
+                  }
+                }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -115,6 +121,7 @@ const CreateCouponModal = ({
                   />
                 )}
               />
+
             </Grid>
 
             {/* Coupon Name */}
@@ -202,6 +209,8 @@ CreateCouponModal.propTypes = {
   setQuantity: PropTypes.func.isRequired,
   validity: PropTypes.string.isRequired,
   setValidity: PropTypes.func.isRequired,
+  assignedTo: PropTypes.string.isRequired,
+  setAssignedTo: PropTypes.func.isRequired,
 };
 
 export default CreateCouponModal;
