@@ -83,44 +83,44 @@ const CreateCouponModal = ({
           <Grid container spacing={2}>
             {/* Assigned To (Autocomplete) */}
             <Grid item xs={12}>
-              <Autocomplete
-                freeSolo
-                options={allUsers}
-                getOptionLabel={(option) =>
-                  typeof option === "string"
-                    ? option
-                    : `${option.userName || "Unknown"} (${option.email})`
-                }
-                filterOptions={(options, state) =>
-                  options.filter((user) =>
-                    user.email.toLowerCase().includes(state.inputValue.toLowerCase())
-                  )
-                }
-                inputValue={assignedTo}
-                onInputChange={(event, newInputValue) => {
-                  // Do nothing here to avoid setting full label
-                  // We'll handle this via onChange only
-                }}
-                onChange={(event, newValue) => {
-                  if (typeof newValue === "string") {
-                    setAssignedTo(newValue); // user typed email
-                  } else if (newValue && newValue.email) {
-                    setAssignedTo(newValue.email); // ✅ only email
-                  } else {
-                    setAssignedTo("");
-                  }
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Assigned To"
-                    placeholder="Enter email"
-                    size="small"
-                    fullWidth
-                    required
-                  />
-                )}
-              />
+             <Autocomplete
+  freeSolo
+  options={allUsers}
+  getOptionLabel={(option) =>
+    typeof option === "string"
+      ? option
+      : `${option.userName || "Unknown"} (${option.email})`
+  }
+  filterOptions={(options, state) =>
+    options.filter((user) =>
+      user.email.toLowerCase().includes(state.inputValue.toLowerCase())
+    )
+  }
+  inputValue={assignedTo}
+  onInputChange={(event, newInputValue) => {
+    setAssignedTo(newInputValue); // ✅ Fix: makes typing work
+  }}
+  onChange={(event, newValue) => {
+    if (typeof newValue === "string") {
+      setAssignedTo(newValue);
+    } else if (newValue && newValue.email) {
+      setAssignedTo(newValue.email);
+    } else {
+      setAssignedTo("");
+    }
+  }}
+  renderInput={(params) => (
+    <TextField
+      {...params}
+      label="Assigned To"
+      placeholder="Enter email"
+      size="small"
+      fullWidth
+      required
+    />
+  )}
+/>
+
 
             </Grid>
 
