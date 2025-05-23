@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-import BookingCreate from '../../settings/booking/userSelection';
+import BookingCreate from '../../settings/booking/create_booking';
 
 // ----------------------------------------------------------------------
 
