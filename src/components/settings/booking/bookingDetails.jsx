@@ -95,6 +95,99 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
 
   const userId = sessionStorage.getItem("subid");
   const hotelId = localStorage.getItem("subhotelId");
+
+
+  // const loadRazorpayScript = () => {
+  //   return new Promise((resolve) => {
+  //     const script = document.createElement('script');
+  //     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+  //     script.onload = () => resolve(true);
+  //     script.onerror = () => resolve(false);
+  //     document.body.appendChild(script);
+  //   });
+  // };
+
+  // const handleBooking = async () => {
+  //   if (!inDate || !outDate || guests <= 0) {
+  //     toast.error("Please fill in all required fields.");
+  //     return;
+  //   }
+
+  //   const formattedInDate = inDate.toISOString().split("T")[0];
+  //   const formattedOutDate = outDate.toISOString().split("T")[0];
+
+  //   const bookingData = {
+  //     checkInDate: formattedInDate,
+  //     checkOutDate: formattedOutDate,
+  //     guests: guests,
+  //     numRooms: numRooms,
+  //     foodDetails: food,
+  //     roomDetails: room,
+  //     price: calculateTotalPrice(),
+  //     discountPrice: discountPrice,
+  //     hotelName: hotel,
+  //     couponCode: couponCode,
+  //     hotelEmail: email,
+  //     hotelOwnerName: owner,
+  //     gstPrice: gstData?.gstPrice || 0,
+  //     createdBy: {
+  //       user: userName,
+  //       email: hotelEmail,
+  //     },
+  //     destination: address,
+  //     hotelCity: city,
+  //     bookingSource: "Panel",
+  //   };
+
+  //   const razorpayLoaded = await loadRazorpayScript();
+  //   if (!razorpayLoaded) {
+  //     alert("Razorpay SDK failed to load. Are you online?");
+  //     return;
+  //   }
+
+  //   try {
+  //     const userData = { userId, hotelId };
+  //     const response = await dispatch(createBooking({ userData, bookingData })).unwrap();
+
+  //     const orderData = response?.data;
+  //     console.log("Booking response:", orderData);
+
+  //     if (!orderData || !orderData.bookingId) {
+  //       throw new Error("Razorpay order ID not found in response.");
+  //     }
+
+  //     const options = {
+  //       key: "rzp_test_7xbcyn4tIZfQPE", // Replace with your real Razorpay key in production
+  //       amount: calculateTotalPrice() * 100, // Amount in paise
+  //       currency: "INR",
+  //       name: "Hotel Booking",
+  //       description: "Room + Food Booking",
+  //       order_id: orderData.bookingId,
+  //       handler: function (response) {
+  //         console.log("Payment successful:", response);
+  //         toast.success("Booking successful!");
+  //         reloadPage();
+  //       },
+  //       prefill: {
+  //         name: userName,
+  //         email: hotelEmail,
+  //         contact: "9576630507", // Ideally, dynamic contact
+  //       },
+  //       theme: {
+  //         color: "#3399cc",
+  //       },
+
+  //     };
+
+  //     const rzp = new window.Razorpay(options);
+  //     rzp.open();
+  //   } catch (error) {
+  //     console.error("Booking failed:", error);
+  //     toast.error("Booking failed. Please try again.");
+  //   }
+  // };
+
+
   const handleBooking = () => {
     if (!inDate || !outDate || guests <= 0) {
       toast.error("Please fill in all required fields.");
