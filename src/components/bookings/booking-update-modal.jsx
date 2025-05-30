@@ -49,22 +49,27 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
   const role = localStorage.getItem("user_role");
   useEffect(() => {
     if (bookingData) {
+      const formatDate = (dateInput) => {
+        const date = new Date(dateInput);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      };
+
       setFormData({
-        checkInDate: bookingData.checkInDate || "",
-        checkOutDate: bookingData.checkOutDate || "",
-        checkInTime: bookingData.checkInTime
-          ? new Date(bookingData.checkInTime)
-          : null,
-        checkOutTime: bookingData.checkOutTime
-          ? new Date(bookingData.checkOutTime)
-          : null,
+        checkInDate: bookingData.checkInDate ? formatDate(bookingData.checkInDate) : "",
+        checkOutDate: bookingData.checkOutDate ? formatDate(bookingData.checkOutDate) : "",
+        checkInTime: bookingData.checkInTime ? new Date(bookingData.checkInTime) : null,
+        checkOutTime: bookingData.checkOutTime ? new Date(bookingData.checkOutTime) : null,
         price: bookingData.price || "",
-        bookingStatus: bookingData.status || "",
+        bookingStatus: bookingData.bookingStatus || "",
         numRooms: bookingData.numRooms || "",
         guests: bookingData.guests || "",
       });
     }
   }, [bookingData]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;

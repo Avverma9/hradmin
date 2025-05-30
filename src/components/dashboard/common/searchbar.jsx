@@ -1,16 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import Slide from '@mui/material/Slide';
-import Input from '@mui/material/Input';
-import Button from '@mui/material/Button';
-import { styled } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
-
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
+import { styled } from '@mui/material/styles';
 
 import Iconify from '../../../components/stuff/iconify';
 import { bgBlur } from '../../../../theme/css';
+import { fetchNavConfig } from '../config-navigation';
 
 // ----------------------------------------------------------------------
 
@@ -41,13 +41,46 @@ const StyledSearchbar = styled('div')(({ theme }) => ({
 
 export default function Searchbar() {
   const [open, setOpen] = useState(false);
+  const [navItems, setNavItems] = useState([]);
+  const [searchInput, setSearchInput] = useState('');
+  const navigate = useNavigate();
 
-  const handleOpen = () => {
-    setOpen(!open);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+
+  // Recursive function to flatten nav tree
+  const flattenNav = (items) => {
+    let flat = [];
+    for (const item of items) {
+      if (item.path && item.title) {
+        flat.push({ title: item.title, path: item.path });
+      }
+      if (item.children) {
+        flat = [...flat, ...flattenNav(item.children)];
+      }
+    }
+    return flat;
   };
 
-  const handleClose = () => {
-    setOpen(false);
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const config = await fetchNavConfig(); // Make sure this returns nav config
+        const flat = flattenNav(config);
+        setNavItems(flat);
+      } catch (error) {
+        console.error('Failed to fetch nav config:', error);
+      }
+    };
+
+    loadConfig();
+  }, []);
+
+  const handleSelect = (event, selected) => {
+    if (selected?.path) {
+      navigate(selected.path);
+      handleClose();
+    }
   };
 
   return (
@@ -61,24 +94,33 @@ export default function Searchbar() {
 
         <Slide direction="down" in={open} mountOnEnter unmountOnExit>
           <StyledSearchbar>
-            <Input
-              autoFocus
+            <Autocomplete
               fullWidth
-              disableUnderline
-              placeholder="Search…"
-              startAdornment={
-                <InputAdornment position="start">
-                  <Iconify
-                    icon="eva:search-fill"
-                    sx={{ color: 'text.disabled', width: 20, height: 20 }}
-                  />
-                </InputAdornment>
-              }
-              sx={{ mr: 1, fontWeight: 'fontWeightBold' }}
+              options={navItems}
+              getOptionLabel={(option) => option.title}
+              onInputChange={(e, newInputValue) => setSearchInput(newInputValue)}
+              inputValue={searchInput}
+              onChange={handleSelect}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  autoFocus
+                  placeholder="Search..."
+                  variant="standard"
+                  InputProps={{
+                    ...params.InputProps,
+                    disableUnderline: true,
+                    startAdornment: (
+                      <Iconify
+                        icon="eva:search-fill"
+                        sx={{ color: 'text.disabled', width: 20, height: 20, mr: 1 }}
+                      />
+                    ),
+                  }}
+                  sx={{ fontWeight: 'fontWeightBold' }}
+                />
+              )}
             />
-            <Button variant="contained" onClick={handleClose}>
-              Search
-            </Button>
           </StyledSearchbar>
         </Slide>
       </div>

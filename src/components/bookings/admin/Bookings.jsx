@@ -68,7 +68,11 @@ export default function BookingsView() {
             variant="contained"
             color="warning"
             size="small"
-            onClick={() => handleUpdate(params.row)}
+            onClick={() => {
+              const fullBooking = bookings.find((b) => b.bookingId === params.row.bookingId);
+              handleUpdate(fullBooking);
+            }}
+
             style={{ marginLeft: "10px" }}
           >
             Update
