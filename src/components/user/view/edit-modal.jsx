@@ -27,14 +27,15 @@ import {
     DialogContent,
 } from '@mui/material';
 
-import { paths } from '../../../../utils/filterOptions';
 import { useDispatch, useSelector } from 'react-redux';
 import { addMenu, deleteMenu, updatePartnerImage } from 'src/components/redux/reducers/partner';
+import { useMenuItems } from '../../../../utils/additional/menuItems';
 
 const EditUserModal = ({ open, onClose, user, onSubmit }) => {
     const [selectedMenuItems, setSelectedMenuItems] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [openSelect, setOpenSelect] = useState(false);
+    const paths = useMenuItems()
     const dispatch = useDispatch();
     const partnerImage = useSelector((state) => state.partner.partnerImage);
     const [formData, setFormData] = useState({

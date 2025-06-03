@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 
 import { localUrl } from '../../../../utils/util';
-import { paths } from '../../../../utils/filterOptions';
+import { useMenuItems } from '../../../../utils/additional/menuItems';
 
 const UserNotification = () => {
   const [name, setName] = useState('');
@@ -28,7 +28,7 @@ const UserNotification = () => {
   const [users, setUsers] = useState([]);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [selectedRole, setSelectedRole] = useState('');
-
+const paths = useMenuItems()
   // Fetch user data when component mounts
   useEffect(() => {
     const fetchUsers = async () => {

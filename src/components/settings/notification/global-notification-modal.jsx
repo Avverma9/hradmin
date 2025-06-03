@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 
 import { localUrl } from '../../../../utils/util';
-import { paths } from '../../../../utils/filterOptions';
+import { useMenuItems } from '../../../../utils/additional/menuItems';
 
 
 // Sample path configuration (replace with your actual path options)
@@ -28,7 +28,7 @@ const GlobalNotification = () => {
   const [message, setMessage] = useState('');
   const [selectedPath, setSelectedPath] = useState('');
   const [error, setError] = useState(null);
-
+  const paths = useMenuItems()
   const handleSubmit = async (e) => {
     e.preventDefault();
 

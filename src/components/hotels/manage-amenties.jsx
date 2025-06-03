@@ -9,8 +9,8 @@ import React, { useState, useEffect } from 'react';
 import { Box, Grid, Modal, Button, Checkbox, Typography, FormControlLabel } from '@mui/material';
 
 import { localUrl } from '../../../utils/util';
+import { useHotelAmenities } from '../../../utils/additional/hotelAmenities';
 
-import { allAmenities } from '../../../utils/filterOptions';
 
 export default function Amenities({ open, onClose, hotelId }) {
   const [data, setData] = useState([]);
@@ -18,7 +18,7 @@ export default function Amenities({ open, onClose, hotelId }) {
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [existingAmenities, setExistingAmenities] = useState([]);
   const [selectedAmenityWarning, setSelectedAmenityWarning] = useState(null);
-
+  const allAmenities = useHotelAmenities()
   // Fetch amenities when the component mounts or hotelId changes
   useEffect(() => {
     const fetchAmenities = async () => {
@@ -182,7 +182,7 @@ export default function Amenities({ open, onClose, hotelId }) {
           </Typography>
           <Grid container spacing={2} sx={{ mt: 2 }}>
             {allAmenities.map((amenity) => (
-              <Grid item xs={12} sm={6} md={4} key={amenity.id}>
+              <Grid item xs={12} sm={6} md={4} key={amenity._id}>
                 <FormControlLabel
                   control={
                     <Checkbox

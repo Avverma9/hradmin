@@ -29,7 +29,7 @@ import {
 } from "@mui/material";
 
 import { localUrl } from "../../../utils/util";
-import { bedTypes, roomTypes } from "../../../utils/filterOptions";
+
 
 import "./button.css";
 import {
@@ -42,6 +42,8 @@ import {
   ImagePreview,
   UploadButton,
 } from "./view/manageRoomsCss";
+import { useBedTypes } from "../../../utils/additional/bedTypes";
+import { useRoomTypes } from "../../../utils/additional/roomTypes";
 
 const AddRoomModal = ({ open, onClose, hotelId }) => {
   const [roomType, setRoomType] = useState("");
@@ -56,10 +58,10 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
   const [currentRoomId, setCurrentRoomId] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
+  const bedTypes = useBedTypes()
+  const roomTypes = useRoomTypes()
   useEffect(() => {
     if (!open) {
-      // Reset state when modal is closed
       resetForm();
     }
   }, [open]);
@@ -289,8 +291,8 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
                     label="Room Type"
                   >
                     {roomTypes.map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {type}
+                      <MenuItem key={type._id} value={type.name}>
+                        {type.name}
                       </MenuItem>
                     ))}
                   </Select>
@@ -315,8 +317,8 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
                     label="Bed Type"
                   >
                     {bedTypes.map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {type}
+                      <MenuItem key={type._id} value={type.name}>
+                        {type.name}
                       </MenuItem>
                     ))}
                   </Select>
