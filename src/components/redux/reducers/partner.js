@@ -152,11 +152,12 @@ export const updatePartnerImage = createAsyncThunk(
 
 export const addMenu = createAsyncThunk(
   'partner/addMenu',
-  async ({ userId, selectedMenuItems }, { rejectWithValue }) => {
+  async ({ userId, matchedMenuItems }, { rejectWithValue }) => {
+    console.log("matced menu items", matchedMenuItems)
     try {
       const response = await axios.post(
         `${localUrl}/api/users/${userId}/menu-items`,
-        { menuItems: selectedMenuItems },
+        { menuItems: matchedMenuItems },
         {
           headers: {
             Authorization: token,
@@ -179,7 +180,7 @@ export const deleteMenu = createAsyncThunk(
     try {
       const response = await axios.patch(
         `${localUrl}/api/users/${userId}/menu-items`,
-        { menuItems: item },
+        { menuId: item._id },
         {
           headers: {
             Authorization: token,

@@ -77,10 +77,22 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
     };
 
     const handleSubmit = async () => {
+        const matchedMenuItems = selectedMenuItems
+            .map((item) => {
+                const itemName = item.name || item.title; // handle both keys
+                const matchedPath = paths.find((p) => p.title === itemName);
+
+                return matchedPath ? { name: matchedPath.title, path: matchedPath.path } : null;
+            })
+            .filter((item) => item !== null);
+
+
+
         const updatedUser = {
             ...formData,
-            menuItems: selectedMenuItems,
+            menuItems: matchedMenuItems,
         };
+
 
         // Handle image upload if a new image file is selected
         if (imageFile) {
@@ -101,9 +113,15 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
 
     const handleAddMenuItems = async () => {
         if (selectedMenuItems.length === 0) return;
+        const matchedMenuItems = selectedMenuItems
+            .map((title) => {
+                const matchedPath = paths.find((p) => p.title === title);
+                return matchedPath ? { name: matchedPath.title, path: matchedPath.path } : null;
+            })
+            .filter((item) => item !== null);
 
         try {
-            await dispatch(addMenu({ userId: user._id, selectedMenuItems }));
+            await dispatch(addMenu({ userId: user._id, matchedMenuItems }));
         } catch (error) {
             console.error('Error adding menu items:', error);
             toast.error('Failed to add menu items');
@@ -124,7 +142,13 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
         }
     };
 
-    const filteredMenuItems = selectedMenuItems.filter((item) => item.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredMenuItems = selectedMenuItems.filter(
+        (item) =>
+            typeof item === 'object' &&
+            typeof item.name === 'string' &&
+            item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     const handleImageChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
@@ -225,7 +249,9 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                                         onChange={(e) => setSelectedMenuItems(e.target.value)}
                                         onOpen={() => setOpenSelect(true)} // When dropdown opens, set open to true
                                         onClose={() => setOpenSelect(false)} // When dropdown closes, set open to false
-                                        renderValue={(selected) => selected.join(', ')}
+                                        renderValue={(selected) => selected.map(item => item.name).join(', ')}
+
+
                                         MenuProps={{
                                             PaperProps: {
                                                 style: {
@@ -238,13 +264,14 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                                         sx={{ borderRadius: '8px', width: '100%' }}
                                     >
                                         {paths.map((path) => (
-                                            <MenuItem key={path.path} value={path.title}>
-                                                <Checkbox checked={selectedMenuItems.indexOf(path.title) > -1} />
+                                            <MenuItem key={path.path} value={path}>
+                                                <Checkbox checked={selectedMenuItems.some(item => item.name === path.title)} />
                                                 <ListItemText
                                                     primary={path.title}
                                                     secondary={path.role ? `Role: ${path.role}` : 'No specific role'}
                                                 />
                                             </MenuItem>
+
                                         ))}
                                         <div
                                             style={{
@@ -342,7 +369,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                                         },
                                     }}
                                 >
-                                    <Typography variant="body1">{item}</Typography>
+                                    <Typography variant="body1">{item.name}</Typography>
                                     <Button variant="outlined" color="error" onClick={() => handleDeleteMenuItem(item)} sx={{ ml: 1 }}>
                                         Delete
                                     </Button>

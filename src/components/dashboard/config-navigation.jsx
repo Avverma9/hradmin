@@ -54,12 +54,17 @@ const fetchMenuItems = async () => {
                 Authorization: token,
             },
         });
-        return response.data.menuItems.map((item) => item.toLowerCase());
+        const items = response.data.menuItems;
+        if (!Array.isArray(items)) return [];
+        return items
+            .filter((item) => item && typeof item.name === 'string')
+            .map((item) => item.name.toLowerCase());
     } catch (error) {
-        console.error("Error fetching menu items:", error);
+        console.error("Error fetching menu items:", error?.response?.data || error.message);
         return [];
     }
 };
+
 
 // Function to get nav config
 const getNavConfig = async () => {

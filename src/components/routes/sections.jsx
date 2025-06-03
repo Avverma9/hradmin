@@ -69,7 +69,7 @@ export default function Router() {
                 { path: 'bulk-data-processing', element: <BulkOperation /> },
                 { path: 'hotels/monthly-price', element: <MonthlyPricePage /> },
                 { path: 'hotels/monthly-price-pms', element: <PMSMonthlyPricePage /> },
-                { path: '/gst-page', element: <GSTpage /> },
+                { path: 'gst-page', element: <GSTpage /> },
                 { path: 'your-hotels', element: <YourHotelsPage /> },
                 { path: 'view-hotel-details/:hotelId', element: <HotelDetailsPage /> },
                 { path: 'all-bookings', element: <BookingsView /> },
