@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Card,
   Stack,
@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import { exportToExcel } from '../../../../utils/exportFunction';
 import Iconify from '../../../components/stuff/iconify/iconify';
-import Scrollbar from '../../../components/stuff/scrollbar/scrollbar';
 import EditUserModal from './edit-modal';
 import TableNoData from '../table-no-data';
 import UserTableRow from '../user-table-row';
@@ -34,6 +33,8 @@ import {
   updateStatus,
 } from 'src/components/redux/reducers/partner';
 import { useLoader } from '../../../../utils/loader';
+import { useDragScroll } from '../../../../utils/dragScroll';
+
 export default function UserPage() {
   const [page, setPage] = useState(0);
   const [order, setOrder] = useState('asc');
@@ -49,15 +50,17 @@ export default function UserPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [refresh, setRefresh] = useState(false); // State to manage refresh
+  const [refresh, setRefresh] = useState(false);
   const data = useSelector((state) => state.partner.allData);
   const dispatch = useDispatch();
+
+  const tableRef = useDragScroll(); // Ref for drag-scroll
 
   useEffect(() => {
     showLoader();
     const fetchUsers = async () => {
       try {
-        await dispatch(getAll()); // Dispatch the action to fetch users
+        await dispatch(getAll());
       } catch (error) {
         setError(error);
         toast.error('Error fetching users');
@@ -67,14 +70,15 @@ export default function UserPage() {
     };
 
     fetchUsers();
-  }, [dispatch, refresh]); // Make sure to include `dispatch` in the dependency array
+  }, [dispatch, refresh]);
 
-  // Handle the refresh state to fetch users again
   useEffect(() => {
     if (data) {
-      setUsers(data); // Set users state based on the latest data from Redux
+      setUsers(data);
     }
   }, [data]);
+
+
 
   const handleEdit = (user) => {
     setEditUser(user);
@@ -117,7 +121,6 @@ export default function UserPage() {
       await dispatch(updatedPartner({ userId: updatedUser._id, formData }));
       setRefresh((prev) => !prev);
     } catch (error) {
-      console.error('Error updating user:', error);
       toast.error('Something went wrong!');
     } finally {
       hideLoader();
@@ -128,7 +131,7 @@ export default function UserPage() {
     showLoader();
     try {
       await dispatch(addPartner(newUser));
-      setRefresh((prev) => !prev); // Trigger refresh
+      setRefresh((prev) => !prev);
     } catch (error) {
       toast.error('Something went wrong!', error);
     } finally {
@@ -139,16 +142,18 @@ export default function UserPage() {
   const handleDelete = async (id) => {
     try {
       await dispatch(deletePartner(id));
-      setRefresh((prev) => !prev); // Trigger refresh
+      setRefresh((prev) => !prev);
     } catch (error) {
       toast.warning('Something went wrong!', error);
     }
   };
+
   const handleSort = (event, id) => {
     const isAsc = orderBy === id && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(id);
   };
+
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
       const newSelecteds = users?.map((n) => n.name);
@@ -157,6 +162,7 @@ export default function UserPage() {
     }
     setSelected([]);
   };
+
   const handleClick = (event, name) => {
     const selectedIndex = selected.indexOf(name);
     let newSelected = [];
@@ -174,13 +180,16 @@ export default function UserPage() {
     }
     setSelected(newSelected);
   };
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
+
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
+
   const handleFilterByName = (event) => {
     setPage(0);
     setFilterName(event.target.value);
@@ -193,22 +202,21 @@ export default function UserPage() {
   });
 
   const notFound = !dataFiltered.length && !!filterName;
+
   const handleExport = () => {
     exportToExcel(users);
   };
 
   const handleStatusChange = async (userId, currentStatus) => {
     try {
-      const newStatus = !currentStatus; // Toggle the current status
+      const newStatus = !currentStatus;
       await dispatch(updateStatus({ userId, newStatus }));
-      // Update local users state
       const updatedUsers = users?.map((user) =>
         user._id === userId ? { ...user, status: newStatus } : user
       );
       setUsers(updatedUsers);
     } catch (error) {
       toast.error('Something went wrong!', error);
-      console.error('Error updating status:', error);
     }
   };
 
@@ -225,6 +233,7 @@ export default function UserPage() {
           New User
         </Button>
       </Stack>
+
       <Card>
         <UserTableToolbar
           numSelected={selected.length}
@@ -232,60 +241,70 @@ export default function UserPage() {
           onFilterName={handleFilterByName}
           onExport={handleExport}
         />
-        <Scrollbar>
-          <TableContainer sx={{ overflow: 'unset' }}>
-            <Table sx={{ minWidth: 'auto' }}>
-              <UserTableHead
-                order={order}
-                orderBy={orderBy}
-                rowCount={users.length}
-                numSelected={selected.length}
-                onRequestSort={handleSort}
-                onSelectAllClick={handleSelectAllClick}
-                headLabel={[
-                  { id: 'name', label: 'Name' },
-                  { id: 'email', label: 'Email' },
-                  { id: 'password', label: 'Password' },
-                  { id: 'status', label: 'Status' },
-                  { id: '' },
-                ]}
-                sx={{
-                  position: 'sticky',
-                  top: 0,
-                  backgroundColor: 'background.paper',
-                  zIndex: 2,
-                }}
-              />
 
-              <TableBody>
-                {dataFiltered
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  ?.map((row) => (
-                    <UserTableRow
-                      key={row._id}
-                      name={`${row.name} (${row.role})`}
-                      email={row.email}
-                      password={row.password}
-                      status={row?.status ? 'Active' : 'Inactive'}
-                      avatarUrl={row.avatarUrl || row.images}
-                      selected={selected.indexOf(row.name) !== -1}
-                      handleClick={(event) => handleClick(event, row.name)}
-                      handleDelete={() => handleDelete(row._id)}
-                      handleEdit={() => handleEdit(row)}
-                      handleSubmitEdit={() => handleSubmitEdit(row._id)}
-                      handleView={() => handleView(row)}
-                      handleStatusChange={() => handleStatusChange(row._id, row.status)} // Pass user ID and current status
-                    />
-                  ))}
-                <TableEmptyRows
-                  height={17}
-                  emptyRows={emptyRows(page, rowsPerPage, users.length)}
-                />
-                {notFound && <TableNoData query={filterName} />}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Scrollbar>
+        <TableContainer
+          ref={tableRef}
+          sx={{
+            overflowX: 'auto',
+            overflowY: 'auto',          // vertical scrolling enable karenge
+            maxHeight: 600,             // fixed max height for container
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-x',
+            cursor: 'grab',
+            '&.active': { cursor: 'grabbing' },
+            minWidth: 900,
+          }}
+        >
+          <Table sx={{ minWidth: 'auto' }} >
+            <UserTableHead
+              order={order}
+              orderBy={orderBy}
+              rowCount={users.length}
+              numSelected={selected.length}
+              onRequestSort={handleSort}
+              onSelectAllClick={handleSelectAllClick}
+              headLabel={[
+                { id: 'name', label: 'Name' },
+                { id: 'email', label: 'Email' },
+                { id: 'password', label: 'Password' },
+                { id: 'status', label: 'Status' },
+                { id: '' },
+              ]}
+              sx={{
+                position: 'sticky',
+                top: 0,
+                backgroundColor: 'background.paper',
+                zIndex: 2,
+              }}
+            />
+
+            <TableBody>
+              {dataFiltered
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((row) => (
+                  <UserTableRow
+                    key={row._id}
+                    name={`${row.name} (${row.role})`}
+                    email={row.email}
+                    password={row.password}
+                    status={row?.status ? 'Active' : 'Inactive'}
+                    avatarUrl={row.avatarUrl || row.images}
+                    selected={selected.indexOf(row.name) !== -1}
+                    handleClick={(event) => handleClick(event, row.name)}
+                    handleDelete={() => handleDelete(row._id)}
+                    handleEdit={() => handleEdit(row)}
+                    handleSubmitEdit={() => handleSubmitEdit(row._id)}
+                    handleView={() => handleView(row)}
+                    handleStatusChange={() => handleStatusChange(row._id, row.status)}
+                  />
+                ))}
+
+              <TableEmptyRows height={17} emptyRows={emptyRows(page, rowsPerPage, users.length)} />
+              {notFound && <TableNoData query={filterName} />}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
         <TablePagination
           page={page}
           component="div"
@@ -296,20 +315,10 @@ export default function UserPage() {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Card>
+
       <AddUserModal open={addModalOpen} onClose={handleCloseAddModal} onSubmit={handleAdd} />
-      {/* Edit User Modal */}
-      <EditUserModal
-        open={editModalOpen}
-        onClose={handleCloseEditModal}
-        user={editUser || {}}
-        onSubmit={handleSubmitEdit}
-      />
-      <ViewUserModal
-        open={viewModalOpen}
-        onClose={handleCloseViewModal}
-        user={viewUser || {}}
-        onSubmit={handleView}
-      />
+      <EditUserModal open={editModalOpen} onClose={handleCloseEditModal} user={editUser || {}} onSubmit={handleSubmitEdit} />
+      <ViewUserModal open={viewModalOpen} onClose={handleCloseViewModal} user={viewUser || {}} onSubmit={handleView} />
     </Container>
   );
 }

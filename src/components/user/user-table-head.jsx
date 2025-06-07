@@ -40,7 +40,14 @@ export default function UserTableHead({
             key={headCell.id}
             align={headCell.align || 'left'}
             sortDirection={orderBy === headCell.id ? order : false}
-            sx={{ width: headCell.width, minWidth: headCell.minWidth }}
+            sx={{
+              width: headCell.width,
+              minWidth: headCell.minWidth,
+              position: 'sticky',
+              top: 0,
+              backgroundColor: 'background.paper', // ya koi solid color, e.g. '#fff'
+              zIndex: 10,
+            }}
           >
             <TableSortLabel
               hideSortIcon
