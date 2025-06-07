@@ -176,11 +176,12 @@ export const addMenu = createAsyncThunk(
 
 export const deleteMenu = createAsyncThunk(
   'partner/deleteMenu',
-  async ({ userId, item }, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
+    console.log("here is payload",payload)
     try {
       const response = await axios.patch(
-        `${localUrl}/api/users/${userId}/menu-items`,
-        { menuId: item._id },
+        `${localUrl}/api/users/${payload.id}/menu-items`,
+        { menuId: payload.menuId },
         {
           headers: {
             Authorization: token,

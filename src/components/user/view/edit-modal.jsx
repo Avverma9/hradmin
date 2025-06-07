@@ -132,7 +132,11 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
 
     const handleDeleteMenuItem = async (item) => {
         try {
-            await dispatch(deleteMenu({ userId: user._id, item }));
+            const payload = {
+                id: user._id,
+                menuId: item._id
+            }
+            await dispatch(deleteMenu(payload));
             const updatedMenuItems = selectedMenuItems.filter((menu) => menu !== item);
             setSelectedMenuItems(updatedMenuItems);
         } catch (error) {
@@ -271,49 +275,49 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                                                 />
                                             </MenuItem>
                                         ))}
+
+
+                                        {/* Buttons for Add and Cancel */}
+                                        <div
+                                            style={{
+                                                position: 'sticky',
+                                                bottom: '-10px', // Position buttons at the bottom
+                                                left: 0,
+                                                right: 0,
+                                                width: '100%',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                padding: '0 10px',
+                                                zIndex: 1,
+                                            }}
+                                        >
+                                            <Button
+                                                onClick={handleCancel}
+                                                variant="contained"
+                                                color="secondary"
+                                                sx={{
+                                                    width: '45%', // Button takes up half width
+                                                }}
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                onClick={handleAddMenuItems}
+                                                variant="contained"
+                                                color="primary"
+                                                sx={{
+                                                    width: '45%', // Button takes up half width
+                                                }}
+                                            >
+                                                Add Menu Items
+                                            </Button>
+                                        </div>
                                     </Select>
 
-                                    {/* Buttons for Add and Cancel */}
-                                    <div
-                                        style={{
-                                            position: 'sticky',
-                                            bottom: '-10px', // Position buttons at the bottom
-                                            left: 0,
-                                            right: 0,
-                                            width: '100%',
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            padding: '0 10px',
-                                            zIndex: 1,
-                                        }}
-                                    >
-                                        <Button
-                                            onClick={handleCancel}
-                                            variant="contained"
-                                            color="secondary"
-                                            sx={{
-                                                width: '45%', // Button takes up half width
-                                            }}
-                                        >
-                                            Cancel
-                                        </Button>
-                                        <Button
-                                            onClick={handleAddMenuItems}
-                                            variant="contained"
-                                            color="primary"
-                                            sx={{
-                                                width: '45%', // Button takes up half width
-                                            }}
-                                        >
-                                            Add Menu Items
-                                        </Button>
-                                    </div>
+
                                 </div>
                             </FormControl>
                         </Grid>
-
-
-
 
                     </Grid>
                     <Divider sx={{ my: 3 }} />
@@ -370,7 +374,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                                     }}
                                 >
                                     <Typography variant="body1">{item.title}</Typography>
-                                    <Button variant="outlined" color="error" onClick={() => handleDeleteMenuItem(item._id)} sx={{ ml: 1 }}>
+                                    <Button variant="outlined" color="error" onClick={() => handleDeleteMenuItem(item)} sx={{ ml: 1 }}>
                                         Delete
                                     </Button>
                                 </Box>
