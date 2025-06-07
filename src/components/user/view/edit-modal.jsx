@@ -69,7 +69,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
             setSelectedMenuItems(user.menuItems || []);
         }
     }, [user]);
-
+    console.log("user data", user._id)
     const handleChange = (e) => {
         const { name, value } = e.target;
         const newValue = name === 'status' ? value === 'true' : value;
@@ -77,15 +77,12 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
     };
 
     const handleSubmit = async () => {
-        const matchedMenuItems = selectedMenuItems
-            .map((item) => {
-                const itemName = item.name || item.title; // handle both keys
-                const matchedPath = paths.find((p) => p.title === itemName);
-
-                return matchedPath ? { name: matchedPath.title, path: matchedPath.path } : null;
-            })
-            .filter((item) => item !== null);
-
+        const matchedMenuItems = selectedMenuItems.map((item) => {
+            return {
+                title: item.title,  // We use the title as name
+                path: item.path    // Path remains the same
+            };
+        });
 
 
         const updatedUser = {
@@ -113,12 +110,13 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
 
     const handleAddMenuItems = async () => {
         if (selectedMenuItems.length === 0) return;
-        const matchedMenuItems = selectedMenuItems
-            .map((title) => {
-                const matchedPath = paths.find((p) => p.title === title);
-                return matchedPath ? { name: matchedPath.title, path: matchedPath.path } : null;
-            })
-            .filter((item) => item !== null);
+
+        const matchedMenuItems = selectedMenuItems.map((item) => {
+            return {
+                title: item.title,  // Send the `title` of the menu item
+                path: item.path    // Send the `path` of the menu item
+            };
+        });
 
         try {
             await dispatch(addMenu({ userId: user._id, matchedMenuItems }));
@@ -127,6 +125,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
             toast.error('Failed to add menu items');
         }
     };
+
     const handleCancel = () => {
         setOpenSelect(false);
     };
@@ -145,10 +144,12 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
     const filteredMenuItems = selectedMenuItems.filter(
         (item) =>
             typeof item === 'object' &&
-            typeof item.name === 'string' &&
-            item.name.toLowerCase().includes(searchTerm.toLowerCase())
+            typeof item.title === 'string' &&
+            item.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    console.log("fileterf ,", filteredMenuItems)
+    console.log("selecrted menu", selectedMenuItems)
     const handleImageChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
@@ -249,9 +250,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                                         onChange={(e) => setSelectedMenuItems(e.target.value)}
                                         onOpen={() => setOpenSelect(true)} // When dropdown opens, set open to true
                                         onClose={() => setOpenSelect(false)} // When dropdown closes, set open to false
-                                        renderValue={(selected) => selected.map(item => item.name).join(', ')}
-
-
+                                        renderValue={(selected) => selected.map(item => item.title).join(', ')} // Use `title` here to display selected items
                                         MenuProps={{
                                             PaperProps: {
                                                 style: {
@@ -264,54 +263,55 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                                         sx={{ borderRadius: '8px', width: '100%' }}
                                     >
                                         {paths.map((path) => (
-                                            <MenuItem key={path.path} value={path}>
-                                                <Checkbox checked={selectedMenuItems.some(item => item.name === path.title)} />
+                                            <MenuItem key={path._id} value={path}>
+                                                <Checkbox checked={selectedMenuItems.some(item => item.path === path.path)} />
                                                 <ListItemText
                                                     primary={path.title}
                                                     secondary={path.role ? `Role: ${path.role}` : 'No specific role'}
                                                 />
                                             </MenuItem>
-
                                         ))}
-                                        <div
-                                            style={{
-                                                position: 'sticky',
-                                                bottom: '-10px',  // Position buttons at the bottom
-                                                left: 0,
-                                                right: 0,
-                                                width: '100%',
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                padding: '0 10px',
-                                                zIndex: 1,
+                                    </Select>
+
+                                    {/* Buttons for Add and Cancel */}
+                                    <div
+                                        style={{
+                                            position: 'sticky',
+                                            bottom: '-10px', // Position buttons at the bottom
+                                            left: 0,
+                                            right: 0,
+                                            width: '100%',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            padding: '0 10px',
+                                            zIndex: 1,
+                                        }}
+                                    >
+                                        <Button
+                                            onClick={handleCancel}
+                                            variant="contained"
+                                            color="secondary"
+                                            sx={{
+                                                width: '45%', // Button takes up half width
                                             }}
                                         >
-                                            <Button
-                                                onClick={handleCancel}
-                                                variant="contained"
-                                                color="secondary"
-                                                sx={{
-                                                    width: '45%', // Button takes up half width
-                                                }}
-                                            >
-                                                Cancel
-                                            </Button>
-                                            <Button
-                                                onClick={handleAddMenuItems}
-                                                variant="contained"
-                                                color="primary"
-                                                sx={{
-                                                    width: '45%', // Button takes up half width
-                                                }}
-                                            >
-                                                Add Menu Items
-                                            </Button>
-                                        </div>
-                                    </Select>
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            onClick={handleAddMenuItems}
+                                            variant="contained"
+                                            color="primary"
+                                            sx={{
+                                                width: '45%', // Button takes up half width
+                                            }}
+                                        >
+                                            Add Menu Items
+                                        </Button>
+                                    </div>
                                 </div>
                             </FormControl>
-
                         </Grid>
+
 
 
 
@@ -369,8 +369,8 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                                         },
                                     }}
                                 >
-                                    <Typography variant="body1">{item.name}</Typography>
-                                    <Button variant="outlined" color="error" onClick={() => handleDeleteMenuItem(item)} sx={{ ml: 1 }}>
+                                    <Typography variant="body1">{item.title}</Typography>
+                                    <Button variant="outlined" color="error" onClick={() => handleDeleteMenuItem(item._id)} sx={{ ml: 1 }}>
                                         Delete
                                     </Button>
                                 </Box>
@@ -399,7 +399,7 @@ EditUserModal.propTypes = {
     open: PropTypes.bool.isRequired,
     onClose: PropTypes.func.isRequired,
     user: PropTypes.shape({
-        _id: PropTypes.string.isRequired,
+        _id: PropTypes.string,
         name: PropTypes.string,
         email: PropTypes.string,
         mobile: PropTypes.string,

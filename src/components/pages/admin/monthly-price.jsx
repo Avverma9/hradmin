@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-import PMSMonth from '../../settings/monthly/pms-monthly';
+import MonthPrice from '../../settings/monthly/monthly-price';
 
 // ----------------------------------------------------------------------
 
@@ -11,7 +11,7 @@ export default function LoginPage() {
         <title> Month setup | Roomsstay </title>
       </Helmet>
 
-      <PMSMonth />
+      <MonthPrice />
     </>
   );
 }

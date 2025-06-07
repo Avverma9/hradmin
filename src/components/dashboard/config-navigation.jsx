@@ -57,8 +57,8 @@ const fetchMenuItems = async () => {
         const items = response.data.menuItems;
         if (!Array.isArray(items)) return [];
         return items
-            .filter((item) => item && typeof item.name === 'string')
-            .map((item) => item.name.toLowerCase());
+            .filter((item) => item && typeof item.title === 'string')
+            .map((item) => item.title.toLowerCase());
     } catch (error) {
         console.error("Error fetching menu items:", error?.response?.data || error.message);
         return [];
@@ -130,7 +130,7 @@ const getNavConfig = async () => {
             ],
         },
         {
-            title: 'Admin features',
+            title: 'Advanced features',
             icon: icons.admin,
             children: [
                 { title: 'Complaints', path: '/complaints', icon: icons.complaints },

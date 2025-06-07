@@ -41,7 +41,7 @@ const TravelBookingTMS = lazy(() => import('src/components/pages/travel/travel-b
 const TravelBookingsAdmin = lazy(() => import('src/components/settings/travelBookings/travel-booking'))
 const PartnerCouponPage = lazy(() => import('src/components/pages/admin/partner-coupon-page'));
 const UserCouponPage = lazy(() => import('src/components/pages/admin/user-coupon-page'));
-const PMSMonthlyPricePage = lazy(() => import('src/components/pages/superAdmin/pms-coupon'));
+const PMSMonthlyPricePage = lazy(() => import('src/components/pages/superAdmin/monthly-price-pms'));
 const GSTpage = lazy(() => import('src/components/pages/admin/gst-page'));
 const PanelBookingPage = lazy(() => import('src/components/pages/panel-booking'));
 export default function Router() {
