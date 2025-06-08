@@ -86,7 +86,6 @@ export default function Router() {
     }
 
     const allowedPaths = extractPathsFromNavItems(navItems).filter(Boolean);
-    console.log("allowed o", allowedPaths)
 
     // Define the full routes configuration
     const allRoutes = [
@@ -133,10 +132,11 @@ export default function Router() {
     ];
 
     // Filter the routes to include only the ones that are in allowedPaths
-    const filteredRoutes = allowedPaths.map(path => {
-        const route = allRoutes.find(r => r.path === path);
-        return route ? route : null;
-    }).filter(Boolean);
+    // Filter the routes that are either allowed or contain dynamic params like /:id
+    const filteredRoutes = allRoutes.filter(route =>
+        allowedPaths.includes(route.path) || /\/:/.test(route.path)
+    );
+
 
     // Keep the "/" route for login and 404 page
     const routes = useRoutes([

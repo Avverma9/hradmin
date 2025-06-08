@@ -23,6 +23,52 @@ export const getTravelAmenities = createAsyncThunk(
     }
   }
 );
+export const addTravelAmenity = createAsyncThunk(
+  "additional/addTravelAmenity",
+  async (name, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${localUrl}/additional/add/travel-amenities`,
+        {
+          name
+        },
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status)
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+export const deleteTravelAmenity = createAsyncThunk(
+  "additional/deleteTravelAmenity",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axios.delete(
+        `${localUrl}/additional/delete-travel/amenities/${id}`,
+        
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status)
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
 
 export const getMenuItems = createAsyncThunk(
   "additional/getMenuItems",
@@ -36,6 +82,53 @@ export const getMenuItems = createAsyncThunk(
           },
         }
       );
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const addMenu = createAsyncThunk(
+  "additional/addMenu",
+  async (formData, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${localUrl}/additional/add-single/menu`,
+        formData, // ✅ send as a flat object
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+
+      notify(response.status);
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+
+export const deleteMenu = createAsyncThunk(
+  "additional/deleteMenu",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axios.delete(
+        `${localUrl}/additional/delete-menu-item/${id}`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status)
       return response.data;
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message;
@@ -66,6 +159,52 @@ export const getBedTypes = createAsyncThunk(
   }
 );
 
+export const addBedTypes = createAsyncThunk(
+  "additional/addBedTypes",
+  async (name, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${localUrl}/additional/add-bed`,{
+          name
+        },
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status)
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const deleteBedTypes = createAsyncThunk(
+  "additional/deleteBedTypes",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axios.delete(
+        `${localUrl}/additional/delete-bed/${id}`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status)
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 export const getRoomTypes = createAsyncThunk(
   "additional/getRoomTypes",
   async (_, { rejectWithValue }) => {
@@ -86,7 +225,50 @@ export const getRoomTypes = createAsyncThunk(
     }
   }
 );
-
+export const addRoomTypes = createAsyncThunk(
+  "additional/addRoomTypes",
+  async (name, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${localUrl}/additional/add-room`,{
+          name
+        },
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status)
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+export const deleteRoomTypes = createAsyncThunk(
+  "additional/deleteRoomTypes",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axios.delete(
+        `${localUrl}/additional/delete-room/${id}`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status)
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
 export const getAmenities = createAsyncThunk(
   "additional/getAmenities",
   async (_, { rejectWithValue }) => {

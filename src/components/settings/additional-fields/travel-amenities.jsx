@@ -1,76 +1,74 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import {
-    addAmenity,
-    getAmenities,
-    deleteAmenity,
-} from 'src/components/redux/reducers/additional-fields/additional';
-
 import {
     Box,
     Button,
-    TextField,
-    Typography,
     IconButton,
     Stack,
-    InputAdornment,
+    TextField,
+    Typography,
     Skeleton,
+    InputAdornment,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+    addTravelAmenity,
+    deleteTravelAmenity,
+    getTravelAmenities,
+} from 'src/components/redux/reducers/additional-fields/additional';
 
-const Amenity = () => {
+const TravelAmenities = () => {
     const dispatch = useDispatch();
-    const [amenityInput, setAmenityInput] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
+    const travelAmenities = useSelector((state) => state.additional.travelAmenities);
+    const [name, setName] = useState('');
+    const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
-
-    const hotelAmenities = useSelector((state) => state.additional.hotelAmenities);
 
     useEffect(() => {
         setLoading(true);
-        dispatch(getAmenities()).finally(() => setLoading(false));
+        dispatch(getTravelAmenities()).finally(() => setLoading(false));
     }, [dispatch]);
 
-    const handleAddAmenity = async (e) => {
+    const handleAdd = async (e) => {
         e.preventDefault();
-        if (!amenityInput.trim()) return;
-
+        if (!name.trim()) return;
         setLoading(true);
-        await dispatch(addAmenity({ name: amenityInput }));
-        setAmenityInput('');
-        await dispatch(getAmenities());
+        await dispatch(addTravelAmenity({ name }));
+        setName('');
+        await dispatch(getTravelAmenities());
         setLoading(false);
     };
 
-    const handleDeleteAmenity = async (id) => {
+    const handleDelete = async (id) => {
         setLoading(true);
-        await dispatch(deleteAmenity(id));
-        await dispatch(getAmenities());
+        await dispatch(deleteTravelAmenity(id));
+        await dispatch(getTravelAmenities());
         setLoading(false);
     };
 
-    const filteredAmenities = hotelAmenities?.filter((item) =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
+    const filtered = Array.isArray(travelAmenities)
+        ? travelAmenities.filter((item) =>
+            item?.name?.toLowerCase().includes(search.toLowerCase())
+        )
+        : [];
     return (
-        <Box sx={{ width: '100%', maxWidth: 400, mx: 'auto', mt: 5 }}>
+        <Box sx={{ width: '100%', maxWidth: 450, mx: 'auto', mt: 5 }}>
             <Typography variant="h5" align="center" gutterBottom>
-                Hotel Amenities
+                Travel Amenities
             </Typography>
 
-            <form onSubmit={handleAddAmenity}>
+            <form onSubmit={handleAdd}>
                 <Stack direction="row" spacing={1} mb={2}>
                     <TextField
                         fullWidth
                         label="New Amenity"
                         variant="standard"
-                        value={amenityInput}
-                        onChange={(e) => setAmenityInput(e.target.value)}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
                         disabled={loading}
                     />
-                    <Button type="submit" variant="contained" color="primary" disabled={loading}>
+                    <Button type="submit" variant="contained" disabled={loading}>
                         Add
                     </Button>
                 </Stack>
@@ -81,8 +79,8 @@ const Amenity = () => {
                 placeholder="Search amenities..."
                 variant="outlined"
                 size="small"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 disabled={loading}
                 InputProps={{
                     startAdornment: (
@@ -105,11 +103,11 @@ const Amenity = () => {
                 }}
             >
                 {loading ? (
-                    Array.from({ length: 6 }).map((_, index) => (
+                    Array.from({ length: 5 }).map((_, index) => (
                         <Skeleton key={index} variant="rectangular" height={40} sx={{ borderRadius: 1 }} />
                     ))
-                ) : filteredAmenities && filteredAmenities.length > 0 ? (
-                    filteredAmenities.map((item) => (
+                ) : filtered.length > 0 ? (
+                    filtered.map((item) => (
                         <Box
                             key={item._id}
                             sx={{
@@ -121,12 +119,12 @@ const Amenity = () => {
                             }}
                         >
                             <Typography variant="body1" noWrap>
-                                {item.name}
+                                {item}
                             </Typography>
                             <IconButton
                                 size="small"
                                 color="error"
-                                onClick={() => handleDeleteAmenity(item._id)}
+                                onClick={() => handleDelete(item._id)}
                                 disabled={loading}
                             >
                                 <DeleteIcon fontSize="small" />
@@ -143,4 +141,4 @@ const Amenity = () => {
     );
 };
 
-export default Amenity;
+export default TravelAmenities;

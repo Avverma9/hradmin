@@ -13,30 +13,38 @@ import {
     Typography,
     IconButton,
     Stack,
+    Skeleton,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 const Role = () => {
     const dispatch = useDispatch();
-    const [roleInput, setRoleInput] = useState('');
     const role = useSelector((state) => state.additional.role);
 
+    const [roleInput, setRoleInput] = useState('');
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
-        dispatch(getRole());
+        setLoading(true);
+        dispatch(getRole()).finally(() => setLoading(false));
     }, [dispatch]);
 
     const handleAddRole = async (e) => {
         e.preventDefault();
         if (!roleInput.trim()) return;
 
+        setLoading(true);
         await dispatch(addRole(roleInput));
         setRoleInput('');
-        dispatch(getRole());
+        await dispatch(getRole());
+        setLoading(false);
     };
 
     const handleDeleteRole = async (id) => {
+        setLoading(true);
         await dispatch(deleteRole(id));
-        dispatch(getRole());
+        await dispatch(getRole());
+        setLoading(false);
     };
 
     return (
@@ -53,15 +61,26 @@ const Role = () => {
                         variant="standard"
                         value={roleInput}
                         onChange={(e) => setRoleInput(e.target.value)}
+                        disabled={loading}
                     />
-                    <Button type="submit" variant="contained" color="primary">
+                    <Button type="submit" variant="contained" color="primary" disabled={loading}>
                         Add
                     </Button>
                 </Stack>
             </form>
 
             <Stack spacing={1}>
-                {Array.isArray(role) && role.length > 0 ? (
+                {loading ? (
+                    // Show 5 skeleton lines while loading
+                    Array.from(new Array(5)).map((_, index) => (
+                        <Skeleton
+                            key={index}
+                            variant="rectangular"
+                            height={40}
+                            sx={{ borderRadius: 1, mb: 1 }}
+                        />
+                    ))
+                ) : Array.isArray(role) && role.length > 0 ? (
                     role.map((item) => (
                         <Box
                             key={item._id}
@@ -80,6 +99,7 @@ const Role = () => {
                                 size="small"
                                 color="error"
                                 onClick={() => handleDeleteRole(item._id)}
+                                disabled={loading}
                             >
                                 <DeleteIcon fontSize="small" />
                             </IconButton>
