@@ -17,8 +17,10 @@ import {
   DialogActions,
   DialogContent,
 } from "@mui/material";
+import { useRole } from "../../../../utils/additional/role";
 
 const AddUserModal = ({ open, onClose, onSubmit }) => {
+  const role = useRole()
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -132,14 +134,13 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
+                  label="Select Role"
                 >
-                  <MenuItem value="Admin">Admin</MenuItem>
-                  <MenuItem value="PMS">Partner Management System</MenuItem>
-                  <MenuItem value="CMS">Client Management System</MenuItem>
-                  <MenuItem value="TMS">Travel Management System</MenuItem>
-                  <MenuItem value="CA">Company Agent</MenuItem>
-
-                  <MenuItem value="Developer">Developer</MenuItem>
+                  {role.map((item) => (
+                    <MenuItem key={item._id} value={item.role}>
+                      {item.role}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>

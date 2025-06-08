@@ -52,6 +52,7 @@ const TravelAmenities = () => {
             item?.name?.toLowerCase().includes(search.toLowerCase())
         )
         : [];
+
     return (
         <Box sx={{ width: '100%', maxWidth: 450, mx: 'auto', mt: 5 }}>
             <Typography variant="h5" align="center" gutterBottom>
@@ -119,7 +120,7 @@ const TravelAmenities = () => {
                             }}
                         >
                             <Typography variant="body1" noWrap>
-                                {item}
+                                {item.name}
                             </Typography>
                             <IconButton
                                 size="small"

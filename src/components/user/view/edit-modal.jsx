@@ -30,12 +30,14 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { addMenu, deleteMenu, updatePartnerImage } from 'src/components/redux/reducers/partner';
 import { useMenuItems } from '../../../../utils/additional/menuItems';
+import { useRole } from '../../../../utils/additional/role';
 
 const EditUserModal = ({ open, onClose, user, onSubmit }) => {
     const [selectedMenuItems, setSelectedMenuItems] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [openSelect, setOpenSelect] = useState(false);
     const paths = useMenuItems()
+    const role = useRole()
     const dispatch = useDispatch();
     const partnerImage = useSelector((state) => state.partner.partnerImage);
     const [formData, setFormData] = useState({
@@ -225,12 +227,18 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                         <Grid item xs={12} sm={6}>
                             <FormControl fullWidth variant="outlined">
                                 <InputLabel>Select Role</InputLabel>
-                                <Select name="role" value={formData.role} onChange={handleChange} sx={{ borderRadius: '8px' }}>
-                                    <MenuItem value="Admin">Admin</MenuItem>
-                                    <MenuItem value="PMS">Partner Management System</MenuItem>
-                                    <MenuItem value="CMS">Client Management System</MenuItem>
-                                    <MenuItem value="TMS">Travel Management System</MenuItem>
-                                    <MenuItem value="Developer">Developer</MenuItem>
+                                <Select
+                                    name="role"
+                                    value={formData.role}
+                                    onChange={handleChange}
+                                    sx={{ borderRadius: '8px' }}
+                                    label="Select Role"
+                                >
+                                    {role.map((item) => (
+                                        <MenuItem key={item._id} value={item.role}>
+                                            {item.role}
+                                        </MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
                         </Grid>
