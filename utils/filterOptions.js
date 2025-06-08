@@ -1,7 +1,7 @@
 import { useDispatch } from "react-redux";
 import { role } from "./util";
 import { useEffect } from "react";
-import { getTravelAmenities } from "src/components/redux/reducers/additional";
+import { getTravelAmenities } from "src/components/redux/reducers/additional-fields/additional";
 
 // Custom Hook to fetch and export travelAmenities
 export const TravelAmenties = () => {

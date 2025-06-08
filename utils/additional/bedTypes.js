@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getBedTypes } from "src/components/redux/reducers/additional";
+import { getBedTypes } from "src/components/redux/reducers/additional-fields/additional";
 
 export const useBedTypes = () => {
   const dispatch = useDispatch();

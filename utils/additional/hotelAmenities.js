@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getAmenities } from "src/components/redux/reducers/additional";
+import { getAmenities } from "src/components/redux/reducers/additional-fields/additional";
 
 export const useHotelAmenities = () => {
   const dispatch = useDispatch();

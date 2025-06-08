@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import { localUrl, token } from "../../../../utils/util";
+import { localUrl, notify, token } from "../../../../../utils/util";
 import { toast } from "react-toastify";
 
 export const getTravelAmenities = createAsyncThunk(
@@ -107,14 +107,124 @@ export const getAmenities = createAsyncThunk(
     }
   }
 );
+export const addAmenity = createAsyncThunk(
+  "additional/addAmenity",
+  async (name, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${localUrl}/additional/get-amenities`, {
+        name: name
+      },
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status)
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+export const deleteAmenity = createAsyncThunk(
+  "additional/deleteAmenity",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axios.delete(
+        `${localUrl}/additional/delete-amenity/${id}`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status)
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+export const getRole = createAsyncThunk(
+  "additional/getRole",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${localUrl}/additional/roles`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
 
+export const addRole = createAsyncThunk(
+  "additional/getRole",
+  async (roleInput, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${localUrl}/additional/roles`,
+        {
+          role: roleInput
+        },
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const deleteRole = createAsyncThunk(
+  "additional/deleteRole",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axios.delete(
+        `${localUrl}/additional/roles/${id}`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      notify(response.status)
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
 
 const initialState = {
   travelAmenities: [],
   menuItems: [],
-  bedTypes:[],
-  roomTypes:[],
-  hotelAmenities:[]
+  bedTypes: [],
+  roomTypes: [],
+  role: [],
+  hotelAmenities: []
 };
 
 const additionalSlice = createSlice({
@@ -129,14 +239,17 @@ const additionalSlice = createSlice({
       .addCase(getMenuItems.fulfilled, (state, action) => {
         state.menuItems = action.payload;
       })
-       .addCase(getBedTypes.fulfilled, (state, action) => {
+      .addCase(getBedTypes.fulfilled, (state, action) => {
         state.bedTypes = action.payload;
       })
       .addCase(getRoomTypes.fulfilled, (state, action) => {
         state.roomTypes = action.payload;
       })
-       .addCase(getAmenities.fulfilled, (state, action) => {
+      .addCase(getAmenities.fulfilled, (state, action) => {
         state.hotelAmenities = action.payload;
+      })
+      .addCase(getRole.fulfilled, (state, action) => {
+        state.role = action.payload;
       })
   },
 });

@@ -9,7 +9,7 @@ import carReducer from './reducers/travel/car';
 import carOwnerReducer from './reducers/travel/carOwner';
 import tourReducer from './reducers/tour/tour';
 import bulkReducer from './reducers/bulk';
-import additionalReducer from './reducers/additional';
+import additionalReducer from './reducers/additional-fields/additional';
 import travelBookingReducer from './reducers/travel/booking';
 import userCouponReducer from './reducers/userAndPartnerCoupon/coupon'
 import gstReducer from './reducers/gst';

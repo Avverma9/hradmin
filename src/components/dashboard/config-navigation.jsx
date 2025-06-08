@@ -149,6 +149,8 @@ const getNavConfig = async () => {
                 { title: "Partner Coupon", path: '/partner-coupon', icon: icons.coupon },
                 { title: "User Coupon", path: '/user-coupon', icon: icons.coupon },
                 { title: "GST", path: "/gst-page", icon: icons.settings },
+                { title: "Additional Fields", path: "/additional-fields", icon: icons.settings },
+
 
             ],
         },

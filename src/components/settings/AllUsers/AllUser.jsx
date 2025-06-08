@@ -24,10 +24,12 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUsers, userDetails } from 'src/components/redux/reducers/user';
 import UserDetailsModal from './user-details';
+import { useLoader } from '../../../../utils/loader';
 
 const AllUser = () => {
   const { userData } = useSelector((state) => state.user);
   const [open, setOpen] = useState(false);
+  const { showLoader, hideLoader } = useLoader()
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
@@ -35,8 +37,19 @@ const AllUser = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(userDetails());
+    const fetchUserDetails = async () => {
+      showLoader()
+      try {
+        await dispatch(userDetails());
+      } catch (error) {
+        console.error("Failed to fetch user details:", error);
+      } finally {
+        hideLoader();
+      }
+    };
+    fetchUserDetails();
   }, [dispatch]);
+
 
   const handleOpen = (user) => {
     setSelectedUser(user);
@@ -105,7 +118,7 @@ const AllUser = () => {
                     <Avatar alt={user.userName} src={user.profile[0]} sx={{ width: 40, height: 40 }} />
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2">{user.userName}</Typography>
+                    <Typography variant="body2">{user.name}</Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">{user.email}</Typography>

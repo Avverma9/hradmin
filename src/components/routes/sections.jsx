@@ -45,6 +45,8 @@ const UserCouponPage = lazy(() => import('src/components/pages/admin/user-coupon
 const PMSMonthlyPricePage = lazy(() => import('src/components/pages/superAdmin/monthly-price-pms'));
 const GSTpage = lazy(() => import('src/components/pages/admin/gst-page'));
 const PanelBookingPage = lazy(() => import('src/components/pages/panel-booking'));
+const AdditionalInputs = lazy(() => import('src/components/pages/admin/additional-page'));
+
 
 // Recursively extract paths
 const extractPathsFromNavItems = (items = []) => {
@@ -126,6 +128,8 @@ export default function Router() {
         { path: "/admin-travel/bookings", element: <TravelBookingsAdmin /> },
         { path: "/partner-coupon", element: <PartnerCouponPage /> },
         { path: "/user-coupon", element: <UserCouponPage /> },
+        { path: "/additional-fields", element: <AdditionalInputs /> },
+
     ];
 
     // Filter the routes to include only the ones that are in allowedPaths
@@ -146,6 +150,8 @@ export default function Router() {
             ),
             children: filteredRoutes,
         },
+        { path: "/additional-fields", element: <AdditionalInputs /> },
+
         { path: '/', element: <LoginPage /> }, // Home route stays as it is
         { path: '/404', element: <Page404 /> },  // 404 route
         { path: '*', element: <Navigate to="/404" replace /> }, // Any unmatched path
