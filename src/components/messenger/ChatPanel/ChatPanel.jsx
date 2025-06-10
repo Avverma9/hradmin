@@ -4,16 +4,17 @@ import styles from "./ChatPanel.module.css";
 import { useDispatch, useSelector } from "react-redux";
 import { getPartnerById } from "src/components/redux/reducers/partner";
 import { addMessage, getMessages } from "src/components/redux/reducers/messenger/messenger";
-import { userId } from "../../../../utils/util"; // assume this returns current user's MongoDB ID
-import socket from "../../../../utils/socket";
+import { localUrl, userId } from "../../../../utils/util"; // assume this returns current user's MongoDB ID
 
 const ChatPanel = () => {
     const [menuIndex, setMenuIndex] = useState(null);
     const dispatch = useDispatch();
+    const socket = useRef(null);
     const partner = useSelector((state) => state.partner.data);
     const receiverId = useSelector((state) => state.messenger.activeReceiverId);
     const messages = useSelector((state) => state.messenger.messages);
     const bottomRef = useRef(null);
+
     const handleCopy = (text) => {
         navigator.clipboard.writeText(text);
         alert("Message copied!");
@@ -51,6 +52,8 @@ const ChatPanel = () => {
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
     useEffect(() => {
+    socket.current = window.io(`${localUrl}`);
+
         const handleNewMessage = (newMessage) => {
             console.log("Socket received:", newMessage);
 
@@ -63,10 +66,10 @@ const ChatPanel = () => {
             }
         };
 
-        socket.on("newMessage", handleNewMessage);
+        socket.current.on("newMessage", handleNewMessage);
 
         return () => {
-            socket.off("newMessage", handleNewMessage);
+            socket.current.off("newMessage", handleNewMessage);
         };
     }, [dispatch, receiverId]);
     return (

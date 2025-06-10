@@ -1,23 +1,23 @@
-/* Messenger.module.css */
-
+/* ========================
+   BASE STYLES
+   ======================== */
 .messengerContainer {
   display: flex;
-  height: 85vh;
   font-family: "Segoe UI", sans-serif;
   background-color: #f5f6fa;
-
+  height: 85vh;
 }
-
 
 .messengerWrapper {
   position: fixed;
-  top:80px; /* Leaves space for top header */
-  left:300px; /* Leaves space for sidebar */
+  top: 100px;           /* Leave space for header */
+  left: 300px;          /* Leave space for sidebar */
   right: 0;
   bottom: 0;
   display: flex;
   background-color: #f4f4f4;
   overflow: hidden;
+  z-index: 1;
 }
 
 .chatArea {
@@ -29,34 +29,35 @@
   overflow: hidden;
 }
 
-
+/* ========================
+   RESPONSIVE (TABLET / MOBILE)
+   ======================== */
 @media (max-width: 768px) {
   .messengerContainer {
     flex-direction: column;
+    height: auto; /* Let height adjust naturally */
   }
 
-  .chatArea {
+  .messengerWrapper {
+    position: relative;
+    top: unset;
+    left: unset;
+    right: unset;
+    bottom: unset;
     width: 100%;
-  }
-   .messengerWrapper {
-    /* Reset or override styles for mobile */
-    position: static; /* Or 'initial' if you want it to flow normally */
-    top: auto;
-    left: auto;
-    right: auto;
-    bottom: auto;
-    display: block; /* Or 'initial' */
-    /* You might want to remove background-color or adjust it for mobile */
-    background-color: initial;
-    overflow: initial;
+    height: 100vh;
+    margin-top: 0;
+    z-index: auto;
+    flex-direction: column;
+    overflow: auto;
+    background-color: transparent;
   }
 
   .chatArea {
-    /* Reset or override styles for mobile */
-    flex: initial;
-    flex-direction: initial; /* Or 'column' if it makes sense for mobile layout */
-    background-color: initial;
-    height: auto; /* Allow height to adjust naturally */
-    overflow: initial;
+    height: auto;
+    flex: 1;
+    overflow: auto;
+    background-color: transparent;
+    flex-direction: column;
   }
 }
