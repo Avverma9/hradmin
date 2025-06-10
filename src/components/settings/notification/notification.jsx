@@ -178,7 +178,6 @@ const Notification = () => {
       </Table>
     </TableContainer>
   );
-  console.log("here is userIds ", userIds);
 
   return (
     <Container maxWidth="lg">

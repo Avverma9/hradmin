@@ -28,12 +28,19 @@ export default function UserTableRow({
   handleEdit,
   handleView,
   handleStatusChange,
+  handleContact
 }) {
   const [open, setOpen] = useState(null);
+  const [showEditContact, setShowEditContact] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
 
   const handleOpenMenu = (event) => {
     setOpen(event.currentTarget);
+  };
+  const handleMessengerSetupClick = () => {
+    handleContact(); // Call the passed prop
+    handleCloseMenu();
   };
 
   const handleCloseMenu = () => {
@@ -132,6 +139,11 @@ export default function UserTableRow({
           <Iconify icon="eva:edit-fill" sx={{ mr: 2 }} />
           Access & Update
         </MenuItem>
+        <MenuItem onClick={handleMessengerSetupClick}>
+          <Iconify icon="eva:edit-fill" sx={{ mr: 2 }} />
+          Messenger setup
+        </MenuItem>
+
         <MenuItem onClick={handleViewClick}>
           <Iconify icon="eva:eye-fill" sx={{ mr: 2 }} />
           View
@@ -163,4 +175,5 @@ UserTableRow.propTypes = {
   handleEdit: PropTypes.func.isRequired,
   handleView: PropTypes.func.isRequired,
   handleStatusChange: PropTypes.func.isRequired,
+  handleContact: PropTypes.func.isRequired, // ✅ Add this
 };

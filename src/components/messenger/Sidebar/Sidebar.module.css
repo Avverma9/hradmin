@@ -233,3 +233,23 @@
     font-size: 13px;
   }
 }
+.sidebar,
+.profileSection,
+.profileName,
+.status,
+.notificationContainer,
+.bellIcon,
+.notificationDropdown,
+.tabButtons,
+.tabButton,
+.chatList,
+.chatItem,
+.contactLabel,
+.contactGroup,
+.contactLetter,
+.contactItem,
+.contactInfo,
+.contactName,
+.contactMobile {
+  user-select: none;
+}

@@ -55,7 +55,6 @@ const WhoSeen = ({ open, onClose, userIds }) => {
 
     fetchSeenBy();
   }, [userIds]); // Ensure that userIds is correctly updated
-  console.log('here is seen by ', seenBy.name);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">

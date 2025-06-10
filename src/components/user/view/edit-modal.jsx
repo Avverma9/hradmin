@@ -71,7 +71,6 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
             setSelectedMenuItems(user.menuItems || []);
         }
     }, [user]);
-    console.log("user data", user._id)
     const handleChange = (e) => {
         const { name, value } = e.target;
         const newValue = name === 'status' ? value === 'true' : value;
@@ -154,8 +153,6 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
             item.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    console.log("fileterf ,", filteredMenuItems)
-    console.log("selecrted menu", selectedMenuItems)
     const handleImageChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];

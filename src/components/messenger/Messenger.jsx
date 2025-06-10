@@ -34,10 +34,8 @@ const Messenger = () => {
         socket.current.on("newMessage", handleNewMessage);
         socket.current.on("messageDeleted", handleMessageDeleted);
         socket.current.on("userStatusUpdate", (statusUpdate) => {
-            console.log("User status update:", statusUpdate);
         });
         socket.current.on("messageSeen", (seenInfo) => {
-            console.log("Message seen info:", seenInfo);
         });
 
         return () => {
@@ -95,7 +93,6 @@ const Messenger = () => {
 
     const handleMessageDeleted = (deletedId) => {
         // Optional future enhancement
-        console.log("Deleted message ID:", deletedId);
     };
 
     return (

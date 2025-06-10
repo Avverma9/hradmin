@@ -6,6 +6,8 @@
   font-family: "Segoe UI", sans-serif;
   background-color: #f5f6fa;
   height: 85vh;
+  cursor: pointer;
+
 }
 
 .messengerWrapper {
@@ -18,6 +20,8 @@
   background-color: #f4f4f4;
   overflow: hidden;
   z-index: 1;
+  cursor: pointer;
+
 }
 
 .chatArea {
@@ -26,6 +30,8 @@
   flex-direction: column;
   background-color: white;
   height: 100%;
+  cursor: pointer;
+
   overflow: hidden;
 }
 

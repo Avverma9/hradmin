@@ -52,7 +52,6 @@ export default function MyTravelBookingTMS() {
 
     loadBookings();
   }, [dispatch]);
-  console.log("here is bookings", bookingsTMS)
   return (
     <Box
       sx={{

@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   background: #fdfdfd;
-  height: 40vh; /* Full viewport height */
+  height: 40vh; /* Adjust as needed */
 }
 
 .chatHeader {
@@ -44,6 +44,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  cursor: default; /* Prevent pointer in message area */
 }
 
 .message {
@@ -52,6 +53,7 @@
   display: flex;
   flex-direction: column;
   border-radius: 12px;
+  cursor: default;
 }
 
 .messageLeft {
@@ -71,17 +73,17 @@
   font-weight: bold;
   color: #555;
   margin-bottom: 4px;
+  cursor: default;
 }
 
 .bubble {
   background-color: #f1f1f1;
-  padding: 10px 12px;
-  border-radius: 12px;
   max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 4px;
   position: relative;
+  cursor: default;
 }
 
 .messageRight .bubble {
@@ -100,6 +102,7 @@
   font-size: 14px;
   line-height: 1.4;
   word-break: break-word;
+  cursor: default;
 }
 
 .menuWrapper {
@@ -141,12 +144,130 @@
   color: #999;
   margin-top: 3px;
   align-self: flex-end;
+  cursor: default;
 }
+
+.chatItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+}
+
 .chatItem:last-child {
-    border-bottom: none; /* Optional: avoid line after the last chat */
+  border-bottom: none;
 }
 
 .active {
-    background-color: #f0f0f0;
+  background-color: #f0f0f0;
 }
 
+.tabButton {
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.contactItem {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  gap: 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.contactInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.contactName {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.contactMobile {
+  font-size: 12px;
+  color: #666;
+  cursor: default;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+.chatMessages,
+.message,
+.bubble,
+.messageText,
+.timestamp,
+.sender,
+.menuWrapper,
+.chatItem,
+.contactItem {
+  user-select: none;
+}
+
+
+
+.iconBtn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #444;
+  padding: 4px;
+  margin-right: 8px;
+}
+
+.iconBtn:hover {
+  color: #000;
+}
+
+.searchInput {
+  width: 100%;
+  max-width: 300px;
+  margin: 10px auto;
+  display: block;
+  padding: 8px 12px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  outline: none;
+  opacity: 0;
+  transform: translateY(-10px);
+  animation: fadeInSearch 0.3s forwards;
+}
+
+/* For fade-out animation */
+.searchInput.hide {
+  animation: fadeOutSearch 0.3s forwards;
+}
+
+@keyframes fadeInSearch {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOutSearch {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}

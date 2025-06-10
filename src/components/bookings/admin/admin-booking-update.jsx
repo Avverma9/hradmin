@@ -108,7 +108,6 @@ const AdminBookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
 
   const isDisabled =
     bookingData?.status === "Cancelled" || bookingData?.status === "Checked-out";
-  console.log("checinDate", bookingData);
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={modalStyle}>

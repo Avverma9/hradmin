@@ -153,7 +153,6 @@ export const updatePartnerImage = createAsyncThunk(
 export const addMenu = createAsyncThunk(
   'partner/addMenu',
   async ({ userId, matchedMenuItems }, { rejectWithValue }) => {
-    console.log("matced menu items", matchedMenuItems)
     try {
       const response = await axios.post(
         `${localUrl}/api/users/${userId}/menu-items`,
@@ -177,7 +176,6 @@ export const addMenu = createAsyncThunk(
 export const deleteMenu = createAsyncThunk(
   'partner/deleteMenu',
   async (payload, { rejectWithValue }) => {
-    console.log("here is payload",payload)
     try {
       const response = await axios.patch(
         `${localUrl}/api/users/${payload.id}/menu-items`,

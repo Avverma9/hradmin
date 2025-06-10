@@ -72,7 +72,6 @@ const MyCar = () => {
       [car._id]: newStatus,
     }));
 
-    console.log("here is ", car?._id, newStatus);
 
     // Dispatch action to update the status in the Redux store
     dispatch(updateCar({ id: car._id, data: { runningStatus: newStatus } }))

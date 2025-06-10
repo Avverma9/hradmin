@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Stack,
@@ -34,6 +34,7 @@ import {
 } from 'src/components/redux/reducers/partner';
 import { useLoader } from '../../../../utils/loader';
 import { useDragScroll } from '../../../../utils/dragScroll';
+import EditContact from './edit-contact-messenger';
 
 export default function UserPage() {
   const [page, setPage] = useState(0);
@@ -46,15 +47,16 @@ export default function UserPage() {
   const { showLoader, hideLoader } = useLoader();
   const [error, setError] = useState(null);
   const [editUser, setEditUser] = useState(null);
+  const [editContact, setEditContact] = useState(null);
   const [viewUser, setViewUser] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editContactModal, setEditContactModal] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [refresh, setRefresh] = useState(false);
   const data = useSelector((state) => state.partner.allData);
   const dispatch = useDispatch();
-
-  const tableRef = useDragScroll(); // Ref for drag-scroll
+  const tableRef = useDragScroll();
 
   useEffect(() => {
     showLoader();
@@ -68,40 +70,50 @@ export default function UserPage() {
         hideLoader();
       }
     };
-
     fetchUsers();
   }, [dispatch, refresh]);
 
   useEffect(() => {
-    if (data) {
-      setUsers(data);
-    }
+    if (data) setUsers(data);
   }, [data]);
-
-
 
   const handleEdit = (user) => {
     setEditUser(user);
     setEditModalOpen(true);
   };
+
+  const handleContact = (user) => {
+    setEditContact(user);
+    setEditContactModal(true);
+  };
+
+  const handleContactClose = () => {
+    setEditContact(null);
+    setEditContactModal(false);
+  };
+
   const handleView = (user) => {
     setViewUser(user);
     setViewModalOpen(true);
-  };
-  const handleAddModal = () => {
-    setAddModalOpen(true);
-  };
-  const handleCloseAddModal = () => {
-    setAddModalOpen(false);
-  };
-  const handleCloseEditModal = () => {
-    setEditUser(null);
-    setEditModalOpen(false);
   };
   const handleCloseViewModal = () => {
     setViewUser(null);
     setViewModalOpen(false);
   };
+  const handleAddModal = () => {
+    setAddModalOpen(true);
+  };
+
+  const handleCloseAddModal = () => {
+    setAddModalOpen(false);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditUser(null);
+    setEditModalOpen(false);
+  };
+
+
 
   const handleSubmitEdit = async (updatedUser) => {
     try {
@@ -115,12 +127,10 @@ export default function UserPage() {
       formData.append('password', updatedUser.password);
       formData.append('role', updatedUser.role);
       formData.append('status', updatedUser.status ? 'true' : 'false');
-      if (updatedUser.images) {
-        formData.append('images', updatedUser.images);
-      }
+      if (updatedUser.images) formData.append('images', updatedUser.images);
       await dispatch(updatedPartner({ userId: updatedUser._id, formData }));
       setRefresh((prev) => !prev);
-    } catch (error) {
+    } catch {
       toast.error('Something went wrong!');
     } finally {
       hideLoader();
@@ -132,8 +142,8 @@ export default function UserPage() {
     try {
       await dispatch(addPartner(newUser));
       setRefresh((prev) => !prev);
-    } catch (error) {
-      toast.error('Something went wrong!', error);
+    } catch {
+      toast.error('Something went wrong!');
     } finally {
       hideLoader();
     }
@@ -143,8 +153,8 @@ export default function UserPage() {
     try {
       await dispatch(deletePartner(id));
       setRefresh((prev) => !prev);
-    } catch (error) {
-      toast.warning('Something went wrong!', error);
+    } catch {
+      toast.warning('Something went wrong!');
     }
   };
 
@@ -166,18 +176,8 @@ export default function UserPage() {
   const handleClick = (event, name) => {
     const selectedIndex = selected.indexOf(name);
     let newSelected = [];
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      );
-    }
+    if (selectedIndex === -1) newSelected = [...selected, name];
+    else newSelected = selected.filter((item) => item !== name);
     setSelected(newSelected);
   };
 
@@ -215,8 +215,8 @@ export default function UserPage() {
         user._id === userId ? { ...user, status: newStatus } : user
       );
       setUsers(updatedUsers);
-    } catch (error) {
-      toast.error('Something went wrong!', error);
+    } catch {
+      toast.error('Something went wrong!');
     }
   };
 
@@ -246,8 +246,8 @@ export default function UserPage() {
           ref={tableRef}
           sx={{
             overflowX: 'auto',
-            overflowY: 'auto',          // vertical scrolling enable karenge
-            maxHeight: 600,             // fixed max height for container
+            overflowY: 'auto',
+            maxHeight: 600,
             WebkitOverflowScrolling: 'touch',
             touchAction: 'pan-x',
             cursor: 'grab',
@@ -255,7 +255,7 @@ export default function UserPage() {
             minWidth: 900,
           }}
         >
-          <Table sx={{ minWidth: 'auto' }} >
+          <Table>
             <UserTableHead
               order={order}
               orderBy={orderBy}
@@ -293,7 +293,8 @@ export default function UserPage() {
                     handleClick={(event) => handleClick(event, row.name)}
                     handleDelete={() => handleDelete(row._id)}
                     handleEdit={() => handleEdit(row)}
-                    handleSubmitEdit={() => handleSubmitEdit(row._id)}
+                    handleContact={() => handleContact(row)}
+                    handleSubmitEdit={() => handleSubmitEdit(row)}
                     handleView={() => handleView(row)}
                     handleStatusChange={() => handleStatusChange(row._id, row.status)}
                   />
@@ -315,6 +316,12 @@ export default function UserPage() {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Card>
+
+      <EditContact
+        open={editContactModal}
+        user={editContact || {}}
+        onClose={handleContactClose}
+      />
 
       <AddUserModal open={addModalOpen} onClose={handleCloseAddModal} onSubmit={handleAdd} />
       <EditUserModal open={editModalOpen} onClose={handleCloseEditModal} user={editUser || {}} onSubmit={handleSubmitEdit} />

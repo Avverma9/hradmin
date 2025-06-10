@@ -97,7 +97,6 @@ const TourForm = () => {
 
     const handleAmenitiesChange = (selectedOptions) => {
         // Log the selected options for debugging
-        console.log('Selected Options:', selectedOptions);
 
         // Update the state with selected amenities
         setFormData({

@@ -78,7 +78,6 @@ const Sidebar = ({ activeTab, setActiveTab, searchQuery, setSearchQuery }) => {
                                 key={chat.receiver}
                                 className={`${styles.chatItem} ${activeReceiverId === chat.receiver ? styles.active : ""}`}
                                 onClick={() => {
-                                    console.log("Clicked receiver id:", chat.receiverId);
                                     dispatch(setActiveReceiverId(chat.receiverId));
                                 }}
                                 style={{ cursor: "pointer" }}
@@ -108,7 +107,9 @@ const Sidebar = ({ activeTab, setActiveTab, searchQuery, setSearchQuery }) => {
                 <div className={styles.contactList}>
                     <div className={styles.contactLabel}>Contacts</div>
                     {contacts.map((contact) => (
-                        <div key={contact._id} className={styles.contactGroup}>
+                        <div key={contact._id} className={styles.contactGroup}     onClick={() => {
+                                    dispatch(setActiveReceiverId(contact.userId));
+                                }}>
                             <div className={styles.contactItem}>
                                 <img
                                     src="https://randomuser.me/api/portraits/men/10.jpg"
