@@ -1,312 +1,126 @@
-import axios from 'axios';
-import { toast } from 'react-toastify';
-import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { role, localUrl, showSnackbar } from '../../../utils/util';
-import { fDateTime } from '../../../utils/format-time';
-import AlertDialog from '../../../utils/alertDialogue';
-import './ChatApp.css';
-import { LinearProgress } from '@mui/material';
-import { useLoader } from '../../../utils/loader';
-import Sidebar from './Sidebar';
-import ChatWindow from './ChatWindow';
+import React, { useState, useEffect, useRef } from "react";
+import styles from "./Messenger.module.css";
+import Sidebar from "./Sidebar/Sidebar";
+import ChatPanel from "./ChatPanel/ChatPanel";
+import ChatInput from "./ChatInput/ChatInput";
+import { userId } from "../../../utils/util";
+import { useDispatch, useSelector } from "react-redux";
+import { sendMessages } from "../redux/reducers/messenger/messenger";
+import { toast } from "react-toastify";
 
-const ChatApp = () => {
-    const [contacts, setContacts] = useState([]);
-    const [selectedContact, setSelectedContact] = useState(null);
-    const [messages, setMessages] = useState([]);
-    const [filteredContacts, setFilteredContacts] = useState([]);
-    const { showLoader, hideLoader } = useLoader();
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [chatToDelete, setChatToDelete] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const socket = useRef(null);
-    const messagesEndRef = useRef(null);
-    const [filePreviews, setFilePreviews] = useState([]);
-    const senderId = localStorage.getItem('user_id');
+const Messenger = () => {
+    const [activeTab, setActiveTab] = useState("Contacts");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [message, setMessage] = useState("");
     const [selectedFiles, setSelectedFiles] = useState([]);
+    const [filePreviews, setFilePreviews] = useState([]);
 
-    const handleFileChange = (event) => {
-        const files = Array.from(event.target.files);
-        setSelectedFiles(files);
+    const dispatch = useDispatch();
+    const receiverId = useSelector((state) => state.messenger.activeReceiverId);
+    const reduxMessages = useSelector((state) => state.messenger.messages);
+    const senderId = userId;
 
-        // Create object URLs for preview
-        const previews = files.map((file) => URL.createObjectURL(file));
-        setFilePreviews(previews);
-    };
+    const socket = useRef(null);
 
-    const handleRemoveFile = (index) => {
-        setSelectedFiles((prevFiles) => prevFiles?.filter((_, i) => i !== index));
-        setFilePreviews((prevPreviews) => prevPreviews?.filter((_, i) => i !== index));
-    };
-
-    // WebSocket setup
+    // Connect socket and handle listeners
     useEffect(() => {
-        // socket.current = window.io('http://localhost:5000');
-        socket.current = window.io('https://hotel-backend-tge7.onrender.com');
+        socket.current = window.io("https://hotel-backend-tge7.onrender.com");
 
         if (senderId) {
-            socket.current.emit('registerUser', senderId);
-            socket.current.emit('userStatus', { senderId, isOnline: true });
+            socket.current.emit("registerUser", senderId);
+            socket.current.emit("userStatus", { senderId, isOnline: true });
         }
 
-        socket.current.on('newMessage', handleNewMessage);
-        socket.current.on('messageDeleted', handleMessageDeleted);
-
-        socket.current.on('userStatusUpdate', handleUserStatusUpdate);
-        socket.current.on('messageSeen', handleMessageSeen);
+        socket.current.on("newMessage", handleNewMessage);
+        socket.current.on("messageDeleted", handleMessageDeleted);
+        socket.current.on("userStatusUpdate", (statusUpdate) => {
+            console.log("User status update:", statusUpdate);
+        });
+        socket.current.on("messageSeen", (seenInfo) => {
+            console.log("Message seen info:", seenInfo);
+        });
 
         return () => {
             if (senderId) {
-                socket.current.emit('userStatus', { senderId, isOnline: false });
+                socket.current.emit("userStatus", { senderId, isOnline: false });
             }
             socket.current.disconnect();
         };
     }, [senderId]);
 
-    const scrollToBottom = () => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
-
-    useEffect(() => {
-        const fetchContacts = async () => {
-            try {
-                const response = await axios.get(`${localUrl}/get-chat/contacts`);
-                const filtered = filterContactsByRole(response.data);
-                setContacts(filtered);
-                setFilteredContacts(filtered);
-            } catch (error) {
-                console.error('Error fetching contacts:', error);
-                toast.error('Failed to fetch contacts.');
-            }
-        };
-
-        fetchContacts();
-    }, []);
-
-    useEffect(() => {
-        setFilteredContacts(contacts?.filter((contact) => contact?.name.toLowerCase().includes(searchTerm.toLowerCase())));
-    }, [searchTerm, contacts]);
-
-    useEffect(() => {
-        if (selectedContact) {
-            fetchMessages(selectedContact._id);
-            localStorage.setItem('chat_receiver', selectedContact._id);
-        }
-    }, [selectedContact]);
-
-    const fetchMessages = async (receiverId) => {
-        try {
-            showLoader();
-            const userId1 = localStorage.getItem('user_id');
-            const response = await axios.get(`${localUrl}/get-messages/of-chat/${userId1}/${receiverId}`);
-            setMessages(response.data);
-        } catch (error) {
-            console.error('Error fetching messages:', error);
-            toast.error('Failed to fetch messages.');
-        } finally {
-            hideLoader();
-        }
-    };
-
-    const handleNewMessage = async (newMessage) => {
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
-    };
-    const handleMessageDeleted = (data) => {
-        const { messageId } = data;
-
-        setMessages((prevMessages) => prevMessages.filter((msg) => msg._id !== messageId));
-    };
-
-    const handleUserStatusUpdate = ({ senderId, isOnline }) => {
-        setContacts((prevContacts) => prevContacts.map((contact) => (contact._id === senderId ? { ...contact, isOnline } : contact)));
-    };
-
-    const handleMessageSeen = ({ messageId }) => {
-        setMessages((prevMessages) => prevMessages.map((msg) => (msg._id === messageId ? { ...msg, seen: true } : msg)));
-    };
-
-    const filterContactsByRole = (contacts) => {
-        const localStorageRole = localStorage.getItem('user_role');
-        return contacts?.filter((contact) => {
-            if (localStorageRole === 'PMS') {
-                return contact.role !== 'PMS' && contact.role !== 'Developer';
-            }
-            return true; // Default: no filtering
-        });
-    };
-
-    const handleDeleteButtonClick = (receiverId) => {
-        setChatToDelete({ receiverId });
-        setDialogOpen(true);
-    };
-
-    const handleDeleteChat = async () => {
-        const selectedReceiverId = localStorage.getItem('chat_receiver');
-
-        const userId = localStorage.getItem('user_id');
-
-        if (!userId) {
-            toast.error('User not found. Unable to delete chat.');
-            return;
-        }
-
-        try {
-            const response = await axios.delete(`${localUrl}/delete/added/chats/from/messenger-app/${userId}/${selectedReceiverId}`);
-            if (response.status === 200) {
-                toast.success('Chat deleted successfully');
-                if (selectedContact?._id === selectedReceiverId) {
-                    setSelectedContact(null);
-                    setMessages([]);
-                }
-            } else {
-                toast.error('Failed to delete chat. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error deleting chat:', error);
-            toast.error('An error occurred while deleting the chat. Please try again.');
-        } finally {
-            setDialogOpen(false);
-            setChatToDelete(null);
-        }
-    };
-
-    const deleteAmessage = async (messageId) => {
-        const selectedReceiverId = localStorage.getItem('chat_receiver');
-
-        const userId = localStorage.getItem('user_id');
-
-        if (!userId) {
-            toast.error('User not found. Unable to delete chat.');
-            return;
-        }
-
-        try {
-            const response = await axios.delete(
-                `${localUrl}/delete/a/chat-and-message/from/messenger-app/${messageId}/${userId}/${selectedReceiverId}`
-            );
-            if (response.status === 200) {
-                showSnackbar('Unsent', 'success');
-                socket.current.emit('messageDeleted', { messageId, receiverId: selectedReceiverId });
-                await fetchMessages(selectedContact._id); // Update the message list for the sender
-            } else {
-                toast.error('Failed to delete chat. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error deleting chat:', error);
-            toast.error('An error occurred while deleting the chat. Please try again.');
-        } finally {
-            setDialogOpen(false);
-            setChatToDelete(null);
-        }
-    };
-
-    const handleDialogClose = () => {
-        setDialogOpen(false);
-        setChatToDelete(null);
-    };
-
-    const handleSelectContact = useCallback((contact) => {
-        setSelectedContact(contact);
-    }, []);
-
+    // Emit from frontend after sending message
     const handleSendMessage = async (event) => {
         event.preventDefault();
-        const input = event.target.message.value.trim();
 
-        // Check if there is content or selected files
-        if ((input || selectedFiles?.length > 0) && selectedContact) {
-            const formData = new FormData();
-            formData.append('senderId', senderId);
-            formData.append('receiverId', selectedContact._id);
-            formData.append('content', input);
-            formData.append('timestamp', new Date().toISOString());
-            formData.append('seen', false);
+        if (!receiverId) return toast.error("No contact selected.");
+        if (!message.trim() && selectedFiles.length === 0)
+            return toast.error("Please enter a message or select a file.");
 
-            // Append each selected file to the FormData
-            selectedFiles.forEach((file) => {
-                formData.append('images', file); // 'images' is the key used on the server side
+        const formData = new FormData();
+        formData.append("senderId", senderId);
+        formData.append("receiverId", receiverId);
+        formData.append("content", message.trim());
+        formData.append("timestamp", new Date().toISOString());
+        formData.append("seen", false);
+        selectedFiles.forEach((file) => formData.append("images", file));
+
+        try {
+            await dispatch(sendMessages(formData));
+
+            socket.current.emit("newMessage", {
+                content: message.trim(),
+                images: selectedFiles.map((file) => URL.createObjectURL(file)),
+                senderId,
+                receiverId,
+                timestamp: new Date().toISOString()
             });
 
-            try {
-                showLoader();
-                await axios.post(`${localUrl}/send-a-message/messenger`, formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data', // Important for file uploads
-                    },
-                });
-
-                await fetchMessages(selectedContact._id);
-                socket.current.emit('newMessage', {
-                    content: input,
-                    images: selectedFiles.map((file) => URL.createObjectURL(file)),
-                });
-            } catch (error) {
-                console.error('Error sending message:', error);
-            } finally {
-                event.target.reset();
-                setSelectedFiles([]); // Reset selected files after sending
-                setFilePreviews([]); // Clear file previews
-                hideLoader();
-            }
-        } else {
-            toast.error('Please enter a message or select a file to send.');
+            setMessage("");
+            setSelectedFiles([]);
+            setFilePreviews([]);
+        } catch (error) {
+            console.error("Error sending message:", error);
+            toast.error("Failed to send message.");
         }
     };
 
-    const getTickIndicators = (seen) => (seen ? '✔✔' : '✔✔');
-    if (filteredContacts?.length === 0) {
-        showLoader();
-    } else {
-        hideLoader();
-    }
+    const handleNewMessage = (newMsg) => {
+        // Optionally filter by current chat receiver
+        if (newMsg.senderId === receiverId || newMsg.receiverId === receiverId) {
+            dispatch({ type: "messenger/addMessage", payload: newMsg });
+        }
+    };
+
+    
+
+    const handleMessageDeleted = (deletedId) => {
+        // Optional future enhancement
+        console.log("Deleted message ID:", deletedId);
+    };
 
     return (
-        // <>
-        //   <iframe
-        //     src="https://dreamschat.dreamstechnologies.com/html/template/chat.html"
-        //     frameborder="0"
-        //     style={{ width: '100%', height: '80vh' }}
-        //   ></iframe>
-        // </>
-        <div className="chat-app">
+        <div className={styles.messengerWrapper}>
             <Sidebar
-                role={role}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                filteredContacts={filteredContacts}
-                selectedContact={selectedContact}
-                handleSelectContact={handleSelectContact}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
             />
 
-            <ChatWindow
-                selectedContact={selectedContact}
-                messages={messages}
-                senderId={senderId}
-                handleDeleteButtonClick={handleDeleteButtonClick}
-                handleSendMessage={handleSendMessage}
-                handleFileChange={handleFileChange}
-                deleteAmessage={deleteAmessage}
-                filePreviews={filePreviews}
-                handleRemoveFile={handleRemoveFile}
-                fDateTime={fDateTime}
-                getTickIndicators={getTickIndicators}
-            />
-
-            <AlertDialog
-                open={dialogOpen}
-                onClose={handleDialogClose}
-                onConfirm={handleDeleteChat}
-                title="Confirm Conversation Delete"
-                message="This action will delete the entire conversation between you and the other party. Are you sure you want to delete this chat? This action cannot be undone."
-            />
+            <div className={styles.chatArea}>
+                <ChatPanel messages={reduxMessages} />
+                <ChatInput
+                    message={message}
+                    setMessage={setMessage}
+                    onSend={handleSendMessage}
+                    selectedFiles={selectedFiles}
+                    setSelectedFiles={setSelectedFiles}
+                    filePreviews={filePreviews}
+                    setFilePreviews={setFilePreviews}
+                />
+            </div>
         </div>
     );
 };
 
-export default ChatApp;
+export default Messenger;

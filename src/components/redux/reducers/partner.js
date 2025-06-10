@@ -24,7 +24,7 @@ export const addPartner = createAsyncThunk(
 
 export const getPartnerById = createAsyncThunk(
   'partner/getById',
-  async (_, { rejectWithValue }) => {
+  async (userId, { rejectWithValue }) => {
     try {
       const response = await axios.get(`${localUrl}/login/dashboard/get/all/user/${userId}`, {
         headers: {
@@ -203,6 +203,7 @@ const partnerSlice = createSlice({
   initialState: {
     data: [],
   },
+  
   extraReducers: (builder) => {
     builder
       .addCase(getPartnerById.fulfilled, (state, action) => {

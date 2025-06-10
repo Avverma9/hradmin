@@ -13,6 +13,7 @@ import additionalReducer from './reducers/additional-fields/additional';
 import travelBookingReducer from './reducers/travel/booking';
 import userCouponReducer from './reducers/userAndPartnerCoupon/coupon'
 import gstReducer from './reducers/gst';
+import messengerReducer from './reducers/messenger/messenger'
 import { add } from 'lodash';
 // Combine reducers into a rootReducer
 const rootReducer = combineReducers({
@@ -29,5 +30,6 @@ const rootReducer = combineReducers({
     travelBooking: travelBookingReducer,
     userCoupon:userCouponReducer,
     gst: gstReducer,
+    messenger:messengerReducer
 });
 export default rootReducer;

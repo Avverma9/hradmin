@@ -1,0 +1,235 @@
+/* Sidebar.module.css */
+
+.sidebar {
+  width: 300px;
+  background: #fff;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.profileSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.profilePic {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+}
+
+.profileName {
+  font-weight: 600;
+}
+
+.status {
+  font-size: 12px;
+  color: green;
+}
+
+.notificationContainer {
+  margin-left: auto;
+  position: relative;
+}
+
+.bellIcon {
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.notificationDropdown {
+  position: absolute;
+  top: 25px;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 10px;
+  font-size: 14px;
+  width: 180px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 5px 10px;
+  margin-bottom: 15px;
+}
+
+.searchIcon {
+  color: #888;
+  margin-right: 8px;
+}
+
+.searchBar input {
+  border: none;
+  outline: none;
+  flex: 1;
+}
+
+.tabButtons {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.tabButton {
+  flex: 1;
+  padding: 10px;
+  background: #f0f0f0;
+  border: none;
+  margin: 0 2px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-weight: 500;
+}
+
+.active {
+  background-color: #0052cc;
+  color: white;
+}
+
+.chatList {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.chatItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.chatItem:hover {
+  background-color: #f5f5f5;
+}
+
+.chatItem.active {
+  background-color: #7f98bb;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.time {
+  font-size: 11px;
+  color: #999;
+  margin-left: auto;
+}
+
+.contactList {
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.contactLabel {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.contactGroup {
+  margin-bottom: 10px;
+}
+
+.contactLetter {
+  font-size: 12px;
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.contactItem {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  margin-bottom: 10px;
+  transition: background-color 0.2s ease;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 12px;
+}
+
+.contactInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.contactName {
+  font-weight: 500;
+  font-size: 14px;
+  color: #333;
+}
+
+.contactMobile {
+  font-size: 12px;
+  color: #777;
+}
+
+
+.contactItem:hover,
+.contactItem.active {
+  background-color: #7995bd;
+}
+
+/* Sidebar.module.css */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 10px;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .profileSection {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .searchBar {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .tabButtons {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .chatList,
+  .contactList {
+    max-height: 300px;
+    overflow-y: auto;
+    width: 100%;
+  }
+
+  .chatItem,
+  .contactItem {
+    padding: 6px;
+    font-size: 13px;
+  }
+}

@@ -1,0 +1,62 @@
+/* Messenger.module.css */
+
+.messengerContainer {
+  display: flex;
+  height: 85vh;
+  font-family: "Segoe UI", sans-serif;
+  background-color: #f5f6fa;
+
+}
+
+
+.messengerWrapper {
+  position: fixed;
+  top:80px; /* Leaves space for top header */
+  left:300px; /* Leaves space for sidebar */
+  right: 0;
+  bottom: 0;
+  display: flex;
+  background-color: #f4f4f4;
+  overflow: hidden;
+}
+
+.chatArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  height: 100%;
+  overflow: hidden;
+}
+
+
+@media (max-width: 768px) {
+  .messengerContainer {
+    flex-direction: column;
+  }
+
+  .chatArea {
+    width: 100%;
+  }
+   .messengerWrapper {
+    /* Reset or override styles for mobile */
+    position: static; /* Or 'initial' if you want it to flow normally */
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    display: block; /* Or 'initial' */
+    /* You might want to remove background-color or adjust it for mobile */
+    background-color: initial;
+    overflow: initial;
+  }
+
+  .chatArea {
+    /* Reset or override styles for mobile */
+    flex: initial;
+    flex-direction: initial; /* Or 'column' if it makes sense for mobile layout */
+    background-color: initial;
+    height: auto; /* Allow height to adjust naturally */
+    overflow: initial;
+  }
+}
