@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { localUrl, token } from "../../../../../utils/util";
+import { localUrl, notify, token } from "../../../../../utils/util";
 
 // ------------------ Async Thunks ------------------
 
@@ -12,6 +12,41 @@ export const getContacts = createAsyncThunk("messenger/getContacts", async (id, 
                 Authorization: token,
             },
         });
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+});
+
+export const addContacts = createAsyncThunk("messenger/addContacts", async (payload, { rejectWithValue }) => {
+    try {
+        const response = await axios.patch(`${localUrl}/chatApp/contacts/${payload.id}`, {
+            userId: payload.userId,
+        }, {
+            headers: {
+                Authorization: token,
+            },
+        });
+        notify(response.status)
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+});
+
+
+export const deleteContact = createAsyncThunk("messenger/deleteContact", async (payload, { rejectWithValue }) => {
+    try {
+        const response = await axios.delete(`${localUrl}/chatApp/contacts/${payload.id}/${payload.userId}`, {
+            headers: {
+                Authorization: token,
+            },
+        });
+        notify(response.status)
         return response.data;
     } catch (error) {
         const errorMessage = error.response?.data?.message || error.message;

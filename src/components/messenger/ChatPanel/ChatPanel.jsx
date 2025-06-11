@@ -7,7 +7,7 @@ import {
     addMessage,
     getMessages,
 } from "src/components/redux/reducers/messenger/messenger";
-import { localUrl, userId } from "../../../../utils/util";
+import { localUrl, userId, userName } from "../../../../utils/util";
 
 const ChatPanel = () => {
     const [menuIndex, setMenuIndex] = useState(null);
@@ -75,11 +75,15 @@ const ChatPanel = () => {
         <div className={styles.chatPanel}>
             <div className={styles.chatHeader}>
                 <div>
-                    <div className={styles.chatName}>{partner?.name}</div>
+                    <div className={styles.chatName}>{partner?.name === userName ? "You" : partner?.name}</div>
                     {messages.length > 0 && (
-                        <div className={styles.status}>
-                            {partner?.isOnline ? "Active" : "Not Active"}
+                        <div
+                            className={`${styles.status} ${partner?.isOnline ? styles.active : styles.inactive
+                                }`}
+                        >
+                            {partner?.isOnline ? "Active now" : "Not Active"}
                         </div>
+
                     )}
                 </div>
 
@@ -129,7 +133,18 @@ const ChatPanel = () => {
                                         }`}
                                 >
                                     <div className={styles.bubble}>
-                                        <div className={styles.bubbleContent}>
+                                        <div >
+                                            <div style={{ fontSize: "10px", color: "green" }}>{msg.sender === userId ? "You" : partner?.name}</div>
+                                            {msg?.images.length > 0 &&
+                                                <img
+                                                    src={msg.images[0]}
+
+                                                    className={styles.messageImage}
+                                                    onError={(e) => (e.target.style.display = 'none')}
+                                                />
+                                            }
+
+
                                             <div className={styles.messageText}>{msg.content}</div>
                                         </div>
                                     </div>

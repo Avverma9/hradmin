@@ -17,13 +17,25 @@
 
 .chatName {
   font-weight: 600;
-  font-size: 16px;
+  font-size: 12px;
 }
 
 .status {
-  font-size: 12px;
-  color: green;
+  font-weight: bold;
 }
+
+.active {
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  color: green;
+  font-size: 13px;
+}
+
+.inactive {
+  color: red;
+  font-size: 13px;
+
+}
+
 
 .chatIcons {
   display: flex;
@@ -58,13 +70,13 @@
 
 .messageLeft {
   align-self: flex-start;
-  background-color: #f1f1f1;
+  background-color: #a3828200;
   border-radius: 12px 12px 12px 0;
 }
 
 .messageRight {
   align-self: flex-end;
-  background-color: #dcf8c6;
+  background-color: #dcf8c600;
   border-radius: 12px 12px 0 12px;
 }
 
@@ -75,9 +87,22 @@
   margin-bottom: 4px;
   cursor: default;
 }
+.message {
+  position: relative;
+  border: 1px solid transparent;  /* Border ki width specify karen */
+  border-radius: 12px;            /* Agar border rounded chahiye */
+
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+
+  /* Yeh two-layer background - ek for content, ek for border gradient */
+  background-image: 
+    linear-gradient(white, white), /* content background - yahan white ya transparent rakh sakte hain */
+    linear-gradient(45deg, #ff7e5f, #feb47b); /* border gradient */
+}
 
 .bubble {
-  background-color: #f1f1f1;
+  background-color: #f1f1f100;
   max-width: 100%;
   display: flex;
   flex-direction: column;
@@ -87,7 +112,7 @@
 }
 
 .messageRight .bubble {
-  background-color: #dcf8c6;
+  background-color: #dcf8c600;
 }
 
 .bubbleContent {
@@ -270,4 +295,14 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+}
+
+
+.messageImage {
+  max-width: 180px;
+  max-height: 180px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  object-fit: cover;
+  display: block;
 }

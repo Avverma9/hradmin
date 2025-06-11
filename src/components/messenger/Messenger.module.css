@@ -1,69 +1,30 @@
-/* ========================
-   BASE STYLES
-   ======================== */
-.messengerContainer {
-  display: flex;
-  font-family: "Segoe UI", sans-serif;
-  background-color: #f5f6fa;
-  height: 85vh;
-  cursor: pointer;
-
-}
+/* Messenger.module.css */
 
 .messengerWrapper {
-  position: fixed;
-  top: 100px;           /* Leave space for header */
-  left: 300px;          /* Leave space for sidebar */
-  right: 0;
-  bottom: 0;
   display: flex;
-  background-color: #f4f4f4;
+  flex: 1;
+   min-height: 85vh; /* Slightly more than before */
+  height: calc(100vh - 60px); /* Assuming header height is 60px */
   overflow: hidden;
-  z-index: 1;
-  cursor: pointer;
-
+  background-color: #ffffff;
 }
 
 .chatArea {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: white;
-  height: 100%;
-  cursor: pointer;
-
+  background-color: #ffffff;
   overflow: hidden;
 }
 
-/* ========================
-   RESPONSIVE (TABLET / MOBILE)
-   ======================== */
+/* Sidebar responsiveness */
 @media (max-width: 768px) {
-  .messengerContainer {
-    flex-direction: column;
-    height: auto; /* Let height adjust naturally */
-  }
-
   .messengerWrapper {
-    position: relative;
-    top: unset;
-    left: unset;
-    right: unset;
-    bottom: unset;
-    width: 100%;
-    height: 100vh;
-    margin-top: 0;
-    z-index: auto;
     flex-direction: column;
-    overflow: auto;
-    background-color: transparent;
+    height: auto;
   }
 
   .chatArea {
     height: auto;
-    flex: 1;
-    overflow: auto;
-    background-color: transparent;
-    flex-direction: column;
   }
 }

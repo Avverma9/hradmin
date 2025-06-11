@@ -88,7 +88,7 @@ const Sidebar = ({ activeTab, setActiveTab, searchQuery, setSearchQuery }) => {
                                     className={styles.avatar}
                                 />
                                 <div>
-                                    <h6>{chat.name}</h6>
+                                    <h6>{chat.name=== userName ? "You" : chat?.name }</h6>
                                     <span>{chat.content}</span>
                                 </div>
                                 <span className={styles.time}>
