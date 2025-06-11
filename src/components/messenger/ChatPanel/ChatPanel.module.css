@@ -306,3 +306,26 @@
   object-fit: cover;
   display: block;
 }
+/* Ultra-Thin Scrollbar for chat messages */
+.chatMessages::-webkit-scrollbar {
+  width: 2px;
+}
+
+.chatMessages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chatMessages::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #0052cc, #7f98bb);
+  border-radius: 10px;
+}
+
+.chatMessages::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #003d99, #5f799d);
+}
+
+/* Firefox Support */
+.chatMessages {
+  scrollbar-width: thin;
+  scrollbar-color: #0052cc transparent;
+}

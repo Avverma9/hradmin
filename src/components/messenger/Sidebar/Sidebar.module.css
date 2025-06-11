@@ -253,3 +253,32 @@
 .contactMobile {
   user-select: none;
 }
+/* Super Thin Scrollbar */
+.chatList::-webkit-scrollbar,
+.contactList::-webkit-scrollbar {
+  width: 3px;
+}
+
+.chatList::-webkit-scrollbar-track,
+.contactList::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 10px;
+}
+
+.chatList::-webkit-scrollbar-thumb,
+.contactList::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #0052cc, #7f98bb);
+  border-radius: 10px;
+}
+
+.chatList::-webkit-scrollbar-thumb:hover,
+.contactList::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #003d99, #5f799d);
+}
+
+/* Firefox Support */
+.chatList,
+.contactList {
+  scrollbar-width: thin;
+  scrollbar-color: #0052cc #f0f0f0;
+}
