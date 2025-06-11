@@ -111,7 +111,7 @@ const Sidebar = ({ activeTab, setActiveTab, searchQuery, setSearchQuery }) => {
       {/* Chats */}
       {activeTab === "Chat" && (
         <div className={styles.chatList}>
-          <h5>Recent</h5>
+          <h6>Recent chats</h6>
           {filteredChats.length === 0 ? (
             <p>No recent chats</p>
           ) : (
@@ -195,7 +195,6 @@ const Sidebar = ({ activeTab, setActiveTab, searchQuery, setSearchQuery }) => {
       {/* Contacts */}
       {activeTab === "Contacts" && (
         <div className={styles.contactList}>
-          <div className={styles.contactLabel}>Contacts</div>
           {filteredContacts.map((contact) => (
             <div
               key={contact._id}

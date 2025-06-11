@@ -329,3 +329,17 @@
   scrollbar-width: thin;
   scrollbar-color: #0052cc transparent;
 }
+.noMessagesContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%; /* Full height of parent container */
+  padding: 20px;
+}
+
+.noMessagesImage {
+  width: 180px; /* Slightly smaller */
+  max-width: 100%;
+  height: auto;
+  opacity: 0.8;
+}
