@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 
 export const addTour = createAsyncThunk("tour/addTour", async (data, { rejectWithValue }) => {
     try {
-        const response = await axios.post(`${localUrl}/create-travel`, data, {
+        const response = await axios.post(`${localUrl}/create-tour`, data, {
             headers: {
                 Authorization: token,
             },
@@ -21,7 +21,23 @@ export const addTour = createAsyncThunk("tour/addTour", async (data, { rejectWit
 
 export const tourList = createAsyncThunk("tour/tourList", async (_, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`${localUrl}/get-travel-list`, {
+        const response = await axios.get(`${localUrl}/get-tour-list`, {
+            headers: {
+                Authorization: token,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+});
+
+
+export const tourRequest = createAsyncThunk("tour/tourRequest", async (_, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(`${localUrl}/get-requests`, {
             headers: {
                 Authorization: token,
             },
@@ -36,7 +52,7 @@ export const tourList = createAsyncThunk("tour/tourList", async (_, { rejectWith
 
 export const tourById = createAsyncThunk("tour/tourById", async (id, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`${localUrl}/get-travel/${id}`, {
+        const response = await axios.get(`${localUrl}/get-tour/${id}`, {
             headers: {
                 Authorization: token,
             },
@@ -84,6 +100,10 @@ const tourSlice = createSlice({
                 state.data.push(action.payload);
             })
             .addCase(tourList.fulfilled, (state, action) => {
+                state.loading = false;
+                state.data = action.payload;
+            })
+            .addCase(tourRequest.fulfilled, (state, action) => {
                 state.loading = false;
                 state.data = action.payload;
             })

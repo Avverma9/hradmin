@@ -46,6 +46,8 @@ const PMSMonthlyPricePage = lazy(() => import('src/components/pages/superAdmin/m
 const GSTpage = lazy(() => import('src/components/pages/admin/gst-page'));
 const PanelBookingPage = lazy(() => import('src/components/pages/panel-booking'));
 const AdditionalInputs = lazy(() => import('src/components/pages/admin/additional-page'));
+const TourRequest = lazy(() => import('src/components/pages/admin/tour-requests'));
+
 
 
 // Recursively extract paths
@@ -94,6 +96,7 @@ export default function Router() {
         { path: '/send-notification-to-all', element: <NotificationPage /> },
         { path: '/user', element: <UserPage /> },
         { path: '/hotels', element: <ProductsPage /> },
+        { path: '/tour-requests', element: <TourRequest /> },
         { path: '/bulk-data-processing', element: <BulkOperation /> },
         { path: '/hotels/monthly-price', element: <MonthlyPricePage /> },
         { path: '/hotels/monthly-price-pms', element: <PMSMonthlyPricePage /> },
@@ -150,8 +153,6 @@ export default function Router() {
             ),
             children: filteredRoutes,
         },
-        { path: "/additional-fields", element: <AdditionalInputs /> },
-
         { path: '/', element: <LoginPage /> }, // Home route stays as it is
         { path: '/404', element: <Page404 /> },  // 404 route
         { path: '*', element: <Navigate to="/404" replace /> }, // Any unmatched path

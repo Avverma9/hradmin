@@ -86,7 +86,7 @@ const getNavConfig = async () => {
             icon: icons.messenger,
         },
         {
-            title: 'bookings',
+            title: 'Your Bookings',
             icon: icons.bookings,
             path: '/your-bookings',
         },
@@ -135,25 +135,28 @@ const getNavConfig = async () => {
             children: [
                 { title: 'Complaints', path: '/complaints', icon: icons.complaints },
                 { title: 'Bookings', icon: icons.bookings, path: '/all-bookings' },
+                { title: "Travel Bookings", path: '/admin-travel/bookings', icon: icons.bookings },
+                { title: 'Availability', path: '/hotels/availability', icon: icons.available },
+                { title: 'Set Month', path: '/hotels/monthly-price', icon: icons.setMonthlyPrice },
+                { title: 'Apply Coupons (Single Use)', path: '/apply-coupon', icon: icons.coupon },
+                { title: "Partner Coupon", path: '/partner-coupon', icon: icons.coupon },
+                { title: "User Coupon", path: '/user-coupon', icon: icons.coupon },
                 { title: 'Hotels', icon: icons.hotels, path: '/hotels' },
                 { title: 'Reviews', path: '/all-reviews', icon: icons.review },
                 { title: 'Manage users', path: '/all-users', icon: icons.user },
-                { title: 'Bulk Operation', path: '/bulk-data-processing', icon: icons.settings },
                 { title: 'Add travel location', path: '/add-travel-location', icon: icons.travel },
-                { title: 'Availability', path: '/hotels/availability', icon: icons.available },
-                { title: 'Set Month', path: '/hotels/monthly-price', icon: icons.setMonthlyPrice },
                 { title: 'Change banner', path: '/change-banner', icon: icons.banner },
-                { title: 'Apply Coupons (Single Use)', path: '/apply-coupon', icon: icons.coupon },
                 { title: 'Push notification', path: '/send-notification-to-all', icon: icons.notification },
-                { title: "Travel Bookings", path: '/admin-travel/bookings', icon: icons.bookings },
-                { title: "Partner Coupon", path: '/partner-coupon', icon: icons.coupon },
-                { title: "User Coupon", path: '/user-coupon', icon: icons.coupon },
                 { title: "GST", path: "/gst-page", icon: icons.settings },
                 { title: "Additional Fields", path: "/additional-fields", icon: icons.settings },
+                { title: 'Bulk Operation', path: '/bulk-data-processing', icon: icons.settings },
+                { title: 'Tour Requests', path: '/tour-requests', icon: icons.travel },
+
 
 
             ],
         },
+      
     ];
 
     return baseConfig.filter((item) => {

@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import { tourList } from "../redux/reducers/tour/tour";
-import { iconsList } from "../../../utils/icon";
 import {
   TextField,
   Box,
@@ -15,6 +13,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
+import {  tourRequest } from "src/components/redux/reducers/tour/tour";
 
 const StyledButton = styled(Button)(({ theme }) => ({
   textTransform: "none",
@@ -32,22 +31,15 @@ const StyledButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-const TourList = () => {
+const TourRequest = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const data = useSelector((state) => state.tour.data);
   const [searchText, setSearchText] = useState("");
 
   useEffect(() => {
-    dispatch(tourList());
+    dispatch(tourRequest());
   }, [dispatch]);
-
-  const getAmenityIcon = (amenity) => {
-    const iconObj = iconsList.find(
-      (icon) => icon.label.toLowerCase() === amenity.toLowerCase()
-    );
-    return iconObj ? iconObj.icon : null;
-  };
 
   const handleUpdate = (id) => {
     navigate(`/tour-update/${id}`);
@@ -60,22 +52,21 @@ const TourList = () => {
     { field: "days", headerName: "Days", width: 100 },
     { field: "price", headerName: "Price", width: 120 },
     {
-      field: "amenities",
-      headerName: "Amenities",
-      width: 200,
-      renderCell: (params) => (
-        <div>
-          {params.value?.slice(0, 3).map((amenity, idx) => {
-            const icon = getAmenityIcon(amenity);
-            return (
-              <span key={idx} style={{ marginRight: "8px" }}>
-                {icon && <span>{icon}</span>} {amenity}
-              </span>
-            );
-          })}
-        </div>
-      ),
-    },
+        field: "isAccepted",
+        headerName: "Status",
+        width: 150,
+        renderCell: (params) => (
+          <span
+            style={{
+              color: params.value ? "green" : "red",
+              fontWeight: 600,
+            }}
+          >
+            {params.value ? "Accepted" : "Not Accepted"}
+          </span>
+        ),
+      },
+      
     {
       field: "actions",
       headerName: "Actions",
@@ -106,7 +97,7 @@ const TourList = () => {
     <div style={{ height: 500, width: "100%" }}>
      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
       <Box sx={{ fontSize: "24px", fontWeight: "bold", color: "#fffff" }}>
-    ✈️ Tour List
+    ✈️ Tour Requests
   </Box>
         <TextField
           variant="outlined"
@@ -155,4 +146,4 @@ const TourList = () => {
   );
 };
 
-export default TourList;
+export default TourRequest;

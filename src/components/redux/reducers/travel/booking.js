@@ -31,7 +31,6 @@ export const fetchTravelBookingsTMS = createAsyncThunk(
                     Authorization: token,
                 },
             });
-            notify(response?.status);
             return response.data;
         } catch (error) {
             const errorMessage = error.response?.data?.message || error.message;
