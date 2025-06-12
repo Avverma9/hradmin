@@ -118,7 +118,7 @@ const ChatPanel = () => {
         {messages.length === 0 ? (
           <div className={styles.noMessagesContainer}>
             <img
-              src="../../../../public/assets/messenger.gif"
+              src="/assets/messenger.gif"
               className={styles.noMessagesImage}
             />
           </div>
