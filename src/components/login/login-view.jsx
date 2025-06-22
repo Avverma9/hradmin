@@ -59,9 +59,8 @@ export default function LoginView() {
     localStorage.setItem('user_image', data.loggedUserImage);
     localStorage.setItem('user_name', data.loggedUserName);
     localStorage.setItem('rs_token', data.rsToken);
-    setTimeout(() => {
       router.push('/dashboard');
-    }, 3000);
+   
     toast.success('Login successful!');
     setTimeout(() => window.location.reload(), 5000);
   };

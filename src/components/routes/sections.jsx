@@ -71,25 +71,26 @@ const extractPathsFromNavItems = (items = []) => {
 
 export default function Router() {
     const [navItems, setNavItems] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // Fetch navigation configuration
     useEffect(() => {
         fetchNavConfig()
             .then(result => {
                 setNavItems(result);
+                setLoading(false);
             })
             .catch(err => {
                 console.error("Failed to fetch nav config:", err);
+                setLoading(false);
             });
     }, []);
 
-    if (!navItems) {
-        return <LoaderProvider />;
+    if (loading) {
+        return <LoaderProvider />; 
     }
 
     const allowedPaths = extractPathsFromNavItems(navItems).filter(Boolean);
 
-    // Define the full routes configuration
     const allRoutes = [
         { path: '/dashboard', element: <IndexPage /> },
         { path: '/messenger', element: <MessengerPage /> },
@@ -131,17 +132,12 @@ export default function Router() {
         { path: "/partner-coupon", element: <PartnerCouponPage /> },
         { path: "/user-coupon", element: <UserCouponPage /> },
         { path: "/additional-fields", element: <AdditionalInputs /> },
-
     ];
 
-    // Filter the routes to include only the ones that are in allowedPaths
-    // Filter the routes that are either allowed or contain dynamic params like /:id
     const filteredRoutes = allRoutes.filter(route =>
         allowedPaths.includes(route.path) || /\/:/.test(route.path)
     );
 
-
-    // Keep the "/" route for login and 404 page
     const routes = useRoutes([
         {
             element: (
@@ -153,10 +149,11 @@ export default function Router() {
             ),
             children: filteredRoutes,
         },
-        { path: '/', element: <LoginPage /> }, // Home route stays as it is
-        { path: '/404', element: <Page404 /> },  // 404 route
-        { path: '*', element: <Navigate to="/404" replace /> }, // Any unmatched path
+        { path: '/', element: <LoginPage /> },
+        { path: '/404', element: <Page404 /> },
+        { path: '*', element: <Navigate to="/404" replace /> },
     ]);
 
     return routes;
 }
+
