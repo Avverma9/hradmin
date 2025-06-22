@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 
 export const addTour = createAsyncThunk("tour/addTour", async (data, { rejectWithValue }) => {
     try {
-        const response = await axios.post(`${localUrl}/create-tour`, data, {
+        const response = await axios.post(`${localUrl}/create-travel`, data, {
             headers: {
                 Authorization: token,
             },
@@ -21,7 +21,7 @@ export const addTour = createAsyncThunk("tour/addTour", async (data, { rejectWit
 
 export const tourList = createAsyncThunk("tour/tourList", async (_, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`${localUrl}/get-tour-list`, {
+        const response = await axios.get(`${localUrl}/get-travel-list`, {
             headers: {
                 Authorization: token,
             },
@@ -29,7 +29,6 @@ export const tourList = createAsyncThunk("tour/tourList", async (_, { rejectWith
         return response.data;
     } catch (error) {
         const errorMessage = error.response?.data?.message || error.message;
-        toast.error(`Error: ${errorMessage}`);
         return rejectWithValue(errorMessage);
     }
 });
@@ -52,7 +51,7 @@ export const tourRequest = createAsyncThunk("tour/tourRequest", async (_, { reje
 
 export const tourById = createAsyncThunk("tour/tourById", async (id, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`${localUrl}/get-tour/${id}`, {
+        const response = await axios.get(`${localUrl}/get-travel/${id}`, {
             headers: {
                 Authorization: token,
             },

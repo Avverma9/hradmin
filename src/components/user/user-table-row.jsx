@@ -137,11 +137,11 @@ export default function UserTableRow({
       >
         <MenuItem onClick={handleEditClick}>
           <Iconify icon="eva:edit-fill" sx={{ mr: 2 }} />
-          Access & Update
+          Update
         </MenuItem>
         <MenuItem onClick={handleMessengerSetupClick}>
-          <Iconify icon="eva:edit-fill" sx={{ mr: 2 }} />
-          Messenger setup
+          <Iconify icon="mdi:message-text" sx={{ mr: 2 }} />
+          Messenger
         </MenuItem>
 
         <MenuItem onClick={handleViewClick}>

@@ -61,7 +61,7 @@ export default function LoginView() {
     localStorage.setItem('rs_token', data.rsToken);
     setTimeout(() => {
       router.push('/dashboard');
-    }, 2000);
+    }, 3000);
     toast.success('Login successful!');
     setTimeout(() => window.location.reload(), 5000);
   };
