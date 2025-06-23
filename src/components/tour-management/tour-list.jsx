@@ -15,6 +15,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
+import { useLoader } from "../../../utils/loader";
 
 const StyledButton = styled(Button)(({ theme }) => ({
   textTransform: "none",
@@ -37,9 +38,20 @@ const TourList = () => {
   const navigate = useNavigate();
   const data = useSelector((state) => state.tour.data);
   const [searchText, setSearchText] = useState("");
+  const { showLoader, hideLoader } = useLoader()
 
   useEffect(() => {
-    dispatch(tourList());
+    try {
+      showLoader();
+      // Fetch the tour list
+      dispatch(tourList()).then(() => {
+        hideLoader();
+      });
+    }
+    catch (error) {
+      hideLoader();
+      console.error("Error fetching tour list:", error);
+    }
   }, [dispatch]);
 
   const getAmenityIcon = (amenity) => {
@@ -104,10 +116,10 @@ const TourList = () => {
 
   return (
     <div style={{ height: 500, width: "100%" }}>
-     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-      <Box sx={{ fontSize: "24px", fontWeight: "bold", color: "#fffff" }}>
-    ✈️ Tour List
-  </Box>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+        <Box sx={{ fontSize: "24px", fontWeight: "bold", color: "#fffff" }}>
+          ✈️ Tour List
+        </Box>
         <TextField
           variant="outlined"
           size="small"

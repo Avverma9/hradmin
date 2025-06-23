@@ -27,6 +27,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import Rating from "@mui/material/Rating";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
+import { useLoader } from "../../../utils/loader";
 
 const deepCopy = (obj) => {
   if (typeof structuredClone === "function") {
@@ -61,10 +62,18 @@ export default function TourUpdate() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [originalData, setOriginalData] = useState(null);
-
+const {showLoader, hideLoader} = useLoader();
   useEffect(() => {
     if (id) {
-      dispatch(tourById(id));
+      try {
+        showLoader();
+        dispatch(tourById(id)).then(() => {
+          hideLoader();
+        });
+      } catch (error) {
+        hideLoader();
+        console.error("Error fetching tour data:", error);
+      }
     }
     setEditableData(null);
     setOriginalData(null);

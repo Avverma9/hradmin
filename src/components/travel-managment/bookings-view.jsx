@@ -29,6 +29,8 @@ const BookingDetails = ({ booking, onClose }) => {
         });
 
     // Calculate total seat count and price
+
+    console.log("seatsData", booking);
     const seatCount = seatsData.length;
     const totalPrice = seatsData.reduce((sum, seat) => sum + (seat.seatPrice || 0), 0);
 
@@ -74,8 +76,8 @@ const BookingDetails = ({ booking, onClose }) => {
                         ['Drop Location', dropP],
                         ['Pickup Date', formatDateTime(pickupD)],
                         ['Drop Date', formatDateTime(dropD)],
-                        ['Total Seats Booked', seatCount],
-                        ['Total Price', `₹${totalPrice}`],
+                        // ['Total Seats Booked', seatCount],
+                        // ['Total Price', `₹${totalPrice}`],
                         ['Booking Date', formatDateTime(bookingDate)],
                     ]?.map(([label, value], index) => (
                         <Grid item xs={12} sm={6} key={index}>
@@ -100,7 +102,7 @@ const BookingDetails = ({ booking, onClose }) => {
 
                 {/* Show Seat-wise Details */}
                 <Divider sx={{ my: 4 }} />
-                <Typography variant="h6" gutterBottom color="primary">
+                {/* <Typography variant="h6" gutterBottom color="primary">
                     Seat Details
                 </Typography>
                 <Grid container spacing={2}>
@@ -126,7 +128,7 @@ const BookingDetails = ({ booking, onClose }) => {
                             </Box>
                         </Grid>
                     ))}
-                </Grid>
+                </Grid> */}
             </Paper>
         </Box>
     );
