@@ -1,35 +1,53 @@
-import { lazy, Suspense, useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect, useMemo } from 'react';
 import { Outlet, Navigate, useRoutes } from 'react-router-dom';
+
+// Layouts and Loaders
 import DashboardLayout from 'src/components/dashboard';
 import { LoaderProvider } from '../../../utils/loader';
-import { fetchNavConfig } from '../dashboard/config-navigation';
-import BookNowPage from '../pages/superAdmin/book-now-page';
 
-// Lazy load components
+
+// Navigation Configuration
+import { fetchNavConfig } from '../dashboard/config-navigation';
+
+// --- Page Components (Lazy Loaded) ---
 const IndexPage = lazy(() => import('src/components/pages/app'));
 const UserPage = lazy(() => import('src/components/pages/user'));
 const LoginPage = lazy(() => import('src/components/pages/login'));
-const ProductsPage = lazy(() => import('src/components/pages/admin/hotels'));
 const Page404 = lazy(() => import('src/components/pages/page-not-found'));
+const HotelDetailsPage = lazy(() => import('src/components/pages/hotel-details-page'));
+const BookingDetail = lazy(() => import('src/components/pages/booking-details'));
+const MessengerPage = lazy(() => import('src/components/pages/messenger-app'));
+const PanelBookingPage = lazy(() => import('src/components/pages/panel-booking'));
+
+// Admin Pages
+const ProductsPage = lazy(() => import('src/components/pages/admin/hotels'));
 const ListTravelPage = lazy(() => import('src/components/pages/admin/travel-location'));
 const BannerPage = lazy(() => import('src/components/pages/admin/banner'));
-const HotelDetailsPage = lazy(() => import('src/components/pages/hotel-details-page'));
-const YourHotelsPage = lazy(() => import('src/components/pages/superAdmin/your-hotel-page'));
 const BookingsView = lazy(() => import('src/components/pages/admin/admin-bookings-page'));
-const BookingDetail = lazy(() => import('src/components/pages/booking-details'));
 const UserDetails = lazy(() => import('src/components/pages/admin/alluser-page'));
 const AllReviews = lazy(() => import('src/components/pages/admin/review-page'));
-const SuperAdminBookingsView = lazy(() => import('src/components/pages/superAdmin/superAdmin-bookings-page'));
-const MonthlyPricePage = lazy(() => import('src/components/pages/monthly-price'));
+const MonthlyPricePage = lazy(() => import('src/components/pages/admin/monthly-price'));
 const CouponPage = lazy(() => import('src/components/pages/admin/coupon-page'));
-const MessengerPage = lazy(() => import('src/components/pages/messenger-app'));
 const NotificationPage = lazy(() => import('src/components/pages/admin/notification-page'));
-const PmsCouponPage = lazy(() => import('src/components/pages/superAdmin/pms-coupon'));
 const ComplaintPage = lazy(() => import('src/components/pages/admin/complaint-page'));
-const PmsComplaintsPage = lazy(() => import('src/components/pages/superAdmin/complaint-page'));
 const BulkOperation = lazy(() => import('src/components/pages/admin/bulk-page'));
 const AvailabilityPage = lazy(() => import('src/components/pages/admin/availability-page'));
 const BookingCreate = lazy(() => import('src/components/pages/admin/booking_createForm'));
+const PartnerCouponPage = lazy(() => import('src/components/pages/admin/partner-coupon-page'));
+const UserCouponPage = lazy(() => import('src/components/pages/admin/user-coupon-page'));
+const GSTpage = lazy(() => import('src/components/pages/admin/gst-page'));
+const AdditionalInputs = lazy(() => import('src/components/pages/admin/additional-page'));
+const TourRequest = lazy(() => import('src/components/pages/admin/tour-requests'));
+
+// Super Admin Pages
+const BookNowPage = lazy(() => import('../pages/superAdmin/book-now-page'));
+const YourHotelsPage = lazy(() => import('src/components/pages/superAdmin/your-hotel-page'));
+const SuperAdminBookingsView = lazy(() => import('src/components/pages/superAdmin/superAdmin-bookings-page'));
+const PmsCouponPage = lazy(() => import('src/components/pages/superAdmin/pms-coupon'));
+const PmsComplaintsPage = lazy(() => import('src/components/pages/superAdmin/complaint-page'));
+const PMSMonthlyPricePage = lazy(() => import('src/components/pages/superAdmin/monthly-price-pms'));
+
+// Travel & Tour Pages
 const CarsPage = lazy(() => import('src/components/pages/travel/cars-page'));
 const CarFormPage = lazy(() => import('src/components/pages/travel/cars-form'));
 const OwnerList = lazy(() => import('src/components/pages/travel/owner-list-page'));
@@ -40,103 +58,111 @@ const TourList = lazy(() => import('src/components/pages/tour/tour-list'));
 const TourUpdatePage = lazy(() => import('src/components/pages/tour/tour-update'));
 const TravelBookingTMS = lazy(() => import('src/components/pages/travel/travel-bookings'));
 const TravelBookingsAdmin = lazy(() => import('src/components/settings/travelBookings/travel-booking'));
-const PartnerCouponPage = lazy(() => import('src/components/pages/admin/partner-coupon-page'));
-const UserCouponPage = lazy(() => import('src/components/pages/admin/user-coupon-page'));
-const PMSMonthlyPricePage = lazy(() => import('src/components/pages/superAdmin/monthly-price-pms'));
-const GSTpage = lazy(() => import('src/components/pages/admin/gst-page'));
-const PanelBookingPage = lazy(() => import('src/components/pages/panel-booking'));
-const AdditionalInputs = lazy(() => import('src/components/pages/admin/additional-page'));
-const TourRequest = lazy(() => import('src/components/pages/admin/tour-requests'));
 
 
-
-// Recursively extract paths
-const extractPathsFromNavItems = (items = []) => {
-    const paths = [];
-
-    const traverse = (itemList) => {
-        itemList.forEach(item => {
-            if (item?.path) {
-                paths.push(item.path);
-            }
-            if (Array.isArray(item?.children)) {
-                traverse(item.children);
-            }
-        });
-    };
-
-    traverse(items);
+/**
+ * Recursively extracts all paths from the navigation configuration items.
+ * @param {Array} items - The navigation items array.
+ * @returns {Array<string>} A flat array of paths.
+ */
+const extractPathsFromNavConfig = (items = []) => {
+    let paths = [];
+    items.forEach(item => {
+        if (item?.path) {
+            paths.push(item.path);
+        }
+        if (Array.isArray(item.children)) {
+            paths = [...paths, ...extractPathsFromNavConfig(item.children)];
+        }
+    });
     return paths;
 };
 
+// --- Main Router Component ---
 export default function Router() {
-    const [navItems, setNavItems] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [navConfig, setNavConfig] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        fetchNavConfig()
-            .then(result => {
-                setNavItems(result);
-                setLoading(false);
-            })
-            .catch(err => {
+        const loadNavConfig = async () => {
+            try {
+                const config = await fetchNavConfig();
+                setNavConfig(config || []);
+            } catch (err) {
                 console.error("Failed to fetch nav config:", err);
-                setLoading(false);
-            });
+                // Optionally set some default/error state for navConfig
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadNavConfig();
     }, []);
 
-    if (loading) {
-        return <LoaderProvider />; 
-    }
-
-    const allowedPaths = extractPathsFromNavItems(navItems).filter(Boolean);
-
-    const allRoutes = [
+    const allAppRoutes = [
+        // Main Dashboard Routes
         { path: '/dashboard', element: <IndexPage /> },
-        { path: '/messenger', element: <MessengerPage /> },
-        { path: '/send-notification-to-all', element: <NotificationPage /> },
         { path: '/user', element: <UserPage /> },
         { path: '/hotels', element: <ProductsPage /> },
-        { path: '/tour-requests', element: <TourRequest /> },
-        { path: '/bulk-data-processing', element: <BulkOperation /> },
-        { path: '/hotels/monthly-price', element: <MonthlyPricePage /> },
-        { path: '/hotels/monthly-price-pms', element: <PMSMonthlyPricePage /> },
-        { path: '/gst-page', element: <GSTpage /> },
         { path: '/your-hotels', element: <YourHotelsPage /> },
         { path: '/view-hotel-details/:hotelId', element: <HotelDetailsPage /> },
+
+        // Booking Routes
         { path: '/all-bookings', element: <BookingsView /> },
-        { path: '/booking-creation', element: <BookingCreate /> },
         { path: '/your-bookings', element: <SuperAdminBookingsView /> },
-        { path: '/all-users', element: <UserDetails /> },
-        { path: '/all-reviews', element: <AllReviews /> },
+        { path: '/your-booking-details/:bookingId', element: <BookingDetail /> },
+        { path: '/booking-creation', element: <BookingCreate /> },
         { path: '/book-now-page/:hotelId', element: <BookNowPage /> },
         { path: "/panel-booking", element: <PanelBookingPage /> },
+        
+        // User & Review Management
+        { path: '/all-users', element: <UserDetails /> },
+        { path: '/all-reviews', element: <AllReviews /> },
+
+        // Hotel & Pricing Management
+        { path: '/hotels/monthly-price', element: <MonthlyPricePage /> },
+        { path: '/hotels/monthly-price-pms', element: <PMSMonthlyPricePage /> },
+        { path: '/hotels/availability', element: <AvailabilityPage /> },
+        { path: '/gst-page', element: <GSTpage /> },
+        { path: '/bulk-data-processing', element: <BulkOperation /> },
+        { path: "/additional-fields", element: <AdditionalInputs /> },
+        
+        // Travel & Tours
         { path: '/your-cars', element: <CarsPage /> },
         { path: '/cars-owner', element: <OwnerList /> },
         { path: '/add-an-car-owner', element: <CarOwnerFormPage /> },
         { path: '/add-a-car', element: <CarFormPage /> },
         { path: '/your-car-details/owner-car', element: <OwnerCar /> },
         { path: '/add-tour-data', element: <TourFormPage /> },
-        { path: '/complaints', element: <ComplaintPage /> },
-        { path: '/hotels/availability', element: <AvailabilityPage /> },
-        { path: '/apply-coupon', element: <CouponPage /> },
-        { path: '/your-complaints', element: <PmsComplaintsPage /> },
-        { path: '/apply-pms-coupon', element: <PmsCouponPage /> },
-        { path: '/your-booking-details/:bookingId', element: <BookingDetail /> },
-        { path: '/add-travel-location', element: <ListTravelPage /> },
-        { path: '/change-banner', element: <BannerPage /> },
         { path: '/tour-list', element: <TourList /> },
         { path: "/tour-update/:id", element: <TourUpdatePage /> },
+        { path: "/tour-requests", element: <TourRequest /> },
         { path: "/travel-bookings", element: <TravelBookingTMS /> },
         { path: "/admin-travel/bookings", element: <TravelBookingsAdmin /> },
+        { path: '/add-travel-location', element: <ListTravelPage /> },
+        
+        // Coupons
+        { path: '/apply-coupon', element: <CouponPage /> },
+        { path: '/apply-pms-coupon', element: <PmsCouponPage /> },
         { path: "/partner-coupon", element: <PartnerCouponPage /> },
         { path: "/user-coupon", element: <UserCouponPage /> },
-        { path: "/additional-fields", element: <AdditionalInputs /> },
+
+        // Support & System
+        { path: '/complaints', element: <ComplaintPage /> },
+        { path: '/your-complaints', element: <PmsComplaintsPage /> },
+        { path: '/change-banner', element: <BannerPage /> },
+        { path: '/messenger', element: <MessengerPage /> },
+        { path: '/send-notification-to-all', element: <NotificationPage /> },
     ];
 
-    const filteredRoutes = allRoutes.filter(route =>
-        allowedPaths.includes(route.path) || /\/:/.test(route.path)
-    );
+    // Memoize the calculation of allowed paths to prevent re-computation on every render
+    const allowedPaths = useMemo(() => new Set(extractPathsFromNavConfig(navConfig)), [navConfig]);
+
+    // Filter routes based on permissions from navConfig
+    // Routes with dynamic params (e.g., /:id) are always included
+    const filteredRoutes = useMemo(() => allAppRoutes.filter(route => 
+        allowedPaths.has(route.path) || route.path.includes(':')
+    ), [allowedPaths, allAppRoutes]);
 
     const routes = useRoutes([
         {
@@ -149,11 +175,27 @@ export default function Router() {
             ),
             children: filteredRoutes,
         },
-        { path: '/', element: <LoginPage /> },
-        { path: '/404', element: <Page404 /> },
-        { path: '*', element: <Navigate to="/404" replace /> },
+        {
+            path: 'login', // Correctly handles the root path
+            element: <LoginPage />,
+        },
+        {
+            path: '/',
+            element: <Navigate to="/login" replace />, // Redirect root to login
+        },
+        {
+            path: '404',
+            element: <Page404 />,
+        },
+        {
+            path: '*',
+            element: <Navigate to="/404" replace />,
+        },
     ]);
+
+    if (isLoading) {
+        return <LoaderProvider />;
+    }
 
     return routes;
 }
-

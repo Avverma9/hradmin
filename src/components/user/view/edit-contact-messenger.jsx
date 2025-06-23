@@ -250,7 +250,7 @@ export default function EditContact({ user, open, onClose }) {
 
 EditContact.propTypes = {
     user: PropTypes.shape({
-        _id: PropTypes.string.isRequired,
+        _id: PropTypes.string,
         name: PropTypes.string,
     }),
     open: PropTypes.bool.isRequired,

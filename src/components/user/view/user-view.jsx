@@ -288,7 +288,7 @@ export default function UserPage() {
                     email={row.email}
                     password={row.password}
                     status={row?.status ? 'Active' : 'Inactive'}
-                    avatarUrl={row.avatarUrl || row.images}
+                    avatarUrl={row.images && row.images.length > 0 ? row.images[0] : ''}
                     selected={selected.indexOf(row.name) !== -1}
                     handleClick={(event) => handleClick(event, row.name)}
                     handleDelete={() => handleDelete(row._id)}
