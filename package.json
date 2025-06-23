@@ -22,7 +22,7 @@
     "@mui/x-date-pickers": "^7.18.0",
     "@reduxjs/toolkit": "^2.2.7",
     "@tanstack/react-table": "^8.20.5",
-    "apexcharts": "^3.54.0",
+    "apexcharts": "^4.7.0",
     "axios": "^1.7.7",
     "bootstrap": "^5.3.3",
     "country-state-city": "^3.2.1",
