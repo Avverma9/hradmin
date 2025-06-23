@@ -15,119 +15,81 @@ const BookingDetails = ({ booking, onClose }) => {
         dropP,
         pickupD,
         dropD,
-        seatsData = [],
         bookedBy,
         customerMobile,
         bookingDate,
         bookingId,
     } = booking;
 
-    const formatDateTime = (dateStr) =>
-        new Date(dateStr).toLocaleString(undefined, {
-            dateStyle: 'medium',
-            timeStyle: 'short',
+    const formatDateTime = (dateStr) => {
+        if (!dateStr) return 'N/A';
+        return new Date(dateStr).toLocaleString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
         });
-
-    // const seatCount = seatsData.length;
-    // const totalPrice = seatsData.reduce((sum, seat) => sum + (seat.seatPrice || 0), 0);
+    };
 
     return (
-        <Box
+        <Paper
+            elevation={1}
             sx={{
-                maxWidth: 800,
-                margin: '40px auto',
-                border: '2px dotted #1976d2',
-                borderRadius: 4,
-                backgroundColor: '#fefefe',
-                boxShadow: 3,
+                width: "calc(100% - 64px)",
+                margin: '20px auto',
+                border: '2px dotted #1976d2', // Border applied directly to Paper
+                borderRadius: 3,
+                p: 2, // Main padding
             }}
         >
-            <Paper
-                elevation={0}
-                sx={{
-                    padding: 4,
-                    borderRadius: 4,
-                    backgroundColor: 'white',
-                }}
-            >
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h5" fontWeight="bold" color="primary">
-                        Booking Details
-                    </Typography>
-                    {onClose && (
-                        <Button variant="contained" color="error" onClick={onClose}>
-                            Close
-                        </Button>
-                    )}
-                </Box>
-
-                <Divider sx={{ mb: 3 }} />
-
-                <Grid container spacing={2}>
-                    {[
-                        ['Booking ID', bookingId],
-                        ['Booked By', bookedBy],
-                        ['Mobile', customerMobile],
-                        ['Vehicle Number', vehicleNumber],
-                        ['Pickup Location', pickupP],
-                        ['Drop Location', dropP],
-                        ['Pickup Date', formatDateTime(pickupD)],
-                        ['Drop Date', formatDateTime(dropD)],
-                        // ['Total Seats Booked', seatCount],
-                        // ['Total Price', `₹${totalPrice}`],
-                        ['Booking Date', formatDateTime(bookingDate)],
-                    ]?.map(([label, value], index) => (
-                        <Grid item xs={12} sm={6} key={index}>
-                            <Box
-                                sx={{
-                                    backgroundColor: '#f5f5f5',
-                                    padding: 2,
-                                    borderRadius: 2,
-                                    borderLeft: '4px solid #1976d2',
-                                }}
-                            >
-                                <Typography variant="subtitle2" color="textSecondary">
-                                    {label}
-                                </Typography>
-                                <Typography variant="body1" fontWeight="bold">
-                                    {value}
-                                </Typography>
-                            </Box>
-                        </Grid>
-                    ))}
-                </Grid>
-
-                {/* Show Seat-wise Details */}
-                <Divider sx={{ my: 4 }} />
-                {/* <Typography variant="h6" gutterBottom color="primary">
-                    Seat Details
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+                <Typography variant="h6" fontWeight="bold" color="primary">
+                    Booking Details
                 </Typography>
-                <Grid container spacing={2}>
-                    {seatsData?.map((seat, index) => (
-                        <Grid item xs={12} sm={6} key={seat._id}>
-                            <Box
-                                sx={{
-                                    backgroundColor: '#e3f2fd',
-                                    padding: 2,
-                                    borderRadius: 2,
-                                    borderLeft: '4px solid #0288d1',
-                                }}
-                            >
-                                <Typography variant="subtitle2" color="textSecondary">
-                                    Seat #{seat.seatNumber}
-                                </Typography>
-                                <Typography variant="body1">
-                                    Type: {seat.seatType}
-                                </Typography>
-                                <Typography variant="body1">
-                                    Price: ₹{seat.seatPrice}
-                                </Typography>
-                            </Box>
-                        </Grid>
-                    ))}
-                </Grid> */}
-            </Paper>
-        </Box>
+                {onClose && (
+                    <Button size="small" variant="contained" color="error" onClick={onClose}>
+                        Close
+                    </Button>
+                )}
+            </Box>
+
+            <Divider sx={{ mb: 1.5 }} />
+
+            <Grid container spacing={1}> {/* Further reduced spacing */}
+                {[
+                    ['Booking ID', bookingId],
+                    ['Booked By', bookedBy],
+                    ['Mobile', customerMobile],
+                    ['Vehicle Number', vehicleNumber],
+                    ['Pickup Location', pickupP],
+                    ['Drop Location', dropP],
+                    ['Pickup Date', formatDateTime(pickupD)],
+                    ['Drop Date', formatDateTime(dropD)],
+                    ['Booking Date', formatDateTime(bookingDate)],
+                ]?.map(([label, value]) => (
+                    <Grid item xs={12} sm={6} key={label}>
+                        <Box
+                            sx={{
+                                backgroundColor: '#f5f5f5',
+                                p: 1, // Further reduced padding
+                                borderRadius: 1,
+                                borderLeft: '4px solid #1976d2',
+                                height: '100%',
+                            }}
+                        >
+                            <Typography variant="caption" color="text.secondary" lineHeight={1.2}>
+                                {label}
+                            </Typography>
+                            <Typography variant="body2" fontWeight="bold">
+                                {value || 'N/A'}
+                            </Typography>
+                        </Box>
+                    </Grid>
+                ))}
+            </Grid>
+        </Paper>
     );
 };
 
