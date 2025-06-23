@@ -28,11 +28,8 @@ const BookingDetails = ({ booking, onClose }) => {
             timeStyle: 'short',
         });
 
-    // Calculate total seat count and price
-
-    console.log("seatsData", booking);
-    const seatCount = seatsData.length;
-    const totalPrice = seatsData.reduce((sum, seat) => sum + (seat.seatPrice || 0), 0);
+    // const seatCount = seatsData.length;
+    // const totalPrice = seatsData.reduce((sum, seat) => sum + (seat.seatPrice || 0), 0);
 
     return (
         <Box
