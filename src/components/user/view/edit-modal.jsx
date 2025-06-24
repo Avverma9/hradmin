@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 
-import { Close, Person, VpnKey, Business, Badge, Phone, Mail, Add, Cancel } from '@mui/icons-material';
+import { Close, Person, VpnKey, Business,   Visibility, VisibilityOff, Phone, Mail, Add, Cancel } from '@mui/icons-material';
 import {
   Box,
   Grid,
@@ -60,6 +60,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
   const [openSelect, setOpenSelect] = useState(false);
   const [initialMenuItems, setInitialMenuItems] = useState([]);
   const [assignedSearchTerm, setAssignedSearchTerm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const paths = useMenuItems();
   const role = useRole();
@@ -73,7 +74,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
         email: user.email || '',
         mobile: user.mobile || '',
         address: user.address || '',
-        password: '',
+        password: user.password ||'',
         role: user.role || '',
         status: user.status || false,
       });
@@ -84,6 +85,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
       setImagePreview(user.images || '');
       setImageFile(null);
       setAssignedSearchTerm('');
+      setShowPassword(false);
     }
   }, [user]);
 
@@ -160,6 +162,13 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
   const filteredAssignedItems = selectedMenuItems.filter(item => 
     item.title.toLowerCase().includes(assignedSearchTerm.toLowerCase())
   );
+  const handleClickShowPassword = () => {
+    setShowPassword((prev) => !prev);
+  };
+
+  const handleMouseDownPassword = (event) => {
+    event.preventDefault();
+  };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg" PaperProps={{ sx: { borderRadius: 4 } }}>
@@ -228,7 +237,39 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} sm={6}><TextField name="password" type="password" label="New Password" placeholder="Leave blank to keep unchanged" fullWidth onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><VpnKey color="action" /></InputAdornment> }} /></Grid>
+                  <Grid item xs={12} sm={6}>
+                     <TextField 
+                       name="password" 
+                       type={showPassword ? 'text' : 'password'}
+                       label="New Password" 
+                       position="start"
+                       fullWidth 
+                       value={formData.password || ''} 
+                       onChange={handleChange} 
+                       InputProps={{ 
+                         startAdornment: (
+                           <InputAdornment position="start">
+                             <VpnKey color="action" />
+                           </InputAdornment>
+                         ),
+                         endAdornment: (
+                           <InputAdornment position="end">
+                             <IconButton
+                               aria-label="toggle password visibility"
+                               onClick={handleClickShowPassword}
+                               onMouseDown={handleMouseDownPassword}
+                               edge="end"
+                             >
+                               {showPassword ? <VisibilityOff /> : <Visibility />}
+                             </IconButton>
+                           </InputAdornment>
+                         ),
+                       }} 
+                     />
+                   </Grid>
+                 
+                
+                
                 </Grid>
               </CardContent>
             </Card>
