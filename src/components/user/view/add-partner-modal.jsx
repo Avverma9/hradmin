@@ -1,26 +1,33 @@
-/* eslint-disable react/jsx-boolean-value */
-import PropTypes from "prop-types";
-import React, { useState } from "react";
+import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 
 import {
   Box,
   Grid,
+  Card,
+  Alert,
   Button,
   Dialog,
-  Select,
   Avatar,
+  Select,
   MenuItem,
   TextField,
   InputLabel,
+  Typography,
+  IconButton,
+  CardHeader,
+  CardContent,
   FormControl,
   DialogTitle,
   DialogActions,
   DialogContent,
-} from "@mui/material";
+  InputAdornment,
+} from '@mui/material';
+import { Close, Person, Mail, Phone, Business, Badge, VpnKey, Info } from '@mui/icons-material';
 import { useRole } from "../../../../utils/additional/role";
 
 const AddUserModal = ({ open, onClose, onSubmit }) => {
-  const role = useRole()
+  const role = useRole();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -28,14 +35,13 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
     address: "",
     password: "",
     role: "",
-    status: "", // This will hold true or false
+    status: true,
     images: null,
-    imageUrl: "",
   });
+  const [imagePreview, setImagePreview] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // Convert status value to boolean
     const newValue = name === "status" ? value === "true" : value;
     setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
@@ -43,138 +49,115 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setFormData((prev) => ({
-        ...prev,
-        images: file,
-        imageUrl: URL.createObjectURL(file),
-      }));
+      setFormData((prev) => ({ ...prev, images: file }));
+      setImagePreview(URL.createObjectURL(file));
     }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData((prev) => ({ ...prev, images: null }));
+    setImagePreview("");
   };
 
   const handleSubmit = () => {
     const data = new FormData();
-    data.append("name", formData.name);
-    data.append("email", formData.email);
-    data.append("mobile", formData.mobile);
-    data.append("address", formData.address);
-    data.append("password", formData.password);
-    data.append("role", formData.role);
-    // Convert boolean to string for FormData
-    data.append("status", formData.status ? "true" : "false");
-    if (formData.images) {
-      data.append("images", formData.images);
-    }
+    Object.keys(formData).forEach(key => {
+        if (key === 'status') {
+            data.append(key, formData[key] ? "true" : "false");
+        } else if (formData[key] !== null) {
+            data.append(key, formData[key]);
+        }
+    });
     onSubmit(data);
     onClose();
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>Basic Info</DialogTitle>
-      <DialogContent>
-        <Box display="flex" justifyContent="center" mb={3}>
-          <Box display="flex" flexDirection="column" alignItems="center">
-            <Avatar
-              src={formData.imageUrl}
-              sx={{ width: 80, height: 80, marginBottom: 1 }}
-            />
-            <Button variant="contained" component="label" color="primary">
-              Upload Photo
-              <input
-                hidden
-                accept="image/*"
-                type="file"
-                onChange={handleImageChange}
-              />
-            </Button>
-          </Box>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" PaperProps={{ sx: { borderRadius: 4 } }}>
+      <DialogTitle sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6" fontWeight="600">
+            Create New Partner
+          </Typography>
+          <IconButton onClick={onClose} size="small">
+            <Close />
+          </IconButton>
         </Box>
-        <Box component="form" noValidate autoComplete="off">
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="name"
-                label="Full Name"
-                fullWidth
-                value={formData.name}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="email"
-                label="Email"
-                fullWidth
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="mobile"
-                label="Mobile Number"
-                fullWidth
-                value={formData.mobile}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="address"
-                label="Your Location"
-                fullWidth
-                value={formData.address}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Select Role</InputLabel>
-                <Select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  label="Select Role"
-                >
-                  {role.map((item) => (
-                    <MenuItem key={item._id} value={item.role}>
-                      {item.role}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Select Status</InputLabel>
-                <Select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                >
-                  <MenuItem value="true">Active</MenuItem>
-                  <MenuItem value="false">Inactive</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="password"
-                label="Enter your password"
-                fullWidth
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </Grid>
+      </DialogTitle>
+      <DialogContent sx={{ p: { xs: 2, sm: 3 }, bgcolor: 'grey.50' }}>
+        {/* Added Informational Alert */}
+        <Alert severity="info" icon={<Info fontSize="inherit" />} sx={{ mb: 3 }}>
+          After creating a partner, you can assign page authorizations from the **Update** section.
+        </Alert>
+        
+        <Grid container spacing={{ xs: 2, sm: 3 }}>
+          <Grid item xs={12} sm={5} md={4}>
+             <Card variant="outlined" sx={{ height: '100%' }}>
+                <CardHeader title="Profile Picture" titleTypographyProps={{ fontWeight: '600', fontSize: '1rem' }} />
+                <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 2, pt: 1 }}>
+                    <Box sx={{ position: 'relative', mb: 2 }}>
+                        <Avatar src={imagePreview} sx={{ width: 120, height: 120, border: '3px dashed', borderColor: 'grey.400' }} />
+                        {imagePreview && (
+                            <IconButton
+                              size="small"
+                              onClick={handleRemoveImage}
+                              sx={{
+                                position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(255, 255, 255, 0.8)',
+                                '&:hover': { bgcolor: 'white' },
+                              }}
+                            >
+                              <Close sx={{ fontSize: '1rem' }} />
+                            </IconButton>
+                        )}
+                    </Box>
+                    <Button variant="outlined" component="label" color="inherit">
+                      Upload Photo
+                      <input hidden accept="image/*" type="file" onChange={handleImageChange} />
+                    </Button>
+                </CardContent>
+            </Card>
           </Grid>
-        </Box>
+          <Grid item xs={12} sm={7} md={8}>
+            <Card variant="outlined">
+                <CardHeader title="Account Information" titleTypographyProps={{ fontWeight: '600' }} />
+                <CardContent>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12}><TextField name="name" label="Full Name" fullWidth value={formData.name} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><Person color="action" /></InputAdornment> }} /></Grid>
+                        <Grid item xs={12} sm={6}><TextField name="mobile" label="Mobile Number" fullWidth value={formData.mobile} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><Phone color="action" /></InputAdornment> }} /></Grid>
+                        <Grid item xs={12} sm={6}><TextField name="email" label="Email Address" type="email" fullWidth value={formData.email} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><Mail color="action" /></InputAdornment> }} /></Grid>
+                        <Grid item xs={12}><TextField name="address" label="Address" fullWidth value={formData.address} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><Business color="action" /></InputAdornment> }} /></Grid>
+                        <Grid item xs={12} sm={6}>
+                            <FormControl fullWidth>
+                                <InputLabel>Role</InputLabel>
+                                <Select name="role" value={formData.role} onChange={handleChange} label="Role">
+                                    {role.map((item) => ( <MenuItem key={item._id} value={item.role}>{item.role}</MenuItem> ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                             <FormControl fullWidth>
+                                <InputLabel>Status</InputLabel>
+                                <Select name="status" value={formData.status} onChange={handleChange} label="Status">
+                                    <MenuItem value="true">Active</MenuItem>
+                                    <MenuItem value="false">Inactive</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                         <Grid item xs={12}>
+                            <TextField name="password" type="password" label="Password" fullWidth value={formData.password} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><VpnKey color="action" /></InputAdornment> }} />
+                         </Grid>
+                    </Grid>
+                </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="secondary">
+      <DialogActions sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+        <Button onClick={onClose} color="inherit" variant="outlined">
           Cancel
         </Button>
-        <Button onClick={handleSubmit} color="primary">
-          Save
+        <Button onClick={handleSubmit} variant="contained" color="primary">
+          Create Partner
         </Button>
       </DialogActions>
     </Dialog>
