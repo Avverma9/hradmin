@@ -1,48 +1,49 @@
-import React, { useEffect, useState } from "react";
-import { DataGrid } from "@mui/x-data-grid";
-import { useDispatch, useSelector } from "react-redux";
-import { getAllOwner } from "../redux/reducers/travel/carOwner";
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { DataGrid } from '@mui/x-data-grid';
 import {
   Paper,
   Button,
   Box,
   Typography,
   TextField,
-  Modal,
-} from "@mui/material";
-import "./owner-list.css";
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  InputAdornment,
+  Container,
+  Avatar,
+  Tooltip,
+} from '@mui/material';
+import { Close, Download, Visibility, Search } from '@mui/icons-material';
+import { getAllOwner } from '../redux/reducers/travel/carOwner';
 
 const OwnerList = () => {
-  const owners = useSelector((state) => state.owner.data);
   const dispatch = useDispatch();
+  const { data: owners = [], loading } = useSelector((state) => state.owner);
+  
   const [selectedDlImage, setSelectedDlImage] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [filteredOwners, setFilteredOwners] = useState([]);
 
   useEffect(() => {
-    const fetchOwners = async () => {
-      try {
-        await dispatch(getAllOwner());
-      } catch (error) {
-        console.error("Error fetching owner data:", error);
-      }
-    };
-
-    fetchOwners();
+    dispatch(getAllOwner());
   }, [dispatch]);
 
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredOwners(owners);
+    const ownersArray = Array.isArray(owners) ? owners : [];
+    if (searchQuery.trim() === '') {
+      setFilteredOwners(ownersArray);
     } else {
       const lowercasedQuery = searchQuery.toLowerCase();
       setFilteredOwners(
-        owners.filter(
+        ownersArray.filter(
           (owner) =>
-            owner?.mobile?.toString().toLowerCase().includes(lowercasedQuery)
-            ||
-            owner?.dl?.toString().toLowerCase().includes(lowercasedQuery),
-        ),
+            owner?.mobile?.toString().toLowerCase().includes(lowercasedQuery) ||
+            owner?.dl?.toString().toLowerCase().includes(lowercasedQuery)
+        )
       );
     }
   }, [searchQuery, owners]);
@@ -56,130 +57,124 @@ const OwnerList = () => {
   };
 
   const handleDownloadImage = (dlImage) => {
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = dlImage;
-    link.download = "DL_Image.jpg";
+    link.download = 'DL_Image.jpg';
     link.click();
   };
 
   const columns = [
-    { field: "name", headerName: "Name", width: 160 },
-    { field: "role", headerName: "Role", width: 120 },
-    { field: "mobile", headerName: "Mobile", width: 140 },
-    { field: "email", headerName: "Email", width: 180 },
-    { field: "dl", headerName: "DL", width: 120 },
-    { field: "city", headerName: "City", width: 120 },
-    { field: "state", headerName: "State", width: 120 },
-    { field: "pinCode", headerName: "Pin Code", width: 100 },
     {
-      field: "actions",
-      headerName: "Actions",
-      width: 140,
+      field: 'name',
+      headerName: 'Name',
+      width: 200,
       renderCell: (params) => (
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={(event) => {
-            event.stopPropagation();
-            handleViewDlImage(params.row.dlImage[0]);
-          }}
-        >
-          View DL
-        </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Avatar src={params.row.images?.[0]} sx={{ mr: 1.5, width: 36, height: 36 }} />
+              <Typography variant="body2">{params.value}</Typography>
+          </Box>
+      )
+    },
+    { field: 'mobile', headerName: 'Mobile', width: 130 },
+    { field: 'email', headerName: 'Email', width: 220 },
+    { field: 'dl', headerName: 'DL Number', width: 150 },
+    { field: 'city', headerName: 'City', width: 120 },
+    { field: 'state', headerName: 'State', width: 120 },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 120,
+      sortable: false,
+      renderCell: (params) => (
+        <Tooltip title="View Driving License">
+          <IconButton
+            variant="outlined"
+            size="small"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleViewDlImage(params.row.dlImage?.[0]);
+            }}
+          >
+            <Visibility />
+          </IconButton>
+        </Tooltip>
       ),
     },
   ];
 
-  const rows = filteredOwners.map((owner) => ({
-    id: owner._id,
-    name: owner.name,
-    role: owner.role,
-    mobile: owner.mobile,
-    email: owner.email,
-    dl: owner.dl,
-    city: owner.city,
-    state: owner.state,
-    address: owner.address,
-    pinCode: owner.pinCode,
-    dlImage: owner.dlImage,
-  }));
+  const rows = Array.isArray(filteredOwners) ? filteredOwners.map((owner) => ({
+    id: owner._id, // Ensure unique id for each row
+    ...owner
+  })) : [];
 
   return (
-    <Box sx={{ padding: 3 }}>
-      <Typography
-        variant="h6"
-        sx={{
-          mb: 2,
-          textAlign: "center",
-          backgroundColor: "#f5f5f5",
-          padding: 2,
-          borderRadius: 1,
-          border: "1px solid #ddd",
-          fontSize: "1rem",
-        }}
-      >
-        List of registered car owners with associated documents and contact details.
-      </Typography>
+    <Container maxWidth="xl" sx={{ py: 3 }}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom>
+            Car Owners
+        </Typography>
+        <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                <TextField
+                label="Search by Mobile or DL"
+                variant="outlined"
+                size="small"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{ width: 300 }}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <Search />
+                        </InputAdornment>
+                    ),
+                }}
+                />
+            </Box>
 
-      <Box sx={{ mb: 2, textAlign: "right" }}>
-        <TextField
-          label="Search by Mobile or DL"
-          variant="outlined"
-          size="small"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          sx={{ width: 300 }}
-        />
-      </Box>
-
-      <Paper elevation={3}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: { pageSize: 10, page: 0 },
-            },
-          }}
-          pageSizeOptions={[10, 20, 30]}
-          checkboxSelection
-          sx={{ height: 600, border: 0 }}
-        />
-      </Paper>
+            <Paper elevation={0} sx={{ height: 650, width: '100%', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    loading={loading}
+                    initialState={{
+                        pagination: {
+                        paginationModel: { pageSize: 10, page: 0 },
+                        },
+                    }}
+                    pageSizeOptions={[10, 20, 50]}
+                    checkboxSelection
+                    disableRowSelectionOnClick
+                    sx={{ border: 0 }}
+                />
+            </Paper>
+        </Paper>
 
       {/* Modal for DL Image */}
-      <Modal open={!!selectedDlImage} onClose={closeDlImage}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            backgroundColor: "white",
-            boxShadow: 24,
-            p: 3,
-            borderRadius: 1,
-            maxWidth: 500,
-            textAlign: "center",
-          }}
-        >
-          <img
-            src={selectedDlImage}
-            alt="DL"
-            style={{ width: "100%", maxHeight: "400px", objectFit: "contain" }}
-          />
-          <Box sx={{ mt: 2 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => handleDownloadImage(selectedDlImage)}
-            >
-              Download DL Image
-            </Button>
-          </Box>
-        </Box>
-      </Modal>
-    </Box>
+        <Dialog open={!!selectedDlImage} onClose={closeDlImage} maxWidth="sm">
+            <DialogTitle>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                    Driving License
+                    <IconButton onClick={closeDlImage}><Close/></IconButton>
+                </Box>
+            </DialogTitle>
+            <DialogContent>
+                <img
+                    src={selectedDlImage}
+                    alt="DL"
+                    style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+                />
+            </DialogContent>
+            <DialogActions>
+                <Button
+                    variant="contained"
+                    onClick={() => handleDownloadImage(selectedDlImage)}
+                    startIcon={<Download/>}
+                >
+                    Download
+                </Button>
+            </DialogActions>
+        </Dialog>
+    </Container>
   );
 };
 
