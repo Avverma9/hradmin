@@ -14,7 +14,7 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@faker-js/faker": "^9.0.3",
-    "@iconify/react": "^5.0.2",
+    "@iconify/react": "^5.2.1",
     "@mui/icons-material": "^6.1.1",
     "@mui/lab": "^6.0.0-beta.10",
     "@mui/material": "^6.1.1",
@@ -53,6 +53,7 @@
     "slick-carousel": "^1.8.1",
     "socket.io-client": "^4.8.1",
     "styled-components": "^6.1.14",
+    "three": "^0.177.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
