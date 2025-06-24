@@ -1,40 +1,156 @@
-import React, { useEffect, useState } from "react";
-import "./Cars.css";
-import { useDispatch, useSelector } from "react-redux";
-import { filterCar, getAllCars } from "../redux/reducers/travel/car";
-import { MdOutlineAirlineSeatReclineNormal } from "react-icons/md";
-import { BsFillFuelPumpFill, BsPersonCircle } from "react-icons/bs";
-import { FaPersonWalkingLuggage } from "react-icons/fa6";
-import { IoMdSpeedometer } from "react-icons/io";
-import axios from "axios";
-import { localUrl } from "../../../utils/util";
-import { CiSearch } from "react-icons/ci";
-import { RxCross1 } from "react-icons/rx";
-import { Button, TextField, Typography } from "@mui/material";
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { format } from "date-fns"; // Import format from date-fns
-import SeatData from "./seat-data";
-import { FaLocationArrow, FaMapMarkerAlt } from "react-icons/fa";
-import { AiOutlineCalendar } from "react-icons/ai";
-import { indianTime } from "../../../utils/format-time";
-import { useLoader } from "../../../utils/loader";
+import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
+import { useDispatch, useSelector } from 'react-redux';
+import { format } from 'date-fns';
+import axios from 'axios';
+
+// MUI Components
+import {
+  Box,
+  Button,
+  Container,
+  Paper,
+  Typography,
+  Grid,
+  TextField,
+  Checkbox,
+  FormControlLabel,
+  FormGroup,
+  Divider,
+  Card,
+  CardContent,
+  CardMedia,
+  CardActions,
+  Chip,
+  InputAdornment,
+  Skeleton,
+  Stack,
+} from '@mui/material';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+
+// MUI Icons
+import {
+  Search,
+  Clear,
+  LocalGasStation,
+  EventSeat,
+  Work,
+  Speed,
+  Person,
+  LocationOn,
+  Map,
+  CalendarToday,
+} from '@mui/icons-material';
+
+// Local Imports
+import { filterCar, getAllCars } from '../redux/reducers/travel/car';
+import { localUrl } from '../../../utils/util';
+import { useLoader } from '../../../utils/loader';
+import SeatData from './seat-data';
+
+// CarCard Component for individual car display
+const CarCard = ({ car, onBookNow }) => {
+  const handleCarImage = (carData) =>
+    carData?.images && Array.isArray(carData.images) && carData.images.length > 0
+      ? carData.images[0]
+      : "https://placehold.co/600x400/e0e0e0/757575?text=Car";
+      
+  const availableSeats = car.seatConfig?.filter(seat => !seat.bookedBy).length || 0;
+
+  return (
+    <Card variant="outlined" sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, mb: 2, borderRadius: 3, transition: 'box-shadow 0.3s', '&:hover': { boxShadow: 3 } }}>
+      <CardMedia
+        component="img"
+        sx={{ width: { xs: '100%', sm: 220 }, height: { xs: 180, sm: 'auto' }, objectFit: 'cover' }}
+        image={handleCarImage(car)}
+        alt={`${car.make} ${car.model}`}
+      />
+      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <CardContent sx={{ flex: '1 0 auto' }}>
+          <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+            <Box>
+              <Typography component="div" variant="h6" fontWeight="bold">
+                {car.make} {car.model}
+              </Typography>
+              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                {car.color} • {car.runningStatus}
+              </Typography>
+            </Box>
+            {car.recommended && <Chip label="Recommended" color="success" size="small" variant="filled" />}
+          </Box>
+          <Grid container spacing={1.5} mt={0.5}>
+            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><LocalGasStation fontSize="small" color="action"/> <Typography variant="body2">{car.fuelType}</Typography></Grid>
+            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><EventSeat fontSize="small" color="action"/> <Typography variant="body2">{car.seater} Seater</Typography></Grid>
+            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><Work fontSize="small" color="action"/> <Typography variant="body2">{car.luggage} Luggage</Typography></Grid>
+            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><Speed fontSize="small" color="action"/> <Typography variant="body2">₹{car.extraKm}/km Extra</Typography></Grid>
+            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><LocationOn fontSize="small" color="action"/> <Typography variant="body2">From: {car.pickupP}</Typography></Grid>
+            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><Map fontSize="small" color="action"/> <Typography variant="body2">To: {car.dropP}</Typography></Grid>
+            <Grid item xs={12} display="flex" alignItems="center" gap={1}><CalendarToday fontSize="small" color="action"/> <Typography variant="body2">{format(new Date(car.pickupD), 'p, dd MMM')} to {format(new Date(car.dropD), 'p, dd MMM')}</Typography></Grid>
+          </Grid>
+          <Box mt={1.5}>
+              {car.badges?.map((badge, index) => <Chip key={index} label={badge} size="small" sx={{ mr: 0.5, mb: 0.5 }} />)}
+          </Box>
+        </CardContent>
+        <Divider />
+        <CardActions sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, bgcolor: 'grey.50' }}>
+           <Box>
+                <Typography variant="h6" fontWeight="bold">₹{car.price}</Typography>
+                <Typography variant="caption" color="text.secondary">Full ride</Typography>
+           </Box>
+           <Box textAlign="right">
+              <Button variant="contained" size="medium" onClick={onBookNow}>
+                Book Now
+              </Button>
+              <Typography variant="caption" display="block" color="text.secondary" mt={0.5}>
+                {availableSeats} seats available
+              </Typography>
+           </Box>
+        </CardActions>
+      </Box>
+    </Card>
+  );
+};
+
+CarCard.propTypes = {
+  car: PropTypes.object.isRequired,
+  onBookNow: PropTypes.func.isRequired,
+};
+
+// Skeleton Loader for CarCard
+const CarCardSkeleton = () => (
+    <Card variant="outlined" sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, mb: 2, borderRadius: 3 }}>
+        <Skeleton variant="rectangular" sx={{ width: { xs: '100%', sm: 220 }, height: { xs: 180, sm: 250 } }} />
+        <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, p: 2 }}>
+            <Skeleton variant="text" width="60%" height={32} />
+            <Skeleton variant="text" width="40%" height={20} />
+            <Grid container spacing={2} mt={1}>
+                <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
+                <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
+                <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
+                <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
+                <Grid item xs={12}><Skeleton variant="text" width="90%" /></Grid>
+            </Grid>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto' }}>
+                <Skeleton variant="text" width={80} height={40} />
+                <Skeleton variant="rectangular" width={100} height={40} />
+            </Box>
+        </Box>
+    </Card>
+);
 
 const Cars = () => {
   const dispatch = useDispatch();
   const [data, setData] = useState([]);
   const [openSeatData, setOpenSeatData] = useState(false);
-  const [selectedCarId, setSelectedCarId] = useState(null); // Track selected car ID
-  const { showLoader, hideLoader } = useLoader()
+  const [selectedCar, setSelectedCar] = useState(null);
+  const { showLoader, hideLoader, isLoading } = useLoader();
   const filterList = useSelector((state) => state.car.data);
-  const [pickupP, sePickupP] = useState("");
-  const [dropP, setDropP] = useState("");
-  const [filters, setFilters] = useState({
-    make: [],
-    fuelType: [],
-  });
-  const [fromDate, setFromDate] = useState(""); // New state for from date
-  const [toDate, setToDate] = useState(""); // New state for to date
+  const [pickupP, setPickupP] = useState('');
+  const [dropP, setDropP] = useState('');
+  const [filters, setFilters] = useState({ make: [], fuelType: [] });
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,15 +159,13 @@ const Cars = () => {
         const response = await dispatch(getAllCars());
         setData(response.payload);
       } catch (error) {
-        console.error("Failed to fetch cars:", error);
+        console.error('Failed to fetch cars:', error);
       } finally {
         hideLoader();
       }
     };
-
     fetchData();
   }, [dispatch]);
-
 
   const handleFilterChange = async (key, value) => {
     const newFilters = { ...filters };
@@ -62,311 +176,115 @@ const Cars = () => {
     } else {
       newFilters[key] = [...currentFilterValues, value];
     }
-
     setFilters(newFilters);
     showLoader();
-
     try {
-      if (newFilters.make.length === 0 && newFilters.fuelType.length === 0) {
-        const response = await dispatch(getAllCars());
-        setData(response.payload);
-      } else {
         const response = await dispatch(filterCar({ query: key, value }));
         setData(response.payload);
-      }
     } catch (error) {
-      console.error("Filter failed:", error);
+      console.error('Filter failed:', error);
     } finally {
       hideLoader();
     }
   };
 
-
-  const handleSeatDataOpen = (carId) => {
-    setSelectedCarId(carId); // Set the selected car ID
-    setOpenSeatData(true); // Open the SeatData component
+  const handleSeatDataOpen = (car) => {
+    setSelectedCar(car);
+    setOpenSeatData(true);
   };
 
   const handleSeatDataClose = () => {
-    setOpenSeatData(false); // Close the SeatData component
-  };
-
-  const handleCarImage = (car) => {
-    return car?.images && Array.isArray(car.images) && car.images.length > 0
-      ? car.images[0]
-      : "https://avverma.s3.ap-south-1.amazonaws.com/car.png";
+    setOpenSeatData(false);
   };
 
   const handleSearch = async () => {
     if ((!pickupP || !dropP) && (!fromDate || !toDate)) return;
-
-    const formattedFromDate = fromDate ? format(fromDate, "yyyy-MM-dd") : "";
-    const formattedToDate = toDate ? format(toDate, "yyyy-MM-dd") : "";
-
+    const formattedFromDate = fromDate ? format(fromDate, 'yyyy-MM-dd') : '';
+    const formattedToDate = toDate ? format(toDate, 'yyyy-MM-dd') : '';
     const queryParams = [
       pickupP && `pickupP=${pickupP}`,
       dropP && `dropP=${dropP}`,
       formattedFromDate && `pickupD=${formattedFromDate}`,
       formattedToDate && `dropD=${formattedToDate}`,
-    ]
-      .filter(Boolean)
-      .join("&");
-
+    ].filter(Boolean).join('&');
+    
     showLoader();
-
     try {
       const response = await axios.get(`${localUrl}/travel/filter-car/by-query?${queryParams}`);
       setData(response.data);
     } catch (error) {
-      console.error("Search failed:", error);
+      console.error('Search failed:', error);
     } finally {
       hideLoader();
     }
   };
 
-  const handleClear = () => {
-    window.location.reload();
-  };
+  const handleClear = () => window.location.reload();
 
   return (
-    <div className="cars-page">
-      <header className="car-upper-header">
-        <div className="car-header-row">
-          <TextField
-            label="Pickup"
-            variant="outlined"
-            value={pickupP}
-            onChange={(e) => sePickupP(e.target.value)}
-            sx={{ width: 140 }}
-          />
+    <Container maxWidth="xl" sx={{ py: 3 }}>
+        <Paper variant="outlined" sx={{ p: 2, mb: 3, borderRadius: 3 }}>
+            <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} sm={6} md={2.5}><TextField fullWidth label="Pickup" value={pickupP} onChange={(e) => setPickupP(e.target.value)} InputProps={{startAdornment: <InputAdornment position="start"><LocationOn /></InputAdornment>}}/></Grid>
+                <Grid item xs={12} sm={6} md={2.5}><TextField fullWidth label="Drop" value={dropP} onChange={(e) => setDropP(e.target.value)} InputProps={{startAdornment: <InputAdornment position="start"><Map /></InputAdornment>}}/></Grid>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <Grid item xs={12} sm={6} md={2}><DatePicker label="From" value={fromDate} onChange={setFromDate} renderInput={(params) => <TextField {...params} fullWidth />} /></Grid>
+                    <Grid item xs={12} sm={6} md={2}><DatePicker label="To" value={toDate} onChange={setToDate} renderInput={(params) => <TextField {...params} fullWidth />} /></Grid>
+                </LocalizationProvider>
+                <Grid item xs={12} md={3} display="flex" gap={1}>
+                    <Button fullWidth variant="contained" onClick={handleSearch} startIcon={<Search />} sx={{ height: 56 }}>Search</Button>
+                    <Button fullWidth variant="outlined" onClick={handleClear} startIcon={<Clear />} sx={{ height: 56 }}>Clear</Button>
+                </Grid>
+            </Grid>
+        </Paper>
 
-          <TextField
-            label="Drop"
-            variant="outlined"
-            value={dropP}
-            onChange={(e) => setDropP(e.target.value)}
-            sx={{ width: 140 }}
-          />
+        <Grid container spacing={3}>
+            <Grid item xs={12} md={3}>
+                <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, position: 'sticky', top: 20 }}>
+                    <Typography variant="h6" gutterBottom>Filters</Typography>
+                    <Divider sx={{ mb: 2 }}/>
+                    <Box mb={2}>
+                        <Typography variant="subtitle1" fontWeight="bold">Car Type</Typography>
+                        <FormGroup>
+                            {Array.from(new Set(filterList?.map((car) => car.make))).map((make) => (
+                                <FormControlLabel key={make} control={<Checkbox checked={filters.make.includes(make)} onChange={() => handleFilterChange('make', make)} />} label={make} />
+                            ))}
+                        </FormGroup>
+                    </Box>
+                    <Divider sx={{ my: 2 }}/>
+                    <Box>
+                        <Typography variant="subtitle1" fontWeight="bold">Fuel Type</Typography>
+                        <FormGroup>
+                            {Array.from(new Set(filterList?.map((car) => car.fuelType))).map((fuelType) => (
+                                <FormControlLabel key={fuelType} control={<Checkbox checked={filters.fuelType.includes(fuelType)} onChange={() => handleFilterChange('fuelType', fuelType)} />} label={fuelType} />
+                            ))}
+                        </FormGroup>
+                    </Box>
+                </Paper>
+            </Grid>
 
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
-              label="From"
-              value={fromDate}
-              onChange={(newValue) => setFromDate(newValue)}
-              renderInput={(params) => (
-                <TextField {...params} sx={{ width: 130 }} />
-              )}
-            />
-          </LocalizationProvider>
-
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
-              label="To"
-              value={toDate}
-              onChange={(newValue) => setToDate(newValue)}
-              renderInput={(params) => (
-                <TextField {...params} sx={{ width: 130 }} />
-              )}
-            />
-          </LocalizationProvider>
-
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSearch}
-            startIcon={<CiSearch />}
-            sx={{ height: 40, fontSize: '12px', padding: '6px 12px' }}
-          >
-            Search
-          </Button>
-
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={handleClear}
-            startIcon={<RxCross1 />}
-            sx={{ height: 40, fontSize: '12px', padding: '6px 12px' }}
-          >
-            Clear
-          </Button>
-        </div>
-      </header>
-      <div className="car-layout">
-        <aside className="car-sidebar">
-          <div className="car-filter">
-            <h5
-              style={{
-                backgroundColor: "#f2f2f2",
-                borderRadius: "10px",
-                padding: "10px",
-                fontSize: "13px",
-                color: "black",
-                fontWeight: "bold",
-                textAlign: "center",
-              }}
-            >
-              Car Type
-            </h5>
-            <div>
-              {Array.from(new Set(filterList?.map((car) => car.make))).map(
-                (make) => (
-                  <label key={make}>
-                    <input
-                      type="checkbox"
-                      checked={filters.make.includes(make)}
-                      onChange={() => handleFilterChange("make", make)}
-                    />{" "}
-                    {make}
-                  </label>
-                ),
-              )}
-            </div>
-          </div>
-
-          <div className="car-filter">
-            <h5
-              style={{
-                backgroundColor: "#f2f2f2",
-                borderRadius: "10px",
-                padding: "10px",
-                fontSize: "13px",
-                color: "black",
-                fontWeight: "bold",
-                textAlign: "center",
-              }}
-            >
-              Fuel Type
-            </h5>
-            <div>
-              {Array.from(new Set(filterList?.map((car) => car.fuelType))).map(
-                (fuelType) => (
-                  <label key={fuelType}>
-                    <input
-                      type="checkbox"
-                      checked={filters.fuelType.includes(fuelType)}
-                      onChange={() => handleFilterChange("fuelType", fuelType)}
-                    />{" "}
-                    {fuelType}
-                  </label>
-                ),
-              )}
-            </div>
-          </div>
-        </aside>
-
-        <main className="cars-container">
-          {data?.length > 0 ? (
-            data?.map((car) => (
-              <div className="car-card" key={car?._id}>
-                {/* Car Header */}
-                <div className="car-header">
-                  <span className="car-safety">
-                    {" "}
-                    <h3 className="car-title">
-                      {car?.make} {car?.model} ({car?.color})
-                    </h3>{" "}
-                    {car?.runningStatus}
-                  </span>
-                  {car?.recommended && (
-                    <div className="car-recommended-badge">
-                      <span>Recommended</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Car Content */}
-                <div className="car-content">
-                  <img
-                    src={handleCarImage(car)}
-                    alt={car?.model}
-                    className="car-image"
-                  />
-                  <div className="car-details">
-                    {/* Left Side (4 details) */}
-                    <div className="left-details">
-                      <div className="fuel-type">
-                        <BsFillFuelPumpFill /> {car?.fuelType}
-                      </div>
-                      <div>
-                        <MdOutlineAirlineSeatReclineNormal /> {car?.seater}{" "}
-                        Seater
-                      </div>
-                      <div>
-                        <FaPersonWalkingLuggage /> {car?.luggage} Luggage Bag
-                      </div>
-                      {car?.extraKm && (
-                        <div style={{ color: "black" }}>
-                          <IoMdSpeedometer /> ₹{car?.extraKm} Extra Per Km
-                        </div>
-                      )}
-                      <div> Full Ride @₹{car?.price}</div>
-                    </div>
-
-                    {/* Right Side (4 details) */}
-                    <div className="right-details">
-                      <div>
-                        <BsPersonCircle /> Per Person: ₹{car?.perPersonCost}
-                      </div>
-                      <div>
-                        <FaLocationArrow /> Pickup: {car?.pickupP}
-                      </div>
-                      <div>
-                        <FaMapMarkerAlt /> Drop: {car?.dropP}
-                      </div>
-                      <div style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <AiOutlineCalendar style={{ fontSize: '18px' }} />
-                        Pickup & drop time {indianTime(car?.pickupD)} to {indianTime(car?.dropD)}
-                      </div>
-
-                    </div>
-                  </div>
-
-                  {/* Car Badges */}
-                  <div className="car-badges">
-                    {car?.badges?.map((badge, index) => (
-                      <div key={index} className="car-badge">
-                        {badge}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <Typography>
-                  Available:{" "}
-                  {
-                    car?.seatConfig.filter(
-                      (seat) => !seat.bookedBy || seat.bookedBy.trim() === "",
-                    ).length
-                  }{" "}
-                  Seats
-                </Typography>
-                {/* Car Footer */}
-                <div className="car-footer">
-                  <div className="car-price">₹{car?.price}</div>
-                  <button
-                    className="book-now"
-                    onClick={() => handleSeatDataOpen(car._id)}
-                  >
-                    Book Now
-                  </button>
-                </div> <SeatData
-                  open={openSeatData}
-                  carData={car}
-                  onClose={handleSeatDataClose}
-                  id={selectedCarId}
-                />
-              </div>
-            ))
-          ) : (
-            <img
-              src="https://assets-v2.lottiefiles.com/a/0e30b444-117c-11ee-9b0d-0fd3804d46cd/BkQxD7wtnZ.gif"
-              alt="Loading..."
-              className="loading-gif"
-            />
-          )}
-        </main>
-      </div>
-
-    </div>
+            <Grid item xs={12} md={9}>
+                {isLoading ? (
+                    <Stack spacing={2}>
+                        <CarCardSkeleton />
+                        <CarCardSkeleton />
+                        <CarCardSkeleton />
+                    </Stack>
+                ) : data?.length > 0 ? (
+                    data.map((car) => (
+                        <CarCard key={car._id} car={car} onBookNow={() => handleSeatDataOpen(car)} />
+                    ))
+                ) : (
+                    <Box textAlign="center" p={5}>
+                        <Typography variant="h6">No Cars Found</Typography>
+                        <Typography color="text.secondary">Try adjusting your search or filters.</Typography>
+                    </Box>
+                )}
+            </Grid>
+        </Grid>
+        
+        {selectedCar && <SeatData open={openSeatData} onClose={handleSeatDataClose} id={selectedCar._id} carData={selectedCar} />}
+    </Container>
   );
 };
 
