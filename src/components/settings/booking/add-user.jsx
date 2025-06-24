@@ -86,14 +86,7 @@ export default function AddUser() {
   return (
     <Box className="user-selection-container" sx={{ maxWidth: 'auto', padding: 2 }}>
       <Card sx={{ width: 650, margin: '0 auto', padding: 3 }}>
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={() => navigate(-1)}
-          sx={{ marginBottom: 2 }}
-        >
-          Go Back
-        </Button>
+       
         <CardContent>
           <Typography variant="h5" gutterBottom textAlign="center">
             Create New User
