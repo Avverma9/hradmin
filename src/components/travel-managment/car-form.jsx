@@ -1,680 +1,271 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import axios from 'axios';
+
+// MUI Components
 import {
-  TextField,
-  Button,
-  Card,
-  CardContent,
-  Typography,
   Box,
-  InputAdornment,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Autocomplete,
-  FormHelperText,
   Grid,
-  Tooltip,
+  Button,
+  Select,
+  MenuItem,
+  TextField,
+  InputLabel,
+  Typography,
+  FormControl,
+  InputAdornment,
+  Paper,
+  Divider,
   IconButton,
-} from "@mui/material";
-import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { addCar } from "../redux/reducers/travel/car";
-import AlertDialog from "../../../utils/alertDialogue";
-import { userId } from "../../../utils/util";
-import { PhotoCamera, Speed } from "@mui/icons-material";
-import { FaIndianRupeeSign } from "react-icons/fa6";
-import { FaLocationArrow } from "react-icons/fa";
-import { TravelAmenties } from "../../../utils/filterOptions";
+  Autocomplete,
+  Container,
+  Stack,
+  Avatar,
+  FormHelperText,
+} from '@mui/material';
+import {
+  PhotoCamera,
+  Speed,
+  LocationOn,
+  Map,
+  CalendarToday,
+  ArrowBack,
+  Save,
+  EventSeat,
+  Close,
+} from '@mui/icons-material';
+
+// Local Imports
+import { addCar } from '../redux/reducers/travel/car';
+import AlertDialog from '../../../utils/alertDialogue';
+import { userId, localUrl, notify } from '../../../utils/util';
+
+const Section = ({ title, children }) => (
+    <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, mb: 3 }}>
+        <Typography variant="h6" fontWeight="600" gutterBottom>{title}</Typography>
+        <Divider sx={{ mb: 3 }} />
+        {children}
+    </Paper>
+);
+
+Section.propTypes = {
+    title: PropTypes.string.isRequired,
+    children: PropTypes.node.isRequired,
+};
 
 export default function CarForm() {
-  const [make, setMake] = useState("");
-  const [model, setModel] = useState("");
-  const [year, setYear] = useState("");
-  const [vehicleNumber, setVehicleNumber] = useState("");
-  const [images, setImages] = useState([]);
-  const [price, setPrice] = useState("");
-  const [pickupP, setPickupP] = useState("");
-  const [pickupD, setPickupD] = useState("");
-  const [dropD, setDropD] = useState("");
-  const [perPersonCost, setPerPersonCost] = useState("");
-  const [dropP, setDropP] = useState("");
-  const [seater, setSeater] = useState("");
-  const [extraKm, setExtraKm] = useState("");
-  const [runningStatus, setRunningStatus] = useState("");
-  const [color, setColor] = useState("");
-  const [mileage, setMileage] = useState("");
-  const [fuelType, setFuelType] = useState("");
-  const [transmission, setTransmission] = useState("");
-  const [ownerId, setOwnerId] = useState(userId);
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isAvailable, setIsAvailable] = useState(true);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [allCarData, setAllCarData] = useState([]);
-  const [makes, setMakes] = useState([]);
-  const [filteredModels, setFilteredModels] = useState([]);
-  const [seatConfig, setSeatConfig] = useState([]);
-  const [showSeatConfig, setShowSeatConfig] = useState(false);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
-  const handleFileChange = (e) => {
-    setImages(e.target.files);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setOpenDialog(true);
-  };
-
-  const handleDialogClose = () => {
-    setOpenDialog(false);
-  };
-
-  const handleToggleVisibility = () => {
-    setIsPasswordVisible(!isPasswordVisible);
-  };
-
-  const handleDialogConfirm = async () => {
-    setOpenDialog(false);
-    const formData = new FormData();
-    for (let i = 0; i < images.length; i++) {
-      formData.append("images", images[i]);
-    }
-    formData.append("make", make);
-    formData.append("model", model);
-    formData.append("seater", seater);
-
-    // Convert each seatConfig object to a JSON string and append it to formData
-    seatConfig.forEach((seat, index) => {
-      formData.append(
-        `seatConfig[${index}]`,
-        JSON.stringify({
-          seatType: seat.seatType,
-          seatNumber: Number(seat.seatNumber),
-          isBooked: seat.isBooked,
-          seatPrice: Number(seat.seatPrice), // Ensure seatPrice is a number
-          bookedBy: seat.bookedBy,
-        }),
-      );
+    const [formData, setFormData] = useState({
+        make: '', model: '', year: '', vehicleNumber: '', color: '',
+        fuelType: '', transmission: '', mileage: '', seater: '',
+        price: '', perPersonCost: '', extraKm: '',
+        pickupP: '', dropP: '', pickupD: '', dropD: '',
+        runningStatus: 'Available', isAvailable: true,
+        images: [],
     });
 
-    formData.append("extraKm", extraKm);
-    formData.append("runningStatus", runningStatus);
-    formData.append("year", year);
-    formData.append("vehicleNumber", vehicleNumber);
-    formData.append("price", price);
-    formData.append("pickupP", pickupP);
-    formData.append("dropP", dropP);
-    formData.append("pickupD", pickupD);
-    formData.append("dropD", dropD);
-    formData.append("perPersonCost", perPersonCost);
-    formData.append("color", color);
-    formData.append("mileage", mileage);
-    formData.append("fuelType", fuelType);
-    formData.append("transmission", transmission);
-    formData.append("ownerId", ownerId);
-    formData.append("isAvailable", isAvailable);
-    dispatch(addCar(formData));
-    navigate("/your-cars");
-  };
+    const [allCarData, setAllCarData] = useState([]);
+    const [makes, setMakes] = useState([]);
+    const [filteredModels, setFilteredModels] = useState([]);
+    const [seatConfig, setSeatConfig] = useState([]);
+    const [openDialog, setOpenDialog] = useState(false);
+    
+    const handleBack = () => navigate(-1);
 
-  useEffect(() => {
-    const fetchCarData = async () => {
-      try {
-        const response1 = await fetch(
-          "https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/all-vehicles-model/records?limit=100",
-        );
-        const data1 = await response1.json();
-        const carData1 = data1.results;
-
-        const response2 = await fetch(
-          "https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/all-vehicles-model/records?limit=100&refine=fueltype1%3A%22Regular%20Gasoline%22",
-        );
-        const data2 = await response2.json();
-        const carData2 = data2.results;
-
-        const combinedCarData = [...carData1, ...carData2];
-        setAllCarData(combinedCarData);
-
-        const uniqueMakes = [
-          ...new Set(combinedCarData.map((car) => car.make)),
-        ];
-        setMakes(uniqueMakes);
-
-        setFilteredModels(combinedCarData);
-      } catch (err) {
-        console.error("Error fetching car data:", err);
-      }
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+    
+    const handleAutocompleteChange = (name, value) => {
+        setFormData(prev => ({ ...prev, [name]: value || '' }));
     };
 
-    fetchCarData();
-  }, []);
-
-  useEffect(() => {
-    if (make) {
-      setFilteredModels(allCarData.filter((car) => car.make === make));
-    } else {
-      setFilteredModels(allCarData);
-    }
-  }, [make, allCarData]);
-
-  const handleSeaterChange = (e) => {
-    setSeater(e.target.value);
-    setShowSeatConfig(false); // Hide the seat configuration when seater is selected
-  };
-
-  const handleSeatChange = (index, field, value) => {
-    const updatedSeatsData = [...seatConfig];
-    updatedSeatsData[index] = {
-      ...updatedSeatsData[index],
-      [field]: value,
-    };
-    setSeatConfig(updatedSeatsData);
-    // Automatically update full ride price based on seat prices
-    if (field === "seatPrice") {
-      updateFullRidePrice(updatedSeatsData);
-    }
-  };
-
-  const updateFullRidePrice = (currentSeatConfig) => {
-    if (currentSeatConfig.length > 0) {
-      const nonAcSeats = currentSeatConfig.filter(
-        (seat) => seat.seatType === "Non-AC" && seat.seatPrice !== ""
-      );
-
-      if (nonAcSeats.length > 0) {
-        const minNonAcPrice = Math.min(
-          ...nonAcSeats.map((seat) => Number(seat.seatPrice))
-        );
-        setPrice(String(minNonAcPrice));
-      } else {
-        const acSeats = currentSeatConfig.filter(
-          (seat) => seat.seatType === "AC" && seat.seatPrice !== ""
-        );
-        if (acSeats.length > 0) {
-          const minAcPrice = Math.min(
-            ...acSeats.map((seat) => Number(seat.seatPrice))
-          );
-          setPrice(String(minAcPrice));
-        } else {
-          setPrice(""); // No seat prices entered
+    const handleFileChange = (e) => {
+        if (e.target.files) {
+            setFormData(prev => ({ ...prev, images: [...e.target.files] }));
         }
-      }
-    } else {
-      setPrice(""); // No seats configured
-    }
-  };
+    };
+    
+    const handleSeaterChange = (e) => {
+        const numSeats = parseInt(e.target.value, 10) || 0;
+        setFormData(prev => ({ ...prev, seater: e.target.value }));
+        setSeatConfig(Array.from({ length: numSeats }, (_, i) => ({
+            seatType: "AC",
+            seatNumber: `S${i + 1}`,
+            seatPrice: "",
+            isBooked: false,
+            bookedBy: "",
+        })));
+    };
+    
+    const handleSeatChange = (index, field, value) => {
+        const updatedSeats = [...seatConfig];
+        const seat = { ...updatedSeats[index] };
 
-  useEffect(() => {
-    updateFullRidePrice(seatConfig);
-  }, [seatConfig]);
+        if (field === "isBooked") {
+            seat[field] = value;
+            if (!value) seat.bookedBy = ""; 
+        } else {
+            seat[field] = value;
+        }
 
-  const addNewSeat = () => {
-    setSeatConfig([
-      ...seatConfig,
-      {
-        seatType: "",
-        seatNumber: "",
-        seatPrice: "",
-        isBooked: false,
-        bookedBy: "",
-      },
-    ]);
-  };
+        updatedSeats[index] = seat;
+        setSeatConfig(updatedSeats);
+    };
+    
+    const addNewSeat = () => {
+        setSeatConfig([
+          ...seatConfig,
+          { seatType: "AC", seatNumber: "", seatPrice: "", isBooked: false, bookedBy: "" },
+        ]);
+    };
 
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        setOpenDialog(true);
+    };
+
+    const handleDialogConfirm = async () => {
+        setOpenDialog(false);
+        const data = new FormData();
+
+        Object.entries(formData).forEach(([key, value]) => {
+            if (key === 'images') {
+                for (let i = 0; i < value.length; i++) {
+                    data.append('images', value[i]);
+                }
+            } else {
+                data.append(key, value);
+            }
+        });
+        
+        seatConfig.forEach((seat, index) => {
+            data.append(`seatConfig[${index}]`, JSON.stringify({
+                ...seat,
+                seatNumber: Number(seat.seatNumber.replace('S', '')) || index + 1,
+                seatPrice: Number(seat.seatPrice)
+            }));
+        });
+
+        data.append("ownerId", userId);
+
+        try {
+            await dispatch(addCar(data)).unwrap();
+            notify('Car added successfully!', 'success');
+            navigate("/your-cars");
+        } catch (error) {
+            console.error("Error creating car:", error);
+          
+        }
+    };
+
+    useEffect(() => {
+        const fetchCarData = async () => {
+            try {
+                const response = await fetch("https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/all-vehicles-model/records?limit=100");
+                const data = await response.json();
+                const carData = data.results || [];
+                setAllCarData(carData);
+                const uniqueMakes = [...new Set(carData.map((car) => car.make))];
+                setMakes(uniqueMakes);
+            } catch (err) {
+                console.error("Error fetching car data:", err);
+            }
+        };
+        fetchCarData();
+    }, []);
+
+    useEffect(() => {
+        if (formData.make) {
+            setFilteredModels(allCarData.filter((car) => car.make === formData.make));
+        } else {
+            setFilteredModels([]);
+        }
+    }, [formData.make, allCarData]);
 
   return (
-    <Card sx={{ margin: "0 auto", padding: 3 }}>
-      {" "}
-      <Typography variant="h5" gutterBottom textAlign="center">
-        Add New Car
-      </Typography>
-      <Button
-        variant="outlined"
-        color="primary"
-        onClick={handleBack}
-        sx={{ marginBottom: 1 }}
-      >
-        Go Back
-      </Button>
-      <CardContent>
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
-              <Autocomplete
-                value={make}
-                onChange={(event, newValue) => setMake(newValue)}
-                options={makes}
-                renderInput={(params) => (
-                  <TextField {...params} label="Make" variant="outlined" />
-                )}
-                fullWidth
-                margin="normal"
-                freeSolo
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Autocomplete
-                value={model}
-                onChange={(event, newValue) => setModel(newValue)}
-                options={filteredModels.map((car) => car.model)}
-                renderInput={(params) => (
-                  <TextField {...params} label="Model" variant="outlined" />
-                )}
-                fullWidth
-                margin="normal"
-                freeSolo
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Year"
-                variant="outlined"
-                fullWidth
-                type="number"
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
-                margin="normal"
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Car Number"
-                variant="outlined"
-                fullWidth
-                type="text"
-                value={vehicleNumber}
-                onChange={(e) => setVehicleNumber(e.target.value)}
-                margin="normal"
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={4}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Color</InputLabel>
-                <Select
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  label="Color"
-                >
-                  {["Red", "Blue", "Black", "White", "Silver", "Green"].map(
-                    (color) => (
-                      <MenuItem key={color} value={color}>
-                        {color}
-                      </MenuItem>
-                    ),
-                  )}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="seater-label">Seater</InputLabel>
-                <Select
-                  labelId="seater-label"
-                  value={seater}
-                  onChange={handleSeaterChange}
-                  label="Seater"
-                >
-                  {[...Array(60).keys()].map((value) => (
-                    <MenuItem key={value + 1} value={value + 1}>
-                      {value + 1}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {seater === "" && (
-                  <FormHelperText error>
-                    Please select the number of seats
-                  </FormHelperText>
-                )}
-              </FormControl>
-            </Grid>
-            {seater && (
-              <Grid item xs={12}>
-                <Button
-                  variant="text"
-                  color="primary"
-                  onClick={() => setShowSeatConfig(true)}
-                >
-                  Want to set seats
-                </Button>
-              </Grid>
-            )}
-
-            {showSeatConfig && (
-              <>
-                <Grid item xs={12}>
-                  <Typography variant="h6" gutterBottom>
-                    Seat Configuration
-                  </Typography>
-                  {Array.from({ length: seater }).map((_, index) => (
-                    <Box key={index} sx={{ marginBottom: 2 }}>
-                      <Grid container spacing={2}>
-                        {/* Seat Type (Dropdown) */}
-                        <Grid item xs={12} sm={4}>
-                          <FormControl fullWidth variant="outlined">
-                            <InputLabel>Seat {index + 1} Type</InputLabel>
-                            <Select
-                              value={seatConfig[index]?.seatType || ""}
-                              onChange={(e) =>
-                                handleSeatChange(index, "seatType", e.target.value)
-                              }
-                              label={`Seat ${index + 1} Type`}
-                            >
-                              <MenuItem value="AC">AC</MenuItem>
-                              <MenuItem value="Non-AC">Non-AC</MenuItem>
-                            </Select>
-                          </FormControl>
-                        </Grid>
-
-                        {/* Seat Number */}
-                        <Grid item xs={12} sm={4}>
-                          <TextField
-                            label={`Seat ${index + 1} Number`}
-                            variant="outlined"
-                            fullWidth
-                            value={seatConfig[index]?.seatNumber || ""}
-                            onChange={(e) =>
-                              handleSeatChange(index, "seatNumber", e.target.value)
-                            }
-                          />
-                        </Grid>
-
-                        {/* Seat Price */}
-                        <Grid item xs={12} sm={4}>
-                          <TextField
-                            label={`Seat ${index + 1} Price`}
-                            variant="outlined"
-                            fullWidth
-                            value={seatConfig[index]?.seatPrice}
-                            onChange={(e) =>
-                              handleSeatChange(index, "seatPrice", e.target.value)
-                            }
-                            type="number"
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <FaIndianRupeeSign />
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        </Grid>
-
-                        {/* Seat Booking Status */}
-                        <Grid item xs={12} sm={4}>
-                          <FormControl fullWidth variant="outlined">
-                            <InputLabel>Seat {index + 1} Status</InputLabel>
-                            <Select
-                              value={seatConfig[index]?.isBooked || false}
-                              onChange={(e) =>
-                                handleSeatChange(index, "isBooked", e.target.value)
-                              }
-                              label={`Seat ${index + 1} Status`}
-                            >
-                              <MenuItem value={false}>Available</MenuItem>
-                              <MenuItem value={true}>Booked</MenuItem>
-                            </Select>
-                          </FormControl>
-                        </Grid>
-
-                        {/* Booked By Field (Only if Seat is Booked) */}
-                        {seatConfig[index]?.isBooked && (
-                          <Grid item xs={12} sm={4}>
-                            <TextField
-                              label={`Seat ${index + 1} Booked By`}
-                              variant="outlined"
-                              fullWidth
-                              value={seatConfig[index]?.bookedBy || ""}
-                              onChange={(e) =>
-                                handleSeatChange(index, "bookedBy", e.target.value)
-                              }
-                            />
-                          </Grid>
-                        )}
-                      </Grid>
-                    </Box>
-                  ))}
-                  <Button variant="outlined" onClick={addNewSeat}>
-                    Add More Seats
-                  </Button>
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+        <Box component="form" onSubmit={handleSubmit}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                 <Typography variant="h4" fontWeight="bold">Add New Car</Typography>
+                 <Button variant="outlined" onClick={handleBack} startIcon={<ArrowBack />}>
+                    Go Back
+                 </Button>
+            </Box>
+            
+            <Section title="Car Details">
+                <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6} md={3}><Autocomplete options={makes} value={formData.make} onChange={(_, val) => handleAutocompleteChange('make', val)} renderInput={(params) => <TextField {...params} label="Make" />} /></Grid>
+                    <Grid item xs={12} sm={6} md={3}><Autocomplete options={filteredModels.map(c => c.model)} value={formData.model} onChange={(_, val) => handleAutocompleteChange('model', val)} renderInput={(params) => <TextField {...params} label="Model" />} /></Grid>
+                    <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Year" type="number" name="year" value={formData.year} onChange={handleInputChange} /></Grid>
+                    <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Vehicle Number" name="vehicleNumber" value={formData.vehicleNumber} onChange={handleInputChange} /></Grid>
+                    <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Color</InputLabel><Select name="color" value={formData.color} label="Color" onChange={handleInputChange}>{["Red", "Blue", "Black", "White", "Silver", "Green"].map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}</Select></FormControl></Grid>
+                    <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Fuel Type</InputLabel><Select name="fuelType" value={formData.fuelType} label="Fuel Type" onChange={handleInputChange}>{["Petrol", "Diesel", "Electric", "Hybrid"].map(f => <MenuItem key={f} value={f}>{f}</MenuItem>)}</Select></FormControl></Grid>
+                    <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Transmission</InputLabel><Select name="transmission" value={formData.transmission} label="Transmission" onChange={handleInputChange}><MenuItem value="Automatic">Automatic</MenuItem><MenuItem value="Manual">Manual</MenuItem></Select></FormControl></Grid>
+                    <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Mileage (KM/L)" type="number" name="mileage" value={formData.mileage} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start"><Speed/></InputAdornment> }} /></Grid>
                 </Grid>
-              </>
-            )}
-            <Grid item xs={12} sm={4}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Fuel Type</InputLabel>
-                <Select
-                  value={fuelType}
-                  onChange={(e) => setFuelType(e.target.value)}
-                  label="Fuel Type"
-                >
-                  {["Petrol", "Diesel", "Electric", "Hybrid"].map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {type}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Transmission</InputLabel>
-                <Select
-                  value={transmission}
-                  onChange={(e) => setTransmission(e.target.value)}
-                  label="Transmission"
-                >
-                  <MenuItem value="Automatic">Automatic</MenuItem>
-                  <MenuItem value="Manual">Manual</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Mileage (KM/L)"
-                variant="outlined"
-                fullWidth
-                type="number"
-                value={mileage}
-                onChange={(e) => setMileage(e.target.value)}
-                margin="normal"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Speed />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Pickup Location"
-                variant="outlined"
-                fullWidth
-                type="text"
-                value={pickupP}
-                onChange={(e) => setPickupP(e.target.value)}
-                margin="normal"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <FaLocationArrow />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>{" "}
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Drop Location"
-                variant="outlined"
-                fullWidth
-                type="text"
-                value={dropP}
-                onChange={(e) => setDropP(e.target.value)}
-                margin="normal"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <FaLocationArrow />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Pickup Date & Time"
-                type="datetime-local"
-                value={pickupD}
-                onChange={(e) => setPickupD(e.target.value)}
-                margin="normal"
-                fullWidth
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
+            </Section>
 
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Drop Date & Time"
-                type="datetime-local"
-                value={dropD}
-                onChange={(e) => setDropD(e.target.value)}
-                margin="normal"
-                fullWidth
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
+            <Section title="Trip & Pricing">
+                <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Pickup Location" name="pickupP" value={formData.pickupP} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start"><LocationOn/></InputAdornment> }} /></Grid>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Drop Location" name="dropP" value={formData.dropP} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start"><Map/></InputAdornment> }} /></Grid>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Pickup Date & Time" type="datetime-local" name="pickupD" value={formData.pickupD} onChange={handleInputChange} InputLabelProps={{ shrink: true }} /></Grid>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Drop Date & Time" type="datetime-local" name="dropD" value={formData.dropD} onChange={handleInputChange} InputLabelProps={{ shrink: true }} /></Grid>
+                    <Grid item xs={12} sm={4}><TextField fullWidth label="Full Ride Price" name="price" value={formData.price} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
+                    <Grid item xs={12} sm={4}><TextField fullWidth label="Per Person Cost" type="number" name="perPersonCost" value={formData.perPersonCost} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
+                    <Grid item xs={12} sm={4}><TextField fullWidth label="Extra KM Charge (₹)" type="number" name="extraKm" value={formData.extraKm} onChange={handleInputChange} /></Grid>
+                </Grid>
+            </Section>
 
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Full Ride Price"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                margin="normal"
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Per Person Cost"
-                type="number"
-                value={perPersonCost}
-                onChange={(e) => setPerPersonCost(e.target.value)}
-                margin="normal"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <FaIndianRupeeSign />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Extra KM Charge"
-                variant="outlined"
-                fullWidth
-                value={extraKm}
-                onChange={(e) => setExtraKm(e.target.value)}
-                margin="normal"
-              />
-              {extraKm === "" && (
-                <FormHelperText error>
-                  Please mention Per extra KM Charge in INR
-                </FormHelperText>
-              )}
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Running Status</InputLabel>
-                <Select
-                  value={runningStatus}
-                  onChange={(e) => setRunningStatus(e.target.value)}
-                  label="Running Status"
-                >
-                  <MenuItem value="Available">Available</MenuItem>
-                  <MenuItem value="On A Trip">On A Trip</MenuItem>
-                  <MenuItem value="Trip Completed">Trip Completed</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            {/* Fifth Row (Image upload) */}
-            <Grid item xs={12}>
-              <Box sx={{ marginBottom: 1 }}>
-                <input
-                  type="file"
-                  id="carImages"
-                  accept="image/*"
-                  multiple
-                  onChange={handleFileChange}
-                  style={{ display: "none" }}
-                />
-                <label htmlFor="carImages">
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    component="span"
-                    fullWidth
-                    sx={{ padding: "10px", textAlign: "center" }}
-                    startIcon={<PhotoCamera />}
-                  >
-                    Select Car Images
-                  </Button>
-                </label>
-                {images.length > 0 && (
-                  <Box sx={{ marginTop: 1, textAlign: "center" }}>
-                    {Array.from(images).map((image, index) => (
-                      <img
-                        key={index}
-                        src={URL.createObjectURL(image)}
-                        alt={`Car Image ${index}`}
-                        style={{
-                          width: "80px",
-                          height: "80px",
-                          objectFit: "cover",
-                          borderRadius: "8px",
-                          margin: "5px",
-                        }}
-                      />
+            <Section title="Capacity & Seats">
+                <Grid container spacing={2}>
+                    <Grid item xs={12} sm={4}>
+                        <FormControl fullWidth>
+                            <InputLabel>Seater</InputLabel>
+                            <Select name="seater" value={formData.seater} label="Seater" onChange={handleSeaterChange}>
+                                {[...Array(60).keys()].map((val) => <MenuItem key={val + 1} value={val + 1}>{val + 1}</MenuItem>)}
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                     <Grid item xs={12} sm={8}>
+                        <Button fullWidth variant="contained" component="label" startIcon={<PhotoCamera/>} sx={{ height: '100%' }}>
+                            Upload Car Images
+                            <input type="file" hidden multiple accept="image/*" onChange={handleFileChange} />
+                        </Button>
+                    </Grid>
+                    {formData.images.length > 0 && <Grid item xs={12}><Stack direction="row" spacing={1} flexWrap="wrap">{Array.from(formData.images).map((file, i) => <Avatar key={i} src={URL.createObjectURL(file)} variant="rounded" />)}</Stack></Grid>}
+                    <Grid item xs={12}><Divider>Seat Configuration</Divider></Grid>
+                    {seatConfig.map((seat, index) => (
+                        <Grid item xs={12} sm={6} md={4} key={index}>
+                           <Paper variant="outlined" sx={{p: 2, position: 'relative'}}>
+                               <Typography variant="subtitle2" gutterBottom>Seat {index + 1}</Typography>
+                               <Grid container spacing={1}>
+                                    <Grid item xs={12}><FormControl fullWidth size="small"><InputLabel>Type</InputLabel><Select name="seatType" value={seat.seatType} label="Type" onChange={(e) => handleSeatChange(index, 'seatType', e.target.value)}><MenuItem value="AC">AC</MenuItem><MenuItem value="Non-AC">Non-AC</MenuItem></Select></FormControl></Grid>
+                                    <Grid item xs={12}><TextField fullWidth size="small" label="Number" name="seatNumber" value={seat.seatNumber} onChange={(e) => handleSeatChange(index, 'seatNumber', e.target.value)} /></Grid>
+                                    <Grid item xs={12}><TextField fullWidth size="small" label="Price" name="seatPrice" type="number" value={seat.seatPrice} onChange={(e) => handleSeatChange(index, 'seatPrice', e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
+                                    <Grid item xs={12}><FormControl fullWidth size="small"><InputLabel>Status</InputLabel><Select name="isBooked" value={seat.isBooked} label="Status" onChange={(e) => handleSeatChange(index, 'isBooked', e.target.value)}><MenuItem value={false}>Available</MenuItem><MenuItem value={true}>Booked</MenuItem></Select></FormControl></Grid>
+                                    {seat.isBooked && <Grid item xs={12}><TextField fullWidth size="small" label="Booked By" name="bookedBy" value={seat.bookedBy} onChange={(e) => handleSeatChange(index, 'bookedBy', e.target.value)} /></Grid>}
+                               </Grid>
+                           </Paper>
+                        </Grid>
                     ))}
-                  </Box>
-                )}
-              </Box>
-            </Grid>
-          </Grid>
+                    {formData.seater && <Grid item xs={12}><Button variant="text" onClick={addNewSeat}>Add More Seats</Button></Grid>}
+                </Grid>
+            </Section>
 
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{ marginTop: 2 }}
-          >
-            Add Car
-          </Button>
-        </form>
-      </CardContent>
-      <AlertDialog
-        open={openDialog}
-        onClose={handleDialogClose}
-        onConfirm={handleDialogConfirm}
-        title="Confirm Car Submission"
-        message="Are you sure you want to add this car?"
-      />
-    </Card>
+            <Box display="flex" justifyContent="flex-end" mt={3}>
+                <Button type="submit" variant="contained" size="large" startIcon={<Save />}>
+                    Add Car
+                </Button>
+            </Box>
+        </Box>
+        <AlertDialog open={openDialog} onClose={() => setOpenDialog(false)} onConfirm={handleDialogConfirm} title="Confirm Car Submission" message="Are you sure you want to add this car?" />
+    </Container>
   );
 }

@@ -46,8 +46,8 @@ import {
 // Local Imports
 import { filterCar, getAllCars } from '../redux/reducers/travel/car';
 import { localUrl } from '../../../utils/util';
-import { useLoader } from '../../../utils/loader';
 import SeatData from './seat-data';
+import { useLoader } from '../../../utils/loader';
 
 // CarCard Component for individual car display
 const CarCard = ({ car, onBookNow }) => {
@@ -151,11 +151,11 @@ const Cars = () => {
   const [filters, setFilters] = useState({ make: [], fuelType: [] });
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
-
   useEffect(() => {
     const fetchData = async () => {
-      showLoader();
-      try {
+     
+      try { 
+        showLoader();
         const response = await dispatch(getAllCars());
         setData(response.payload);
       } catch (error) {
