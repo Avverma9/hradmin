@@ -1,22 +1,159 @@
-import React, { useState, useEffect } from "react";
-import { getCarByOwnerId, updateCar } from "../redux/reducers/travel/car";
-import { useDispatch, useSelector } from "react-redux";
-import "./Cars.css";
-import { MdOutlineAirlineSeatReclineNormal } from "react-icons/md";
-import { BsFillFuelPumpFill, BsPersonCircle } from "react-icons/bs";
-import { FaPersonWalkingLuggage } from "react-icons/fa6";
-import { IoMdSpeedometer } from "react-icons/io";
-import CarUpdate from "./car-update";
-import { FaLocationArrow, FaMapMarkerAlt } from "react-icons/fa";
-import { AiOutlineCalendar } from "react-icons/ai";
-import { fDate } from "../../../utils/format-time";
-import { DialogTitle, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
-import SeatConfigUpdate from "./update-seats";
+import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
+import { useDispatch, useSelector } from 'react-redux';
+import { format } from 'date-fns';
+
+// MUI Components
+import {
+  Box,
+  Button,
+  Container,
+  Paper,
+  Typography,
+  Grid,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Divider,
+  Card,
+  CardContent,
+  CardMedia,
+  CardActions,
+  Chip,
+  Skeleton,
+  Stack,
+} from '@mui/material';
+
+// MUI Icons
+import {
+  EventSeat,
+  LocalGasStation,
+  Work,
+  Speed,
+  LocationOn,
+  Map,
+  CalendarToday,
+  Edit,
+  Settings,
+  NoCrash,
+  Person,
+} from '@mui/icons-material';
+
+// Local Imports
+import { getCarByOwnerId, updateCar } from '../redux/reducers/travel/car';
+import CarUpdate from './car-update';
+import SeatConfigUpdate from './update-seats';
+import { fDate } from '../../../utils/format-time';
+
+const DetailItem = ({ icon, text }) => (
+    <Grid item xs={6} display="flex" alignItems="center" gap={1}>
+        {React.cloneElement(icon, { sx: { fontSize: '1.1rem', color: 'text.secondary' } })}
+        <Typography variant="body2" noWrap>{text}</Typography>
+    </Grid>
+);
+
+DetailItem.propTypes = {
+  icon: PropTypes.node.isRequired,
+  text: PropTypes.string.isRequired,
+};
+
+
+const MyCarCard = ({ car, onUpdateCar, onUpdateSeats, onStatusChange }) => {
+  const handleCarImage = (carData) =>
+    carData?.images && Array.isArray(carData.images) && carData.images.length > 0
+      ? carData.images[0]
+      : "https://placehold.co/600x400/e0e0e0/757575?text=Car";
+
+  const availableSeats = car.seatConfig?.filter(seat => !seat.bookedBy).length || 0;
+  const bookedSeats = car.seatConfig?.length - availableSeats || 0;
+
+  return (
+    <Card variant="outlined" sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, mb: 2, borderRadius: 3, transition: 'box-shadow 0.3s', '&:hover': { boxShadow: 3 } }}>
+      <CardMedia
+        component="img"
+        sx={{ width: { xs: '100%', sm: 200 }, height: { xs: 160, sm: 'auto' }, objectFit: 'cover' }}
+        image={handleCarImage(car)}
+        alt={`${car.make} ${car.model}`}
+      />
+      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <CardContent sx={{ flex: '1 0 auto', p: 2 }}>
+          <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+            <Box>
+              <Typography component="div" variant="h6" fontWeight="bold">
+                {car.make} {car.model}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                {car.color} • {car.vehicleNumber}
+              </Typography>
+            </Box>
+            {car.recommended && <Chip label="Recommended" color="success" size="small" />}
+          </Box>
+          <Divider sx={{ my: 1 }} />
+          <Grid container spacing={1.5}>
+            <DetailItem icon={<LocalGasStation />} text={car.fuelType || 'N/A'} />
+            <DetailItem icon={<EventSeat />} text={car.seater ? `${car.seater} Seater` : 'N/A'} />
+            <DetailItem icon={<Work />} text={car.luggage ? `${car.luggage} Luggage` : 'N/A'} />
+            <DetailItem icon={<Speed />} text={car.extraKm ? `₹${car.extraKm}/km` : 'N/A'} />
+            <DetailItem icon={<Person />} text={car.perPersonCost ? `₹${car.perPersonCost}/person` : 'N/A'} />
+            <DetailItem icon={<LocationOn />} text={car.pickupP ? `From: ${car.pickupP}` : 'N/A'} />
+            <DetailItem icon={<Map />} text={car.dropP ? `To: ${car.dropP}` : 'N/A'} />
+             <Grid item xs={12} display="flex" alignItems="center" gap={1}>
+                <CalendarToday sx={{ fontSize: '1.1rem', color: 'text.secondary' }}/>
+                <Typography variant="body2">{fDate(car.pickupD)} to {fDate(car.dropD)}</Typography>
+             </Grid>
+          </Grid>
+        </CardContent>
+        <CardActions sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1.5, bgcolor: 'grey.50' }}>
+            <Box>
+                <Typography variant="h6" fontWeight="bold">₹{car.price}</Typography>
+                <Typography variant="caption" color="text.secondary">Full ride</Typography>
+            </Box>
+            <Box textAlign="right">
+                <Typography variant="body2" fontWeight="bold">Seats: {availableSeats} Available</Typography>
+                <Typography variant="caption" color="text.secondary">({bookedSeats} Booked)</Typography>
+            </Box>
+            <FormControl variant="standard" sx={{ minWidth: 120 }} size="small">
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={car.runningStatus || ""}
+                  onChange={(e) => onStatusChange(e, car)}
+                  label="Status"
+                >
+                  <MenuItem value="On A Trip">On A Trip</MenuItem>
+                  <MenuItem value="Available">Available</MenuItem>
+                </Select>
+            </FormControl>
+        </CardActions>
+        <CardActions sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', p: 1.5, pt:0, bgcolor: 'grey.50', gap: 1 }}>
+            <Button variant="outlined" size="small" onClick={() => onUpdateCar(car)} startIcon={<Edit />}>
+                Details
+            </Button>
+            <Button variant="contained" size="small" onClick={() => onUpdateSeats(car)} startIcon={<Settings />}>
+                Seats
+            </Button>
+        </CardActions>
+      </Box>
+    </Card>
+  );
+};
+
+MyCarCard.propTypes = {
+  car: PropTypes.object.isRequired,
+  onUpdateCar: PropTypes.func.isRequired,
+  onUpdateSeats: PropTypes.func.isRequired,
+  onStatusChange: PropTypes.func.isRequired,
+};
 
 const MyCar = () => {
   const dispatch = useDispatch();
-  const userId = localStorage.getItem("user_id");
-  const carData = useSelector((state) => state.car.ownerCar);
+  const userId = localStorage.getItem('user_id');
+  const { ownerCar: carData, loading } = useSelector((state) => state.car);
+
+  const [openCarUpdate, setOpenCarUpdate] = useState(false);
+  const [openSeatConfig, setOpenSeatConfig] = useState(false);
+  const [selectedCar, setSelectedCar] = useState(null);
 
   useEffect(() => {
     if (userId) {
@@ -24,40 +161,21 @@ const MyCar = () => {
     }
   }, [userId, dispatch]);
 
- const handleCarImage = (car) => {
-    return car?.images && Array.isArray(car.images) && car.images.length > 0
-      ? car.images[0]
-      : "https://avverma.s3.ap-south-1.amazonaws.com/car.png";
-  };
-
-
-  // Separate states for different modals
-  const [openCarUpdate, setOpenCarUpdate] = useState(false);
-  const [openSeatConfig, setOpenSeatConfig] = useState(false);
-  const [selectedCar, setSelectedCar] = useState(null);
-
-  // State to manage individual car status
-  const [carStatus, setCarStatus] = useState({});
-
-  // Open Car Update Modal
   const handleUpdateCar = (car) => {
     setSelectedCar(car);
     setOpenCarUpdate(true);
   };
 
-  // Open Seat Config Modal
   const handleUpdateSeats = (car) => {
     setSelectedCar(car);
     setOpenSeatConfig(true);
   };
 
-  // Close Car Update Modal
   const handleCloseCarUpdate = () => {
     setOpenCarUpdate(false);
     setSelectedCar(null);
   };
 
-  // Close Seat Config Modal
   const handleCloseSeatConfig = () => {
     setOpenSeatConfig(false);
     setSelectedCar(null);
@@ -65,175 +183,60 @@ const MyCar = () => {
 
   const handleChangeRunningStatus = (e, car) => {
     const newStatus = e.target.value;
-
-    // Update status in local state for the car
-    setCarStatus((prevStatus) => ({
-      ...prevStatus,
-      [car._id]: newStatus,
-    }));
-
-
-    // Dispatch action to update the status in the Redux store
     dispatch(updateCar({ id: car._id, data: { runningStatus: newStatus } }))
       .unwrap()
       .then(() => {
-        // Refetch the car data after updating the status
         dispatch(getCarByOwnerId(userId));
       })
       .catch((error) => {
-        console.error("Error updating car status:", error);
+        console.error('Error updating car status:', error);
       });
   };
 
   return (
-    <div>
-      <main className="cars-container">
-        {carData?.length > 0 ? (
-          carData?.map((car) => (
-            <div className="car-card" key={car?._id}>
-              {/* Car Header */}
-              <div className="car-header">
-                <span className="car-safety">{car?.runningStatus}</span>
-                {car?.recommended && (
-                  <div className="car-recommended-badge">
-                    <span>Recommended</span>
-                  </div>
-                )}
-              </div>
-              {/* Car Content */}
-              <div className="car-content">
-                <img
-                  src={handleCarImage(car)}
-                  alt={car?.model}
-                  className="car-image"
-                />
-                <div className="car-details">
-                  <h3 className="car-title">
-                    {car?.make} {car?.model} ({car?.color})
-                  </h3>
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom>My Cars</Typography>
+        <main>
+            {loading ? (
+                <Stack spacing={2}>
+                    <Skeleton variant="rectangular" height={190} sx={{ borderRadius: 3 }} />
+                    <Skeleton variant="rectangular" height={190} sx={{ borderRadius: 3 }} />
+                </Stack>
+            ) : carData?.length > 0 ? (
+                carData.map((car) => (
+                    <MyCarCard
+                        key={car._id}
+                        car={car}
+                        onUpdateCar={handleUpdateCar}
+                        onUpdateSeats={handleUpdateSeats}
+                        onStatusChange={handleChangeRunningStatus}
+                    />
+                ))
+            ) : (
+                <Paper variant="outlined" sx={{ textAlign: 'center', p: 5, borderRadius: 3 }}>
+                    <NoCrash sx={{ fontSize: 60, color: 'grey.400' }} />
+                    <Typography variant="h6" mt={2}>No cars found.</Typography>
+                    <Typography color="text.secondary">You have not added any cars yet.</Typography>
+                </Paper>
+            )}
+        </main>
 
-                  {/* Left Side (4 details) */}
-                  <div className="left-details">
-                    <div className="fuel-type">
-                      <BsFillFuelPumpFill /> {car?.fuelType}
-                    </div>
-                    <div>
-                      <MdOutlineAirlineSeatReclineNormal /> {car?.seater} Seater
-                    </div>
-                    <div>
-                      <FaPersonWalkingLuggage /> {car?.luggage} Luggage Bag
-                    </div>
-                    {car?.extraKm && (
-                      <div style={{ color: "black" }}>
-                        <IoMdSpeedometer /> ₹{car?.extraKm} Extra Per Km
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Right Side (4 details) */}
-                  <div className="right-details">
-                    <div>
-                      <BsPersonCircle /> Per Person: ₹{car?.perPersonCost}
-                    </div>
-                    <div>
-                      <FaLocationArrow /> Pickup: {car?.pickupP}
-                    </div>
-                    <div>
-                      <FaMapMarkerAlt /> Drop: {car?.dropP}
-                    </div>
-                    <div>
-                      <AiOutlineCalendar /> From {fDate(car?.pickupD)} to{" "}
-                      {fDate(car?.dropD)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Car Badges */}
-                <div className="car-badges">
-                  {car?.badges?.map((badge, index) => (
-                    <div key={index} className="car-badge">
-                      {badge}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <DialogTitle> Seats →
-             Available:{" "}
-              {
-                car?.seatConfig.filter(
-                  (seat) => !seat.bookedBy || seat.bookedBy.trim() === "",
-                ).length
-              }{" "}
-              / Booked:{" "}
-              {
-                car?.seatConfig.filter(
-                  (seat) => seat.bookedBy && seat.bookedBy.trim() !== "",
-                ).length
-              }</DialogTitle>
-              {/* Car Footer */}
-              <div className="car-footer">
-                {/* Status Select */}
-                <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
-                  <InputLabel id={`status-select-label-${car._id}`}>
-                    Change Running Status
-                  </InputLabel>
-                  <Select
-                    labelId={`status-select-label-${car._id}`}
-                    id={`status-select-${car._id}`}
-                    value={carStatus[car._id] || car?.runningStatus || ""}
-                    onChange={(e) => handleChangeRunningStatus(e, car)}
-                    label="Change Running Status"
-                  >
-                    <MenuItem value=""> </MenuItem>
-                    <MenuItem value="On A Trip">On A Trip</MenuItem>
-                    <MenuItem value="Available">Available</MenuItem>
-                  </Select>
-                </FormControl>
-
-                {/* Update Button */}
-                <button
-                  className="book-now"
-                  onClick={() => handleUpdateCar(car)}
-                >
-                  Update Car
-                </button>
-
-                <button
-                  className="book-now"
-                  onClick={() => handleUpdateSeats(car)}
-                >
-                  Update Seats
-                </button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <img
-            src="https://assets-v2.lottiefiles.com/a/0e30b444-117c-11ee-9b0d-0fd3804d46cd/BkQxD7wtnZ.gif"
-            alt="Loading..."
-            className="loading-gif"
-          />
+        {openCarUpdate && selectedCar && (
+            <CarUpdate
+                open={openCarUpdate}
+                onClose={handleCloseCarUpdate}
+                car={selectedCar}
+            />
         )}
-      </main>
 
-      {/* Car Update Modal */}
-      {openCarUpdate && selectedCar && (
-        <CarUpdate
-          open={openCarUpdate}
-          onClose={handleCloseCarUpdate}
-          car={selectedCar}
-        />
-      )}
-
-      {/* Seat Config Update Modal */}
-      {openSeatConfig && selectedCar && (
-        <SeatConfigUpdate
-          open={openSeatConfig}
-          onClose={handleCloseSeatConfig}
-          car={selectedCar}
-        />
-      )}
-    </div>
+        {openSeatConfig && selectedCar && (
+            <SeatConfigUpdate
+                open={openSeatConfig}
+                onClose={handleCloseSeatConfig}
+                car={selectedCar}
+            />
+        )}
+    </Container>
   );
 };
 
