@@ -1,391 +1,405 @@
-/* eslint-disable react/button-has-type */
-/* eslint-disable react/no-unknown-property */
-/* eslint-disable jsx-a11y/label-has-associated-control */
-/* eslint-disable react-hooks/exhaustive-deps */
-import axios from 'axios';
-import PropTypes from 'prop-types';
-import { toast } from 'react-toastify';
-import { AiOutlineDelete } from 'react-icons/ai';
-import React, { useState, useEffect } from 'react';
-import { FaIndianRupeeSign } from 'react-icons/fa6';
-import { IoFastFoodOutline } from 'react-icons/io5';
+import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
+import { toast } from "react-toastify";
+import { useDispatch, useSelector } from "react-redux";
 
+// Material-UI Imports
 import {
   Box,
   Grid,
-  Modal,
-  Input,
   Button,
   Select,
-  styled,
   MenuItem,
-  useTheme,
   TextField,
   Typography,
   InputLabel,
   FormControl,
-  useMediaQuery,
-} from '@mui/material';
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Stack,
+  Paper,
+  Skeleton,
+  Input,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Chip,
+  Tooltip,
+} from "@mui/material";
 
-import { localUrl } from '../../../utils/util';
+// Material-UI Icons
+import CloseIcon from "@mui/icons-material/Close";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
+import CategoryIcon from "@mui/icons-material/Category";
+import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import './button.css';
-import { addFood, deleteFood, getHotelById } from '../redux/reducers/hotel';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLoader } from '../../../utils/loader';
-
-// Styled components
-const ModalContent = styled(Box)(({ theme }) => ({
-  position: 'relative',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: '90%',
-  maxWidth: 500,
-  maxHeight: '90vh',
-  overflowY: 'auto',
-  backgroundColor: theme.palette.background.paper,
-  padding: theme.spacing(2),
-  boxShadow: theme.shadows[5],
-  borderRadius: theme.shape.borderRadius,
-  paddingBottom: theme.spacing(10),
-}));
-
-const Header = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginBottom: theme.spacing(2),
-}));
-
-const ImagePreview = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: theme.spacing(1),
-  marginTop: theme.spacing(2),
-}));
-
-const UploadButton = styled(Button)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '100%',
-  padding: theme.spacing(1),
-  backgroundColor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText,
-  '&:hover': {
-    backgroundColor: theme.palette.primary.dark,
-  },
-}));
-
-const FoodItem = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  padding: theme.spacing(1),
-  border: `1px solid ${theme.palette.divider}`,
-  borderRadius: theme.shape.borderRadius,
-  marginBottom: theme.spacing(1),
-  backgroundColor: theme.palette.background.default,
-  [theme.breakpoints.down('sm')]: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    padding: theme.spacing(1),
-  },
-}));
-
-const FoodImage = styled('img')(({ theme }) => ({
-  width: '100px',
-  height: '100px',
-  objectFit: 'cover',
-  borderRadius: theme.shape.borderRadius,
-  [theme.breakpoints.down('sm')]: {
-    width: '80px',
-    height: '80px',
-  },
-}));
-
-const FoodDetails = styled(Box)(({ theme }) => ({
-  marginLeft: theme.spacing(1),
-  [theme.breakpoints.down('sm')]: {
-    marginLeft: 0,
-    marginTop: theme.spacing(1),
-    textAlign: 'center',
-  },
-}));
+// Local Imports
+import { addFood, deleteFood, getHotelById } from "../redux/reducers/hotel";
+import { useLoader } from "../../../utils/loader";
 
 const AddFoodModal = ({ open, onClose, hotelId }) => {
-  const [foodName, setFoodName] = useState('');
-  const [foodPrice, setFoodPrice] = useState('');
-  const [foodType, setFoodType] = useState('');
-  const [about, setAbout] = useState('');
+  const [foodName, setFoodName] = useState("");
+  const [foodPrice, setFoodPrice] = useState("");
+  const [foodType, setFoodType] = useState("");
+  const [about, setAbout] = useState("");
   const [images, setImages] = useState([]);
   const [isAddingFood, setIsAddingFood] = useState(false);
-  const [loading, setLoading] = useState(false); // Added loading state
+  const [isLoading, setIsLoading] = useState(true);
+
+  // --- 1. The new "refresh trigger" state ---
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const dispatch = useDispatch();
-  const foods = useSelector((state) => state.hotel.byId?.foods || []);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { showLoader, hideLoader } = useLoader();
+  const foods = useSelector((state) => state.hotel.byId?.foods || []);
 
   useEffect(() => {
-    const fetchFoods = async () => {
-      if (hotelId) {
-        setLoading(true); // Show loader
-        await dispatch(getHotelById(hotelId));
-        setLoading(false); // Hide loader after fetching
-      }
-    };
-
-    if (open) {
-      fetchFoods();
-    } else {
-      setLoading(false); // Hide loader if not open
+    if (open && hotelId) {
+      setIsLoading(true);
+      dispatch(getHotelById(hotelId)).finally(() => setIsLoading(false));
     }
-  }, [open, hotelId, dispatch]);
+    // --- 2. The useEffect now depends on refreshKey ---
+  }, [open, hotelId, dispatch, refreshKey]);
 
-  useEffect(() => {
-    if (loading) {
-      showLoader(); // Show loader when loading
-    } else {
-      hideLoader(); // Hide loader when not loading
-    }
-  }, [loading]);
+  const handleAccordionChange = (event, isExpanded) => {
+    setIsAddingFood(isExpanded);
+  };
 
   const handleAddFood = async () => {
-    showLoader(); // Show loader
+    if (!foodName || !foodPrice || !foodType) {
+      toast.error("Please fill all required fields.");
+      return;
+    }
+    showLoader();
     const formData = new FormData();
-    formData.append('hotelId', hotelId);
-    formData.append('name', foodName);
-    formData.append('price', foodPrice);
-    formData.append('foodType', foodType);
-    formData.append('about', about);
-
-    images.forEach((file) => {
-      formData.append('images', file);
-    });
+    formData.append("hotelId", hotelId);
+    formData.append("name", foodName);
+    formData.append("price", foodPrice);
+    formData.append("foodType", foodType);
+    formData.append("about", about);
+    images.forEach((file) => formData.append("images", file));
 
     try {
-      await dispatch(addFood(formData));
-    } catch (error) {
-      toast.error('Error adding food');
-    } finally {
-      hideLoader(); // Hide loader
+      await dispatch(addFood(formData)).unwrap();
+      dispatch(getHotelById(hotelId));
+      toast.success("Food item added successfully!");
+
+      // --- 3. Trigger the refresh after adding ---
+      setRefreshKey((oldKey) => oldKey + 1);
+
+      resetForm();
       setIsAddingFood(false);
-      resetForm(); // Reset form fields
+    } catch (error) {
+      toast.error(error?.message || "Error adding food");
+    } finally {
+      hideLoader();
     }
   };
 
   const resetForm = () => {
-    setFoodName('');
-    setFoodPrice('');
-    setFoodType('');
-    setAbout('');
+    setFoodName("");
+    setFoodPrice("");
+    setFoodType("");
+    setAbout("");
     setImages([]);
   };
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
-    setImages(files);
-  };
-
-  const handleDeleteFood = async (foodId) => {
-    try {
-      await dispatch(deleteFood({ hotelId, foodId }));
-      await dispatch(getHotelById(hotelId)); // Fetch updated food list
-    } catch (error) {
-      console.error('Error deleting food:', error);
-      toast.error('Error deleting item. Please try again.');
+    setImages(files.slice(0, 5));
+    if (files.length > 5) {
+      toast.warn("You can only upload a maximum of 5 images.");
     }
   };
 
-  const handleCancel = () => {
-    fetchFoods(); // Refresh food list
-    resetForm(); // Reset form state
-    onClose(); // Close the modal
+  const handleRemoveImage = (indexToRemove) => {
+    setImages((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  return (
-    <Modal open={open} onClose={onClose}>
-      <ModalContent>
-        <Header>
-          <Typography variant="h6">{isAddingFood ? 'Add Food' : 'Hotel Foods'}</Typography>
-          <Button onClick={onClose} color="inherit">
-            Close
-          </Button>
-        </Header>
-        {!isAddingFood ? (
-          <>
-            {foods?.length > 0 ? (
-              <Box>
-                {foods.map((food, index) => (
-                  <FoodItem key={food.foodId}>
-                    {' '}
-                    {/* Use unique identifier for key */}
-                    <FoodImage src={food?.images} alt={`food ${index}`} />
-                    <FoodDetails>
-                      <Typography variant="h6">{food?.name}</Typography>
-                      <Typography style={{ color: 'red' }} variant="body1">
-                        <FaIndianRupeeSign /> {food?.price}
-                      </Typography>
-                      <Typography variant="body1">
-                        <IoFastFoodOutline /> {food?.foodType}
-                      </Typography>
-                      <Typography style={{ color: 'green' }} variant="body2">
-                        {food?.about}
-                      </Typography>
+  const handleDeleteFood = async (foodId) => {
+    if (window.confirm("Are you sure you want to delete this item?")) {
+      try {
+        await dispatch(deleteFood({ hotelId, foodId })).unwrap();
+        toast.success("Food item deleted.");
 
-                      <button
-                        onClick={() => handleDeleteFood(food.foodId)}
-                        className="custom-button"
-                        startIcon={<AiOutlineDelete />}
-                      >
-                        Delete
-                      </button>
+        // --- 3. Trigger the refresh after deleting ---
+        setRefreshKey((oldKey) => oldKey + 1);
+      } catch (error) {
+        toast.error(error?.message || "Error deleting item.");
+      }
+    }
+  };
 
-                      <ImagePreview>
-                        {images?.length > 0 &&
-                          images.map((file, item) => (
-                            <img
-                              key={item}
-                              src={URL.createObjectURL(file)}
-                              alt={`Food ${item}`}
-                              style={{
-                                width: isMobile ? '60px' : '80px',
-                                height: isMobile ? '60px' : '80px',
-                                objectFit: 'cover',
-                                borderRadius: 4,
-                              }}
-                            />
-                          ))}
-                      </ImagePreview>
-                    </FoodDetails>
-                  </FoodItem>
-                ))}
-              </Box>
-            ) : (
-              <>
-                <Typography>This hotel has no food availability.</Typography>
-                <img
-                  src="https://media.istockphoto.com/id/1396541669/vector/no-food-or-drink-icon.jpg?s=612x612&w=0&k=20&c=T8qvZM66nqu-Ir_rhjnmlmfTnbSUR4G6t0oPPlvVqfw="
-                  alt="No food"
-                  style={{ width: '100px', height: 'auto' }}
-                />
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Food Name"
-                  variant="outlined"
-                  fullWidth
-                  margin="normal"
-                  value={foodName}
-                  onChange={(e) => setFoodName(e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Food Price"
-                  variant="outlined"
-                  fullWidth
-                  margin="normal"
-                  value={foodPrice}
-                  onChange={(e) => setFoodPrice(e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth margin="normal" required>
-                  <InputLabel>Food Type</InputLabel>
-                  <Select
-                    value={foodType}
-                    onChange={(e) => setFoodType(e.target.value)}
-                    label="Food Type"
+  const handleClose = () => {
+    resetForm();
+    setIsAddingFood(false);
+    onClose();
+  };
+
+  const renderAddFoodForm = () => (
+    <Stack spacing={2}>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            size="small"
+            label="Food Name"
+            fullWidth
+            required
+            value={foodName}
+            onChange={(e) => setFoodName(e.target.value)}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            size="small"
+            label="Price"
+            fullWidth
+            required
+            type="number"
+            value={foodPrice}
+            onChange={(e) => setFoodPrice(e.target.value)}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <FormControl size="small" fullWidth required>
+            <InputLabel>Food Type</InputLabel>
+            <Select
+              value={foodType}
+              onChange={(e) => setFoodType(e.target.value)}
+              label="Food Type"
+            >
+              <MenuItem value="Appetizer">Appetizer</MenuItem>
+              <MenuItem value="Main Course">Main Course</MenuItem>
+              <MenuItem value="Dessert">Dessert</MenuItem>
+              <MenuItem value="Beverage">Beverage</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            size="small"
+            label="About Food"
+            fullWidth
+            multiline
+            rows={2}
+            value={about}
+            onChange={(e) => setAbout(e.target.value)}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <Paper
+            component="label"
+            htmlFor="upload-file"
+            variant="outlined"
+            sx={{
+              p: 1.5,
+              textAlign: "center",
+              cursor: "pointer",
+              borderStyle: "dashed",
+            }}
+          >
+            <UploadFileIcon sx={{ mr: 1, fontSize: 18 }} />
+            Click to Upload
+            <Input
+              type="file"
+              inputProps={{ multiple: true, accept: "image/*" }}
+              onChange={handleFileChange}
+              sx={{ display: "none" }}
+              id="upload-file"
+            />
+          </Paper>
+          {images.length > 0 && (
+            <Stack direction="row" spacing={1} mt={1} flexWrap="wrap">
+              {images.map((file, index) => (
+                <Box key={index} sx={{ position: "relative" }}>
+                  <Box
+                    component="img"
+                    src={URL.createObjectURL(file)}
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      objectFit: "cover",
+                      borderRadius: 1,
+                    }}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRemoveImage(index)}
+                    sx={{
+                      position: "absolute",
+                      top: -8,
+                      right: -8,
+                      bgcolor: "rgba(255,255,255,0.8)",
+                    }}
                   >
-                    <MenuItem value="Appetizer">Appetizer</MenuItem>
-                    <MenuItem value="Main Course">Main Course</MenuItem>
-                    <MenuItem value="Dessert">Dessert</MenuItem>
-                    <MenuItem value="Beverage">Beverage</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="About"
-                  variant="outlined"
-                  fullWidth
-                  margin="normal"
-                  value={about}
-                  onChange={(e) => setAbout(e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Input
-                  type="file"
-                  inputProps={{ multiple: true }}
-                  onChange={handleFileChange}
-                  sx={{ display: 'none' }}
-                  id="upload-file"
-                />
-                <label htmlFor="upload-file">
-                  <UploadButton component="span">Choose Images</UploadButton>
-                </label>
-                <ImagePreview>
-                  {images?.length > 0 &&
-                    images.map((file, index) => (
-                      <img
-                        key={index}
-                        src={URL.createObjectURL(file)}
-                        alt={`Food ${index}`}
-                        style={{
-                          width: isMobile ? '60px' : '80px',
-                          height: isMobile ? '60px' : '80px',
-                          objectFit: 'cover',
-                          borderRadius: 4,
-                        }}
-                      />
-                    ))}
-                </ImagePreview>
-              </Grid>
-            </Grid>
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => {
-                  handleCancel();
-                  setIsAddingFood(false);
-                }}
-                className="custom-button"
-                sx={{ mr: 1 }}
-              >
-                Cancel
-              </button>
-              <button onClick={handleAddFood} className="custom-button" disabled={loading}>
-                {loading ? 'Adding...' : 'Add Food'}
-              </button>
-            </div>
-          </>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          {!isAddingFood && (
-            <button className="custom-button" onClick={() => setIsAddingFood(true)}>
-              Add Food
-            </button>
+                    <CloseIcon sx={{ fontSize: 14 }} />
+                  </IconButton>
+                </Box>
+              ))}
+            </Stack>
           )}
-        </div>
-      </ModalContent>
-    </Modal>
+        </Grid>
+      </Grid>
+      <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
+        <Button onClick={resetForm} variant="outlined" size="small">
+          Clear
+        </Button>
+        <Button onClick={handleAddFood} variant="contained" size="small">
+          Save Item
+        </Button>
+      </Stack>
+    </Stack>
+  );
+
+  const renderFoodList = () => (
+    <Stack spacing={1.5}>
+      {isLoading ? (
+        Array.from(new Array(3)).map((_, index) => (
+          <Skeleton
+            key={index}
+            variant="rectangular"
+            height={80}
+            sx={{ borderRadius: 1.5 }}
+          />
+        ))
+      ) : foods && foods.length > 0 ? (
+        foods.map((food) => (
+          <Paper
+            key={food.foodId}
+            variant="outlined"
+            sx={{ p: 1.5, display: "flex", alignItems: "center", gap: 1.5 }}
+          >
+            <Box
+              component="img"
+              src={food?.images?.[0] || "/assets/placeholder.jpg"}
+              alt={food?.name}
+              sx={{
+                width: 70,
+                height: 70,
+                objectFit: "cover",
+                borderRadius: 1.5,
+              }}
+            />
+            <Stack sx={{ flex: 1 }}>
+              <Typography variant="subtitle1" fontWeight="bold">
+                {food?.name || "Unnamed"}
+              </Typography>
+              <Tooltip title={food?.about || ""} arrow>
+                <Typography variant="caption" color="text.secondary" noWrap>
+                  {food?.about || "No description"}
+                </Typography>
+              </Tooltip>
+              <Stack direction="row" spacing={1} mt={0.5}>
+                <Chip
+                  icon={<CurrencyRupeeIcon />}
+                  label={food?.price || "0"}
+                  color="success"
+                  size="small"
+                />
+                <Chip
+                  icon={<CategoryIcon />}
+                  label={food?.foodType || "N/A"}
+                  color="info"
+                  size="small"
+                />
+              </Stack>
+            </Stack>
+            <IconButton
+              size="small"
+              onClick={() => handleDeleteFood(food.foodId)}
+            >
+              <DeleteOutlineIcon color="error" />
+            </IconButton>
+          </Paper>
+        ))
+      ) : (
+        <Box sx={{ textAlign: "center", p: 3, bgcolor: "background.default" }}>
+          <RestaurantMenuIcon sx={{ fontSize: 48, color: "grey.400" }} />
+          <Typography sx={{ mt: 1, fontWeight: "medium" }}>
+            No Menu Items
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Expand the section above to add a new item.
+          </Typography>
+        </Box>
+      )}
+    </Stack>
+  );
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      fullWidth
+      maxWidth="sm"
+      scroll="paper"
+    >
+      <DialogTitle
+        sx={{
+          m: 0,
+          p: 2,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Typography variant="h6" component="div" sx={{ fontWeight: "bold" }}>
+          Manage Hotel Menu
+        </Typography>
+        <IconButton onClick={handleClose}>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent sx={{ p: 2, bgcolor: "background.default" }}>
+        <Accordion
+          expanded={isAddingFood}
+          onChange={handleAccordionChange}
+          sx={{
+            boxShadow: "none",
+            border: "1px solid",
+            borderColor: "divider",
+            "&.Mui-expanded": {
+              margin: 0,
+            },
+            "&:before": {
+              display: "none",
+            },
+          }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography fontWeight="medium">
+              {isAddingFood ? "Adding New Item..." : "Add New Food Item"}
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>{renderAddFoodForm()}</AccordionDetails>
+        </Accordion>
+        <Box mt={2}>{renderFoodList()}</Box>
+      </DialogContent>
+      <DialogActions
+        sx={{ p: "16px 24px", borderTop: "1px solid", borderColor: "divider" }}
+      >
+        <Button onClick={handleClose} variant="outlined" color="inherit">
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 
 AddFoodModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  hotelId: PropTypes.string.isRequired,
+  hotelId: PropTypes.string,
+};
+
+AddFoodModal.defaultProps = {
+  hotelId: null,
 };
 
 export default AddFoodModal;

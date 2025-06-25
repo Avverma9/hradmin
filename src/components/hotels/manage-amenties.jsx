@@ -3,222 +3,192 @@
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
-import { FaTimes } from 'react-icons/fa';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
-import { Box, Grid, Modal, Button, Checkbox, Typography, FormControlLabel } from '@mui/material';
+// Material-UI Imports
+import {
+  Box,
+  Grid,
+  Dialog,
+  Button,
+  Typography,
+  Chip,
+  Stack,
+  Divider,
+  Autocomplete,
+  TextField,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
+  IconButton,
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
+// Local Imports
 import { localUrl } from '../../../utils/util';
 import { useHotelAmenities } from '../../../utils/additional/hotelAmenities';
 
-
 export default function Amenities({ open, onClose, hotelId }) {
-  const [data, setData] = useState([]);
-  const [suggestionOpen, setSuggestionOpen] = useState(false);
-  const [selectedAmenities, setSelectedAmenities] = useState([]);
-  const [existingAmenities, setExistingAmenities] = useState([]);
-  const [selectedAmenityWarning, setSelectedAmenityWarning] = useState(null);
-  const allAmenities = useHotelAmenities()
-  // Fetch amenities when the component mounts or hotelId changes
+  const [currentAmenities, setCurrentAmenities] = useState([]);
+  const [amenitiesToAdd, setAmenitiesToAdd] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const allAmenities = useHotelAmenities();
+
   useEffect(() => {
     const fetchAmenities = async () => {
+      if (!hotelId) return;
+      setIsLoading(true);
       try {
         const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
         const amenitiesData = response.data.amenities.flatMap((item) => item.amenities);
-        setData(amenitiesData);
-        setExistingAmenities(amenitiesData); // Update existing amenities
+        setCurrentAmenities(amenitiesData);
       } catch (error) {
+        toast.error('Failed to fetch hotel amenities.');
         console.error('Error fetching amenities:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    if (hotelId) {
+    if (open) {
       fetchAmenities();
+    } else {
+      // Reset state when modal is closed
+      setCurrentAmenities([]);
+      setAmenitiesToAdd([]);
     }
-  }, [hotelId]);
+  }, [hotelId, open]);
 
-  const handleDeleteAmenity = async (amenityName) => {
+  const handleDeleteAmenity = async (amenityToDelete) => {
     try {
-      await axios.delete(`${localUrl}/hotels/${hotelId}/amenities/${amenityName}`);
-      const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
-      const amenitiesData = response.data.amenities.flatMap((item) => item.amenities);
-      setData(amenitiesData);
-      setExistingAmenities(amenitiesData); // Update existing amenities
-      toast.success('Successfully deleted amenity');
+      await axios.delete(`${localUrl}/hotels/${hotelId}/amenities/${amenityToDelete}`);
+      // Optimistic UI update
+      setCurrentAmenities((prev) => prev.filter((amenity) => amenity !== amenityToDelete));
+      toast.success(`"${amenityToDelete}" removed successfully.`);
     } catch (error) {
       toast.error(`Error deleting amenity: ${error.message}`);
     }
   };
 
-  const handleAddMultipleAmenities = async () => {
-    const newAmenities = selectedAmenities.filter(
-      (amenity) => !existingAmenities.includes(amenity)
-    );
-    if (newAmenities.length > 0) {
-      try {
-        await axios.post(`${localUrl}/create-a-amenities/to-your-hotel`, {
-          hotelId,
-          amenities: newAmenities,
-        });
-        const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
-        const amenitiesData = response.data.amenities.flatMap((item) => item.amenities);
-        setData(amenitiesData);
-        setExistingAmenities(amenitiesData); // Update existing amenities
-        setSelectedAmenities([]); // Clear the selected amenities after adding
-        setSuggestionOpen(false); // Close the suggestion modal
-        toast.success('Successfully added amenities');
-      } catch (error) {
-        toast.error(`Error adding amenities: ${error.message}`);
-      }
-    } else {
-      toast.warning('Some or all selected amenities are already added');
+  const handleAddAmenities = async () => {
+    if (amenitiesToAdd.length === 0) {
+      toast.info('Please select at least one amenity to add.');
+      return;
     }
-  };
+    
+    const newAmenityNames = amenitiesToAdd.map(a => a.name);
 
-  const handleCheckboxChange = (amenityName, isChecked) => {
-    if (isChecked) {
-      if (existingAmenities.includes(amenityName)) {
-        toast.info(`${amenityName} is already added`);
-        setSelectedAmenityWarning(amenityName);
-      } else {
-        setSelectedAmenities([...selectedAmenities, amenityName]);
-        setSelectedAmenityWarning(null);
-      }
-    } else {
-      setSelectedAmenities(selectedAmenities.filter((a) => a !== amenityName));
-      setSelectedAmenityWarning(null);
+    try {
+      await axios.post(`${localUrl}/create-a-amenities/to-your-hotel`, {
+        hotelId,
+        amenities: newAmenityNames,
+      });
+      // Optimistic UI update
+      setCurrentAmenities((prev) => [...prev, ...newAmenityNames]);
+      setAmenitiesToAdd([]); // Clear the selection
+      toast.success('Amenities added successfully.');
+    } catch (error) {
+      toast.error(`Error adding amenities: ${error.message}`);
     }
   };
+  
+  // Memoize the list of available amenities to prevent recalculation on every render
+  const availableOptions = useMemo(
+    () => allAmenities.filter((amenity) => !currentAmenities.includes(amenity.name)),
+    [allAmenities, currentAmenities]
+  );
 
   return (
-    <div>
-      <Modal
-        open={open}
-        onClose={onClose}
-        aria-labelledby="modal-title"
-        aria-describedby="modal-description"
-        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-      >
-        <Box
-          sx={{
-            width: '90%',
-            maxWidth: 600,
-            maxHeight: '80%',
-            overflowY: 'auto',
-            bgcolor: 'background.paper',
-            border: '1px solid #ccc',
-            borderRadius: 2,
-            boxShadow: 24,
-            p: 4,
-          }}
-        >
-          <Typography id="modal-title" variant="h6" component="h2">
-            Amenities
-          </Typography>
-          <Grid container spacing={2} sx={{ mt: 2 }}>
-            {data.length > 0 ? (
-              data.map((item, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Typography variant="body1" sx={{ flexGrow: 1 }}>
-                      {item}
-                    </Typography>
-                    <Button
-                      onClick={() => handleDeleteAmenity(item)}
-                      sx={{ minWidth: 'auto', ml: 1, p: 1 }}
-                      variant="outlined"
-                      color="error"
-                    >
-                      <FaTimes />
-                    </Button>
-                  </Box>
-                </Grid>
-              ))
-            ) : (
-              <Typography variant="body1">No amenities available</Typography>
-            )}
-          </Grid>
-          <Button
-            onClick={() => setSuggestionOpen(true)}
-            sx={{ mt: 2, mr: 2 }} // Margin-right for spacing
-            variant="contained"
-            color="primary"
-          >
-            Add Amenities
-          </Button>
-          <Button
-            onClick={onClose}
-            sx={{ mt: 2 }} // Margin-top for spacing
-            variant="outlined"
-            color="primary"
-          >
-            Close
-          </Button>
-        </Box>
-      </Modal>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+          Manage Amenities
+        </Typography>
+        <IconButton aria-label="close" onClick={onClose}><CloseIcon /></IconButton>
+      </DialogTitle>
+      
+      <DialogContent dividers>
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
+              Current Hotel Amenities
+            </Typography>
+            <Box sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 1,
+              p: 2,
+              border: '1px dashed',
+              borderColor: 'divider',
+              borderRadius: 1,
+              minHeight: '80px',
+              alignContent: 'flex-start'
+            }}>
+              {currentAmenities.length > 0 ? (
+                currentAmenities.map((amenity, index) => (
+                  <Chip
+                    key={index}
+                    label={amenity}
+                    onDelete={() => handleDeleteAmenity(amenity)}
+                    color="primary"
+                    variant="outlined"
+                  />
+                ))
+              ) : (
+                <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
+                  No amenities have been added to this hotel yet.
+                </Typography>
+              )}
+            </Box>
 
-      <Modal
-        open={suggestionOpen}
-        onClose={() => setSuggestionOpen(false)}
-        aria-labelledby="suggestion-modal-title"
-        aria-describedby="suggestion-modal-description"
-        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-      >
-        <Box
-          sx={{
-            width: '90%',
-            maxWidth: 600,
-            maxHeight: '80%',
-            overflowY: 'auto',
-            bgcolor: 'background.paper',
-            border: '1px solid #ccc',
-            borderRadius: 2,
-            boxShadow: 24,
-            p: 4,
-          }}
-        >
-          <Typography id="suggestion-modal-title" variant="h6" component="h2">
-            Select Amenities to Add
-          </Typography>
-          <Grid container spacing={2} sx={{ mt: 2 }}>
-            {allAmenities.map((amenity) => (
-              <Grid item xs={12} sm={6} md={4} key={amenity._id}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={selectedAmenities.includes(amenity.name)}
-                      onChange={(e) => handleCheckboxChange(amenity.name, e.target.checked)}
-                    />
-                  }
-                  label={amenity.name}
-                />
-              </Grid>
-            ))}
-          </Grid>
-          <Button
-            onClick={handleAddMultipleAmenities}
-            sx={{ mt: 2, mr: 2 }} // Margin-right for spacing
-            variant="contained"
-            color="primary"
-          >
-            Add Selected Amenities
-          </Button>
-          <Button
-            onClick={() => setSuggestionOpen(false)}
-            sx={{ mt: 2 }} // Margin-top for spacing
-            variant="outlined"
-            color="secondary"
-          >
-            Close
-          </Button>
-        </Box>
-      </Modal>
-    </div>
+            <Divider sx={{ my: 3 }}>
+              <Chip label="ADD NEW" size="small" />
+            </Divider>
+
+            <Autocomplete
+              multiple
+              limitTags={3}
+              id="add-amenities-autocomplete"
+              options={availableOptions}
+              getOptionLabel={(option) => option.name}
+              value={amenitiesToAdd}
+              onChange={(event, newValue) => {
+                setAmenitiesToAdd(newValue);
+              }}
+              renderInput={(params) => (
+                <TextField {...params} variant="outlined" label="Search and Select Amenities" />
+              )}
+              sx={{ mt: 2 }}
+              noOptionsText="All available amenities have been added."
+            />
+          </>
+        )}
+      </DialogContent>
+
+      <DialogActions sx={{ p: '16px 24px' }}>
+        <Button onClick={onClose} variant="outlined" color="inherit">
+          Cancel
+        </Button>
+        <Button onClick={handleAddAmenities} variant="contained" color="primary" disabled={isLoading || amenitiesToAdd.length === 0}>
+          Add Selected
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
 Amenities.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  hotelId: PropTypes.string.isRequired,
+  hotelId: PropTypes.string,
+};
+
+Amenities.defaultProps = {
+  hotelId: null,
 };

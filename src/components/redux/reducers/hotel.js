@@ -93,7 +93,6 @@ export const addFood = createAsyncThunk('hotel/addFood', async (formData, { reje
         return response.data;
     } catch (error) {
         const errorMessage = error.message;
-        toast.error(`Error: ${errorMessage}`);
         return rejectWithValue(errorMessage);
     }
 });

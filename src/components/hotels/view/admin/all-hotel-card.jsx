@@ -1,75 +1,44 @@
-import PropTypes from "prop-types";
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { PiBathtubThin } from "react-icons/pi";
-import { IoFastFoodSharp } from "react-icons/io5";
-import { FaPersonCircleCheck } from "react-icons/fa6";
-import { FcHome, FcViewDetails } from "react-icons/fc";
-import { styled } from "@mui/system";
+import PropTypes from 'prop-types';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+// Material-UI Imports
 import {
   Box,
-  Link,
   Card,
   Stack,
-  Button,
-  Tooltip,
-  IconButton,
+  Typography,
   Chip,
-} from "@mui/material";
+  IconButton,
+  Menu,
+  MenuItem,
+  CardMedia,
+  CardContent,
+  CardActions,
+  Button,
+  CardActionArea,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+} from '@mui/material';
 
-import Label from "../../../stuff/label";
-import AddFoodModal from "../../manage-foods";
-import Amenities from "../../manage-amenties";
-import AddRoomModal from "../../manage-rooms";
-import BasicDetails from "../../basic-details";
+// Material-UI Icons
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
+import DeckIcon from '@mui/icons-material/Deck';
+import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
+import ArticleIcon from '@mui/icons-material/Article';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import PersonIcon from '@mui/icons-material/Person';
 
-// Styled component for the action button container
-const ActionButtonContainer = styled("div")(({ theme }) => ({
-  position: "relative",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  height: 48,
-  marginTop: theme.spacing(2),
-  "&:hover .action-buttons": {
-    opacity: 1,
-  },
-}));
+// Local Component Imports
+import Label from '../../../stuff/label';
+import AddFoodModal from '../../manage-foods';
+import Amenities from '../../manage-amenties';
+import AddRoomModal from '../../manage-rooms';
+import BasicDetails from '../../basic-details';
 
-// Styled component for the action buttons
-const ActionButtonOverlay = styled("div")(({ theme }) => ({
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  right: 0,
-  backgroundColor: theme.palette.background.paper,
-  padding: theme.spacing(1),
-  boxShadow: theme.shadows[4],
-  display: "flex",
-  justifyContent: "center",
-  gap: theme.spacing(1),
-  zIndex: 10,
-}));
-
-// Styled component for the card
-const StyledCard = styled(Card)(({ theme }) => ({
-  display: "flex",
-  flexDirection: "column",
-  height: "90%", // Ensure all cards take the full height
-  width: 300, // Set a fixed width for all cards
-  margin: theme.spacing(1), // Add margin for spacing between cards
-}));
-
-// Styled component for the image
-const StyledImage = styled(Box)(({ theme }) => ({
-  top: 0,
-  width: "100%",
-  height: 150, // Fixed height for uniformity
-  objectFit: "cover",
-  position: "relative",
-}));
-
-function ShopProductCard({
+export default function ShopProductCard({
   product,
   onAddFood,
   onUpdateAmenities,
@@ -77,37 +46,33 @@ function ShopProductCard({
   onBasicDetails,
 }) {
   const navigate = useNavigate();
-  const [isModalOpen, setModalOpen] = useState(false);
-  const [isAmenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
-  const [isBasicDetailModalOpen, setBasicDetailsOpen] = useState(false);
-  const [isRoomModalOpen, setRoomModalOpen] = useState(false);
 
-  const viewDetails = (hotelId) => {
-    navigate(`/view-hotel-details/${hotelId}`);
+  // --- State Management ---
+  const [openModal, setOpenModal] = useState(null); // e.g., 'food', 'rooms'
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  // --- Handlers ---
+  const handleViewDetails = () => navigate(`/view-hotel-details/${product.hotelId}`);
+  const handleOpenMenu = (event) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
   };
+  const handleCloseMenu = () => setAnchorEl(null);
 
-  const handleOpenModal = () => setModalOpen(true);
-  const handleOpenRoom = () => setRoomModalOpen(true);
-  const handleOpenAmenities = () => setAmenitiesModalOpen(true);
-  const handleBasicDetailsOpen = () => setBasicDetailsOpen(true);
-  const handleCloseModal = () => setModalOpen(false);
-  const handleCloseRoom = () => setRoomModalOpen(false);
-  const handleCloseAmenitiesModal = () => setAmenitiesModalOpen(false);
-  const handleBasicDetailsClose = () => setBasicDetailsOpen(false);
+  const handleOpenModal = (modalName) => {
+    setOpenModal(modalName);
+    handleCloseMenu();
+  };
+  const handleCloseModal = () => setOpenModal(null);
 
   const handleAddFood = (foodData) => {
     onAddFood(product.hotelId, foodData);
     handleCloseModal();
   };
 
-  const handleAddAmenities = (amenitiesData) => {
+  const handleUpdateAmenities = (amenitiesData) => {
     onUpdateAmenities(product.hotelId, amenitiesData);
-    handleCloseAmenitiesModal();
-  };
-
-  const basicDetails = (basicData) => {
-    onBasicDetails(product.hotelId, basicData);
-    handleBasicDetailsClose();
+    handleCloseModal();
   };
 
   const handleAddRoom = (roomData) => {
@@ -115,138 +80,139 @@ function ShopProductCard({
     handleCloseModal();
   };
 
-  const renderStatus = (
-    <Label
-      variant="filled"
-      sx={{
-        zIndex: 9,
-        top: 16,
-        right: 16,
-        position: "absolute",
-        textTransform: "uppercase",
-      }}
-    >
-      {product?.price}
-    </Label>
-  );
+  const handleBasicDetails = (basicData) => {
+    onBasicDetails(product.hotelId, basicData);
+    handleCloseModal();
+  };
 
   return (
     <>
-      <StyledCard onClick={() => viewDetails(product.hotelId)}>
-        <StyledImage
-          component="img"
-          alt={product?.hotelName}
-          src={product?.images?.[0]}
-        />
-        {product.price && renderStatus}
-
-        <Stack  sx={{ p:1, flexGrow: 1 }}>
-          <Link color="inherit" underline="hover" variant="subtitle2" noWrap>
-            <FcHome /> {product?.hotelName}
-          </Link>
-          <Link color="inherit" underline="hover" variant="subtitle2" noWrap>
-            <FaPersonCircleCheck /> Owner - {product?.hotelOwnerName}
-          </Link>
-          <Button
-            variant="outlined"
-            color={product?.isAccepted ? "success" : "warning"}
-            noWrap
-          >
-            {product?.isAccepted === true ? "Live" : "Needs approval"}
-          </Button>
-        </Stack>
-        {product?.rooms.some((room) => room.isOffer) && (
-          <Tooltip title="Offer Running">
-            <Chip
-              size="small"
-              label="Offer"
-              color="primary"
-              sx={{
-                ml: 1,
-                height: "20px",
-                fontSize: "0.7rem",
-              }}
+      <Card sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: 2,
+        transition: 'box-shadow 0.3s ease-in-out, transform 0.2s ease-in-out',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: (theme) => theme.shadows[8],
+        },
+      }}>
+        <Box sx={{ position: 'relative' }}>
+          <CardActionArea onClick={handleViewDetails}>
+            <CardMedia
+              component="img"
+              height="180"
+              image={product?.images?.[0] || '/assets/placeholder.jpg'}
+              alt={product?.hotelName}
             />
-          </Tooltip>
-        )}
-        <ActionButtonContainer>
-          <ActionButtonOverlay className="action-buttons">
-            <Tooltip title="Add Food">
-              <IconButton
-                color="primary"
-                sx={{ width: 32, height: 32 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleOpenModal();
-                }}
-              >
-                <IoFastFoodSharp size={20} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Update Amenities">
-              <IconButton
-                color="primary"
-                sx={{ width: 32, height: 32 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleOpenAmenities();
-                }}
-              >
-                <PiBathtubThin size={20} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Update Rooms">
-              <IconButton
-                color="primary"
-                sx={{ width: 32, height: 32 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleOpenRoom();
-                }}
-              >
-                <FcHome size={20} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Basic Details">
-              <IconButton
-                color="primary"
-                sx={{ width: 32, height: 32 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleBasicDetailsOpen();
-                }}
-              >
-                <FcViewDetails size={20} />
-              </IconButton>
-            </Tooltip>
-          </ActionButtonOverlay>
-        </ActionButtonContainer>
-      </StyledCard>
+          </CardActionArea>
+          {product?.price && (
+            <Label
+              variant="filled"
+              color="info"
+              sx={{ position: 'absolute', zIndex: 9, top: 16, right: 16, textTransform: 'uppercase' }}
+            >
+              {product.price}
+            </Label>
+          )}
+        </Box>
 
-      {/* Modals */}
+        <CardContent sx={{ flexGrow: 1 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1}>
+            <Chip
+              label={product?.isAccepted ? "Live" : "Needs Approval"}
+              color={product?.isAccepted ? "success" : "warning"}
+              size="small"
+              sx={{ fontWeight: 'bold' }}
+            />
+            {product?.rooms.some((room) => room.isOffer) && (
+              <Tooltip title="Special offer available!">
+                <Chip label="Offer" color="primary" size="small" />
+              </Tooltip>
+            )}
+          </Stack>
+          
+          <Typography variant="h6" component="div" noWrap sx={{ mb: 1 }}>
+            {product?.hotelName}
+          </Typography>
+
+          <Stack spacing={1} color="text.secondary">
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <PersonIcon fontSize="small" />
+              <Typography variant="body2">{product?.hotelOwnerName}</Typography>
+            </Stack>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <LocationOnIcon fontSize="small" />
+              <Typography variant="body2">{product?.city}</Typography>
+            </Stack>
+          </Stack>
+        </CardContent>
+
+        <CardActions sx={{ justifyContent: 'space-between', p: 1 }}>
+          <Button size="small" variant="text" onClick={handleViewDetails}>
+            View Details
+          </Button>
+          <Tooltip title="Manage Hotel">
+            <IconButton
+              aria-label="settings"
+              onClick={handleOpenMenu}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <MoreVertIcon />
+            </IconButton>
+          </Tooltip>
+        </CardActions>
+      </Card>
+
+      {/* --- Management Menu --- */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleCloseMenu}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <MenuItem onClick={() => handleOpenModal('details')}>
+          <ListItemIcon><ArticleIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>Basic Details</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleOpenModal('rooms')}>
+          <ListItemIcon><MeetingRoomIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>Manage Rooms</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleOpenModal('food')}>
+          <ListItemIcon><RestaurantMenuIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>Manage Food</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleOpenModal('amenities')}>
+          <ListItemIcon><DeckIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>Manage Amenities</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* --- Modals --- */}
+      <BasicDetails
+        open={openModal === 'details'}
+        onClose={handleCloseModal}
+        hotelId={product.hotelId}
+        onBasicDetails={handleBasicDetails}
+      />
+      <AddRoomModal
+        open={openModal === 'rooms'}
+        onClose={handleCloseModal}
+        hotelId={product.hotelId}
+        onAddRoom={handleAddRoom}
+      />
       <AddFoodModal
-        open={isModalOpen}
+        open={openModal === 'food'}
         onClose={handleCloseModal}
         hotelId={product.hotelId}
         onAddFood={handleAddFood}
       />
       <Amenities
-        open={isAmenitiesModalOpen}
-        onClose={handleCloseAmenitiesModal}
+        open={openModal === 'amenities'}
+        onClose={handleCloseModal}
         hotelId={product.hotelId}
-        onUpdateAmenities={handleAddAmenities}
-      />
-      <AddRoomModal
-        open={isRoomModalOpen}
-        onClose={handleCloseRoom}
-        hotelId={product.hotelId}
-        onAddRoom={handleAddRoom}
-      />
-      <BasicDetails
-        open={isBasicDetailModalOpen}
-        onClose={handleBasicDetailsClose}
-        hotelId={product.hotelId}
-        onBasicDetails={basicDetails}
+        onUpdateAmenities={handleUpdateAmenities}
       />
     </>
   );
@@ -259,5 +225,3 @@ ShopProductCard.propTypes = {
   onUpdateAmenities: PropTypes.func.isRequired,
   onBasicDetails: PropTypes.func.isRequired,
 };
-
-export default ShopProductCard;

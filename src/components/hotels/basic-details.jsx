@@ -1,255 +1,250 @@
-/* eslint-disable no-nested-ternary */
-/* eslint-disable jsx-a11y/img-redundant-alt */
-import axios from 'axios';
-import PropTypes from 'prop-types';
-import { toast } from 'react-toastify';
-import { AiOutlineEdit } from 'react-icons/ai';
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 import {
   Box,
   Grid,
-  Modal,
   Button,
   Select,
   MenuItem,
   TextField,
   Typography,
   IconButton,
-  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Paper,
+  Stack,
+  Skeleton,
+  Divider,
 } from '@mui/material';
 
+import EditIcon from '@mui/icons-material/Edit';
+import CloseIcon from '@mui/icons-material/Close';
+import CheckIcon from '@mui/icons-material/Check';
+import BusinessIcon from '@mui/icons-material/Business';
+import PersonIcon from '@mui/icons-material/Person';
+import PhoneIcon from '@mui/icons-material/Phone';
+import MailIcon from '@mui/icons-material/Mail';
+import LocationCityIcon from '@mui/icons-material/LocationCity';
+import PinDropIcon from '@mui/icons-material/PinDrop';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import MapIcon from '@mui/icons-material/Map';
+import DescriptionIcon from '@mui/icons-material/Description';
+import HomeWorkIcon from '@mui/icons-material/HomeWork';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import StarIcon from '@mui/icons-material/Star';
+import ApartmentIcon from '@mui/icons-material/Apartment';
+import ChatIcon from '@mui/icons-material/Chat';
+import PublicIcon from '@mui/icons-material/Public';
+import FlagIcon from '@mui/icons-material/Flag';
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import DeckIcon from '@mui/icons-material/Deck';
+
 import { localUrl } from '../../../utils/util';
-import { useLoader } from '../../../utils/loader';
+
+const fieldsConfig = [
+  { id: 'hotelId', label: 'Hotel ID', icon: <VpnKeyIcon />, editable: false, grid: 6 },
+  { id: 'hotelName', label: 'Hotel Name', icon: <BusinessIcon />, editable: true, grid: 6 },
+  { id: 'description', label: 'Description', icon: <DescriptionIcon />, editable: true, type: 'multiline', grid: 12 },
+  { id: 'customerWelcomeNote', label: 'Customer Welcome Note', icon: <ChatIcon />, editable: true, type: 'multiline', grid: 12 },
+  { id: 'hotelOwnerName', label: 'Hotel Owner Name', icon: <PersonIcon />, editable: true, grid: 6 },
+  { id: 'propertyType', label: 'Property Type', icon: <ApartmentIcon />, editable: true, grid: 6 },
+  { id: 'contact', label: 'Contact', icon: <PhoneIcon />, editable: true, grid: 6 },
+  { id: 'hotelEmail', label: 'Hotel Email', icon: <MailIcon />, editable: true, type: 'email', grid: 6 },
+  { id: 'generalManagerContact', label: 'General Manager Contact', icon: <SupervisorAccountIcon />, editable: true, grid: 6 },
+  { id: 'salesManagerContact', label: 'Sales Manager Contact', icon: <SupportAgentIcon />, editable: true, grid: 6 },
+  { id: 'landmark', label: 'Landmark', icon: <HomeWorkIcon />, editable: true, grid: 12 },
+  { id: 'destination', label: 'Destination', icon: <FlagIcon />, editable: true, grid: 6 },
+  { id: 'city', label: 'City', icon: <LocationCityIcon />, editable: true, grid: 6 },
+  { id: 'state', label: 'State', icon: <PublicIcon />, editable: true, grid: 6 },
+  { id: 'pinCode', label: 'Pin Code', icon: <PinDropIcon />, editable: true, grid: 6 },
+  { id: 'onFront', label: 'On Front', icon: <DeckIcon />, editable: true, grid: 6 },
+  { id: 'starRating', label: 'Star Rating', icon: <StarIcon />, editable: true, type: 'number', grid: 6 },
+  { id: 'isAccepted', label: 'Approval Status', icon: <CheckCircleIcon />, editable: true, type: 'select', options: ['Accepted', 'Not Accepted'], grid: 6 },
+  { id: 'localId', label: 'Local ID Status', icon: <CheckCircleIcon />, editable: true, type: 'select', options: ['Accepted', 'Not Accepted'], grid: 6 },
+];
+
 export default function BasicDetails({ open, onClose, hotelId }) {
-  const [hotel, setHotel] = useState({});
+  const [hotel, setHotel] = useState(null);
   const [editField, setEditField] = useState(null);
   const [editValue, setEditValue] = useState('');
-  const [loading, setLoading] = useState(true);
-  const { showLoader, hideLoader } = useLoader();
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const fetchData = async () => {
+      if (!hotelId) return;
+      setIsLoading(true);
       try {
         const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
         setHotel(response.data);
       } catch (error) {
-        toast.error('Something went wrong');
+        toast.error('Failed to fetch hotel details.');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-    if (hotelId) {
-      setLoading(true);
+    if (open) {
       fetchData();
     }
-  }, [hotelId]);
+  }, [hotelId, open]);
 
   const handleEditClick = (field, value) => {
-    if (field === 'isAccepted') {
+    setEditField(field.id);
+    if (field.id === 'isAccepted' || field.id === 'localId') {
       setEditValue(value ? 'Accepted' : 'Not Accepted');
     } else {
-      setEditValue(value);
+      setEditValue(value || '');
     }
-    setEditField(field);
+  };
+
+  const handleCancelEdit = () => {
+    setEditField(null);
+    setEditValue('');
   };
 
   const handleSaveClick = async () => {
+    if (editField === null) return;
     try {
       let updatedValue = editValue;
-      if (editField === 'isAccepted') {
+      if (editField === 'isAccepted' || editField === 'localId') {
         updatedValue = editValue === 'Accepted';
       }
 
+      await axios.patch(`${localUrl}/hotels/update/info/${hotelId}`, { [editField]: updatedValue });
+      
       const updatedHotel = { ...hotel, [editField]: updatedValue };
-      await axios.patch(`${localUrl}/hotels/update/info/${hotelId}`, updatedHotel);
       setHotel(updatedHotel);
-      toast.success('Update successful');
+      toast.success('Update successful!');
     } catch (error) {
-      toast.error('Update failed');
+      toast.error('Update failed. Please try again.');
     } finally {
-      setEditField(null);
-      setEditValue('');
+      handleCancelEdit();
     }
   };
 
-  const handleInputChange = (e) => {
-    setEditValue(e.target.value);
-  };
-
-  const handleSelectChange = (e) => {
-    setEditValue(e.target.value);
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      handleSaveClick();
-    }
-  };
-
-  const renderField = (key, value) => {
-    if (key === 'isAccepted') {
+  const renderFieldValue = (field) => {
+    const value = hotel?.[field.id];
+    if (field.id === 'isAccepted' || field.id === 'localId') {
       return value ? 'Accepted' : 'Not Accepted';
     }
-    if (typeof value === 'object') {
-      if (Array.isArray(value)) {
-        return value.join(', '); // Join array values with commas
-      }
-      return JSON.stringify(value); // Convert object to string
-    }
-    return value;
+    return value || 'Not provided';
   };
 
-  const fieldsToHide = [
-    'createdAt',
-    'updatedAt',
-    'rooms',
-    'foods',
-    'amenities',
-    'policies',
-    '_id',
-    '__v',
-    'startDate',
-    'endDate',
-  ];
-
-  if (loading) {
+  const renderEditComponent = (field) => {
+    if (field.type === 'select') {
+      return (
+        <Select value={editValue} onChange={(e) => setEditValue(e.target.value)} size="small" fullWidth>
+          {field.options.map((option) => (<MenuItem key={option} value={option}>{option}</MenuItem>))}
+        </Select>
+      );
+    }
     return (
-      <Modal
-        open={open}
-        onClose={onClose}
-        aria-labelledby="modal-title"
-        aria-describedby="modal-description"
-        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-      >
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            p: 4,
-            textAlign: 'center',
-          }}
-        >
-          <CircularProgress />
-          <Typography variant="body1" sx={{ mt: 2 }}>
-            Loading...
-          </Typography>
-        </Box>
-      </Modal>
+      <TextField
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        size="small"
+        fullWidth
+        autoFocus
+        multiline={field.type === 'multiline'}
+        rows={field.type === 'multiline' ? 3 : 1}
+        type={field.type || 'text'}
+      />
     );
-  }
-
+  };
+  
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      aria-labelledby="modal-title"
-      aria-describedby="modal-description"
-      sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-    >
-      <Box
-        sx={{
-          width: '90%',
-          maxWidth: 800,
-          maxHeight: '80%',
-          overflowY: 'auto',
-          bgcolor: 'background.paper',
-          border: '1px solid #ccc',
-          borderRadius: 2,
-          boxShadow: 24,
-          p: 4,
-        }}
-      >
-        <Typography id="modal-title" variant="h6" component="h2">
-          Basic Details
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg" scroll="paper">
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6" component="div" fontWeight="bold">
+          {hotel?.hotelName || 'Hotel Basic Details'}
         </Typography>
-        <Grid container spacing={3} sx={{ mt: 2 }}>
-          {Object.keys(hotel).map((key) => {
-            if (fieldsToHide.includes(key)) {
-              return null; // Skip rendering fields that should be hidden
-            }
-            return (
-              <Grid item xs={12} key={key} sx={{ display: 'flex', alignItems: 'center' }}>
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="subtitle1" component="div" sx={{ mb: 1 }}>
-                    {`${key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}`}
-                  </Typography>
-                  {editField === key ? (
-                    key === 'isAccepted' ? (
-                      <Select
-                        value={editValue}
-                        onChange={handleSelectChange}
-                        onBlur={handleSaveClick}
-                        onKeyDown={handleKeyDown}
-                        sx={{ width: '100%' }}
-                      >
-                        <MenuItem value="Accepted">Accepted</MenuItem>
-                        <MenuItem value="Not Accepted">Not Accepted</MenuItem>
-                      </Select>
-                    ) : key === 'localId' ? (
-                      <Select
-                        value={editValue}
-                        onChange={handleSelectChange}
-                        onBlur={handleSaveClick}
-                        onKeyDown={handleKeyDown}
-                        sx={{ width: '100%' }}
-                      >
-                        <MenuItem value="Accepted">Accepted</MenuItem>
-                        <MenuItem value="Not Accepted">Not Accepted</MenuItem>
-                      </Select>
-                    ) : (
-                      <TextField
-                        value={editValue}
-                        onChange={handleInputChange}
-                        onKeyDown={handleKeyDown}
-                        onBlur={handleSaveClick}
-                        sx={{ width: '100%' }}
-                      />
-                    )
-                  ) : key === 'images' ? (
-                    <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
-                      {hotel.images.map((image, index) => (
-                        <img
-                          key={index}
-                          src={image}
-                          alt={`Hotel Image ${index}`}
-                          style={{
-                            width: '120px',
-                            height: 'auto',
-                            objectFit: 'cover',
-                            borderRadius: '4px',
-                          }}
-                        />
-                      ))}
-                    </Box>
-                  ) : (
-                    <Typography variant="body1" sx={{ display: 'inline' }}>
-                      {renderField(key, hotel[key])}
-                    </Typography>
-                  )}
-                </Box>
-                {key !== 'images' &&
-                  key !== 'hotelId' && ( // Hide edit icon for images
-                    <IconButton
-                      onClick={() => handleEditClick(key, hotel[key])}
-                      sx={{ ml: 2, visibility: editField === key ? 'hidden' : 'visible' }}
-                    >
-                      <AiOutlineEdit size={24} />
-                    </IconButton>
-                  )}
+        <IconButton onClick={onClose}><CloseIcon /></IconButton>
+      </DialogTitle>
+      <DialogContent dividers>
+        {isLoading ? (
+          <Grid container spacing={2}>
+            {fieldsConfig.map((field) => (
+              <Grid item xs={12} sm={field.grid} key={field.id}>
+                <Skeleton variant="rectangular" height={70} sx={{ borderRadius: 1.5 }} />
               </Grid>
-            );
-          })}
-        </Grid>
-        <Button onClick={onClose} sx={{ mt: 3 }} variant="contained" color="primary">
-          Close
-        </Button>
-      </Box>
-    </Modal>
+            ))}
+          </Grid>
+        ) : hotel ? (
+          <>
+            <Box mb={3}>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Hotel Images</Typography>
+              <Stack direction="row" spacing={2} sx={{ overflowX: 'auto', p: 1, pb: 2 }}>
+                {hotel.images?.length > 0 ? hotel.images.map((image, index) => (
+                  <Box
+                    key={index}
+                    component="img"
+                    src={image}
+                    alt={`Hotel Image ${index + 1}`}
+                    sx={{ width: 180, height: 120, objectFit: 'cover', borderRadius: 1.5, flexShrink: 0, border: '1px solid', borderColor: 'divider' }}
+                  />
+                )) : <Typography variant="body2" color="text.secondary">No images available.</Typography>}
+              </Stack>
+            </Box>
+
+            <Grid container spacing={2}>
+              {fieldsConfig.map((field) => (
+                <Grid item xs={12} sm={field.grid} key={field.id}>
+                  <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
+                      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ minWidth: 0 }}>
+                        {field.icon}
+                        <Typography variant="body2" color="text.secondary" noWrap>{field.label}</Typography>
+                      </Stack>
+                      {field.editable && editField !== field.id && (
+                        <IconButton size="small" onClick={() => handleEditClick(field, hotel[field.id])} sx={{ mt: -0.5 }}>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      )}
+                    </Stack>
+                    
+                    {editField === field.id ? (
+                      <Stack spacing={1} mt={1}>
+                        {renderEditComponent(field)}
+                        <Stack direction="row" justifyContent="flex-end" spacing={1}>
+                          <Button size="small" onClick={handleCancelEdit}>Cancel</Button>
+                          <Button size="small" variant="contained" onClick={handleSaveClick} startIcon={<CheckIcon />}>Save</Button>
+                        </Stack>
+                      </Stack>
+                    ) : (
+                      <Typography variant="body1" fontWeight="500" mt={0.5} sx={{
+                        wordBreak: 'break-word',
+                        color: (field.id === 'isAccepted' || field.id === 'localId') ? (hotel[field.id] ? 'success.main' : 'error.main') : 'text.primary'
+                      }}>
+                        {renderFieldValue(field)}
+                      </Typography>
+                    )}
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </>
+        ) : (
+          <Typography>No hotel data available.</Typography>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+        <Button onClick={onClose} variant="outlined">Close</Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
 BasicDetails.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  hotelId: PropTypes.string.isRequired,
+  hotelId: PropTypes.string,
+};
+
+BasicDetails.defaultProps = {
+  hotelId: null,
 };

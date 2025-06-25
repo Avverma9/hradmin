@@ -32,7 +32,7 @@ const TourRequest = () => {
   };
 
   const handleAddNew = () => {
-    navigate('/tour-add'); // Navigate to the page for adding a new tour
+    navigate('/add-tour-data'); // Navigate to the page for adding a new tour
   };
 
   const columns = [
