@@ -2,10 +2,15 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import Slider from 'react-slick';
 
+// Import slick-carousel styles
+import 'slick-carousel/slick/slick.css'; 
+import 'slick-carousel/slick/slick-theme.css';
+
+// Material-UI Imports
 import {
   Box,
-  Grid,
   Button,
   Select,
   MenuItem,
@@ -16,12 +21,15 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Paper,
   Stack,
   Skeleton,
-  Divider,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Chip,
 } from '@mui/material';
 
+// Material-UI Icons
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckIcon from '@mui/icons-material/Check';
@@ -32,6 +40,7 @@ import MailIcon from '@mui/icons-material/Mail';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
 import PinDropIcon from '@mui/icons-material/PinDrop';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 import MapIcon from '@mui/icons-material/Map';
 import DescriptionIcon from '@mui/icons-material/Description';
 import HomeWorkIcon from '@mui/icons-material/HomeWork';
@@ -44,30 +53,53 @@ import FlagIcon from '@mui/icons-material/Flag';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import DeckIcon from '@mui/icons-material/Deck';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
+// Local Imports
 import { localUrl } from '../../../utils/util';
 
-const fieldsConfig = [
-  { id: 'hotelId', label: 'Hotel ID', icon: <VpnKeyIcon />, editable: false, grid: 6 },
-  { id: 'hotelName', label: 'Hotel Name', icon: <BusinessIcon />, editable: true, grid: 6 },
-  { id: 'description', label: 'Description', icon: <DescriptionIcon />, editable: true, type: 'multiline', grid: 12 },
-  { id: 'customerWelcomeNote', label: 'Customer Welcome Note', icon: <ChatIcon />, editable: true, type: 'multiline', grid: 12 },
-  { id: 'hotelOwnerName', label: 'Hotel Owner Name', icon: <PersonIcon />, editable: true, grid: 6 },
-  { id: 'propertyType', label: 'Property Type', icon: <ApartmentIcon />, editable: true, grid: 6 },
-  { id: 'contact', label: 'Contact', icon: <PhoneIcon />, editable: true, grid: 6 },
-  { id: 'hotelEmail', label: 'Hotel Email', icon: <MailIcon />, editable: true, type: 'email', grid: 6 },
-  { id: 'generalManagerContact', label: 'General Manager Contact', icon: <SupervisorAccountIcon />, editable: true, grid: 6 },
-  { id: 'salesManagerContact', label: 'Sales Manager Contact', icon: <SupportAgentIcon />, editable: true, grid: 6 },
-  { id: 'landmark', label: 'Landmark', icon: <HomeWorkIcon />, editable: true, grid: 12 },
-  { id: 'destination', label: 'Destination', icon: <FlagIcon />, editable: true, grid: 6 },
-  { id: 'city', label: 'City', icon: <LocationCityIcon />, editable: true, grid: 6 },
-  { id: 'state', label: 'State', icon: <PublicIcon />, editable: true, grid: 6 },
-  { id: 'pinCode', label: 'Pin Code', icon: <PinDropIcon />, editable: true, grid: 6 },
-  { id: 'onFront', label: 'On Front', icon: <DeckIcon />, editable: true, grid: 6 },
-  { id: 'starRating', label: 'Star Rating', icon: <StarIcon />, editable: true, type: 'number', grid: 6 },
-  { id: 'isAccepted', label: 'Approval Status', icon: <CheckCircleIcon />, editable: true, type: 'select', options: ['Accepted', 'Not Accepted'], grid: 6 },
-  { id: 'localId', label: 'Local ID Status', icon: <CheckCircleIcon />, editable: true, type: 'select', options: ['Accepted', 'Not Accepted'], grid: 6 },
-];
+const fieldGroups = {
+  'Primary Info': [
+    { id: 'hotelId', label: 'Hotel ID', icon: <VpnKeyIcon fontSize="small" />, editable: false },
+    { id: 'hotelName', label: 'Hotel Name', icon: <BusinessIcon fontSize="small" />, editable: true },
+    { id: 'isAccepted', label: 'Approval Status', icon: <CheckCircleIcon fontSize="small" />, editable: true, type: 'select', options: ['Accepted', 'Not Accepted'] },
+    { id: 'localId', label: 'Local ID Status', icon: <CheckCircleIcon fontSize="small" />, editable: true, type: 'select', options: ['Accepted', 'Not Accepted'] },
+  ],
+  'Property Details': [
+    { id: 'description', label: 'Description', icon: <DescriptionIcon fontSize="small" />, editable: true, type: 'multiline' },
+    { id: 'customerWelcomeNote', label: 'Welcome Note', icon: <ChatIcon fontSize="small" />, editable: true, type: 'multiline' },
+    { id: 'propertyType', label: 'Property Type', icon: <ApartmentIcon fontSize="small" />, editable: true },
+    { id: 'starRating', label: 'Star Rating', icon: <StarIcon fontSize="small" />, editable: true, type: 'number' },
+    { id: 'onFront', label: 'On Front', icon: <DeckIcon fontSize="small" />, editable: true },
+  ],
+  'Contact Information': [
+    { id: 'hotelOwnerName', label: 'Owner Name', icon: <PersonIcon fontSize="small" />, editable: true },
+    { id: 'hotelEmail', label: 'Hotel Email', icon: <MailIcon fontSize="small" />, editable: true, type: 'email' },
+    { id: 'contact', label: 'Contact Number', icon: <PhoneIcon fontSize="small" />, editable: true },
+    { id: 'generalManagerContact', label: 'GM Contact', icon: <SupervisorAccountIcon fontSize="small" />, editable: true },
+    { id: 'salesManagerContact', label: 'Sales Manager Contact', icon: <SupportAgentIcon fontSize="small" />, editable: true },
+  ],
+  'Location Details': [
+    { id: 'landmark', label: 'Landmark', icon: <HomeWorkIcon fontSize="small" />, editable: true },
+    { id: 'destination', label: 'Destination', icon: <FlagIcon fontSize="small" />, editable: true },
+    { id: 'city', label: 'City', icon: <LocationCityIcon fontSize="small" />, editable: true },
+    { id: 'state', label: 'State', icon: <PublicIcon fontSize="small" />, editable: true },
+    { id: 'pinCode', label: 'Pin Code', icon: <PinDropIcon fontSize="small" />, editable: true },
+    { id: 'mapLink', label: 'Map Link', icon: <MapIcon fontSize="small" />, editable: true, type: 'url' },
+  ],
+};
+
+const carouselSettings = {
+  dots: true,
+  infinite: false,
+  speed: 500,
+  slidesToShow: 3,
+  slidesToScroll: 1,
+  responsive: [
+    { breakpoint: 900, settings: { slidesToShow: 2 } },
+    { breakpoint: 600, settings: { slidesToShow: 1 } }
+  ]
+};
 
 export default function BasicDetails({ open, onClose, hotelId }) {
   const [hotel, setHotel] = useState(null);
@@ -95,7 +127,7 @@ export default function BasicDetails({ open, onClose, hotelId }) {
 
   const handleEditClick = (field, value) => {
     setEditField(field.id);
-    if (field.id === 'isAccepted' || field.id === 'localId') {
+    if (['isAccepted', 'localId'].includes(field.id)) {
       setEditValue(value ? 'Accepted' : 'Not Accepted');
     } else {
       setEditValue(value || '');
@@ -111,128 +143,121 @@ export default function BasicDetails({ open, onClose, hotelId }) {
     if (editField === null) return;
     try {
       let updatedValue = editValue;
-      if (editField === 'isAccepted' || editField === 'localId') {
+      if (['isAccepted', 'localId'].includes(editField)) {
         updatedValue = editValue === 'Accepted';
       }
-
       await axios.patch(`${localUrl}/hotels/update/info/${hotelId}`, { [editField]: updatedValue });
-      
       const updatedHotel = { ...hotel, [editField]: updatedValue };
       setHotel(updatedHotel);
       toast.success('Update successful!');
     } catch (error) {
-      toast.error('Update failed. Please try again.');
+      toast.error('Update failed.');
     } finally {
       handleCancelEdit();
     }
   };
-
+  
   const renderFieldValue = (field) => {
     const value = hotel?.[field.id];
-    if (field.id === 'isAccepted' || field.id === 'localId') {
-      return value ? 'Accepted' : 'Not Accepted';
-    }
-    return value || 'Not provided';
-  };
-
-  const renderEditComponent = (field) => {
-    if (field.type === 'select') {
-      return (
-        <Select value={editValue} onChange={(e) => setEditValue(e.target.value)} size="small" fullWidth>
-          {field.options.map((option) => (<MenuItem key={option} value={option}>{option}</MenuItem>))}
-        </Select>
-      );
-    }
-    return (
-      <TextField
-        value={editValue}
-        onChange={(e) => setEditValue(e.target.value)}
+    if (['isAccepted', 'localId'].includes(field.id)) {
+      return <Chip
+        icon={value ? <CheckCircleIcon /> : <CancelIcon />}
+        label={value ? 'Accepted' : 'Not Accepted'}
         size="small"
-        fullWidth
-        autoFocus
-        multiline={field.type === 'multiline'}
-        rows={field.type === 'multiline' ? 3 : 1}
-        type={field.type || 'text'}
-      />
-    );
+        color={value ? 'success' : 'error'}
+      />;
+    }
+    return <Typography variant="body2" color="text.primary" sx={{ wordBreak: 'break-word' }}>{value || <span style={{ color: '#999' }}>Not provided</span>}</Typography>;
   };
   
+  const renderEditComponent = (field) => {
+    if (field.type === 'select') {
+      return <Select value={editValue} onChange={(e) => setEditValue(e.target.value)} size="small" fullWidth><MenuItem value="Accepted">Accepted</MenuItem><MenuItem value="Not Accepted">Not Accepted</MenuItem></Select>;
+    }
+    return <TextField value={editValue} onChange={(e) => setEditValue(e.target.value)} size="small" fullWidth autoFocus multiline={field.type === 'multiline'} rows={2} type={field.type || 'text'}/>;
+  };
+  
+  const renderFieldRow = (field) => (
+    <Stack key={field.id} direction="row" justifyContent="space-between" alignItems="center" sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider', '&:last-child': { borderBottom: 0 } }}>
+      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ minWidth: 0, mr: 1 }}>
+        {field.icon}
+        <Typography variant="body2" color="text.secondary">{field.label}</Typography>
+      </Stack>
+      {editField === field.id ? (
+        <Stack direction="row" alignItems="center" spacing={0.5} flexGrow={1} maxWidth="60%">
+          {renderEditComponent(field)}
+          <IconButton size="small" onClick={handleSaveClick} color="primary"><CheckIcon /></IconButton>
+          <IconButton size="small" onClick={handleCancelEdit}><CloseIcon /></IconButton>
+        </Stack>
+      ) : (
+        <Stack direction="row" alignItems="center" spacing={0.5} flexGrow={1} maxWidth="60%" justifyContent="flex-end">
+          <Box flexGrow={1} textAlign="right">{renderFieldValue(field)}</Box>
+          {field.editable && (<IconButton size="small" onClick={() => handleEditClick(field, hotel[field.id])}><EditIcon sx={{ fontSize: 16, color: 'action.active' }} /></IconButton>)}
+        </Stack>
+      )}
+    </Stack>
+  );
+
+  const getSummaryInfo = (groupName) => {
+    if (!hotel) return null;
+    switch(groupName) {
+      case 'Primary Info':
+        return <Chip label={hotel.isAccepted ? "Approved" : "Pending"} size="small" color={hotel.isAccepted ? "success" : "warning"} />;
+      case 'Contact Information':
+        return <Typography variant="caption" color="text.secondary">{hotel.hotelOwnerName}</Typography>;
+      case 'Location Details':
+        return <Typography variant="caption" color="text.secondary">{hotel.city}</Typography>;
+      default:
+        return null;
+    }
+  }
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg" scroll="paper">
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" component="div" fontWeight="bold">
-          {hotel?.hotelName || 'Hotel Basic Details'}
-        </Typography>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" scroll="paper">
+      <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6" component="div" fontWeight="bold">{hotel?.hotelName || 'Hotel Basic Details'}</Typography>
         <IconButton onClick={onClose}><CloseIcon /></IconButton>
       </DialogTitle>
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ p: { xs: 1, sm: 2 }, bgcolor: 'background.default' }}>
         {isLoading ? (
-          <Grid container spacing={2}>
-            {fieldsConfig.map((field) => (
-              <Grid item xs={12} sm={field.grid} key={field.id}>
-                <Skeleton variant="rectangular" height={70} sx={{ borderRadius: 1.5 }} />
-              </Grid>
-            ))}
-          </Grid>
+          <Stack spacing={2}>
+            <Skeleton variant="rectangular" height={150} sx={{ borderRadius: 2 }} />
+            <Skeleton variant="rectangular" height={50} />
+            <Skeleton variant="rectangular" height={50} />
+          </Stack>
         ) : hotel ? (
           <>
-            <Box mb={3}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Hotel Images</Typography>
-              <Stack direction="row" spacing={2} sx={{ overflowX: 'auto', p: 1, pb: 2 }}>
-                {hotel.images?.length > 0 ? hotel.images.map((image, index) => (
-                  <Box
-                    key={index}
-                    component="img"
-                    src={image}
-                    alt={`Hotel Image ${index + 1}`}
-                    sx={{ width: 180, height: 120, objectFit: 'cover', borderRadius: 1.5, flexShrink: 0, border: '1px solid', borderColor: 'divider' }}
-                  />
-                )) : <Typography variant="body2" color="text.secondary">No images available.</Typography>}
-              </Stack>
+            <Box mb={2} className="slick-container">
+              {hotel.images?.length > 0 ? (
+                <Slider {...carouselSettings}>
+                  {hotel.images.map((image, index) => (
+                    <Box key={index} sx={{ p: 1 }}>
+                      <Box component="img" src={image} alt={`Hotel Image ${index + 1}`} sx={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 1.5 }} />
+                    </Box>
+                  ))}
+                </Slider>
+              ) : <Typography variant="body2" color="text.secondary" textAlign="center" p={2}>No images available.</Typography>}
             </Box>
 
-            <Grid container spacing={2}>
-              {fieldsConfig.map((field) => (
-                <Grid item xs={12} sm={field.grid} key={field.id}>
-                  <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
-                      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ minWidth: 0 }}>
-                        {field.icon}
-                        <Typography variant="body2" color="text.secondary" noWrap>{field.label}</Typography>
-                      </Stack>
-                      {field.editable && editField !== field.id && (
-                        <IconButton size="small" onClick={() => handleEditClick(field, hotel[field.id])} sx={{ mt: -0.5 }}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      )}
-                    </Stack>
-                    
-                    {editField === field.id ? (
-                      <Stack spacing={1} mt={1}>
-                        {renderEditComponent(field)}
-                        <Stack direction="row" justifyContent="flex-end" spacing={1}>
-                          <Button size="small" onClick={handleCancelEdit}>Cancel</Button>
-                          <Button size="small" variant="contained" onClick={handleSaveClick} startIcon={<CheckIcon />}>Save</Button>
-                        </Stack>
-                      </Stack>
-                    ) : (
-                      <Typography variant="body1" fontWeight="500" mt={0.5} sx={{
-                        wordBreak: 'break-word',
-                        color: (field.id === 'isAccepted' || field.id === 'localId') ? (hotel[field.id] ? 'success.main' : 'error.main') : 'text.primary'
-                      }}>
-                        {renderFieldValue(field)}
-                      </Typography>
-                    )}
-                  </Paper>
-                </Grid>
-              ))}
-            </Grid>
+            {Object.entries(fieldGroups).map(([groupName, fields]) => (
+              <Accordion key={groupName} defaultExpanded={groupName === 'Primary Info'} sx={{ boxShadow: 'none', '&:before': { display: 'none' }, border: '1px solid', borderColor: 'divider', '&:not(:last-child)': { mb: 2 } }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
+                    <Typography variant="subtitle1" fontWeight="bold">{groupName}</Typography>
+                    <Box>{getSummaryInfo(groupName)}</Box>
+                  </Stack>
+                </AccordionSummary>
+                <AccordionDetails sx={{ p: { xs: 1, sm: 1.5 } }}>
+                  {fields.map(renderFieldRow)}
+                </AccordionDetails>
+              </Accordion>
+            ))}
           </>
         ) : (
           <Typography>No hotel data available.</Typography>
         )}
       </DialogContent>
-      <DialogActions sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+      <DialogActions sx={{ p: '16px 24px', borderTop: 1, borderColor: 'divider' }}>
         <Button onClick={onClose} variant="outlined">Close</Button>
       </DialogActions>
     </Dialog>
