@@ -1,249 +1,200 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box,
-    Button,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    Typography,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Select,
-    MenuItem,
-    InputLabel,
-    FormControl,
+  Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField, Typography, Grid, Card, CardContent, CardActions,
+  Tabs, Tab, Stack, Tooltip, Fab
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-    createGst,
-    getGst,
-    getAllGst,
-    updateGst,
-    deleteGst,
+  createGst, getGst, getAllGst, updateGst, deleteGst
 } from 'src/components/redux/reducers/gst';
 
+const GST_TYPES = ['Tour', 'Travel', 'Hotel'];
+
 export default function Gst() {
-    const dispatch = useDispatch();
-    const gstData = useSelector((state) => state.gst.gst);
-    const gstList = useSelector((state) => state.gst.gstList);
+  const dispatch = useDispatch();
+  const gstData = useSelector((state) => state.gst.gst);
+  const gstList = useSelector((state) => state.gst.gstList);
 
-    const [gst, setGst] = useState({
-        gstPrice: '',
-        gstMinThreshold: '',
-        gstMaxThreshold: '',
-        type: '',
-    });
+  const [gst, setGst] = useState({ gstPrice: '', gstMinThreshold: '', gstMaxThreshold: '', type: '' });
+  const [openModal, setOpenModal] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [selectedTab, setSelectedTab] = useState(0);
 
-    const [openModal, setOpenModal] = useState(false);
-    const [isEdit, setIsEdit] = useState(false);
-    const [selectedType, setSelectedType] = useState('');
+  const selectedType = GST_TYPES[selectedTab];
 
-    useEffect(() => {
+  useEffect(() => {
+    dispatch(getAllGst());
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(getGst({ selectedType }));
+  }, [selectedType, dispatch]);
+
+  const openForm = (mode = 'create', item = null) => {
+    setIsEdit(mode === 'edit');
+    setGst(mode === 'edit' ? item : { gstPrice: '', gstMinThreshold: '', gstMaxThreshold: '', type: selectedType });
+    setOpenModal(true);
+  };
+
+  const closeForm = () => {
+    setOpenModal(false);
+    setIsEdit(false);
+    setGst({ gstPrice: '', gstMinThreshold: '', gstMaxThreshold: '', type: '' });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    isEdit ? dispatch(updateGst(gst)) : dispatch(createGst(gst));
+    closeForm();
+    setTimeout(() => window.location.reload(), 300);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this GST?')) {
+      dispatch(deleteGst(id));
+      setTimeout(() => {
         dispatch(getAllGst());
-    }, [dispatch]);
-
-    useEffect(() => {
-        if (selectedType) {
-            const payload = { selectedType }
-            dispatch(getGst(payload));
-        }
-    }, [selectedType, dispatch]);
-
-
-    const handleOpenCreate = () => {
-        setIsEdit(false);
-        setGst({
-            gstPrice: '',
-            gstMinThreshold: '',
-            gstMaxThreshold: '',
-            type: selectedType || '',
-        });
-        setOpenModal(true);
-    };
-
-    const handleClose = () => {
-        setOpenModal(false);
-        setIsEdit(false);
-        setGst({
-            gstPrice: '',
-            gstMinThreshold: '',
-            gstMaxThreshold: '',
-            type: '',
-        });
-    };
-
-    const handleChange = (e) => {
-        setGst({ ...gst, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (isEdit) {
-            dispatch(updateGst(gst));
-        } else {
-            dispatch(createGst(gst));
-        }
-        handleClose();
-        setTimeout(() => {
-            window.location.reload();
-        }, 300);
-    };
-
-    const handleDelete = (id) => {
-        if (window.confirm('Are you sure you want to delete this GST?')) {
-            dispatch(deleteGst(id));
-            setTimeout(() => {
-                dispatch(getAllGst());
-                if (selectedType) dispatch(getGst(selectedType));
-            }, 300);
-        }
+        if (selectedType) dispatch(getGst({ selectedType }));
+      }, 300);
     }
+  };
 
-    return (
-        <Box p={3}>
-            <Typography variant="h4" gutterBottom>
-                GST Settings
-            </Typography>
+  const filteredList = (selectedType && gstData ? [gstData] : gstList)?.filter(
+    (item) => item.type === selectedType
+  );
 
-            <FormControl fullWidth margin="normal">
-                <InputLabel>Select GST Type</InputLabel>
-                <Select
-                    value={selectedType}
-                    onChange={(e) => setSelectedType(e.target.value)}
-                    label="Select GST Type"
-                >
-                    <MenuItem value="Tour">Tour</MenuItem>
-                    <MenuItem value="Travel">Travel</MenuItem>
-                    <MenuItem value="Hotel">Hotel</MenuItem>
-                </Select>
-            </FormControl>
+  return (
+    <Box p={4}>
+      <Typography variant="h4" fontWeight="bold" mb={3}>GST Settings</Typography>
 
-            <Box mt={2}>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleOpenCreate}
-                    disabled={!selectedType}
-                >
-                    Create GST
-                </Button>
+      {/* Tabs for GST types */}
+      <Tabs
+        value={selectedTab}
+        onChange={(e, newValue) => setSelectedTab(newValue)}
+        textColor="primary"
+        indicatorColor="primary"
+        sx={{ mb: 3 }}
+      >
+        {GST_TYPES.map((type, idx) => (
+          <Tab key={idx} label={type} />
+        ))}
+      </Tabs>
+
+      {/* GST Cards or No Data */}
+      <Grid container spacing={3}>
+        {filteredList && filteredList.length > 0 ? (
+          filteredList.map((item) => (
+            <Grid item xs={12} sm={6} md={4} key={item._id}>
+              <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>{item.type} GST</Typography>
+                  <Typography variant="body2"><strong>GST %:</strong> {item.gstPrice}%</Typography>
+                  <Typography variant="body2"><strong>Min Threshold:</strong> ₹{item.gstMinThreshold}</Typography>
+                  <Typography variant="body2"><strong>Max Threshold:</strong> ₹{item.gstMaxThreshold}</Typography>
+                </CardContent>
+                <CardActions sx={{ mt: 'auto' }}>
+                  <Button size="small" variant="outlined" onClick={() => openForm('edit', item)}>Edit</Button>
+                  <Button size="small" variant="outlined" color="error" onClick={() => handleDelete(item._id)}>Delete</Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))
+        ) : (
+          <Grid item xs={12}>
+            <Box
+              textAlign="center"
+              py={6}
+              px={2}
+              sx={{ border: '1px dashed #ccc', borderRadius: 2, bgcolor: '#fafafa' }}
+            >
+              <Typography variant="h5" gutterBottom>🚫 No GST Data</Typography>
+              <Typography variant="body2" color="text.secondary">
+                No GST configuration found for <strong>{selectedType}</strong>. <br />
+                Click the + button below to create one.
+              </Typography>
             </Box>
+          </Grid>
+        )}
+      </Grid>
 
-            <TableContainer component={Paper} sx={{ marginTop: 3 }}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>GST Price</TableCell>
-                            <TableCell>GST Min Threshold</TableCell>
-                            <TableCell>GST Max Threshold</TableCell>
-                            <TableCell>Type</TableCell>
-                            <TableCell>Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {(selectedType && gstData ? [gstData] : gstList)?.map((item) => (
-                            <TableRow key={item._id}>
-                                <TableCell>{item.gstPrice}%</TableCell>
-                                <TableCell>{item.gstMinThreshold}</TableCell>
-                                <TableCell>{item.gstMaxThreshold}</TableCell>
-                                <TableCell>{item.type}</TableCell>
-                                <TableCell>
-                                    <Button
-                                        variant="outlined"
-                                        color="primary"
-                                        onClick={() => {
-                                            setIsEdit(true);
-                                            setGst(item);
-                                            setOpenModal(true);
-                                        }}
-                                    >
-                                        Update
-                                    </Button>
+      {/* Floating Create Button */}
+      <Tooltip title={`Create ${selectedType} GST`}>
+        <Fab
+          color="primary"
+          onClick={() => openForm('create')}
+          sx={{
+            position: 'fixed',
+            bottom: 32,
+            right: 32,
+            boxShadow: 6
+          }}
+        >
+          <AddIcon />
+        </Fab>
+      </Tooltip>
 
-                                    <Button
-                                        variant="outlined"
-                                        color="error"
-                                        onClick={() => handleDelete(item._id)}
-                                    >
-                                        Delete
-                                    </Button>
+      {/* Create/Edit Dialog */}
+      <Dialog open={openModal} onClose={closeForm} fullWidth maxWidth="sm">
+        <DialogTitle>{isEdit ? 'Update GST' : `Create ${selectedType} GST`}</DialogTitle>
+        <form onSubmit={handleSubmit}>
+          <DialogContent>
+            <Grid container spacing={2} mt={1}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Min Threshold (₹)"
+                  name="gstMinThreshold"
+                  value={gst.gstMinThreshold}
+                  onChange={(e) => setGst({ ...gst, [e.target.name]: e.target.value })}
+                  fullWidth required type="number"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Max Threshold (₹)"
+                  name="gstMaxThreshold"
+                  value={gst.gstMaxThreshold}
+                  onChange={(e) => setGst({ ...gst, [e.target.name]: e.target.value })}
+                  fullWidth required type="number"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="GST Rate (%)"
+                  name="gstPrice"
+                  value={gst.gstPrice}
+                  onChange={(e) => setGst({ ...gst, [e.target.name]: e.target.value })}
+                  fullWidth required type="number"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Type"
+                  value={gst.type}
+                  fullWidth
+                  disabled
+                />
+              </Grid>
 
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-
-            <Dialog open={openModal} onClose={handleClose} fullWidth maxWidth="sm">
-                <DialogTitle>{isEdit ? 'Update GST' : 'Create GST'}</DialogTitle>
-                <form onSubmit={handleSubmit}>
-                    <DialogContent>
-                        <TextField
-                            label="Minimum Threshold (₹)"
-                            name="gstMinThreshold"
-                            value={gst.gstMinThreshold}
-                            onChange={handleChange}
-                            fullWidth
-                            margin="normal"
-                            required
-                            type="number"
-                        />
-                        <TextField
-                            label="Maximum Threshold (₹)"
-                            name="gstMaxThreshold"
-                            value={gst.gstMaxThreshold}
-                            onChange={handleChange}
-                            fullWidth
-                            margin="normal"
-                            required
-                            type="number"
-                        />
-                        <TextField
-                            label="GST Price (%)"
-                            name="gstPrice"
-                            value={gst.gstPrice}
-                            onChange={handleChange}
-                            fullWidth
-                            margin="normal"
-                            required
-                            type="number"
-                        />
-                        {gst.gstMinThreshold && gst.gstPrice ? (
-                            <Typography variant="caption" color="text.secondary">
-                                {gst.gstPrice}% of ₹{gst.gstMinThreshold} is ₹
-                                {(parseFloat(gst.gstMinThreshold) * parseFloat(gst.gstPrice) / 100).toFixed(2)}
-                            </Typography>
-                        ) : null}
-                        <FormControl fullWidth margin="normal" required>
-                            <InputLabel>Type</InputLabel>
-                            <Select
-                                name="type"
-                                value={gst.type}
-                                onChange={handleChange}
-                                disabled={isEdit}
-                            >
-                                <MenuItem value="Tour">Tour</MenuItem>
-                                <MenuItem value="Travel">Travel</MenuItem>
-                                <MenuItem value="Hotel">Hotel</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleClose}>Cancel</Button>
-                        <Button type="submit" variant="contained" color="primary">
-                            {isEdit ? 'Update' : 'Create'}
-                        </Button>
-                    </DialogActions>
-                </form>
-            </Dialog>
-        </Box>
-    );
+              {gst.gstMinThreshold && gst.gstPrice && (
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">
+                    Preview: {gst.gstPrice}% of ₹{gst.gstMinThreshold} is ₹
+                    {(parseFloat(gst.gstMinThreshold) * parseFloat(gst.gstPrice) / 100).toFixed(2)}
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closeForm}>Cancel</Button>
+            <Button type="submit" variant="contained" color="primary">
+              {isEdit ? 'Update' : 'Create'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+    </Box>
+  );
 }
