@@ -122,6 +122,9 @@ export default function UserPage() {
       formData.append('_id', updatedUser._id);
       formData.append('name', updatedUser.name);
       formData.append('email', updatedUser.email);
+      formData.append('city', updatedUser.city);
+      formData.append("pinCode", updatedUser.pinCode);
+      formData.append('state',updatedUser.state);
       formData.append('mobile', updatedUser.mobile);
       formData.append('address', updatedUser.address);
       formData.append('password', updatedUser.password);
@@ -266,6 +269,7 @@ export default function UserPage() {
               headLabel={[
                 { id: 'name', label: 'Name' },
                 { id: 'email', label: 'Email' },
+                { id: 'city', label: 'City' },
                 { id: 'password', label: 'Password' },
                 { id: 'status', label: 'Status' },
                 { id: '' },
@@ -286,6 +290,7 @@ export default function UserPage() {
                     key={row._id}
                     name={`${row.name} (${row.role})`}
                     email={row.email}
+                    city={row.city}
                     password={row.password}
                     status={row?.status ? 'Active' : 'Inactive'}
                     avatarUrl={row.images && row.images.length > 0 ? row.images[0] : ''}

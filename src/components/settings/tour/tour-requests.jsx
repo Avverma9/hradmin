@@ -37,12 +37,12 @@ const TourRequest = () => {
 
   const columns = [
     { field: 'travelAgencyName', headerName: 'Agency Name', width: 220 },
-    { field: 'nights', headerName: 'Nights', width: 100, align: 'center', headerAlign: 'center' },
-    { field: 'days', headerName: 'Days', width: 100, align: 'center', headerAlign: 'center' },
+    { field: 'nights', headerName: 'Nights', width: 80, align: 'center', headerAlign: 'center' },
+    { field: 'days', headerName: 'Days', width: 80, align: 'center', headerAlign: 'center' },
     {
       field: 'price',
       headerName: 'Price',
-      width: 130,
+      width: 80,
       renderCell: (params) => `₹${params.value.toLocaleString('en-IN')}`,
     },
     {
