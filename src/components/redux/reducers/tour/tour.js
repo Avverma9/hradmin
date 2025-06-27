@@ -1,11 +1,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import { localUrl, notify, token } from "../../../../../utils/util";
+import { hotelEmail, localUrl, notify, token } from "../../../../../utils/util";
 import { toast } from "react-toastify";
 
 export const addTour = createAsyncThunk("tour/addTour", async (data, { rejectWithValue }) => {
     try {
-        const response = await axios.post(`${localUrl}/create-travel`, data, {
+        const response = await axios.post(`${localUrl}/create-tour`, data, {
             headers: {
                 Authorization: token,
             },
@@ -21,7 +21,7 @@ export const addTour = createAsyncThunk("tour/addTour", async (data, { rejectWit
 
 export const tourList = createAsyncThunk("tour/tourList", async (_, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`${localUrl}/get-travel-list`, {
+        const response = await axios.get(`${localUrl}/get-tour-list`, {
             headers: {
                 Authorization: token,
             },
@@ -51,7 +51,22 @@ export const tourRequest = createAsyncThunk("tour/tourRequest", async (_, { reje
 
 export const tourById = createAsyncThunk("tour/tourById", async (id, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`${localUrl}/get-travel/${id}`, {
+        const response = await axios.get(`${localUrl}/get-tour/${id}`, {
+            headers: {
+                Authorization: token,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+});
+
+export const tourByOwner = createAsyncThunk("tour/tourByOwner", async (_, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(`${localUrl}/get-tour/by-owner/query?email=${hotelEmail}`, {
             headers: {
                 Authorization: token,
             },
@@ -79,7 +94,21 @@ export const tourUpdate = createAsyncThunk("tour/tourUpdate", async ({ id, data 
         return rejectWithValue(errorMessage);
     }
 });
-
+export const updateTourImage = createAsyncThunk("tour/tourUpdate", async (formData, { rejectWithValue }) => {
+    try {
+        const response = await axios.patch(`${localUrl}/update-tour-image/${id}`, formData, {
+            headers: {
+                Authorization: token,
+            },
+        });
+        notify(response?.status);
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+});
 const initialState = {
     data: [],
     editData: null,
@@ -99,6 +128,10 @@ const tourSlice = createSlice({
                 state.data.push(action.payload);
             })
             .addCase(tourList.fulfilled, (state, action) => {
+                state.loading = false;
+                state.data = action.payload;
+            })
+            .addCase(tourByOwner.fulfilled, (state, action) => {
                 state.loading = false;
                 state.data = action.payload;
             })

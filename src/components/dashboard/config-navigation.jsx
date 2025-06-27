@@ -117,6 +117,7 @@ const getNavConfig = async () => {
             children: [
                 { title: 'Add Tour', path: '/add-tour-data', icon: icons.addTour },
                 { title: 'Tour List', path: '/tour-list', icon: icons.tour },
+                { title: 'My Tour', path: '/my-tour', icon: icons.tour },
             ],
         },
         {

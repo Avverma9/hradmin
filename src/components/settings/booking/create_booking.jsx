@@ -370,7 +370,7 @@ export default function CreateBooking({ handleBack }) {
                 User Found
               </Typography>
               {foundUser.map((item) => (
-                <Card key={item.userId} variant="outlined" sx={{ mb: 2 }}>
+                <Card key={item.userId} variant="outlined" sx={{ mb: 1 }}>
                   <CardContent>
                     <Box display="flex" alignItems="center" gap={2}>
                       <Avatar sx={{ width: 56, height: 56 }}>

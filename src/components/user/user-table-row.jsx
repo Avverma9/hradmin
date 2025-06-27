@@ -20,6 +20,7 @@ export default function UserTableRow({
   selected,
   name,
   email,
+  city,
   password,
   status,
   avatarUrl,
@@ -75,7 +76,7 @@ export default function UserTableRow({
         </TableCell>
 
         <TableCell component="th" scope="row" padding="none">
-          <Stack direction="row" alignItems="center" spacing={2}>
+          <Stack direction="row" alignItems="center" spacing={1}>
             <Avatar alt={name} src={avatarUrl} />
             <Typography variant="subtitle2" noWrap>
               {name}
@@ -91,6 +92,15 @@ export default function UserTableRow({
             <IconButton onClick={handleCopyEmail} size="small">
               <Iconify icon="eva:copy-fill" />
             </IconButton>
+          </Stack>
+        </TableCell>
+
+        <TableCell>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Typography variant="body2" noWrap>
+              {city ? city : 'N/A'}
+            </Typography>
+           
           </Stack>
         </TableCell>
 

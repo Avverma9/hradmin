@@ -56,6 +56,8 @@ const OwnerCar = lazy(() => import('src/components/pages/travel/owner-car'));
 const TourFormPage = lazy(() => import('src/components/pages/tour/tour-form'));
 const TourList = lazy(() => import('src/components/pages/tour/tour-list'));
 const TourUpdatePage = lazy(() => import('src/components/pages/tour/tour-update'));
+const MyTourPage = lazy(() => import('src/components/pages/tour/my-tour-page'));
+
 const TravelBookingTMS = lazy(() => import('src/components/pages/travel/travel-bookings'));
 const TravelBookingsAdmin = lazy(() => import('src/components/settings/travelBookings/travel-booking'));
 
@@ -140,6 +142,7 @@ export default function Router() {
         { path: "/travel-bookings", element: <TravelBookingTMS /> },
         { path: "/admin-travel/bookings", element: <TravelBookingsAdmin /> },
         { path: '/add-travel-location', element: <ListTravelPage /> },
+        { path: "/my-tour",element:<MyTourPage/>},
         
         // Coupons
         { path: '/apply-coupon', element: <CouponPage /> },

@@ -148,6 +148,7 @@ const TourForm = () => {
 
         const formDataToSend = new FormData();
         formDataToSend.append('city', formData.city);
+        formDataToSend.append('country', formData.country);
         formDataToSend.append('themes', formData.themes);
         formDataToSend.append('state', formData.state);
         formDataToSend.append('overview', formData.overview);
