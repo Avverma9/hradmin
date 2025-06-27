@@ -94,9 +94,26 @@ export const tourUpdate = createAsyncThunk("tour/tourUpdate", async ({ id, data 
         return rejectWithValue(errorMessage);
     }
 });
-export const updateTourImage = createAsyncThunk("tour/tourUpdate", async (formData, { rejectWithValue }) => {
+export const updateTourImage = createAsyncThunk("tour/tourUpdate", async ({id,formData}, { rejectWithValue }) => {
+    console.log("formData", formData);
     try {
         const response = await axios.patch(`${localUrl}/update-tour-image/${id}`, formData, {
+            headers: {
+                Authorization: token,
+            },
+        });
+        notify(response?.status);
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+});
+export const deleteTourImage = createAsyncThunk("tour/deleteTourImage", async ({id,index}, { rejectWithValue }) => {
+    console.log("formData", id,index);
+    try {
+        const response = await axios.delete(`${localUrl}/delete-tour-image/${id}`, index, {
             headers: {
                 Authorization: token,
             },

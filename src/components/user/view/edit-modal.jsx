@@ -98,7 +98,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
         city: user.city || "",
         state: user.state || "",
         pinCode: user.pinCode || "",
-        password: "",
+        password: user.password || "",
         role: user.role || "",
         status: user.status || false,
       });
@@ -260,7 +260,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
   };
-
+console.log("here is formData", formData);
   return (
     <Dialog
       open={open}
@@ -492,7 +492,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
                       type={showPassword ? "text" : "password"}
                       label="New Password (optional)"
                       fullWidth
-                      value={formData.password || ""}
+                      value={formData.password || "hey"}
                       onChange={handleChange}
                       InputProps={{
                         startAdornment: (

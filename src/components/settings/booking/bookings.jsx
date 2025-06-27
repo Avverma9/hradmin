@@ -1,7 +1,7 @@
 import { toast } from "react-toastify";
 import * as React from "react";
-import { DataGrid } from "@mui/x-data-grid";
-import Paper from "@mui/material/Paper";
+// NEW: Importing components for the advanced layout and export feature
+import { DataGrid, GridToolbarContainer, GridToolbarExport } from "@mui/x-data-grid";
 import { useState, useEffect } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +13,19 @@ import {
     TextField,
     Typography,
     MenuItem,
+    // NEW: Card components for the layout
+    Card,
+    CardHeader,
+    CardContent,
+    Divider,
+    FormControl,
+    InputLabel,
+    Select,
+    Chip,
+    Tooltip,
 } from "@mui/material";
+import { Search, Refresh, FileDownload } from "@mui/icons-material";
+
 
 import { fDate } from "../../../../utils/format-time";
 import { useDispatch, useSelector } from "react-redux";
@@ -24,7 +36,84 @@ import BookingUpdateModal from "src/components/bookings/booking-update-modal";
 import { fetchFilteredBookings, searchBooking } from "src/components/redux/reducers/booking";
 import { hotelEmail } from "../../../../utils/util";
 
+
+// --- NEW: Toolbar component to house your existing filters and add new actions ---
+function CustomToolbar({
+    bookingId, setBookingId,
+    couponCode, setCouponCode,
+    selectedCity, setSelectedCity,
+    byCity,
+    handleSearch, handleRefresh,
+}) {
+    return (
+        <GridToolbarContainer sx={{ p: 2, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+            {/* Your original filters, now organized in the toolbar */}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+                <TextField
+                    label="Booking ID"
+                    variant="outlined"
+                    size="small"
+                    value={bookingId}
+                    onChange={(e) => setBookingId(e.target.value)}
+                />
+                <TextField
+                    label="Coupon Code"
+                    variant="outlined"
+                    size="small"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                />
+                <FormControl size="small" sx={{ minWidth: 180 }}>
+                    <InputLabel>Filter by City</InputLabel>
+                    <Select
+                        value={selectedCity}
+                        label="Filter by City"
+                        onChange={(e) => setSelectedCity(e.target.value)}
+                    >
+                        <MenuItem value="">All Cities</MenuItem>
+                        {byCity.map((city, index) => (
+                            <MenuItem key={index} value={city}>{city}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                <Button variant="contained" onClick={handleSearch} startIcon={<Search />}>
+                    Search
+                </Button>
+            </Box>
+
+            {/* Your original refresh button + the new export feature */}
+            <Box sx={{ display: 'flex', gap: 1 }}>
+                <GridToolbarExport
+                    csvOptions={{ fileName: `panel-bookings-${new Date().toLocaleDateString()}` }}
+                    component={Button}
+                    startIcon={<FileDownload />}
+                >
+                    Export
+                </GridToolbarExport>
+                <Tooltip title="Reload Page">
+                    <Button variant="outlined" onClick={handleRefresh} startIcon={<Refresh />}>
+                        Refresh
+                    </Button>
+                </Tooltip>
+            </Box>
+        </GridToolbarContainer>
+    );
+}
+
+// --- NEW: Helper function for displaying status chips (UI only) ---
+const renderStatusChip = (statusVal) => {
+    const statusMap = {
+        Confirmed: { color: 'success', label: 'Confirmed' },
+        Pending: { color: 'warning', label: 'Pending' },
+        Cancelled: { color: 'error', label: 'Cancelled' },
+    };
+    const { color, label } = statusMap[statusVal] || { color: 'default', label: statusVal };
+    return <Chip label={label} color={color} size="small" />;
+};
+
+
 export default function PanelBookings() {
+    // --- ALL YOUR ORIGINAL STATE AND LOGIC IS PRESERVED ---
     const [bookingId, setBookingId] = useState("");
     const [couponCode, setCouponCode] = useState("")
     const [status, setStatus] = useState("");
@@ -45,11 +134,12 @@ export default function PanelBookings() {
     });
     const bookings = search.length ? search : filtered;
     const bookingCount = bookings.length;
+
     useEffect(() => {
         dispatch({ type: "booking/clearSearch" });
     }, [dispatch]);
 
-
+    // --- Columns definition with only one UI change for the status chip ---
     const columns = [
         {
             field: "actions",
@@ -79,7 +169,8 @@ export default function PanelBookings() {
         { field: "bookingId", headerName: "Booking ID", width: 150 },
         { field: "user", headerName: "User", width: 100 },
         { field: "createdBy", headerName: "Created/Updated By", width: 250 },
-        { field: "status", headerName: "Status", width: 110 },
+        // UI CHANGE ONLY: using renderCell to show a chip. The data is the same.
+        { field: "status", headerName: "Status", width: 110, renderCell: (params) => renderStatusChip(params.value) },
         { field: "source", headerName: "Source", width: 130 },
         { field: "mop", headerName: "Payment Mode", width: 130 },
         { field: "checkInDate", headerName: "Check-In Date", width: 180 },
@@ -87,6 +178,7 @@ export default function PanelBookings() {
         { field: "createdAt", headerName: "Created At", width: 180 },
     ];
 
+    // --- YOUR ORIGINAL LOGIC - UNCHANGED ---
     const rows = bookings?.map((booking) => ({
         id: booking._id || booking.bookingId,
         bookingId: booking.bookingId,
@@ -120,7 +212,7 @@ export default function PanelBookings() {
             if (status) queryParams.append("bookingStatus", status);
             if (filterDate) queryParams.append("date", filterDate);
             if (selectedCity) queryParams.append("hotelCity", selectedCity);
-            if (email) queryParams.append("createdBy", email); // ✅ Here is your addition
+            if (email) queryParams.append("createdBy", email);
 
             await dispatch(fetchFilteredBookings(queryParams.toString()));
         } catch (error) {
@@ -149,7 +241,6 @@ export default function PanelBookings() {
         }
     };
 
-
     const handleView = (bookingId) =>
         navigate(`/your-booking-details/${bookingId}`);
 
@@ -167,100 +258,51 @@ export default function PanelBookings() {
     const handleRefresh = () => window.location.reload();
 
     return (
-        <div>
-            <Typography variant="h4" gutterBottom>
-                Bookings ({bookingCount})
-            </Typography>
+        // --- NEW: Advanced card layout wrapping your existing component ---
+        <Container maxWidth="xl" sx={{ my: 4 }}>
+            <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                <CardHeader
+                    title="Panel Bookings"
+                    subheader={`A total of ${bookingCount} bookings found`}
+                />
+                <Divider />
 
-            {/* Filter controls */}
-            <Box >
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} md={3}>
-                        <TextField
-                            fullWidth
-                            label="Booking ID"
-                            variant="outlined"
-                            value={bookingId}
-                            onChange={(e) => setBookingId(e.target.value)}
-                        />
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                        <TextField
-                            fullWidth
-                            label="Coupon Code"
-                            variant="outlined"
-                            value={couponCode}
-                            onChange={(e) => setCouponCode(e.target.value)}
-                        />
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                        <TextField
-                            fullWidth
-                            select
-                            label="Filter by City"
-                            variant="outlined"
-                            value={selectedCity}
-                            onChange={(e) => setSelectedCity(e.target.value)}
-                        >
-                            <MenuItem value="">All Cities</MenuItem>
-                            {byCity.map((city, index) => (
-                                <MenuItem key={index} value={city}>
-                                    {city}
-                                </MenuItem>
-                            ))}
-                        </TextField>
-                    </Grid>
-                    <Grid item xs={12} md={9}>
-                        <Grid container spacing={2} alignItems="center">
-                            <Grid item>
-                                <Button variant="contained" onClick={handleSearch}>
-                                    Search
-                                </Button>
-                            </Grid>
-                            <Grid item md={2} xs={12}>
-                                <Button variant="outlined" onClick={handleRefresh}>
-                                    Refresh
-                                </Button>
-                            </Grid>
-                        </Grid>
-                    </Grid>
-                </Grid>
-            </Box>
+                {/* The DataGrid with the new CustomToolbar */}
+                <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    autoHeight
+                    paginationModel={paginationModel}
+                    onPaginationModelChange={setPaginationModel}
+                    pageSizeOptions={[25, 50, 100]}
+                    checkboxSelection
+                    disableRowSelectionOnClick
+                    slots={{
+                        toolbar: CustomToolbar,
+                        noRowsOverlay: () => <Box sx={{ p: 4, textAlign: 'center' }}>No bookings found.</Box>,
+                    }}
+                    slotProps={{
+                        toolbar: {
+                            bookingId, setBookingId,
+                            couponCode, setCouponCode,
+                            selectedCity, setSelectedCity,
+                            byCity,
+                            handleSearch, handleRefresh,
+                        },
+                    }}
+                    sx={{ border: 0 }}
+                />
+            </Card>
 
-            <Box sx={{ height: 600, width: "100%" }}>
-                <Paper sx={{ width: "100%", height: "100%" }}>
-                    <DataGrid
-                        rows={rows}
-                        columns={columns}
-                        paginationModel={paginationModel}
-                        onPaginationModelChange={(model) => setPaginationModel(model)}
-                        pageSizeOptions={[25, 50, 100]}
-                        checkboxSelection
-                        sx={{
-                            border: 0,
-                            "& .MuiDataGrid-columnHeaders": {
-                                position: "sticky",
-                                top: 0,
-                                zIndex: 1,
-                                backgroundColor: "white", // or your theme
-                            },
-                        }}
-                    />
-                </Paper>
-            </Box>
-
-
-            <Container maxWidth="auto" sx={{ marginTop: "40px" }}>
-                {/* Booking Update Modal */}
-                {selectedBooking && (
-                    <BookingUpdateModal
-                        open={openModal}
-                        onClose={() => setOpenModal(false)}
-                        bookingData={selectedBooking}
-                        onSave={handleSave}
-                    />
-                )}
-            </Container>
-        </div>
+            {/* Your original modal logic, preserved outside the main card */}
+            {selectedBooking && (
+                <BookingUpdateModal
+                    open={openModal}
+                    onClose={() => setOpenModal(false)}
+                    bookingData={selectedBooking}
+                    onSave={handleSave}
+                />
+            )}
+        </Container>
     );
 }

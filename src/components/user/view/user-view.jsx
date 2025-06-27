@@ -230,6 +230,7 @@ export default function UserPage() {
   };
   
   const sortedUsers = [...users].sort(getComparator(order, orderBy));
+  console.log('Sorted Users:', users);
   const notFound = !sortedUsers.length && (!!filterName || !!filterCity || !!filterRole);
 
   const handleExport = () => exportToExcel(sortedUsers);

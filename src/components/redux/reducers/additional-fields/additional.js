@@ -389,11 +389,61 @@ export const deleteRole = createAsyncThunk(
   },
 );
 
+
+export const addTourTheme = createAsyncThunk(
+  "additional/addTourTheme",
+  async (name, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${localUrl}/additional/add-tour-theme`,
+        {
+          name: name,
+        },
+        {
+          headers: {
+            Authorization: token,
+          },
+        },
+      );
+      notify(response.status);
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  },
+);
+
+export const getTourThemes = createAsyncThunk(
+  "additional/getTourThemes",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${localUrl}/additional/get-tour-themes`,
+       
+        {
+          headers: {
+            Authorization: token,
+          },
+        },
+      );
+      notify(response.status);
+      console.log("Tour themes fetched successfully:", response.data);
+      return response.data
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  },
+);
 const initialState = {
   travelAmenities: [],
   menuItems: [],
   bedTypes: [],
   roomTypes: [],
+  tourThemes: [], // Added tourThemes to the initial state
   role: [],
   hotelAmenities: [],
 };
@@ -421,7 +471,10 @@ const additionalSlice = createSlice({
       })
       .addCase(getRole.fulfilled, (state, action) => {
         state.role = action.payload;
-      });
+      })
+      .addCase(getTourThemes.fulfilled, (state, action) => {
+        state.tourThemes = action.payload;
+      })
   },
 });
 

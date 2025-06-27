@@ -1,13 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from 'react-router-dom';
-import { tourByOwner } from "../redux/reducers/tour/tour";
+import { deleteTourImage, tourByOwner, updateTourImage } from "../redux/reducers/tour/tour";
 import { useLoader } from "../../../utils/loader";
+
+// Imports para el carrusel de imágenes
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 import {
   Card, CardContent, CardMedia, Typography, Box, Grid, Chip, Button,
   Collapse, List, ListItem, ListItemIcon, ListItemText, Divider,
   IconButton, Container, CircularProgress, CssBaseline, Paper,
+  Dialog, DialogTitle, DialogContent
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
@@ -21,7 +27,10 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
-
+import CollectionsIcon from '@mui/icons-material/Collections';
+import CloseIcon from '@mui/icons-material/Close';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 
 const parseVisitingPlaces = (placesStr) => {
   if (!placesStr) return 'Details not available.';
@@ -43,92 +52,259 @@ const ExpandMore = styled((props) => {
   }),
 }));
 
+const FALLBACK_IMAGE_URL = 'https://via.placeholder.com/400x300.png?text=No+Image';
 
-function TourCard({ tour }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const navigate = useNavigate();
- const  [images,setImages] = useState([])
-  const handleExpandClick = () => setIsExpanded(!isExpanded);
-  
-  const handleEditClick = (e) => {
-    e.stopPropagation();
-    navigate(`/tour-update/${tour._id}`);
+function ImageManagerModal({ open, onClose, images = [], onImageUpload, onImageDelete, tourId }) {
+  const fileInputRef = useRef(null);
+
+  const handleAddNewClick = () => {
+    fileInputRef.current.click();
   };
- 
-const handleImageUpload=(e)=>{
-    e.stopPropagation();
-    const file = e.target.files[0];
-  setImages(file);
+
+  const handleFileChange = (event) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      onImageUpload(Array.from(files), tourId);
     }
+  };
+
   return (
-    <Card sx={{ borderRadius: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
-      <Grid container>
-        <Grid item xs={12} md={4}>
-          <CardMedia component="img" image={imageUrl} alt={tour.travelAgencyName} sx={{ height: '100%', objectFit: 'cover' }} />
-        </Grid>
-        
-        <Grid item xs={12} md={8}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <CardContent sx={{ flexGrow: 1 }}>
-              
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                <Box>
-                  <Chip label={tour.themes} color="primary" size="small" />
-                  <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', mt: 1 }}>
-                    <LocationOnIcon fontSize="small" sx={{ mr: 0.5 }} />
-                    <Typography variant="body2">{tour.city}, {tour.state} ({tour?.country})</Typography>
-                  </Box>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+      <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        Manage Tour Images
+        <IconButton aria-label="close" onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent dividers>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={4} lg={3}>
+            <Paper
+              variant="outlined"
+              onClick={handleAddNewClick}
+              sx={{
+                height: 200,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                borderStyle: 'dashed',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  bgcolor: 'action.hover',
+                },
+              }}
+            >
+              <AddPhotoAlternateIcon sx={{ fontSize: 40, color: 'grey.500' }} />
+              <Typography sx={{ mt: 1 }} color="text.secondary">Add New Images</Typography>
+            </Paper>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              style={{ display: 'none' }}
+              multiple
+            />
+          </Grid>
+          {images.map((image, index) => (
+            <Grid item key={`${tourId}-img-${index}`} xs={12} sm={6} md={4} lg={3}>
+              <Card sx={{ height: 200, position: 'relative' }}>
+                <CardMedia
+                  component="img"
+                  image={image}
+                  alt={`Tour Image ${index + 1}`}
+                  sx={{ height: '100%', objectFit: 'cover' }}
+                />
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    backgroundColor: 'rgba(0,0,0,0.6)',
+                    borderRadius: '50%',
+                  }}
+                >
+                  <IconButton size="small" onClick={() => onImageDelete(index, tourId)}>
+                    <DeleteIcon fontSize="small" sx={{ color: 'white' }} />
+                  </IconButton>
                 </Box>
-                <IconButton aria-label="edit tour" onClick={handleEditClick}>
-                  <EditIcon />
-                </IconButton>
-              </Box>
-              
-              <Typography variant="h5" component="h2" fontWeight="bold" gutterBottom>
-                {tour.travelAgencyName}
-              </Typography>
-
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                {parseVisitingPlaces(tour.visitngPlaces || tour.visitingPlaces)}
-              </Typography>
-
-              <Box sx={{ display: 'flex', gap: 3, my: 2, color: 'text.secondary' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}><WbSunnyIcon sx={{ mr: 1 }}/> <Typography variant="body2">{tour.days} Days</Typography></Box>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}><NightsStayIcon sx={{ mr: 1 }}/> <Typography variant="body2">{tour.nights} Nights</Typography></Box>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}><StarIcon sx={{ mr: 1, color: '#FFB400' }}/> <Typography variant="body2">{tour.starRating} Stars</Typography></Box>
-              </Box>
-            </CardContent>
-
-            <Divider />
-            
-            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{lineHeight: 1}}>Starts from</Typography>
-                <Typography variant="h5" fontWeight="bold" color="primary">₹{tour.price.toLocaleString('en-IN')}</Typography>
-              </Box>
-              <Button variant="contained" onClick={handleExpandClick} endIcon={<ExpandMore expand={isExpanded}><ExpandMoreIcon /></ExpandMore>}>
-                {isExpanded ? 'Hide' : 'View'} Itinerary
-              </Button>
-            </Box>
-          </Box>
-        </Grid>
-      </Grid>
-      
-      <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-         <Box sx={{ p: 3, backgroundColor: 'grey.50', borderTop: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="h6" gutterBottom>Day-wise Plan</Typography>
-            <List dense>{tour.dayWise?.map(day => (<ListItem key={day._id}><ListItemIcon sx={{minWidth: 32}}><Typography variant="body2" color="primary" fontWeight="bold">Day {day.day}</Typography></ListItemIcon><ListItemText primary={day.description} /></ListItem>))}</List>
-            <Grid container spacing={2} sx={{ mt: 2 }}>
-                <Grid item xs={12} md={4}><Typography variant="subtitle1" fontWeight="medium">Inclusions</Typography><List dense>{tour.inclusion?.map(item => <ListItem key={item}><ListItemIcon sx={{minWidth: 32}}><CheckCircleIcon color="success" fontSize="small"/></ListItemIcon><ListItemText primary={item}/></ListItem>)}</List></Grid>
-                <Grid item xs={12} md={4}><Typography variant="subtitle1" fontWeight="medium">Exclusions</Typography><List dense>{tour.exclusion?.map(item => <ListItem key={item}><ListItemIcon sx={{minWidth: 32}}><CancelIcon color="error" fontSize="small"/></ListItemIcon><ListItemText primary={item}/></ListItem>)}</List></Grid>
-                <Grid item xs={12} md={4}><Typography variant="subtitle1" fontWeight="medium">Amenities</Typography><List dense>{tour.amenities?.map(item => <ListItem key={item}><ListItemText primary={`• ${item}`}/></ListItem>)}</List></Grid>
+              </Card>
             </Grid>
-        </Box>
-      </Collapse>
-    </Card>
+          ))}
+        </Grid>
+      </DialogContent>
+    </Dialog>
   );
 }
 
+function TourCard({ tour }) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const {showLoader, hideLoader} = useLoader();
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const handleExpandClick = () => setIsExpanded(!isExpanded);
+  
+    const handleImageEditClick = (e) => {
+      e.stopPropagation();
+      setIsImageModalOpen(true);
+    };
+  
+    const handleDetailsEditClick = (e) => {
+      e.stopPropagation();
+      navigate(`/tour-update/${tour._id}`);
+    };
+  
+    const handleImageUpload = async (files, tourId) => {
+      const formData = new FormData();
+      files.forEach(file => {
+        formData.append('images', file);
+      });
+  
+      try {
+        showLoader();
+        await dispatch(updateTourImage({ id: tourId, formData })).unwrap();
+        await dispatch(tourByOwner()).unwrap();
+      } catch (error) {
+        console.error("Image upload failed:", error);
+      } finally {
+        hideLoader();
+      }
+    };
+  
+    const handleImageDelete = async (index, tourId) => {
+      try {
+        showLoader();
+        await dispatch(deleteTourImage({ id: tourId,  index })).unwrap();
+        await dispatch(tourByOwner()).unwrap();
+        setIsImageModalOpen(false);
+      } catch (error) {
+        console.error("Image deletion failed:", error);
+      } finally {
+        hideLoader();
+      }
+    };
+  
+    const imageCount = tour.images?.length || 0;
+    const imagesToShow = imageCount > 0 ? tour.images : [FALLBACK_IMAGE_URL];
+  
+    // --- MODIFICACIÓN AQUÍ ---
+    // Se agregaron 'autoplay' y 'autoplaySpeed'
+    const sliderSettings = {
+      dots: imageCount > 1,
+      infinite: imageCount > 1,
+      speed: 500,
+      slidesToShow: 1,
+      slidesToScroll: 1,
+      arrows: false,
+      autoplay: imageCount > 1,      // Habilita el autoplay si hay más de 1 imagen
+      autoplaySpeed: 3000,          // Intervalo de 3 segundos
+    };
+  
+  
+    return (
+      <>
+        <Card sx={{ borderRadius: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
+          <Grid container>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ position: 'relative', height: '100%', '& .slick-dots': { bottom: '10px' }, '& .slick-dotted.slick-slider': { marginBottom: 0 }}}>
+                <Slider {...sliderSettings}>
+                  {imagesToShow.map((image, index) => (
+                      <CardMedia
+                        key={index}
+                        component="img"
+                        image={image}
+                        alt={`Tour Image ${index + 1}`}
+                        sx={{ height: '100%', minHeight: 300, objectFit: 'cover' }}
+                      />
+                  ))}
+                </Slider>
+                <IconButton
+                  aria-label="edit images"
+                  onClick={handleImageEditClick}
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                    '&:hover': { backgroundColor: 'white' },
+                    zIndex: 2
+                  }}
+                >
+                  <CollectionsIcon />
+                </IconButton>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Box>
+                      <Chip label={tour.themes} color="primary" size="small" />
+                      <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', mt: 1 }}>
+                        <LocationOnIcon fontSize="small" sx={{ mr: 0.5 }} />
+                        <Typography variant="body2">{tour.city}, {tour.state} ({tour?.country})</Typography>
+                      </Box>
+                    </Box>
+  
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, textAlign: 'right' }}>
+                      <Typography variant="h5" component="div" fontWeight="bold">
+                        {tour.travelAgencyName}
+                      </Typography>
+                      <IconButton aria-label="edit tour details" onClick={handleDetailsEditClick} size="small">
+                        <EditIcon />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                  
+                  <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                    {parseVisitingPlaces(tour.visitngPlaces || tour.visitingPlaces)}
+                  </Typography>
+                  
+                  <Box sx={{ display: 'flex', gap: 3, my: 2, color: 'text.secondary' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}><WbSunnyIcon sx={{ mr: 1 }} /> <Typography variant="body2">{tour.days} Days</Typography></Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}><NightsStayIcon sx={{ mr: 1 }} /> <Typography variant="body2">{tour.nights} Nights</Typography></Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}><StarIcon sx={{ mr: 1, color: '#FFB400' }} /> <Typography variant="body2">{tour.starRating} Stars</Typography></Box>
+                  </Box>
+                </CardContent>
+                <Divider />
+                <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1 }}>Starts from</Typography>
+                    <Typography variant="h5" fontWeight="bold" color="primary">₹{tour.price.toLocaleString('en-IN')}</Typography>
+                  </Box>
+                  <Button variant="contained" onClick={handleExpandClick} endIcon={<ExpandMore expand={isExpanded}><ExpandMoreIcon /></ExpandMore>}>
+                    {isExpanded ? 'Hide' : 'View'} Itinerary
+                  </Button>
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+            <Box sx={{ p: 3, backgroundColor: 'grey.50', borderTop: '1px solid', borderColor: 'divider' }}>
+              <Typography variant="h6" gutterBottom>Day-wise Plan</Typography>
+              <List dense>{tour.dayWise?.map(day => (<ListItem key={day._id}><ListItemIcon sx={{ minWidth: 32 }}><Typography variant="body2" color="primary" fontWeight="bold">Day {day.day}</Typography></ListItemIcon><ListItemText primary={day.description} /></ListItem>))}</List>
+              <Grid container spacing={2} sx={{ mt: 2 }}>
+                <Grid item xs={12} md={4}><Typography variant="subtitle1" fontWeight="medium">Inclusions</Typography><List dense>{tour.inclusion?.map(item => <ListItem key={item}><ListItemIcon sx={{ minWidth: 32 }}><CheckCircleIcon color="success" fontSize="small" /></ListItemIcon><ListItemText primary={item} /></ListItem>)}</List></Grid>
+                <Grid item xs={12} md={4}><Typography variant="subtitle1" fontWeight="medium">Exclusions</Typography><List dense>{tour.exclusion?.map(item => <ListItem key={item}><ListItemIcon sx={{ minWidth: 32 }}><CancelIcon color="error" fontSize="small" /></ListItemIcon><ListItemText primary={item} /></ListItem>)}</List></Grid>
+                <Grid item xs={12} md={4}><Typography variant="subtitle1" fontWeight="medium">Amenities</Typography><List dense>{tour.amenities?.map(item => <ListItem key={item}><ListItemText primary={`• ${item}`} /></ListItem>)}</List></Grid>
+              </Grid>
+            </Box>
+          </Collapse>
+        </Card>
+        <ImageManagerModal
+          open={isImageModalOpen}
+          onClose={() => setIsImageModalOpen(false)}
+          images={tour.images}
+          onImageUpload={handleImageUpload}
+          onImageDelete={handleImageDelete}
+          tourId={tour._id}
+        />
+      </>
+    );
+  }
 
 export default function MyTour() {
   const dispatch = useDispatch();
@@ -148,9 +324,7 @@ export default function MyTour() {
   if (!tourData) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}><CircularProgress /></Box>;
   }
-  const handleClickNewData = ()=>{
-    window.location.href = '/add-tour-data';
-  }
+
   if (tourData.length === 0) {
     return (
       <Box sx={{ bgcolor: 'grey.100', py: 8, minHeight: '100vh', textAlign: 'center' }}>
@@ -192,7 +366,7 @@ export default function MyTour() {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={()=>handleClickNewData()}
+              onClick={() => navigate('/add-tour-data')}
               sx={{ flexShrink: 0 }}
             >
               Add New Tour

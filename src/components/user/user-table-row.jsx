@@ -98,7 +98,7 @@ export default function UserTableRow({
         <TableCell>
           <Stack direction="row" alignItems="center" spacing={1}>
             <Typography variant="body2" noWrap>
-              {city ? city : 'N/A'}
+              {city}
             </Typography>
            
           </Stack>

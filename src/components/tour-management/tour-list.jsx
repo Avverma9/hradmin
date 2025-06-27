@@ -45,10 +45,10 @@ const TourList = () => {
   };
 
   const columns = [
-    { field: 'id', headerName: 'ID', width: 90 },
-    { field: 'travelAgencyName', headerName: 'Agency Name', width: 200 },
-    { field: 'nights', headerName: 'Nights', width: 80, align: 'center', headerAlign: 'center' },
-    { field: 'days', headerName: 'Days', width: 80, align: 'center', headerAlign: 'center' },
+    { field: '_id', headerName: 'ID', width: 20 },
+    { field: 'travelAgencyName', headerName: 'Agency Name', width: 150 },
+    { field: 'nights', headerName: 'Nights', width: 70, align: 'center', headerAlign: 'center' },
+    { field: 'days', headerName: 'Days', width: 50, align: 'center', headerAlign: 'center' },
     { 
         field: 'price', 
         headerName: 'Price', 
@@ -58,7 +58,7 @@ const TourList = () => {
     {
       field: 'amenities',
       headerName: 'Amenities',
-      width: 250,
+      width: 200,
       sortable: false,
       renderCell: (params) => (
         <Box sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
