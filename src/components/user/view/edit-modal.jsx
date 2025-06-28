@@ -260,7 +260,6 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
   };
-console.log("here is formData", formData);
   return (
     <Dialog
       open={open}

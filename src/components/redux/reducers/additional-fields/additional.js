@@ -453,7 +453,6 @@ export const getTourThemes = createAsyncThunk(
         },
       );
       notify(response.status);
-      console.log("Tour themes fetched successfully:", response.data);
       return response.data
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message;

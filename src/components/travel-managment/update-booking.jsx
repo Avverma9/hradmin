@@ -65,7 +65,6 @@ const UpdateBookingModal = ({ booking, onClose, onUpdate }) => {
       reloadPage();
     }
   };
-  console.log("Booking Data:", booking);
   return (
     <Dialog open={true} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Update Booking - {booking.bookingId}</DialogTitle>

@@ -95,7 +95,6 @@ export const tourUpdate = createAsyncThunk("tour/tourUpdate", async ({ id, data 
     }
 });
 export const updateTourImage = createAsyncThunk("tour/tourUpdate", async ({id,formData}, { rejectWithValue }) => {
-    console.log("formData", formData);
     try {
         const response = await axios.patch(`${localUrl}/update-tour-image/${id}`, formData, {
             headers: {
@@ -111,7 +110,6 @@ export const updateTourImage = createAsyncThunk("tour/tourUpdate", async ({id,fo
     }
 });
 export const deleteTourImage = createAsyncThunk("tour/deleteTourImage", async ({id,index}, { rejectWithValue }) => {
-    console.log("formData", id,index);
     try {
         const response = await axios.delete(`${localUrl}/delete-tour-image/${id}`, index, {
             headers: {

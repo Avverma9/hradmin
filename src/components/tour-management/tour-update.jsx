@@ -68,7 +68,6 @@ export default function TourUpdate() {
   const [cities, setCities] = useState([]);
   const tourTheme = useTourTheme();
 
-  console.log(tourTheme)
   const { showLoader, hideLoader } = useLoader();
 
   useEffect(() => {
