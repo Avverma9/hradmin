@@ -136,6 +136,30 @@ export const deleteMenu = createAsyncThunk(
   },
 );
 
+
+export const changeMenuStatus = createAsyncThunk(
+  "additional/changeMenuStatus",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axios.patch(
+        `${localUrl}/additional/change-menu/status/${id}`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        },
+      );
+      notify(response.status);
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  },
+);
+
+
 export const getBedTypes = createAsyncThunk(
   "additional/getBedTypes",
   async (_, { rejectWithValue }) => {

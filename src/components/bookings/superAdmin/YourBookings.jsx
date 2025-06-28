@@ -161,7 +161,7 @@ export default function SuperAdminBookingsView() {
     },
     { field: "bookingId", headerName: "Booking ID", width: 150 },
     { field: "status", headerName: "Status", width: 120, renderCell: (params) => renderStatusChip(params.value) },
-    { field: "user", headerName: "User Name", width: 150, valueGetter: (params) => params.row.user?.name || 'N/A' },
+    { field: "user", headerName: "User Name", width: 150, valueGetter: (params) => params.row?.user?.name || 'N/A' },
     { field: "source", headerName: "Source", width: 130 },
     { field: "mop", headerName: "Payment Mode", width: 130 },
     { field: "checkInDate", headerName: "Check-In", width: 150, valueGetter: (params) => fDate(params.row.checkInDate) },
@@ -222,7 +222,7 @@ export default function SuperAdminBookingsView() {
     // Clearing the filters will trigger the useEffect to refetch the initial data.
   };
   
-  const disableEditFields = role === "Developer" || role === "TMS";
+  const disableEditFields = role === "Developer" || role === "TMS" || role ==="Admin";
 
   return (
     <Container maxWidth="xl" sx={{ my: 4 }}>

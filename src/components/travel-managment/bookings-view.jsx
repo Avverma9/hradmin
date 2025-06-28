@@ -6,9 +6,11 @@ import {
     Divider,
     Button,
     Box,
+    Chip,
 } from '@mui/material';
 
 const BookingDetails = ({ booking, onClose }) => {
+    // Destructure all required fields from the booking object
     const {
         vehicleNumber,
         pickupP,
@@ -19,6 +21,8 @@ const BookingDetails = ({ booking, onClose }) => {
         customerMobile,
         bookingDate,
         bookingId,
+        seats, // <-- Added seats array
+        totalSeatPrice, // <-- Added total price
     } = booking;
 
     const formatDateTime = (dateStr) => {
@@ -39,9 +43,9 @@ const BookingDetails = ({ booking, onClose }) => {
             sx={{
                 width: "calc(100% - 64px)",
                 margin: '20px auto',
-                border: '2px dotted #1976d2', // Border applied directly to Paper
+                border: '2px dotted #1976d2',
                 borderRadius: 3,
-                p: 2, // Main padding
+                p: 2,
             }}
         >
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
@@ -57,7 +61,8 @@ const BookingDetails = ({ booking, onClose }) => {
 
             <Divider sx={{ mb: 1.5 }} />
 
-            <Grid container spacing={1}> {/* Further reduced spacing */}
+            {/* Main Booking Info */}
+            <Grid container spacing={1}>
                 {[
                     ['Booking ID', bookingId],
                     ['Booked By', bookedBy],
@@ -73,7 +78,7 @@ const BookingDetails = ({ booking, onClose }) => {
                         <Box
                             sx={{
                                 backgroundColor: '#f5f5f5',
-                                p: 1, // Further reduced padding
+                                p: 1,
                                 borderRadius: 1,
                                 borderLeft: '4px solid #1976d2',
                                 height: '100%',
@@ -89,6 +94,54 @@ const BookingDetails = ({ booking, onClose }) => {
                     </Grid>
                 ))}
             </Grid>
+
+            {/* Seat Information Section */}
+            {seats && seats.length > 0 && (
+                <>
+                    <Divider sx={{ my: 2 }}>
+                        <Typography variant="overline">Seat Information</Typography>
+                    </Divider>
+
+                    <Grid container spacing={1}>
+                        {seats.map((seat, index) => (
+                            <Grid item xs={12} sm={6} md={4} key={seat._id || index}>
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        p: 1,
+                                        borderRadius: 1,
+                                        backgroundColor: '#e3f2fd', // Light blue background
+                                        border: '1px solid #90caf9'
+                                    }}
+                                >
+                                    <Box>
+                                        <Typography variant="body2" fontWeight="bold">
+                                            Seat #{seat.seatNumber}
+                                        </Typography>
+                                        <Chip label={seat.seatType} color="primary" size="small" sx={{ mr: 1 }} />
+                                    </Box>
+                                    <Typography variant="body1" fontWeight="bold">
+                                        ₹{seat.seatPrice}
+                                    </Typography>
+                                </Box>
+                            </Grid>
+                        ))}
+                    </Grid>
+                </>
+            )}
+
+            {/* Total Price Section */}
+            <Divider sx={{ my: 2 }} />
+            <Box textAlign="right" sx={{ pr: 1 }}>
+                <Typography variant="overline" color="text.secondary">
+                    Total Amount
+                </Typography>
+                <Typography variant="h5" fontWeight="bold" color="primary">
+                    ₹{totalSeatPrice || 0}
+                </Typography>
+            </Box>
         </Paper>
     );
 };

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { format } from "date-fns";
 
 // MUI Components
@@ -11,7 +12,6 @@ import {
   Paper,
   Typography,
   Grid,
-  TextField,
   FormControl,
   InputLabel,
   Select,
@@ -39,6 +39,7 @@ import {
   Settings,
   NoCrash,
   Person,
+  AssignmentInd, // A better icon for this context
 } from "@mui/icons-material";
 
 // Local Imports
@@ -47,205 +48,217 @@ import CarUpdate from "./car-update";
 import SeatConfigUpdate from "./update-seats";
 import { fDate } from "../../../utils/format-time";
 import { useLoader } from "../../../utils/loader";
+import { getCarOwnerByEmail } from "../redux/reducers/travel/carOwner";
 
+// ... (The DetailItem and MyCarCard components remain unchanged)
 const DetailItem = ({ icon, text }) => (
-  <Grid item xs={6} display="flex" alignItems="center" gap={1}>
-    {React.cloneElement(icon, {
-      sx: { fontSize: "1.1rem", color: "text.secondary" },
-    })}
-    <Typography variant="body2" noWrap>
-      {text}
-    </Typography>
-  </Grid>
-);
-
-DetailItem.propTypes = {
-  icon: PropTypes.node.isRequired,
-  text: PropTypes.string.isRequired,
-};
-
-const MyCarCard = ({ car, onUpdateCar, onUpdateSeats, onStatusChange }) => {
-  const handleCarImage = (carData) =>
-    carData?.images &&
-    Array.isArray(carData.images) &&
-    carData.images.length > 0
-      ? carData.images[0]
-      : "https://placehold.co/600x400/e0e0e0/757575?text=Car";
-
-  const availableSeats =
-    car.seatConfig?.filter((seat) => !seat.bookedBy).length || 0;
-  const bookedSeats = car.seatConfig?.length - availableSeats || 0;
-
-  return (
-    <Card
-      variant="outlined"
-      sx={{
-        display: "flex",
-        flexDirection: { xs: "column", sm: "row" },
-        mb: 2,
-        borderRadius: 3,
-        transition: "box-shadow 0.3s",
-        "&:hover": { boxShadow: 3 },
-      }}
-    >
-      <CardMedia
-        component="img"
+    <Grid item xs={6} display="flex" alignItems="center" gap={1}>
+      {React.cloneElement(icon, {
+        sx: { fontSize: "1.1rem", color: "text.secondary" },
+      })}
+      <Typography variant="body2" noWrap>
+        {text}
+      </Typography>
+    </Grid>
+  );
+  
+  DetailItem.propTypes = {
+    icon: PropTypes.node.isRequired,
+    text: PropTypes.string.isRequired,
+  };
+  
+  const MyCarCard = ({ car, onUpdateCar, onUpdateSeats, onStatusChange }) => {
+    const handleCarImage = (carData) =>
+      carData?.images &&
+      Array.isArray(carData.images) &&
+      carData.images.length > 0
+        ? carData.images[0]
+        : "https://placehold.co/600x400/e0e0e0/757575?text=Car";
+  
+    const availableSeats =
+      car.seatConfig?.filter((seat) => !seat.bookedBy).length || 0;
+    const bookedSeats = car.seatConfig?.length - availableSeats || 0;
+  
+    return (
+      <Card
+        variant="outlined"
         sx={{
-          width: { xs: "100%", sm: 200 },
-          height: { xs: 160, sm: "auto" },
-          objectFit: "cover",
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          mb: 2,
+          borderRadius: 3,
+          transition: "box-shadow 0.3s",
+          "&:hover": { boxShadow: 3 },
         }}
-        image={handleCarImage(car)}
-        alt={`${car.make} ${car.model}`}
-      />
-      <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
-        <CardContent sx={{ flex: "1 0 auto", p: 2 }}>
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="flex-start"
+      >
+        <CardMedia
+          component="img"
+          sx={{
+            width: { xs: "100%", sm: 200 },
+            height: { xs: 160, sm: "auto" },
+            objectFit: "cover",
+          }}
+          image={handleCarImage(car)}
+          alt={`${car.make} ${car.model}`}
+        />
+        <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+          <CardContent sx={{ flex: "1 0 auto", p: 2 }}>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="flex-start"
+            >
+              <Box>
+                <Typography component="div" variant="h6" fontWeight="bold">
+                  {car.make} {car.model}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  {car.color} • {car.vehicleNumber}
+                </Typography>
+              </Box>
+              {car.recommended && (
+                <Chip label="Recommended" color="success" size="small" />
+              )}
+            </Box>
+            <Divider sx={{ my: 1 }} />
+            <Grid container spacing={1.5}>
+              <DetailItem
+                icon={<LocalGasStation />}
+                text={car.fuelType || "N/A"}
+              />
+              <DetailItem
+                icon={<EventSeat />}
+                text={car.seater ? `${car.seater} Seater` : "N/A"}
+              />
+              <DetailItem
+                icon={<Work />}
+                text={car.luggage ? `${car.luggage} Luggage` : "N/A"}
+              />
+              <DetailItem
+                icon={<Speed />}
+                text={car.extraKm ? `₹${car.extraKm}/km` : "N/A"}
+              />
+              <DetailItem
+                icon={<Person />}
+                text={car.perPersonCost ? `₹${car.perPersonCost}/person` : "N/A"}
+              />
+              <DetailItem
+                icon={<LocationOn />}
+                text={car.pickupP ? `From: ${car.pickupP}` : "N/A"}
+              />
+              <DetailItem
+                icon={<Map />}
+                text={car.dropP ? `To: ${car.dropP}` : "N/A"}
+              />
+              <Grid item xs={12} display="flex" alignItems="center" gap={1}>
+                <CalendarToday
+                  sx={{ fontSize: "1.1rem", color: "text.secondary" }}
+                />
+                <Typography variant="body2">
+                  {fDate(car.pickupD)} to {fDate(car.dropD)}
+                </Typography>
+              </Grid>
+            </Grid>
+          </CardContent>
+          <CardActions
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              p: 1.5,
+              bgcolor: "grey.50",
+            }}
           >
             <Box>
-              <Typography component="div" variant="h6" fontWeight="bold">
-                {car.make} {car.model}
+              <Typography variant="h6" fontWeight="bold">
+                ₹{car.price}
               </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                {car.color} • {car.vehicleNumber}
+              <Typography variant="caption" color="text.secondary">
+                Full ride
               </Typography>
             </Box>
-            {car.recommended && (
-              <Chip label="Recommended" color="success" size="small" />
-            )}
-          </Box>
-          <Divider sx={{ my: 1 }} />
-          <Grid container spacing={1.5}>
-            <DetailItem
-              icon={<LocalGasStation />}
-              text={car.fuelType || "N/A"}
-            />
-            <DetailItem
-              icon={<EventSeat />}
-              text={car.seater ? `${car.seater} Seater` : "N/A"}
-            />
-            <DetailItem
-              icon={<Work />}
-              text={car.luggage ? `${car.luggage} Luggage` : "N/A"}
-            />
-            <DetailItem
-              icon={<Speed />}
-              text={car.extraKm ? `₹${car.extraKm}/km` : "N/A"}
-            />
-            <DetailItem
-              icon={<Person />}
-              text={car.perPersonCost ? `₹${car.perPersonCost}/person` : "N/A"}
-            />
-            <DetailItem
-              icon={<LocationOn />}
-              text={car.pickupP ? `From: ${car.pickupP}` : "N/A"}
-            />
-            <DetailItem
-              icon={<Map />}
-              text={car.dropP ? `To: ${car.dropP}` : "N/A"}
-            />
-            <Grid item xs={12} display="flex" alignItems="center" gap={1}>
-              <CalendarToday
-                sx={{ fontSize: "1.1rem", color: "text.secondary" }}
-              />
-              <Typography variant="body2">
-                {fDate(car.pickupD)} to {fDate(car.dropD)}
+            <Box textAlign="right">
+              <Typography variant="body2" fontWeight="bold">
+                Seats: {availableSeats} Available
               </Typography>
-            </Grid>
-          </Grid>
-        </CardContent>
-        <CardActions
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            p: 1.5,
-            bgcolor: "grey.50",
-          }}
-        >
-          <Box>
-            <Typography variant="h6" fontWeight="bold">
-              ₹{car.price}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Full ride
-            </Typography>
-          </Box>
-          <Box textAlign="right">
-            <Typography variant="body2" fontWeight="bold">
-              Seats: {availableSeats} Available
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              ({bookedSeats} Booked)
-            </Typography>
-          </Box>
-          <FormControl variant="standard" sx={{ minWidth: 120 }} size="small">
-            <InputLabel>Status</InputLabel>
-            <Select
-              value={car.runningStatus || ""}
-              onChange={(e) => onStatusChange(e, car)}
-              label="Status"
+              <Typography variant="caption" color="text.secondary">
+                ({bookedSeats} Booked)
+              </Typography>
+            </Box>
+            <FormControl variant="standard" sx={{ minWidth: 120 }} size="small">
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={car.runningStatus || ""}
+                onChange={(e) => onStatusChange(e, car)}
+                label="Status"
+              >
+                <MenuItem value="On A Trip">On A Trip</MenuItem>
+                <MenuItem value="Available">Available</MenuItem>
+              </Select>
+            </FormControl>
+          </CardActions>
+          <CardActions
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              p: 1.5,
+              pt: 0,
+              bgcolor: "grey.50",
+              gap: 1,
+            }}
+          >
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => onUpdateCar(car)}
+              startIcon={<Edit />}
             >
-              <MenuItem value="On A Trip">On A Trip</MenuItem>
-              <MenuItem value="Available">Available</MenuItem>
-            </Select>
-          </FormControl>
-        </CardActions>
-        <CardActions
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            p: 1.5,
-            pt: 0,
-            bgcolor: "grey.50",
-            gap: 1,
-          }}
-        >
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => onUpdateCar(car)}
-            startIcon={<Edit />}
-          >
-            Details
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={() => onUpdateSeats(car)}
-            startIcon={<Settings />}
-          >
-            Seats
-          </Button>
-        </CardActions>
-      </Box>
-    </Card>
-  );
-};
-
-MyCarCard.propTypes = {
-  car: PropTypes.object.isRequired,
-  onUpdateCar: PropTypes.func.isRequired,
-  onUpdateSeats: PropTypes.func.isRequired,
-  onStatusChange: PropTypes.func.isRequired,
-};
+              Details
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => onUpdateSeats(car)}
+              startIcon={<Settings />}
+            >
+              Seats
+            </Button>
+          </CardActions>
+        </Box>
+      </Card>
+    );
+  };
+  
+  MyCarCard.propTypes = {
+    car: PropTypes.object.isRequired,
+    onUpdateCar: PropTypes.func.isRequired,
+    onUpdateSeats: PropTypes.func.isRequired,
+    onStatusChange: PropTypes.func.isRequired,
+  };
 
 const MyCar = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate(); // Initialize useNavigate
   const userId = localStorage.getItem("user_id");
   const { ownerCar: carData, loading } = useSelector((state) => state.car);
-  const { showLoader, hideLoader, isLoading } = useLoader();
+  const { data: ownerData } = useSelector((state) => state.owner);
+  const { showLoader, hideLoader } = useLoader();
 
   const [openCarUpdate, setOpenCarUpdate] = useState(false);
   const [openSeatConfig, setOpenSeatConfig] = useState(false);
   const [selectedCar, setSelectedCar] = useState(null);
 
+  // First, fetch the owner data.
   useEffect(() => {
     if (userId) {
+      dispatch(getCarOwnerByEmail());
+    }
+  }, [userId, dispatch]);
+
+  // THEN, if owner data exists, fetch the cars.
+  useEffect(() => {
+    if (ownerData && ownerData.length > 0 && userId) {
       try {
         showLoader();
         dispatch(getCarByOwnerId(userId))
@@ -256,7 +269,7 @@ const MyCar = () => {
         hideLoader();
       }
     }
-  }, [userId, dispatch]);
+  }, [ownerData, userId, dispatch]);
 
   const handleUpdateCar = (car) => {
     setSelectedCar(car);
@@ -290,13 +303,48 @@ const MyCar = () => {
       });
   };
 
+  const handleNavigateToOwnerForm = () => {
+    navigate("/add-an-car-owner");
+  };
+
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <Typography variant="h4" fontWeight="bold" gutterBottom>
         My Cars
       </Typography>
       <main>
-        {loading ? (
+        {!(ownerData && ownerData.length > 0) ? (
+          // ** ENHANCED SECTION **
+          <Paper
+            variant="outlined"
+            sx={{
+              p: { xs: 3, sm: 5 },
+              mt: 4,
+              borderRadius: 3,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <AssignmentInd sx={{ fontSize: 60, color: "primary.main" }} />
+            <Typography variant="h6" fontWeight="bold" textAlign="center">
+              Complete Your Owner Profile
+            </Typography>
+            <Typography color="text.secondary" textAlign="center" maxWidth="md">
+              To add and manage your cars, you first need to fill out your owner
+              details.
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={handleNavigateToOwnerForm}
+              sx={{ mt: 2 }}
+            >
+              Fill the Form
+            </Button>
+          </Paper>
+        ) : loading ? (
           <Stack spacing={2}>
             <Skeleton
               variant="rectangular"
@@ -329,7 +377,7 @@ const MyCar = () => {
               No cars found.
             </Typography>
             <Typography color="text.secondary">
-              You have not added any cars yet.
+              You can add a new car now.
             </Typography>
           </Paper>
         )}

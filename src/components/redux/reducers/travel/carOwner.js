@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { localUrl, notify, token } from '../../../../../utils/util';
+import { hotelEmail, localUrl, notify, token } from '../../../../../utils/util';
 import { toast } from 'react-toastify';
 
 export const addCarOwner = createAsyncThunk('owner/addCarOwner', async (data, { rejectWithValue }) => {
@@ -42,7 +42,6 @@ export const getAllOwner = createAsyncThunk('owner/getAllOwner', async (_, { rej
                 Authorization: token,
             },
         });
-        notify(response?.status);
         return response.data;
     } catch (error) {
         const errorMessage = error.response?.data?.message || error.message;
@@ -50,6 +49,22 @@ export const getAllOwner = createAsyncThunk('owner/getAllOwner', async (_, { rej
         return rejectWithValue(errorMessage);
     }
 });
+
+export const getCarOwnerByEmail = createAsyncThunk('owner/getCarOwnerByEmail', async (_, { rejectWithValue }) => {
+    try {
+        const response = await axios.post(`${localUrl}/travel/get-an-owner/email?email=${hotelEmail}`, {
+            headers: {
+                Authorization: token,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(`Error: ${errorMessage}`);
+        return rejectWithValue(errorMessage);
+    }
+});
+
 
 export const deleteCarOwner = createAsyncThunk('owner/deleteCarOwner', async (id, { rejectWithValue }) => {
     try {
@@ -110,6 +125,9 @@ const ownerSlice = createSlice({
                 state.data = [action.payload];
             })
             .addCase(getAllOwner.fulfilled, (state, action) => {
+                state.data = action.payload;
+            })
+            .addCase(getCarOwnerByEmail.fulfilled, (state, action) => {
                 state.data = action.payload;
             })
             .addCase(deleteCarOwner.fulfilled, (state, action) => {

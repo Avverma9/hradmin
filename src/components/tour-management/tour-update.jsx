@@ -13,6 +13,7 @@ import { useLoader } from "../../../utils/loader";
 import { toast } from "react-toastify";
 import { Country, State, City } from 'country-state-city';
 import { useTourTheme } from "../../../utils/additional/tourTheme";
+import { role } from "../../../utils/util";
 
 const deepCopy = (obj) => {
   if (typeof structuredClone === "function") {
@@ -341,8 +342,7 @@ export default function TourUpdate() {
               </Grid>
           </SectionPaper>
         </Grid>
-
-        <Grid item xs={12} md={4}>
+{role === "Admin" || role ==="TMS" || role ==="Developer" && <Grid item xs={12} md={4}>
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, position: 'sticky', top: 24 }}>
             <Typography variant="h6" fontWeight="600">Tour Status</Typography>
             <Divider sx={{ my: 1.5 }} />
@@ -360,7 +360,8 @@ export default function TourUpdate() {
               </Grid>
             </Grid>
           </Paper>
-        </Grid>
+        </Grid> }
+        
       </Grid>
     </Container>
   );
