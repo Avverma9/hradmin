@@ -36,7 +36,9 @@ const TourRequest = () => {
   };
 
   const columns = [
-    { field: 'travelAgencyName', headerName: 'Agency Name', width: 220 },
+    { field: 'travelAgencyName', headerName: 'Agency Name', width: 150 },
+    { field: 'city', headerName: 'City', width: 100 },
+    { field: 'themes', headerName: 'Themes', width: 100 },
     { field: 'nights', headerName: 'Nights', width: 80, align: 'center', headerAlign: 'center' },
     { field: 'days', headerName: 'Days', width: 80, align: 'center', headerAlign: 'center' },
     {

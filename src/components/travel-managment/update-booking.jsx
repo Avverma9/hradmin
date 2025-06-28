@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   TextField,
   Button,
@@ -11,24 +11,25 @@ import {
   MenuItem,
   Select,
   InputLabel,
-  FormControl
-} from '@mui/material';
-import { useLoader } from '../../../utils/loader';
-import { reloadPage } from '../../../utils/util';
+  FormControl,
+} from "@mui/material";
+import { useLoader } from "../../../utils/loader";
+import { reloadPage } from "../../../utils/util";
 
 const UpdateBookingModal = ({ booking, onClose, onUpdate }) => {
   const [formData, setFormData] = useState({
-    id: booking.id,
+    id: booking._id, // corrected id key
     bookedBy: booking.bookedBy,
     customerMobile: booking.customerMobile,
     vehicleNumber: booking.vehicleNumber,
     pickupP: booking.pickupP,
     dropP: booking.dropP,
-    pickupD: booking.pickupD,
-    dropD: booking.dropD,
-    seats: booking.seats,
+    pickupD: booking.pickupD.slice(0, 16), // format for datetime-local input
+    dropD: booking.dropD.slice(0, 16), // format for datetime-local input
+    seats: booking.seats || [], // seats are objects array
   });
-  const { showLoader, hideLoader } = useLoader()
+
+  const { showLoader, hideLoader } = useLoader();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -61,10 +62,10 @@ const UpdateBookingModal = ({ booking, onClose, onUpdate }) => {
       console.error("Failed to update booking:", err);
     } finally {
       hideLoader();
-      reloadPage()
+      reloadPage();
     }
   };
-
+  console.log("Booking Data:", booking);
   return (
     <Dialog open={true} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Update Booking - {booking.bookingId}</DialogTitle>
@@ -158,26 +159,34 @@ const UpdateBookingModal = ({ booking, onClose, onUpdate }) => {
                   labelId="seats-label"
                   name="seats"
                   multiple
-                  value={formData.seats}
-                  onChange={(e) =>
+                  value={formData.seats.map((seat) => seat._id)} // array of _id strings
+                  onChange={(e) => {
+                    const selectedIds = e.target.value;
+                    // Map back to seat objects for formData
+                    const selectedSeats = selectedIds
+                      .map((id) =>
+                        booking.seats.find((seat) => seat._id === id),
+                      )
+                      .filter(Boolean);
                     setFormData((prev) => ({
                       ...prev,
-                      seats: e.target.value,
-                    }))
-                  }
+                      seats: selectedSeats,
+                    }));
+                  }}
                   renderValue={(selected) =>
                     selected
-                      .map(
+                      ?.map(
                         (id) =>
-                          booking.availableSeatsOnCar.find((seat) => seat._id === id)
-                            ?.seatType || id
+                          booking.seats.find((seat) => seat._id === id)
+                            ?.seatType || id,
                       )
-                      .join(', ')
+                      .join(", ")
                   }
                 >
-                  {booking.availableSeatsOnCar.map((seat) => (
+                  {booking.seats.map((seat) => (
                     <MenuItem key={seat._id} value={seat._id}>
-                      {seat.seatType} - Seat #{seat.seatNumber} - ₹{seat.seatPrice}
+                      {seat.seatType} - Seat #{seat.seatNumber} - ₹
+                      {seat.seatPrice}
                     </MenuItem>
                   ))}
                 </Select>
@@ -190,7 +199,12 @@ const UpdateBookingModal = ({ booking, onClose, onUpdate }) => {
         <Button onClick={onClose} color="secondary">
           Cancel
         </Button>
-        <Button type="submit" onClick={handleSubmit} color="primary" variant="contained">
+        <Button
+          type="submit"
+          onClick={handleSubmit}
+          color="primary"
+          variant="contained"
+        >
           Update
         </Button>
       </DialogActions>

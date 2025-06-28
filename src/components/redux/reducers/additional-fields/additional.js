@@ -438,6 +438,29 @@ export const getTourThemes = createAsyncThunk(
     }
   },
 );
+
+export const deleteTourThemes = createAsyncThunk(
+  "additional/deleteTourThemes",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axios.delete(
+        `${localUrl}/additional/delete-tour-theme/${id}`,
+       
+        {
+          headers: {
+            Authorization: token,
+          },
+        },
+      );
+      notify(response.status);
+      return response.data
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
+  },
+);
 const initialState = {
   travelAmenities: [],
   menuItems: [],
