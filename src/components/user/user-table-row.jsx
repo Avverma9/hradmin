@@ -158,7 +158,7 @@ export default function UserTableRow({
           <Iconify icon="eva:eye-fill" sx={{ mr: 2 }} />
           View
         </MenuItem>
-        <MenuItem
+        {/* <MenuItem
           onClick={() => {
             handleDelete();
             handleCloseMenu();
@@ -167,7 +167,7 @@ export default function UserTableRow({
         >
           <Iconify icon="eva:trash-2-outline" sx={{ mr: 2 }} />
           Delete
-        </MenuItem>
+        </MenuItem> */}
       </Popover>
     </>
   );

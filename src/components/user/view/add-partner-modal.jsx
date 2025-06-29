@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import {
   Box,
@@ -23,7 +23,20 @@ import {
   DialogContent,
   InputAdornment,
 } from '@mui/material';
-import { Close, Person, Mail, Phone, Business, Badge, VpnKey, Info } from '@mui/icons-material';
+import {
+  Close,
+  Person,
+  Mail,
+  Phone,
+  Business,
+  Badge,
+  VpnKey,
+  Info,
+  LocationCity,
+  PinDrop,
+  Public,
+  ToggleOn,
+} from '@mui/icons-material';
 import { useRole } from "../../../../utils/additional/role";
 
 const AddUserModal = ({ open, onClose, onSubmit }) => {
@@ -33,6 +46,9 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
     email: "",
     mobile: "",
     address: "",
+    city: "",
+    state: "",
+    pinCode: "",
     password: "",
     role: "",
     status: true,
@@ -40,9 +56,17 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
   });
   const [imagePreview, setImagePreview] = useState("");
 
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const newValue = name === "status" ? value === "true" : value;
+    const newValue = name === "status" ? value === 'true' : value;
     setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
 
@@ -50,6 +74,11 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setFormData((prev) => ({ ...prev, images: file }));
+      
+      if (imagePreview) {
+          URL.revokeObjectURL(imagePreview);
+      }
+      
       setImagePreview(URL.createObjectURL(file));
     }
   };
@@ -62,11 +91,9 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
   const handleSubmit = () => {
     const data = new FormData();
     Object.keys(formData).forEach(key => {
-        if (key === 'status') {
-            data.append(key, formData[key] ? "true" : "false");
-        } else if (formData[key] !== null) {
-            data.append(key, formData[key]);
-        }
+      if (formData[key] !== null && formData[key] !== "") {
+        data.append(key, formData[key]);
+      }
     });
     onSubmit(data);
     onClose();
@@ -85,37 +112,36 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
         </Box>
       </DialogTitle>
       <DialogContent sx={{ p: { xs: 2, sm: 3 }, bgcolor: 'grey.50' }}>
-        {/* Added Informational Alert */}
         <Alert severity="info" icon={<Info fontSize="inherit" />} sx={{ mb: 3 }}>
-          After creating a partner, you can assign page authorizations from the **Update** section.
+          After creating a partner, you can assign page authorizations from the <strong>Update</strong> section.
         </Alert>
         
         <Grid container spacing={{ xs: 2, sm: 3 }}>
           <Grid item xs={12} sm={5} md={4}>
              <Card variant="outlined" sx={{ height: '100%' }}>
-                <CardHeader title="Profile Picture" titleTypographyProps={{ fontWeight: '600', fontSize: '1rem' }} />
-                <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 2, pt: 1 }}>
-                    <Box sx={{ position: 'relative', mb: 2 }}>
-                        <Avatar src={imagePreview} sx={{ width: 120, height: 120, border: '3px dashed', borderColor: 'grey.400' }} />
-                        {imagePreview && (
-                            <IconButton
-                              size="small"
-                              onClick={handleRemoveImage}
-                              sx={{
-                                position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(255, 255, 255, 0.8)',
-                                '&:hover': { bgcolor: 'white' },
-                              }}
-                            >
-                              <Close sx={{ fontSize: '1rem' }} />
-                            </IconButton>
-                        )}
-                    </Box>
-                    <Button variant="outlined" component="label" color="inherit">
-                      Upload Photo
-                      <input hidden accept="image/*" type="file" onChange={handleImageChange} />
-                    </Button>
-                </CardContent>
-            </Card>
+               <CardHeader title="Profile Picture" titleTypographyProps={{ fontWeight: '600', fontSize: '1rem' }} />
+               <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 2, pt: 1 }}>
+                   <Box sx={{ position: 'relative', mb: 2 }}>
+                       <Avatar src={imagePreview} sx={{ width: 120, height: 120, border: '3px dashed', borderColor: 'grey.400' }} />
+                       {imagePreview && (
+                           <IconButton
+                             size="small"
+                             onClick={handleRemoveImage}
+                             sx={{
+                               position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(255, 255, 255, 0.8)',
+                               '&:hover': { bgcolor: 'white' },
+                             }}
+                           >
+                             <Close sx={{ fontSize: '1rem' }} />
+                           </IconButton>
+                       )}
+                   </Box>
+                   <Button variant="outlined" component="label" color="inherit">
+                     Upload Photo
+                     <input hidden accept="image/*" type="file" onChange={handleImageChange} />
+                   </Button>
+               </CardContent>
+             </Card>
           </Grid>
           <Grid item xs={12} sm={7} md={8}>
             <Card variant="outlined">
@@ -126,18 +152,21 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
                         <Grid item xs={12} sm={6}><TextField name="mobile" label="Mobile Number" fullWidth value={formData.mobile} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><Phone color="action" /></InputAdornment> }} /></Grid>
                         <Grid item xs={12} sm={6}><TextField name="email" label="Email Address" type="email" fullWidth value={formData.email} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><Mail color="action" /></InputAdornment> }} /></Grid>
                         <Grid item xs={12}><TextField name="address" label="Address" fullWidth value={formData.address} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><Business color="action" /></InputAdornment> }} /></Grid>
+                        <Grid item xs={12} sm={6} md={4}><TextField name="city" label="City" fullWidth value={formData.city} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><LocationCity color="action" /></InputAdornment> }} /></Grid>
+                        <Grid item xs={12} sm={6} md={4}><TextField name="state" label="State" fullWidth value={formData.state} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><Public color="action" /></InputAdornment> }} /></Grid>
+                        <Grid item xs={12} sm={12} md={4}><TextField name="pinCode" label="PIN Code" fullWidth value={formData.pinCode} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><PinDrop color="action" /></InputAdornment> }} /></Grid>
                         <Grid item xs={12} sm={6}>
                             <FormControl fullWidth>
-                                <InputLabel>Role</InputLabel>
-                                <Select name="role" value={formData.role} onChange={handleChange} label="Role">
-                                    {role.map((item) => ( <MenuItem key={item._id} value={item.role}>{item.role}</MenuItem> ))}
+                                <InputLabel id="role-select-label">Role</InputLabel>
+                                <Select name="role" labelId="role-select-label" value={formData.role} onChange={handleChange} label="Role" startAdornment={<InputAdornment position="start"><Badge color="action" /></InputAdornment>}>
+                                    {(role || []).map((item) => ( <MenuItem key={item._id} value={item.role}>{item.role}</MenuItem> ))}
                                 </Select>
                             </FormControl>
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                             <FormControl fullWidth>
-                                <InputLabel>Status</InputLabel>
-                                <Select name="status" value={formData.status} onChange={handleChange} label="Status">
+                            <FormControl fullWidth>
+                                <InputLabel id="status-select-label">Status</InputLabel>
+                                <Select name="status" labelId="status-select-label" value={formData.status} onChange={handleChange} label="Status" startAdornment={<InputAdornment position="start"><ToggleOn color="action" /></InputAdornment>}>
                                     <MenuItem value="true">Active</MenuItem>
                                     <MenuItem value="false">Inactive</MenuItem>
                                 </Select>

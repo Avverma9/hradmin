@@ -184,8 +184,6 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
         })),
       };
       await dispatch(addMenu(payload)).unwrap();
-      toast.success("Menu items added successfully!");
-
       setInitialMenuItems([...selectedMenuItems]);
       setOpenSelect(false);
     } catch (error) {
@@ -222,7 +220,6 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
             
             setSelectedMenuItems([]);
             setInitialMenuItems([]);
-            toast.success("All menu items have been deleted.");
         } catch (error) {
             console.error("Error deleting all menu items:", error);
             toast.error(error.message || "Failed to delete all menu items.");

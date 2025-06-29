@@ -172,7 +172,6 @@ export default function UserPage() {
     try {
       await dispatch(addPartner(newUser));
       setRefresh((prev) => !prev);
-      toast.success('Partner added successfully');
     } catch {
       toast.error('Something went wrong!');
     } finally {
