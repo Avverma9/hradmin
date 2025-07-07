@@ -16,6 +16,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { updateBooking } from "src/components/redux/reducers/booking";
 import { hotelEmail, userName } from "../../../../utils/util";
+import { useLoader } from "../../../../utils/loader";
 
 const modalStyle = {
   position: "absolute",
@@ -46,7 +47,7 @@ const AdminBookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const updated = useSelector((state) => state.booking.updated);
-
+  const { showLoader, hideLoader } = useLoader()
   useEffect(() => {
     if (bookingData) {
       const formatDate = (dateInput) => {
@@ -82,7 +83,9 @@ const AdminBookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
 
   const handleSave = async () => {
     setLoading(true);
+    showLoader()
     try {
+    
       await dispatch(
         updateBooking({
           bookingId: bookingData.bookingId,
@@ -103,6 +106,7 @@ const AdminBookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
       console.error("Error updating booking:", error);
     } finally {
       setLoading(false);
+      hideLoader()
     }
   };
 

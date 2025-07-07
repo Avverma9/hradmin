@@ -16,6 +16,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { updateBooking } from "../redux/reducers/booking";
 import { hotelEmail, userName } from "../../../utils/util";
+import { useLoader } from "../../../utils/loader";
 
 const modalStyle = {
   position: "absolute",
@@ -45,6 +46,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
   });
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
+  const {showLoader,hideLoader} =useLoader()
   const updated = useSelector((state) => state.booking.updated);
   const role = localStorage.getItem("user_role");
   useEffect(() => {
@@ -82,6 +84,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
 
   const handleSave = async () => {
     setLoading(true);
+    showLoader()
     try {
       await dispatch(
         updateBooking({
@@ -103,6 +106,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
       console.error("Error updating booking:", error);
     } finally {
       setLoading(false);
+      hideLoader()
     }
   };
 
