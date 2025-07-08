@@ -1,44 +1,32 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
-  Paper,
   Avatar,
-  Button,
-  Divider,
-  TableRow,
-  TableHead,
-  TableCell,
-  TableBody,
-  TextField,
+  IconButton,
+  Tooltip,
   Typography,
-  TableContainer,
-  TableSortLabel,
-  TablePagination,
-  Skeleton,
   Stack,
-  InputAdornment,
-  Table,
+  Skeleton,
+  Button,
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+import {
+  DataGrid,
+  GridToolbarContainer,
+  GridToolbarColumnsButton,
+  GridToolbarFilterButton,
+  GridToolbarDensitySelector,
+  useGridApiContext,
+} from '@mui/x-data-grid';
+import Papa from 'papaparse';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
-import { visuallyHidden } from '@mui/utils';
 import { userDetails } from 'src/components/redux/reducers/user';
 import UserDetailsModal from './user-details';
 import { useLoader } from '../../../../utils/loader';
 
-function useDebounce(value, delay) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  return debouncedValue;
-}
+// --- Helper Functions ---
 
 function stringToColor(string) {
   let hash = 0;
@@ -54,92 +42,142 @@ function stringToColor(string) {
 }
 
 function stringAvatar(name) {
-  const nameParts = name.split(' ');
-  const children = nameParts.length > 1 ? `${nameParts[0][0]}${nameParts[1][0]}` : name[0];
+  const safeName = typeof name === 'string' && name ? name : 'No Name';
+  const nameParts = safeName.split(' ');
+  const children =
+    nameParts.length > 1 && nameParts[1] ? `${nameParts[0][0]}${nameParts[1][0]}` : safeName[0];
+
   return {
     sx: {
-      bgcolor: stringToColor(name),
+      bgcolor: stringToColor(safeName),
+      color: (theme) => theme.palette.getContrastText(stringToColor(safeName)),
+      width: 36,
+      height: 36,
+      fontSize: '0.9rem',
     },
     children: children.toUpperCase(),
   };
 }
 
-function stableSort(array, comparator) {
-  const stabilizedThis = array.map((el, index) => [el, index]);
-  stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) return order;
-    return a[1] - b[1];
-  });
-  return stabilizedThis.map((el) => el[0]);
-}
+// --- Custom Toolbar & Enhanced Export Button ---
 
-function getComparator(order, orderBy) {
-  return order === 'desc'
-    ? (a, b) => (b[orderBy] < a[orderBy] ? -1 : 1)
-    : (a, b) => (a[orderBy] < b[orderBy] ? -1 : 1);
-}
+const CustomExportButton = ({ userDataMap }) => {
+  const apiRef = useGridApiContext();
 
-const headCells = [
-  { id: 'profile', label: 'Profile' },
-  { id: 'name', label: 'User' },
-  { id: 'email', label: 'Email' },
-  { id: 'mobile', label: 'Mobile' },
-  { id: 'actions', label: 'Actions', disableSorting: true },
-];
+  const flattenUserDataForExport = (users) => {
+    const flatData = [];
+    users.forEach((user) => {
+      const userInfo = {
+        userId: user.userId,
+        userName: user.name,
+        userEmail: user.email,
+        userMobile: user.mobile,
+        userProfileUrl: user.profile?.[0] || '',
+      };
 
-function UserTableHead(props) {
-  const { order, orderBy, onRequestSort } = props;
-  const createSortHandler = (property) => (event) => {
-    onRequestSort(property);
+      if (user.bookings && user.bookings.length > 0) {
+        user.bookings.forEach((booking) => {
+          const roomDetails = booking.roomDetails?.[0] || {};
+          const hotelDetails = booking.hotelDetails || {};
+
+          flatData.push({
+            ...userInfo,
+            bookingId: booking.bookingId,
+            bookingStatus: booking.bookingStatus,
+            totalBookingPrice: booking.price,
+            checkInDate: booking.checkInDate,
+            checkOutDate: booking.checkOutDate,
+            hotelName: hotelDetails.hotelName,
+            hotelCity: hotelDetails.hotelCity,
+            hotelEmail: hotelDetails.hotelEmail,
+            roomId: roomDetails.roomId,
+            roomType: roomDetails.type,
+            roomBedTypes: roomDetails.bedTypes,
+            roomPrice: roomDetails.price,
+          });
+        });
+      } else {
+        flatData.push(userInfo);
+      }
+    });
+    return flatData;
+  };
+
+  const handleExport = () => {
+    const selectedRowIds = apiRef.current.getSelectedRows().keys();
+    const rowIds = Array.from(selectedRowIds);
+
+    let usersToExport;
+    if (rowIds.length > 0) {
+      usersToExport = rowIds.map((id) => userDataMap.get(id));
+    } else {
+      const visibleRowModels = apiRef.current.getSortedRows();
+      usersToExport = visibleRowModels.map((rowModel) => userDataMap.get(rowModel.id));
+    }
+
+    const flattenedData = flattenUserDataForExport(usersToExport);
+    const csv = Papa.unparse(flattenedData);
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'user_bookings_export.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <TableHead sx={{ backgroundColor: (theme) => theme.palette.grey[100] }}>
-      <TableRow>
-        {headCells.map((headCell) => (
-          <TableCell key={headCell.id} sortDirection={orderBy === headCell.id ? order : false}>
-            {headCell.disableSorting ? (
-              headCell.label
-            ) : (
-              <TableSortLabel
-                active={orderBy === headCell.id}
-                direction={orderBy === headCell.id ? order : 'asc'}
-                onClick={createSortHandler(headCell.id)}
-              >
-                {headCell.label}
-                {orderBy === headCell.id ? (
-                  <Box component="span" sx={visuallyHidden}>
-                    {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
-                  </Box>
-                ) : null}
-              </TableSortLabel>
-            )}
-          </TableCell>
-        ))}
-      </TableRow>
-    </TableHead>
+    <Button onClick={handleExport} startIcon={<FileDownloadIcon />} size="small">
+      Export Bookings
+    </Button>
+  );
+};
+
+function CustomToolbar({ userDataMap }) {
+  return (
+    <GridToolbarContainer sx={{ p: 1 }}>
+      <Stack direction="row" flexGrow={1} spacing={1}>
+        <GridToolbarColumnsButton />
+        <GridToolbarFilterButton />
+        <GridToolbarDensitySelector />
+        <CustomExportButton userDataMap={userDataMap} />
+      </Stack>
+    </GridToolbarContainer>
   );
 }
 
+function CustomNoRowsOverlay() {
+  return (
+    <Stack height="100%" alignItems="center" justifyContent="center">
+      <PeopleOutlineIcon sx={{ fontSize: 60, color: 'grey.400' }} />
+      <Typography variant="h6" color="text.secondary">
+        No Users Found
+      </Typography>
+    </Stack>
+  );
+}
+
+// --- Main Component ---
+
 const AllUser = () => {
-  const { userData } = useSelector((state) => state.user);
+  const { userData = [] } = useSelector((state) => state.user);
   const { showLoader, hideLoader, isLoading } = useLoader();
+  const dispatch = useDispatch();
 
   const [open, setOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('name');
-  const dispatch = useDispatch();
 
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const userDataMap = useMemo(() => {
+    const map = new Map();
+    userData.forEach((user) => map.set(user.userId, user));
+    return map;
+  }, [userData]);
 
   useEffect(() => {
-    if (userData && userData.length > 0) return;
-
+    if (userData.length > 0) return;
     const fetchUserDetails = async () => {
       showLoader();
       try {
@@ -151,143 +189,113 @@ const AllUser = () => {
       }
     };
     fetchUserDetails();
-  }, [dispatch, showLoader, hideLoader, userData]);
+  }, [dispatch, showLoader, hideLoader, userData.length]);
 
-  const handleSortRequest = (property) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
-    setOrderBy(property);
-  };
-
-  const handleOpen = (user) => {
+  const handleOpen = useCallback((user) => {
     setSelectedUser(user);
     setOpen(true);
-  };
+  }, []);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setOpen(false);
     setSelectedUser(null);
-  };
+  }, []);
 
-  const visibleUsers = useMemo(() => {
-    const filtered = userData.filter(
-      (user) =>
-        user.name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        user.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        user.mobile?.includes(debouncedSearchTerm)
-    );
-    return stableSort(filtered, getComparator(order, orderBy));
-  }, [userData, debouncedSearchTerm, order, orderBy]);
-
-  const paginatedUsers = visibleUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
-  const renderTableBody = () => {
-    if (isLoading) {
-      return Array.from(new Array(rowsPerPage)).map((_, index) => (
-        <TableRow key={index}>
-          <TableCell>
-            <Skeleton variant="circular" width={40} height={40} />
-          </TableCell>
-          <TableCell>
-            <Skeleton variant="text" width="80%" />
-          </TableCell>
-          <TableCell>
-            <Skeleton variant="text" width="90%" />
-          </TableCell>
-          <TableCell>
-            <Skeleton variant="text" width="70%" />
-          </TableCell>
-          <TableCell>
-            <Skeleton variant="rounded" width={64} height={36} />
-          </TableCell>
-        </TableRow>
-      ));
-    }
-    if (visibleUsers.length === 0) {
-      return (
-        <TableRow>
-          <TableCell colSpan={headCells.length} align="center" sx={{ py: 10 }}>
-            <PeopleOutlineIcon sx={{ fontSize: 60, color: 'grey.400' }} />
-            <Typography variant="h6" color="text.secondary">
-              {searchTerm ? 'No Users Match Your Search' : 'No Users Found'}
+  const columns = useMemo(
+    () => [
+      {
+        field: 'name',
+        headerName: 'Name',
+        flex: 1,
+        minWidth: 200,
+        renderCell: (params) => (
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Avatar
+              alt={params?.row?.name}
+              src={params?.row?.profile?.[0]}
+              {...(!params?.row?.profile?.[0] && stringAvatar(params?.row?.name))}
+            />
+            <Typography variant="body2" fontWeight="bold">
+              {params?.row?.name || '-'}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {searchTerm ? 'Try adjusting your search criteria.' : 'There is no user data to display.'}
-            </Typography>
-          </TableCell>
-        </TableRow>
-      );
-    }
-    return paginatedUsers.map((user) => (
-      <TableRow key={user.userId} hover>
-        <TableCell>
-          <Avatar
-            alt={user.name}
-            src={user.profile?.[0]}
-            {...(user.profile?.[0] ? {} : stringAvatar(user.name || 'No Name'))}
-          />
-        </TableCell>
-        <TableCell>{user.name || '-'}</TableCell>
-        <TableCell>{user.email || '-'}</TableCell>
-        <TableCell>{user.mobile || '-'}</TableCell>
-        <TableCell>
-          <Button variant="contained" color="primary" size="small" onClick={() => handleOpen(user)}>
-            View
-          </Button>
-        </TableCell>
-      </TableRow>
-    ));
-  };
+          </Stack>
+        ),
+      },
+      {
+        field: 'email',
+        headerName: 'Email',
+        flex: 1,
+        minWidth: 220,
+      },
+      {
+        field: 'mobile',
+        headerName: 'Mobile',
+        width: 150,
+      },
+      {
+        field: 'bookingCount',
+        headerName: 'Bookings',
+        width: 120,
+        align: 'center',
+        headerAlign: 'center',
+        // FIXED: Added optional chaining to prevent crash if params is undefined.
+        valueGetter: (params) => params?.row?.bookings?.length || 0,
+      },
+      {
+        field: 'actions',
+        headerName: 'Actions',
+        width: 100,
+        align: 'center',
+        headerAlign: 'center',
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => (
+          <Tooltip title="View Details">
+            {/* FIXED: Added check to ensure params.row exists before passing to handler */}
+            <IconButton
+              color="primary"
+              size="small"
+              onClick={() => params?.row && handleOpen(params.row)}
+            >
+              <VisibilityIcon />
+            </IconButton>
+          </Tooltip>
+        ),
+      },
+    ],
+    [handleOpen]
+  );
+
+  const rows = useMemo(() => userData.map((user) => ({ ...user, id: user.userId })), [userData]);
 
   return (
     <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      <Paper elevation={4} sx={{ borderRadius: 3, overflow: 'hidden' }}>
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
-          alignItems="center"
-          spacing={2}
-          sx={{ p: 2 }}
-        >
-          <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold' }}>
-            User Management
-          </Typography>
-          <TextField
-            label="Search by Name, Email, or Mobile"
-            variant="outlined"
-            size="small"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ width: { xs: '100%', sm: 350 } }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Stack>
-        <Divider />
-        <TableContainer>
-          <Table>
-            <UserTableHead order={order} orderBy={orderBy} onRequestSort={handleSortRequest} />
-            <TableBody>{renderTableBody()}</TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
-          component="div"
-          count={visibleUsers.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={(e, newPage) => setPage(newPage)}
-          onRowsPerPageChange={(e) => {
-            setRowsPerPage(parseInt(e.target.value, 10));
-            setPage(0);
+      <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 2 }}>
+        User Management
+      </Typography>
+      <Box sx={{ height: '70vh', width: '100%', '& .MuiDataGrid-root': { border: 'none', borderRadius: 2, }, '& .MuiDataGrid-cell': { borderBottom: (theme) => `1px solid ${theme.palette.divider}`, }, '& .MuiDataGrid-columnHeaders': { backgroundColor: 'action.hover', fontWeight: 'bold', }, '& .MuiDataGrid-footerContainer': { borderTop: (theme) => `1px solid ${theme.palette.divider}`, }, }} >
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          loading={isLoading}
+          checkboxSelection
+          disableRowSelectionOnClick
+          rowHeight={64}
+          initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+          pageSizeOptions={[10, 25, 50]}
+          slots={{
+            toolbar: () => <CustomToolbar userDataMap={userDataMap} />,
+            noRowsOverlay: CustomNoRowsOverlay,
+            loadingOverlay: () => (
+              <Stack height="100%">
+                {[...Array(10)].map((_, i) => (
+                  <Skeleton key={i} height="64px" />
+                ))}
+              </Stack>
+            ),
           }}
         />
-      </Paper>
+      </Box>
       {selectedUser && <UserDetailsModal user={selectedUser} open={open} onClose={handleClose} />}
     </Box>
   );

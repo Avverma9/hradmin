@@ -37,6 +37,7 @@
     "lucide-react": "^0.523.0",
     "moment-timezone": "^0.5.48",
     "numeral": "^2.0.6",
+    "papaparse": "^5.5.3",
     "primereact": "^10.8.3",
     "prop-types": "^15.8.1",
     "react": "^18.3.1",
