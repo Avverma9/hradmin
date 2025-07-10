@@ -5,7 +5,6 @@ import { localUrl, token } from "../../../../../utils/util";
 export const getHotelDataByYear = createAsyncThunk(
   "statistics/getHotelDataByYear",
   async ( selectedYear , { rejectWithValue }) => {
-    console.log("here i am",selectedYear)
     try {
       const response = await axios.get(`${localUrl}/statistics/hotel-data?year=${selectedYear}`, {
         headers: {

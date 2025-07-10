@@ -71,11 +71,7 @@ const HotelChart = () => {
     const dispatch = useDispatch();
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const yearOptions = useMemo(() => generateYearOptions(), []);
-
-    const { monthlyCounts, isLoading } = useSelector((state) => ({
-        monthlyCounts: state.statistics.hotelChartData,
-        isLoading: state.statistics.isLoading,
-    }));
+    const {hotelChartData , loading} = useSelector((state)=>state?.statistics)
 
     useEffect(() => {
         if (selectedYear) {
@@ -84,7 +80,7 @@ const HotelChart = () => {
     }, [dispatch, selectedYear]);
 
     const { chartData, hasData, total, maxValue } = useMemo(() => {
-        const formattedData = formatChartData(monthlyCounts);
+        const formattedData = formatChartData(hotelChartData);
         const totalCount = formattedData.reduce((sum, item) => sum + item['Hotels Created'], 0);
         const maxVal = Math.max(...formattedData.map(item => item['Hotels Created']));
         return {
@@ -93,13 +89,13 @@ const HotelChart = () => {
             total: totalCount,
             maxValue: maxVal,
         };
-    }, [monthlyCounts]);
+    }, [hotelChartData]);
 
     return (
         <Card elevation={4} sx={{ borderRadius: 3 }}>
             <CardHeader
                 title="Hotel"
-                subheader={!isLoading && `Total in ${selectedYear}: ${total}`}
+                subheader={!loading && `Total in ${selectedYear}: ${total}`}
                 action={
                     <FormControl size="small" variant="outlined">
                         <Select
@@ -116,7 +112,7 @@ const HotelChart = () => {
             />
             <CardContent sx={{ pt: 1, '&.MuiCardContent-root': { pb: 2 } }}>
                 <Box sx={{ height: 320, width: '100%' }}>
-                    {isLoading ? (
+                    {loading ? (
                         <Skeleton variant="rectangular" width="100%" height="100%" sx={{ borderRadius: 2 }} />
                     ) : !hasData ? (
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>

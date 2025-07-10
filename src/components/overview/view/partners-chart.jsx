@@ -87,11 +87,7 @@ const PartnerChart = () => {
     const dispatch = useDispatch();
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const yearOptions = useMemo(() => generateYearOptions(), []);
-
-    const { partnerStats, isLoading } = useSelector((state) => ({
-        partnerStats: state.statistics.partnersChartData,
-        isLoading: state.statistics.isLoading,
-    }));
+    const { partnersChartData,loading } = useSelector((state)=>state.statistics)
 
     useEffect(() => {
         if (selectedYear) {
@@ -99,8 +95,8 @@ const PartnerChart = () => {
         }
     }, [dispatch, selectedYear]);
 
-    const { chartData, uniqueRoles, roleTotals } = useMemo(() => formatPartnerChartData(partnerStats), [partnerStats]);
-    const hasData = useMemo(() => partnerStats && partnerStats.length > 0, [partnerStats]);
+    const { chartData, uniqueRoles, roleTotals } = useMemo(() => formatPartnerChartData(partnersChartData), [partnersChartData]);
+    const hasData = useMemo(() => partnersChartData && partnersChartData.length > 0, [partnersChartData]);
 
     const roleColors = useMemo(() => {
         const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#00C49F', '#FFBB28'];
@@ -111,14 +107,14 @@ const PartnerChart = () => {
     }, [uniqueRoles]);
 
     const subheaderContent = useMemo(() => {
-        if (isLoading || !hasData) return null;
+        if (loading || !hasData) return null;
         
         const breakdown = Object.entries(roleTotals)
             .map(([role, count]) => `${role} (${count})`)
             .join(', ');
 
         return `Total for ${selectedYear}: ${breakdown}`;
-    }, [isLoading, hasData, selectedYear, roleTotals]);
+    }, [loading, hasData, selectedYear, roleTotals]);
 
     return (
         <Card elevation={4} sx={{ borderRadius: 3 }}>
@@ -142,7 +138,7 @@ const PartnerChart = () => {
             />
             <CardContent sx={{ pt: 1, '&.MuiCardContent-root': { pb: 2 } }}>
                 <Box sx={{ height: 320, width: '100%' }}>
-                    {isLoading ? (
+                    {loading ? (
                         <Skeleton variant="rectangular" width="100%" height="100%" sx={{ borderRadius: 2 }} />
                     ) : !hasData ? (
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>

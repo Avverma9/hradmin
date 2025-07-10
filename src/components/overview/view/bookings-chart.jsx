@@ -60,7 +60,7 @@ const processBookingData = (data = []) => {
             statusCounts[item.status] = (statusCounts[item.status] || 0) + item.count;
         }
     });
-    
+
     const pieData = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
     const total = pieData.reduce((sum, item) => sum + item.value, 0);
 
@@ -81,10 +81,7 @@ const BookingChart = () => {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const yearOptions = useMemo(() => generateYearOptions(), []);
 
-    const { bookingsData, isLoading } = useSelector((state) => ({
-        bookingsData: state.statistics.bookingsData,
-        isLoading: state.statistics.isLoading,
-    }));
+    const { bookingsData, loading } = useSelector((state) => (state.statistics));
 
     useEffect(() => {
         if (selectedYear) {
@@ -125,7 +122,7 @@ const BookingChart = () => {
                 sx={{ py: 2, px: 3 }}
             />
             <CardContent>
-                {isLoading ? (
+                {loading ? (
                     <Skeleton variant="rectangular" width="100%" height={400} sx={{ borderRadius: 2 }} />
                 ) : !hasData ? (
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 400 }}>
@@ -144,7 +141,7 @@ const BookingChart = () => {
                                         <XAxis dataKey="month" tickLine={false} dy={5} tick={{ fontSize: 12 }} />
                                         <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
                                         <Tooltip cursor={{ fill: 'rgba(128, 128, 128, 0.05)' }} />
-                                        <Legend wrapperStyle={{ paddingTop: '30px' }}/>
+                                        <Legend wrapperStyle={{ paddingTop: '30px' }} />
                                         {uniqueStatuses.map(status => (
                                             <Bar key={status} dataKey={status} stackId="a" fill={STATUS_COLORS[status] || STATUS_COLORS.Default} radius={[4, 4, 0, 0]} />
                                         ))}
