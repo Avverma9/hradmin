@@ -20,6 +20,7 @@ const BookingDetails = ({ booking, onClose }) => {
         bookedBy,
         customerMobile,
         bookingDate,
+        price,
         bookingId,
         seats, // <-- Added seats array
         totalSeatPrice, // <-- Added total price
@@ -139,7 +140,7 @@ const BookingDetails = ({ booking, onClose }) => {
                     Total Amount
                 </Typography>
                 <Typography variant="h5" fontWeight="bold" color="primary">
-                    ₹{totalSeatPrice || 0}
+                    ₹{price || 0}
                 </Typography>
             </Box>
         </Paper>
