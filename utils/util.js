@@ -17,7 +17,6 @@ export const userName = localStorage.getItem('user_name');
 export const token = localStorage.getItem('rs_token');
 
 export const notify = (statusCode, data) => {
-    // Create a loading toast
     const toastId = toast.loading('Processing...');
 
     // Once the process completes, update the toast based on status

@@ -203,7 +203,6 @@ export default function UserCoupon() {
                 <TableCell><strong>Coupon Code</strong></TableCell>
                 <TableCell><strong>Assigned To</strong></TableCell>
                 <TableCell><strong>Discount Price</strong></TableCell>
-                <TableCell><strong>Quantity</strong></TableCell>
                 <TableCell><strong>Validity</strong></TableCell>
                 <TableCell><strong>Expired</strong></TableCell>
               </TableRow>
@@ -224,22 +223,7 @@ export default function UserCoupon() {
                   </TableCell>
                   <TableCell>{coupon?.assignedTo}</TableCell>
                   <TableCell>₹{coupon.discountPrice}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: "flex", flexDirection: "column" }}>
-                      <Button
-                        variant="text"
-                        size="small"
-                        onClick={() => handleShowUserModal(coupon.userIds)}
-                        disabled={!coupon.userIds || coupon.userIds.length === 0}
-                        sx={{ textTransform: "none", p: 0, width: "fit-content" }}
-                      >
-                        Used: {coupon.userIds?.length || 0}
-                      </Button>
-                      <Typography variant="caption">
-                        Remaining: {coupon.quantity - (coupon.userIds?.length || 0)}
-                      </Typography>
-                    </Box>
-                  </TableCell>
+               
                   <TableCell>{indianTime(coupon.validity)}</TableCell>
                   <TableCell>{coupon.expired ? "Yes" : "No"}</TableCell>
                 </TableRow>
