@@ -204,7 +204,7 @@ export default function UserCoupon() {
                 <TableCell><strong>Assigned To</strong></TableCell>
                 <TableCell><strong>Discount Price</strong></TableCell>
                 <TableCell><strong>Validity</strong></TableCell>
-                <TableCell><strong>Expired</strong></TableCell>
+                <TableCell><strong>Expired/Used</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
