@@ -155,8 +155,10 @@ export default function UserCoupon() {
         <Button variant="contained" color="primary" onClick={handleOpenCreateCouponModal}>
           Create Coupon
         </Button>
-      </Box>
 
+      </Box>
+      <Typography>This coupon will be used by partner on Admin Panel Only</Typography>
+      <hr />
       {/* Filter buttons for Expired and Not Expired coupons */}
       <Box sx={{ mb: 2 }}>
         <Button
@@ -235,10 +237,10 @@ export default function UserCoupon() {
                         disabled={!coupon.userIds || coupon.userIds.length === 0}
                         sx={{ textTransform: "none", p: 0, width: "fit-content" }}
                       >
-                        UsedBy: {coupon.userIds?.length || 0}
+                        Used: {coupon.roomId?.length} times
                       </Button>
                       <Typography variant="caption">
-                        Remaining: {coupon.quantity - (coupon.userIds?.length || 0)}
+                        Remaining: {coupon.quantity - (coupon.roomId?.length || 0)}
                       </Typography>
                     </Box>
                   </TableCell>

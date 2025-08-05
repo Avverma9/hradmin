@@ -1,398 +1,708 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import "./BookingDetails.css";
 import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { createBooking } from "src/components/redux/reducers/booking";
 import { useLoader } from "../../../../utils/loader";
 import { applyCoupon } from "src/components/redux/reducers/userAndPartnerCoupon/coupon";
-import { hotelEmail, reloadPage, userName } from "../../../../utils/util";
+import { hotelEmail, userName } from "../../../../utils/util";
 import { getGst } from "src/components/redux/reducers/gst";
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
+  Grid,
+  Modal,
+  TextField,
+  IconButton,
+  Divider,
+  CircularProgress,
+} from "@mui/material";
+import { Add, Remove, Close, Edit } from "@mui/icons-material";
+
+const modalStyle = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: { xs: "95%", sm: 320 },
+  bgcolor: "background.paper",
+  boxShadow: 24,
+  borderRadius: 2,
+  p: 2,
+};
+
+const datePickerStyles = `
+  .custom-datepicker .react-datepicker {
+    border: none;
+    font-family: inherit;
+    box-shadow: none;
+    padding: 0;
+  }
+  .custom-datepicker .react-datepicker__header {
+    background-color: white;
+    border-bottom: none;
+    padding-top: 0;
+  }
+  .custom-datepicker .react-datepicker__current-month {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #333;
+  }
+  .custom-datepicker .react-datepicker__navigation--previous,
+  .custom-datepicker .react-datepicker__navigation--next {
+    top: 10px;
+  }
+  .custom-datepicker .react-datepicker__day-name {
+    color: #9e9e9e;
+    font-weight: 500;
+  }
+  .custom-datepicker .react-datepicker__day {
+    width: 2.2rem;
+    height: 2.2rem;
+    line-height: 2.2rem;
+    margin: 0.1rem;
+  }
+  .custom-datepicker .react-datepicker__day--selected,
+  .custom-datepicker .react-datepicker__day--in-selecting-range,
+  .custom-datepicker .react-datepicker__day--in-range {
+    background-color: #1976d2 !important;
+    color: white !important;
+    border-radius: 50%;
+  }
+  .custom-datepicker .react-datepicker__day--range-start,
+  .custom-datepicker .react-datepicker__day--range-end {
+    border-radius: 50%;
+  }
+  .custom-datepicker .react-datepicker__day--in-range {
+    border-radius: 0;
+  }
+  .custom-datepicker .react-datepicker__day--keyboard-selected {
+    background-color: #e3f2fd;
+    color: #333;
+  }
+  .custom-datepicker .react-datepicker__day:hover {
+    background-color: #e3f2fd !important;
+    color: #333 !important;
+  }
+`;
 
 const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
+  const [inDate, setInDate] = useState(null);
+  const [outDate, setOutDate] = useState(null);
+  const [numRooms, setNumRooms] = useState(1);
+  const [guests, setGuests] = useState(1);
   const [showDatePickers, setShowDatePickers] = useState(false);
   const [showRoomGuestPicker, setShowRoomGuestPicker] = useState(false);
   const [showCouponInput, setShowCouponInput] = useState(false);
   const [couponCode, setCouponCode] = useState("");
-  const [inDate, setInDate] = useState(null);
-  const [outDate, setOutDate] = useState(null);
+  const [discountPrice, setDiscountPrice] = useState(0);
+  const [discountPercentage, setDiscountPercentage] = useState(0);
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingSuccessData, setBookingSuccessData] = useState(null);
+
   const dispatch = useDispatch();
-  const { apply } = useSelector((state) => state.userCoupon);
   const { showLoader, hideLoader } = useLoader();
-  const [numRooms, setNumRooms] = useState(1);
-  const [guests, setGuests] = useState(1);
-  const [discountPrice, setDiscountPrice] = useState("");
-  const [discountPercentage, setDiscountPercentage] = useState("");
+  const { gst } = useSelector((state) => state.gst);
   const foodItems = Array.isArray(food) ? food[food.length - 1] : food;
   const roomItems = Array.isArray(room) ? room[room.length - 1] : room;
-  const gstData = useSelector((state) => state.gst.gst);
+
+  const userId = sessionStorage.getItem("subid");
+  const hotelId = localStorage.getItem("subhotelId");
+
+  const roomSectionRef = useRef(null);
+  const foodSectionRef = useRef(null);
 
   useEffect(() => {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
-
-    setInDate(today); // Store as a full date object
-    setOutDate(tomorrow); // Store as a full date object
+    setInDate(today);
+    setOutDate(tomorrow);
   }, []);
 
-  const handleStartDateChange = (date) => {
-    // prevent user cant select past dates
-    setInDate(date);
-    if (date > outDate) setInDate(date);
-  };
-
-  const handleEndDateChange = (date) => {
-    setOutDate(date);
-  };
-
-  const foodPrice = parseFloat(foodItems?.price || 0);
-  const roomPrice = parseFloat(roomItems?.price || 0);
-  const totalPricePerDay = (foodPrice + roomPrice) * numRooms;
-  const finalPrice = totalPricePerDay - (discountPrice || 0);
-
-  const calculateTotalPrice = () => {
+  const calculateDaysDifference = () => {
     if (!inDate || !outDate) return 0;
-
     const timeDifference = outDate.getTime() - inDate.getTime();
-    const daysDifference = Math.ceil(timeDifference / (1000 * 3600 * 24));
-    const basePrice = finalPrice * daysDifference;
-
-    const gstPercent = parseFloat(gstData?.gstPrice || 0); // fallback to 0 if undefined
-    const gstAmount = (gstPercent / 100) * basePrice;
-
-    return Math.round(basePrice + gstAmount);
+    return Math.ceil(timeDifference / (1000 * 3600 * 24));
   };
 
-  // Updating the GST when price, dates, or other values change
+  const handleDateChange = (dates) => {
+    const [start, end] = dates;
+    setInDate(start);
+    setOutDate(end);
+  };
+
+  const calculateRoomPriceBeforeDiscount = useCallback(() => {
+    const days = calculateDaysDifference();
+    const roomPrice = parseFloat(roomItems?.price || 0);
+    return roomPrice * numRooms * days;
+  }, [inDate, outDate, roomItems, numRooms]);
+
+  const calculateRoomPriceWithDiscount = useCallback(() => {
+    const priceBeforeDiscount = calculateRoomPriceBeforeDiscount();
+    return Math.max(0, priceBeforeDiscount - discountPrice);
+  }, [calculateRoomPriceBeforeDiscount, discountPrice]);
+
+  const calculateFoodPrice = () => {
+    const days = calculateDaysDifference();
+    const foodPrice = parseFloat(foodItems?.price || 0);
+    return foodPrice * days;
+  };
+
+  const calculateGstAmount = () => {
+    const roomPriceBeforeDiscount = calculateRoomPriceBeforeDiscount();
+    const gstPercent = parseFloat(gst?.gstPrice || 0);
+    return (gstPercent / 100) * roomPriceBeforeDiscount;
+  };
+
+  const calculateFinalPrice = () => {
+    const roomPriceBeforeDiscount = calculateRoomPriceBeforeDiscount();
+    const totalFoodPrice = calculateFoodPrice();
+    const gstAmount = calculateGstAmount();
+    // Sum everything and then apply the discount
+    const finalPrice = roomPriceBeforeDiscount + totalFoodPrice + gstAmount - discountPrice;
+    return Math.round(Math.max(0, finalPrice));
+  };
+
   useEffect(() => {
-    if (!inDate || !outDate) return;
-
-    const gstThreshold = calculateTotalPrice();
-    if (gstThreshold > 0) {
-      const payload = {
-        type: "Hotel",
-        gstThreshold, // Now the threshold should have a value
-      };
-
-      dispatch(getGst(payload));
+    const priceBeforeGST = calculateRoomPriceBeforeDiscount();
+    if (priceBeforeGST > 0) {
+      dispatch(getGst({ type: "Hotel", gstThreshold: priceBeforeGST }));
     }
-  }, [dispatch, inDate, outDate, numRooms, discountPrice, food, room]);
+  }, [dispatch, calculateRoomPriceBeforeDiscount]);
 
-  const updateRoomCount = (newGuests) => {
-    let newNumRooms = numRooms;
-    if (newGuests <= 3) {
-      newNumRooms = 1;
-    } else if (newGuests <= 6) {
-      newNumRooms = 2;
-    } else {
-      newNumRooms = Math.ceil(newGuests / 3);
-    }
-    setNumRooms(newNumRooms);
-    setGuests(newGuests);
-  };
-
-  const userId = sessionStorage.getItem("subid");
-  const hotelId = localStorage.getItem("subhotelId");
-
-
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!inDate || !outDate || guests <= 0) {
-      toast.error("Please fill in all required fields.");
+      toast.error(
+        "Please select valid check-in and check-out dates and guests.",
+      );
       return;
     }
 
-    // Format the dates as 'YYYY-MM-DD' for saving
-    const formattedInDate = inDate.toISOString().split("T")[0];
-    const formattedOutDate = outDate.toISOString().split("T")[0];
+    setIsBooking(true);
+
+    const finalPrice = calculateFinalPrice();
 
     const bookingData = {
-      checkInDate: formattedInDate,
-      checkOutDate: formattedOutDate,
-      guests: guests,
-      numRooms: numRooms,
+      checkInDate: inDate.toISOString().split("T")[0],
+      checkOutDate: outDate.toISOString().split("T")[0],
+      guests,
+      numRooms,
       foodDetails: food,
       roomDetails: room,
-      price: calculateTotalPrice(),
-      discountPrice: discountPrice,
+      discountPrice,
       hotelName: hotel,
-      couponCode: couponCode,
+      couponCode,
       hotelEmail: email,
       hotelOwnerName: owner,
-      gstPrice: gstData?.gstPrice || 0,
-      createdBy: {
-        user: userName,
-        email: hotelEmail
-      },
+      gstPrice: gst?.gstPrice || 0,
+      createdBy: { user: userName, email: hotelEmail },
       destination: address,
       hotelCity: city,
       bookingSource: "Panel",
     };
-    const userData = { userId, hotelId };
-    dispatch(createBooking({ userData, bookingData })).unwrap();
-  };
-  const roomSectionRef = useRef(null);
-  const foodSectionRef = useRef(null);
-  const handleRoomNavigate = () => {
-    if (roomSectionRef.current) {
-      window.scrollTo({
-        top: roomSectionRef.current.offsetTop - -600,
-        behavior: "smooth",
-      });
+
+    try {
+      const response = await dispatch(
+        createBooking({ userData: { userId, hotelId }, bookingData }),
+      ).unwrap();
+      console.log("Booking response:", response);
+      setBookingSuccessData(response.data);
+    } catch (error) {
+      toast.error("Failed to create booking. Please try again.");
+    } finally {
+      setIsBooking(false);
     }
   };
 
-  const handleFoodNavigate = () => {
-    if (foodSectionRef.current) {
-      window.scrollTo({
-        top: foodSectionRef.current.offsetTop,
-        behavior: "smooth",
-      });
+  const handleApplyCoupon = useCallback(async () => {
+    if (!couponCode) {
+      toast.error("Please enter a coupon code.");
+      return;
     }
-  };
+    showLoader();
+    try {
+      const payload = {
+        couponCode,
+        hotelIds: [hotelId],
+        roomIds: [roomItems?.roomId],
+        userIds: [userId],
+      };
+      const response = await dispatch(applyCoupon(payload)).unwrap();
+      const discount = response?.[0]?.discountPrice;
+      const original = response?.[0]?.originalPrice;
+      setDiscountPrice(discount);
+      setDiscountPercentage(Math.round((discount / original) * 100));
+      toast.success("Coupon applied successfully!");
+    } catch (error) {
+      toast.error("Failed to apply coupon. Please check the code.");
+      setDiscountPrice(0);
+      setDiscountPercentage(0);
+    } finally {
+      hideLoader();
+    }
+  }, [
+    dispatch,
+    showLoader,
+    hideLoader,
+    couponCode,
+    hotelId,
+    roomItems,
+    userId,
+  ]);
 
-  const handleApplyCoupon = useCallback(
-    async (hotelId, roomId) => {
-      showLoader();
-      try {
-        const payload = {
-          couponCode,
-          hotelIds: [hotelId],
-          roomIds: [roomId],
-          userIds: [userId],
-        };
-        showLoader();
-        const response = await dispatch(applyCoupon(payload)).unwrap();
-        const discountPrice = response?.[0]?.discountPrice;
-        const discountPercentage = Math.floor(
-          (discountPrice / response?.[0]?.originalPrice) * 100,
-        );
-        setDiscountPercentage(discountPercentage);
-        setDiscountPrice(discountPrice);
-      } catch (error) {
-        const errorMessage = console.error("Error applying coupon:", error);
-      } finally {
-        hideLoader();
-      }
-    },
-
-    [dispatch, showLoader, hideLoader, couponCode],
-  );
   return (
-    <div className="booking-details">
-      <div className="login-banner">
-        <span className="login-text">Booking Summary</span>
-      </div>
-      <div className="price-summary">
-        <div className="price-header">
-          <span className="final-price">₹{roomItems?.price * numRooms}</span>
-          <span className="original-price">₹{discountPrice}</span>
-          <span className="discount">{discountPercentage}% off</span>
-        </div>
-        <span className="tax-info">({gstData?.gstPrice || 0}%) + taxes & fees: <span className="gst-amount">
-          ₹{(() => {
-            if (!inDate || !outDate) return 0;
-            const timeDiff = outDate.getTime() - inDate.getTime();
-            const days = Math.ceil(timeDiff / (1000 * 3600 * 24));
-            const basePrice = finalPrice * days;
-            const gstPercent = parseFloat(gstData?.gstPrice || 0);
-            return Math.round((gstPercent / 100) * basePrice);
-          })()}
-        </span></span>
+    <Box
+      sx={{ p: 1, maxWidth: 360, mx: "auto", fontFamily: "Roboto, sans-serif" }}
+    >
+      <style>{datePickerStyles}</style>
+      <Paper elevation={3} sx={{ p: 2, mb: 1, borderRadius: 3 }}>
+        <Typography variant="h6" fontWeight="bold" mb={1} textAlign="center">
+          Booking Summary
+        </Typography>
 
-        <div className="booking-info">
-          <div
-            className="date-display"
+        {/* Selected Details */}
+        <Box
+          sx={{
+            border: "1px solid",
+            borderColor: "divider",
+            borderRadius: 2,
+            overflow: "hidden",
+            mb: 1.5,
+          }}
+        >
+          <Box
             onClick={() => setShowDatePickers(true)}
+            sx={{
+              p: 1,
+              cursor: "pointer",
+              "&:hover": { bgcolor: "action.hover" },
+            }}
           >
-            <span className="date-text">
-              {inDate
-                ? inDate.toLocaleDateString("en-IN", {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "short",
-                })
-                : "Select Start Date"}
-            </span>
-            <span> - </span>
-            <span className="date-text">
-              {outDate
-                ? outDate.toLocaleDateString("en-IN", {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "short",
-                })
-                : "Select End Date"}
-            </span>
-          </div>
-
-          <div
-            className="room-guest-display"
-            onClick={() => setShowRoomGuestPicker(!showRoomGuestPicker)}
+            <Grid container alignItems="center">
+              <Grid item xs={6}>
+                <Typography variant="caption" color="text.secondary">
+                  Check-in - Check-out
+                </Typography>
+              </Grid>
+              <Grid item xs={6} textAlign="right">
+                <Typography variant="body2" fontWeight="bold">
+                  {inDate?.toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                  }) || "Select"}{" "}
+                  -{" "}
+                  {outDate?.toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                  }) || "Select"}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Box>
+          <Divider />
+          <Box
+            onClick={() => setShowRoomGuestPicker(true)}
+            sx={{
+              p: 1,
+              cursor: "pointer",
+              "&:hover": { bgcolor: "action.hover" },
+            }}
           >
-            <span className="room-guest-text">{`${numRooms} Room${numRooms > 1 ? "s" : ""}, ${guests} Guest${guests > 1 ? "s" : ""}`}</span>
-          </div>
-        </div>
+            <Grid container alignItems="center">
+              <Grid item xs={6}>
+                <Typography variant="caption" color="text.secondary">
+                  Rooms & Guests
+                </Typography>
+              </Grid>
+              <Grid item xs={6} textAlign="right">
+                <Typography variant="body2" fontWeight="bold">
+                  {numRooms} Room{numRooms > 1 ? "s" : ""}, {guests} Guest
+                  {guests > 1 ? "s" : ""}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Box>
+        </Box>
 
-        <div className="room-type">
-          <span>{roomItems?.type}</span>
-          <button className="edit-button" onClick={handleRoomNavigate}>
-            ✎
-          </button>
-        </div>
-        {foodItems && (
-          <div className="food-type">
-            <span>{foodItems?.name}</span>
-            <button className="edit-button" onClick={handleFoodNavigate}>
-              ✎
-            </button>
-          </div>
-        )}
+        {/* Room and Food Items */}
+        <Box mb={1.5}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={0.5}
+          >
+            <Box display="flex" alignItems="center" gap={1}>
+              <Typography variant="body2" fontWeight="bold">
+                {roomItems?.type}
+              </Typography>
+              {roomItems?.countRooms === 0 && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    bgcolor: "error.main",
+                    color: "white",
+                    px: 1,
+                    py: 0.25,
+                    borderRadius: 1,
+                    fontWeight: "bold",
+                  }}
+                >
+                  Sold Out
+                </Typography>
+              )}
+            </Box>
+            <Button
+              size="small"
+              startIcon={<Edit sx={{ fontSize: "12px !important" }} />}
+              onClick={() =>
+                roomSectionRef.current?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                })
+              }
+              sx={{ p: 0.5 }}
+            >
+              Edit
+            </Button>
+          </Box>
+          {foodItems && (
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Typography variant="body2" fontWeight="bold">
+                {foodItems?.name}
+              </Typography>
+              <Button
+                size="small"
+                startIcon={<Edit sx={{ fontSize: "12px !important" }} />}
+                onClick={() =>
+                  foodSectionRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  })
+                }
+                sx={{ p: 0.5 }}
+              >
+                Edit
+              </Button>
+            </Box>
+          )}
+        </Box>
 
-        <div className="offers">
-          <div
-            className="offer"
+        <Divider sx={{ my: 1 }} />
+
+        {/* Price Breakdown */}
+        <Typography variant="body1" fontWeight="bold" mb={1.5}>
+          Price Breakdown
+        </Typography>
+        <Grid container spacing={0.5}>
+          <Grid item xs={8}>
+            <Typography variant="body2" color="text.secondary">
+              Room Price ({calculateDaysDifference()} nights)
+            </Typography>
+          </Grid>
+          <Grid item xs={4} textAlign="right">
+            <Typography variant="body2">
+              ₹{calculateRoomPriceBeforeDiscount()}
+            </Typography>
+          </Grid>
+          {discountPrice > 0 && (
+            <>
+              <Grid item xs={8}>
+                <Typography variant="body2" color="success.main">
+                  Coupon Discount
+                </Typography>
+              </Grid>
+              <Grid item xs={4} textAlign="right">
+                <Typography variant="body2" color="success.main">
+                  - ₹{discountPrice}
+                </Typography>
+              </Grid>
+            </>
+          )}
+          {foodItems && (
+            <>
+              <Grid item xs={8}>
+                <Typography variant="body2" color="text.secondary">
+                  {foodItems.foodType}
+                </Typography>
+              </Grid>
+              <Grid item xs={4} textAlign="right">
+                <Typography variant="body2">+ ₹{calculateFoodPrice()}</Typography>
+              </Grid>
+            </>
+          )}
+          <Grid item xs={8}>
+            <Typography variant="body2" color="text.secondary">
+              GST ({gst?.gstPrice || 0}%)
+            </Typography>
+          </Grid>
+          <Grid item xs={4} textAlign="right">
+            <Typography variant="body2">
+              + ₹{Math.round(calculateGstAmount())}
+            </Typography>
+          </Grid>
+        </Grid>
+
+        <Divider sx={{ my: 1, borderStyle: "dashed" }} />
+
+        {/* Total and Coupon Section */}
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={1}
+        >
+          <Typography variant="body1" fontWeight="bold">
+            Total Amount
+          </Typography>
+          <Typography variant="body1" color="primary" fontWeight="bold">
+            ₹{calculateFinalPrice()}
+          </Typography>
+        </Box>
+        <Box>
+          <Button
+            fullWidth
             onClick={() => setShowCouponInput(!showCouponInput)}
+            sx={{ textTransform: "none", color: "primary.main", mb: 1, p: 0.5 }}
           >
-            <span className="offer-name">
-              {!showCouponInput ? "I have a coupon" : "Dont have any coupon ?"}
-            </span>
-          </div>
-
+            {showCouponInput ? "Hide coupon input" : "I have a coupon"}
+          </Button>
           {showCouponInput && (
-            <div className="coupon-input">
-              <input
-                type="text"
+            <Box display="flex" gap={1}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Coupon Code"
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value)}
-                placeholder="Enter Coupon Code"
-                className="coupon-input-field"
               />
-              <button
-                onClick={() => handleApplyCoupon(hotelId, roomItems?.roomId)}
-                className="apply-button"
-              >
-                <span>&#10003;</span>
-              </button>
-            </div>
+              <Button onClick={handleApplyCoupon} variant="contained">
+                Apply
+              </Button>
+            </Box>
           )}
-        </div>
+        </Box>
+      </Paper>
 
-      </div>
-      <div className="price-breakdown">
-        {
-          discountPrice && <div className="savings">
-            <span>Your Savings</span>
-            <span className="savings-amount">- ₹{discountPrice}</span> {/* Display savings with a negative sign */}
-          </div>
-        }
-
-
-        {foodItems && (
-          <div className="addon">
-            <span>{foodItems?.foodType}</span>
-            <span className="addon-amount">₹{foodItems?.price}</span>
-          </div>
+      <Button
+        fullWidth
+        variant="contained"
+        color="success"
+        size="large"
+        sx={{ mt: 1, py: 1, borderRadius: 2 }}
+        onClick={handleBooking}
+        disabled={isBooking || roomItems?.countRooms === 0}
+      >
+        {isBooking ? (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, justifyContent: 'center' }}>
+            Booking, please wait...
+            <CircularProgress size={20} color="inherit" />
+          </Box>
+        ) : (
+          "Continue to Book"
         )}
+      </Button>
 
-        <div className="gst-info">
-          <span>+ GST ({gstData?.gstPrice || 0}%)</span>
-          <span className="gst-amount">
-            ₹{(() => {
-              if (!inDate || !outDate) return 0;
-              const timeDiff = outDate.getTime() - inDate.getTime();
-              const days = Math.ceil(timeDiff / (1000 * 3600 * 24));
-              const basePrice = finalPrice * days;
-              const gstPercent = parseFloat(gstData?.gstPrice || 0);
-              return Math.round((gstPercent / 100) * basePrice);
-            })()}
-          </span>
-        </div>
-
-        <div className="total-price">
-          <span>Total Price</span>
-          <span className="price-amount">₹{calculateTotalPrice()}</span>
-        </div>
-
-        <span className="taxes-info">Including taxes & fees</span>
-      </div>
-
-      <button className="continue-button" onClick={handleBooking}>
-        Continue to Book
-      </button>
-      {showDatePickers && (
-        <div className="date-pickers-overlay">
-          <div className="date-pickers-container">
-            <button
-              className="close-button"
-              onClick={() => setShowDatePickers(false)}
+      {/* Booking Success Modal */}
+      <Modal
+        open={Boolean(bookingSuccessData)}
+        onClose={() => setBookingSuccessData(null)}
+      >
+        <Box sx={modalStyle}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={2}
+          >
+            <Typography variant="h6">Booking Confirmed!</Typography>
+            <IconButton
+              onClick={() => setBookingSuccessData(null)}
+              size="small"
             >
-              ✖
-            </button>
+              <Close fontSize="small" />
+            </IconButton>
+          </Box>
+          <Typography variant="body2" mb={2}>
+            Your booking has been successfully placed. Here are the details:
+          </Typography>
+          <Box mb={2}>
+            <Grid container spacing={1}>
+              <Grid item xs={12}>
+                <Typography variant="body2">
+                  <Typography component="span" fontWeight="bold">
+                    Booking ID:
+                  </Typography>{" "}
+                  {bookingSuccessData?.bookingId}
+                </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="body2">
+                  <Typography component="span" fontWeight="bold">
+                    Status:
+                  </Typography>{" "}
+                  {bookingSuccessData?.bookingStatus}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Box>
+          <Button
+            fullWidth
+            variant="contained"
+            color="primary"
+            onClick={() => setBookingSuccessData(null)}
+          >
+            OK
+          </Button>
+        </Box>
+      </Modal>
 
-            <div className="date-picker-wrapper">
-              <label>Check-in</label>
-              <DatePicker
-                selected={inDate}
-                onChange={handleStartDateChange}
-                selectsStart
-                startDate={inDate}
-                endDate={outDate}
-                minDate={new Date()}
-                inline
-              />
-            </div>
-            <div className="date-picker-wrapper">
-              <label>Check-out</label>
-              <DatePicker
-                selected={outDate}
-                onChange={handleEndDateChange}
-                selectsEnd
-                startDate={inDate}
-                endDate={outDate}
-                minDate={inDate}
-                inline
-              />
-            </div>
-          </div>
-        </div>
-      )}
-      {showRoomGuestPicker && (
-        <div className="room-guest-picker">
-          <div className="picker-header">
-            <span>Rooms</span>
-            <div className="counter">
-              <button onClick={() => setNumRooms(Math.max(1, numRooms - 1))}>
-                -
-              </button>
-              <span>{numRooms}</span>
-              <button onClick={() => setNumRooms(numRooms + 1)}>+</button>
-            </div>
-          </div>
+      {/* Date Picker Modal */}
+      <Modal open={showDatePickers} onClose={() => setShowDatePickers(false)}>
+        <Box sx={modalStyle}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={1}
+          >
+            <Box>
+              <Typography variant="body1" fontWeight="bold">
+                Select Dates
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {inDate?.toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                }) || "Check-in"}{" "}
+                -{" "}
+                {outDate?.toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                }) || "Check-out"}
+              </Typography>
+            </Box>
+            <IconButton onClick={() => setShowDatePickers(false)} size="small">
+              <Close fontSize="small" />
+            </IconButton>
+          </Box>
+          <Box className="custom-datepicker">
+            <DatePicker
+              selected={inDate}
+              onChange={handleDateChange}
+              startDate={inDate}
+              endDate={outDate}
+              selectsRange
+              inline
+              minDate={new Date()}
+            />
+          </Box>
+          <Button
+            fullWidth
+            variant="contained"
+            sx={{ mt: 1, py: 1 }}
+            onClick={() => setShowDatePickers(false)}
+            disabled={!inDate || !outDate}
+          >
+            Done
+          </Button>
+        </Box>
+      </Modal>
 
-          <div className="picker-header">
-            <span>Guests</span>
-            <div className="counter">
-              <button onClick={() => updateRoomCount(Math.max(1, guests - 1))}>
-                -
-              </button>
-              <span>{guests}</span>
-              <button onClick={() => updateRoomCount(guests + 1)}>+</button>
-            </div>
-          </div>
+      {/* Room & Guest Picker Modal */}
+      <Modal
+        open={showRoomGuestPicker}
+        onClose={() => setShowRoomGuestPicker(false)}
+      >
+        <Box sx={modalStyle}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={2}
+          >
+            <Typography variant="h6">Select Rooms & Guests</Typography>
+            <IconButton
+              onClick={() => setShowRoomGuestPicker(false)}
+              size="small"
+            >
+              <Close fontSize="small" />
+            </IconButton>
+          </Box>
+          <Box>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              mb={1}
+            >
+              <Typography>Rooms</Typography>
+              <Box display="flex" alignItems="center">
+                <IconButton
+                  onClick={() => setNumRooms(Math.max(1, numRooms - 1))}
+                  size="small"
+                >
+                  <Remove fontSize="small" />
+                </IconButton>
+                <Typography mx={1}>{numRooms}</Typography>
+                <IconButton
+                  onClick={() => setNumRooms(numRooms + 1)}
+                  size="small"
+                >
+                  <Add fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              mb={1}
+            >
+              <Typography>Guests</Typography>
+              <Box display="flex" alignItems="center">
+                <IconButton
+                  onClick={() => setGuests(Math.max(1, guests - 1))}
+                  size="small"
+                >
+                  <Remove fontSize="small" />
+                </IconButton>
+                <Typography mx={1}>{guests}</Typography>
+                <IconButton
+                  onClick={() => {
+                    setGuests(guests + 1);
+                    if (guests + 1 > 3)
+                      setNumRooms(Math.ceil((guests + 1) / 3));
+                  }}
+                  size="small"
+                >
+                  <Add fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+          </Box>
+          <Button
+            fullWidth
+            variant="contained"
+            sx={{ mt: 2, py: 1 }}
+            onClick={() => setShowRoomGuestPicker(false)}
+          >
+            Done
+          </Button>
+        </Box>
+      </Modal>
 
-          <div className="picker-actions">
-            <button onClick={() => setShowRoomGuestPicker(false)}>
-              Cancel
-            </button>
-            <button onClick={() => setShowRoomGuestPicker(false)}>Done</button>
-          </div>
-        </div>
-      )}
       <div ref={foodSectionRef} style={{ height: "1px" }} />
       <div ref={roomSectionRef} style={{ height: "1px" }} />
-    </div>
+    </Box>
   );
 };
 

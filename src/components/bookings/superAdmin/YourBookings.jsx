@@ -139,12 +139,12 @@ export default function SuperAdminBookingsView() {
         { field: "actions", headerName: "Actions", width: 180, sortable: false, renderCell: (params) => ( <Box display="flex" gap={1}> <Button variant="contained" size="small" onClick={() => handleView(params.row.bookingId)}>View</Button> <Button variant="contained" color="secondary" size="small" onClick={() => handleUpdate(params.row)}>Update</Button> </Box> ), },
         { field: "bookingId", headerName: "Booking ID", width: 150 },
         { field: "status", headerName: "Status", width: 120, renderCell: (params) => renderStatusChip(params.value) },
-        { field: "user", headerName: "User Name", width: 150, valueGetter: (params) => params.row?.user?.name || 'N/A' },
-        { field: "source", headerName: "Source", width: 130 },
-        { field: "mop", headerName: "Payment Mode", width: 130 },
-        { field: "checkInDate", headerName: "Check-In", width: 150, valueGetter: (params) => fDate(params.row.checkInDate) },
-        { field: "checkOutDate", headerName: "Check-Out", width: 150, valueGetter: (params) => fDate(params.row.checkOutDate) },
-        { field: "createdAt", headerName: "Booking Date", width: 150, valueGetter: (params) => fDate(params.row.createdAt) },
+        { field: "user", headerName: "User Name", width: 150, renderCell: (params) => params.row?.user?.name || "Not available"},
+        { field: "source", headerName: "Source", width: 130 , renderCell: (params) => params.row?.bookingSource},
+        { field: "mop", headerName: "Payment Mode", width: 130, renderCell: (params) => params.row?.pm },
+        { field: "checkInDate", headerName: "Check-In", width: 150, renderCell: (params) => fDate(params?.row?.checkInDate) },
+        { field: "checkOutDate", headerName: "Check-Out", width: 150, renderCell: (params) => fDate(params?.row?.checkOutDate) },
+        { field: "createdAt", headerName: "Booking Date", width: 150, renderCell: (params) => fDate(params?.row?.createdAt) },
     ];
 
     const rows = bookings.map(booking => ({ ...booking, id: booking._id || booking.bookingId, status: booking.bookingStatus, source: booking.bookingSource || 'Site', mop: booking.pm || 'Offline' }));

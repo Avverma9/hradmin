@@ -112,8 +112,6 @@ const Hotel = () => {
 
                                 <div className="hotel-pricing">
                                     <span className="price">₹{hotel?.rooms[0]?.price}</span>
-                                    <span className="original-price">₹{hotel?.rooms[0]?.price - hotel?.rooms[0]?.offerPriceLess}</span>
-                                    <p>+ ₹{hotel?.taxesAndFees || 182} taxes & fees per room per night</p>
                                 </div>
 
                                 <div className="hotel-actions">

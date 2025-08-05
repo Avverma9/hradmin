@@ -1,39 +1,75 @@
-import { useState, useEffect } from 'react';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { Button, Container, TextField, ButtonGroup, Grid, LinearProgress, Autocomplete } from '@mui/material';
-import ProductCard from './all-hotel-card';
-import AddFoodModal from '../../manage-foods';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import PropTypes from 'prop-types';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import {
+  Box,
+  Card,
+  Grid,
+  Stack,
+  Container,
+  Typography,
+  CardHeader,
+  Avatar,
+  IconButton,
+  CardContent,
+  Rating,
+  Skeleton,
+  Paper,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  InputAdornment,
+  Tooltip,
+  LinearProgress,
+  ButtonGroup,
+  Autocomplete,
+  Button,
+} from '@mui/material';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import SearchIcon from '@mui/icons-material/Search';
+import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined';
+
+// These imports are placeholders based on the provided code snippets.
+// You should adjust them to your actual project structure.
 import { useDispatch, useSelector } from 'react-redux';
 import { getAllHotels, getHotelsByFilters, getHotelsCity } from 'src/components/redux/reducers/hotel';
+import ProductCard from './all-hotel-card';
+import AddFoodModal from '../../manage-foods';
 import { useLoader } from '../../../../../utils/loader';
+
 
 export default function ProductsView() {
   const dispatch = useDispatch();
-  const byCity = useSelector((state) => state.hotel.byCity);
-  const byFilter = useSelector((state) => state.hotel.byFilter);
+  const { data, byCity, byFilter } = useSelector((state) => state.hotel);
   const { showLoader, hideLoader } = useLoader();
+
   const [selectedCity, setSelectedCity] = useState('All City');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAcceptedFilter, setIsAcceptedFilter] = useState(null);
-  const data = useSelector((state) => state.hotel.data);
+
+  // --- Infinite Scroll State ---
+  const [visibleCount, setVisibleCount] = useState(8); // Show initial 8 items
+  const throttleRef = useRef(false);
 
   useEffect(() => {
+    const getHotels = async () => {
+      showLoader();
+      try {
+        await dispatch(getAllHotels());
+        await dispatch(getHotelsCity());
+      } catch (error) {
+        console.error('Error fetching initial data:', error);
+      } finally {
+        hideLoader();
+      }
+    };
     getHotels();
-  }, []);
-
-  const getHotels = async () => {
-    showLoader();
-    try {
-      await dispatch(getAllHotels());
-    } catch (error) {
-      console.error('Error fetching hotels:', error);
-    } finally {
-      hideLoader();
-    }
-  };
+  }, [dispatch]);
 
   const handleOpenModal = (hotel) => {
     setSelectedHotel(hotel);
@@ -49,35 +85,79 @@ export default function ProductsView() {
     setSearchQuery(event.target.value.toLowerCase());
   };
 
-  const filteredData = selectedCity !=="All City" && selectedCity ? byFilter?.data : data?.filter((hotel) => {
-    const matchesSearchQuery =
-      hotel.hotelOwnerName.toLowerCase().includes(searchQuery) ||
-      hotel.hotelName.toLowerCase().includes(searchQuery);
+  const handleCityChange = async (event, newValue) => {
+    try {
+      setSelectedCity(newValue);
+      if (newValue !== 'All City') {
+        showLoader();
+        await dispatch(getHotelsByFilters(newValue));
+      }
+    } catch (error) {
+      console.error("Error filtering by city:", error);
+    } finally {
+      hideLoader();
+    }
+  };
 
-    const matchesAcceptedFilter =
-      isAcceptedFilter === null || hotel.isAccepted === isAcceptedFilter;
+  // --- Placeholder handlers for props required by ProductCard ---
+  const handleUpdateAmenities = (hotelId, amenitiesData) => {
+    console.log('Update amenities for hotel:', hotelId, amenitiesData);
+    // Implement your logic here
+  };
+  const handleAddRoom = (hotelId, roomData) => {
+    console.log('Add room for hotel:', hotelId, roomData);
+    // Implement your logic here
+  };
+  const handleBasicDetails = (hotelId, basicData) => {
+    console.log('Update basic details for hotel:', hotelId, basicData);
+    // Implement your logic here
+  };
 
-    return matchesSearchQuery && matchesAcceptedFilter;
-  });
 
-  const filteredCount = filteredData.length;
+  const filteredData = useMemo(() => {
+    const sourceData = selectedCity !== "All City" && byFilter?.data ? byFilter.data : data;
+    if (!Array.isArray(sourceData)) return []; // Ensure sourceData is an array
+    return sourceData.filter((hotel) => {
+      const matchesSearchQuery =
+        hotel.hotelOwnerName.toLowerCase().includes(searchQuery) ||
+        hotel.hotelName.toLowerCase().includes(searchQuery);
+      const matchesAcceptedFilter =
+        isAcceptedFilter === null || hotel.isAccepted === isAcceptedFilter;
+      return matchesSearchQuery && matchesAcceptedFilter;
+    });
+  }, [data, byFilter, selectedCity, searchQuery, isAcceptedFilter]);
 
+  // --- Infinite Scroll Logic ---
+  useEffect(() => {
+    setVisibleCount(8); // Reset visible count when filters change
+  }, [searchQuery, selectedCity, isAcceptedFilter]);
+
+  const handleLoadMore = useCallback(() => {
+    if (throttleRef.current) return;
+
+    if (visibleCount < filteredData.length) {
+      throttleRef.current = true;
+      setTimeout(() => {
+        setVisibleCount(prevCount => prevCount + 8); // Load 8 more items
+        throttleRef.current = false;
+      }, 500);
+    }
+  }, [visibleCount, filteredData.length]);
 
   useEffect(() => {
-    dispatch(getHotelsCity())
-  }, [dispatch])
-  const handleCityChange = async (event) => {
-    try {
-      setSelectedCity(event.target.value);
-      showLoader()
-      await dispatch(getHotelsByFilters(event.target.value));
-    } catch (error) {
-      console.error("It seems an error", error)
-    } finally {
-      hideLoader()
-    }
+    const handleScroll = () => {
+      if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 300) {
+        handleLoadMore();
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleLoadMore]);
 
-  };
+  const displayedData = filteredData.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredData.length;
+  const filteredCount = filteredData.length;
+
   return (
     <Container maxWidth="auto">
       <Typography variant="h4" sx={{ mb: 5 }}>
@@ -87,40 +167,36 @@ export default function ProductsView() {
       <Stack
         direction="row"
         alignItems="center"
-        flexWrap="wrap-reverse"
-        justifyContent="flex-end"
-        sx={{ mb: 5 }}
+        flexWrap="wrap"
+        justifyContent="space-between"
+        sx={{ mb: 5, gap: 2 }}
       >
-        <TextField
-          label="Search hotel "
-          variant="outlined"
-          onChange={handleSearchChange}
-          sx={{ width: 150 }}
-        />
-        <Grid item xs={12} md={3}>
+        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" sx={{ gap: 2}}>
+          <TextField
+            label="Search hotel"
+            variant="outlined"
+            onChange={handleSearchChange}
+            sx={{ width: { xs: '100%', sm: 250 } }}
+          />
           <Autocomplete
-            options={["All City", ...byCity]}
+            options={["All City", ...(byCity || [])]}
             value={selectedCity}
-            sx={{ width: 150 }}
-            onChange={(event, newValue) => handleCityChange({ target: { value: newValue } })}
+            sx={{ width: { xs: '100%', sm: 200 } }}
+            onChange={handleCityChange}
             renderInput={(params) => (
-              <TextField {...params} label="Filter by city" variant="outlined" fullWidth />
+              <TextField {...params} label="Filter by city" variant="outlined" />
             )}
           />
-        </Grid>
-
-
-        <ButtonGroup variant="contained" sx={{ ml: 2 }}>
-          <Button onClick={() => setIsAcceptedFilter(null)}>All</Button>
-          <Button onClick={() => setIsAcceptedFilter(true)}>Accepted</Button>
-          <Button onClick={() => setIsAcceptedFilter(false)}>Not Accepted</Button>
+        </Stack>
+        <ButtonGroup variant="contained" aria-label="outlined primary button group">
+          <Button onClick={() => setIsAcceptedFilter(null)} variant={isAcceptedFilter === null ? 'contained' : 'outlined'}>All</Button>
+          <Button onClick={() => setIsAcceptedFilter(true)} variant={isAcceptedFilter === true ? 'contained' : 'outlined'}>Accepted</Button>
+          <Button onClick={() => setIsAcceptedFilter(false)} variant={isAcceptedFilter === false ? 'contained' : 'outlined'}>Not Accepted</Button>
         </ButtonGroup>
       </Stack>
 
-      <Grid container spacing={2}>
-        {' '}
-        {/* Decreased gap from 3 to 2 */}
-        {filteredData.map((product) => (
+      <Grid container spacing={3}>
+        {displayedData.map((product) => (
           <Grid
             item
             xs={12}
@@ -128,21 +204,29 @@ export default function ProductsView() {
             md={4}
             lg={3}
             key={product._id}
-            sx={{ display: 'flex', justifyContent: 'center' }}
           >
             <ProductCard
               product={product}
-              onAddFood={() => handleOpenModal(product)} // Pass handleOpenModal to ProductCard
+              onAddFood={() => handleOpenModal(product)}
+              onUpdateAmenities={handleUpdateAmenities}
+              onAddRoom={handleAddRoom}
+              onBasicDetails={handleBasicDetails}
             />
           </Grid>
         ))}
       </Grid>
 
+      {hasMore && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+           <LinearProgress sx={{width: '50%'}} />
+        </Box>
+      )}
+
       {selectedHotel && (
         <AddFoodModal
           open={isModalOpen}
           onClose={handleCloseModal}
-          hotelId={selectedHotel._id} // Pass the selected hotel's ID or other relevant data
+          hotelId={selectedHotel._id}
         />
       )}
     </Container>

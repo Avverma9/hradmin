@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -17,14 +17,17 @@ import {
   IconButton,
   Tooltip,
   Stack,
+  CircularProgress,
 } from "@mui/material";
 import {
   EventSeat,
   Close,
   Person,
   Phone,
+  Email,
   AirlineSeatReclineNormal,
 } from "@mui/icons-material";
+import { toast } from "react-toastify";
 import { bookSeat, getSeatsData } from "../redux/reducers/travel/car";
 import { getGst } from "../redux/reducers/gst";
 
@@ -149,7 +152,9 @@ export default function SeatData({ open, onClose, id, carData }) {
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [customerName, setCustomerName] = useState("");
   const [customerMobile, setCustomerMobile] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
 
   useEffect(() => {
     if (id && open) {
@@ -159,40 +164,28 @@ export default function SeatData({ open, onClose, id, carData }) {
     }
   }, [id, open, dispatch]);
 
-  useEffect(() => {
-    if (
-      open &&
-      seatData &&
-      seatData.length > 0 &&
-      seatData[0].seats &&
-      selectedSeats.length === 0
-    ) {
-      const firstAvailable = seatData[0].seats.find((s) => !s.isBooked);
-      if (firstAvailable) {
-        setSelectedSeats([firstAvailable]);
-      }
-    }
-  }, [open, seatData, selectedSeats.length]);
-
   const basePrice = selectedSeats.reduce(
     (sum, seat) => sum + seat.seatPrice,
     0,
   );
 
   useEffect(() => {
-    const payload = { type: "Travel", gstThreshold: basePrice };
-    dispatch(getGst(payload));
+    if (basePrice > 0) {
+      const payload = { type: "Travel", gstThreshold: basePrice };
+      dispatch(getGst(payload));
+    }
   }, [basePrice, dispatch]);
 
-  const handleSeatClick = (seat) => {
+  const handleSeatClick = useCallback((seat) => {
     if (seat.isBooked) return;
-    const isSelected = selectedSeats.find((s) => s._id === seat._id);
-    if (isSelected) {
-      setSelectedSeats(selectedSeats.filter((s) => s._id !== seat._id));
-    } else {
-      setSelectedSeats([...selectedSeats, seat]);
-    }
-  };
+    setSelectedSeats((prevSelected) => {
+      const isSelected = prevSelected.find((s) => s._id === seat._id);
+      if (isSelected) {
+        return prevSelected.filter((s) => s._id !== seat._id);
+      }
+      return [...prevSelected, seat];
+    });
+  }, []);
 
   const handleOpenBookingDialog = () => {
     if (selectedSeats.length > 0) {
@@ -201,7 +194,12 @@ export default function SeatData({ open, onClose, id, carData }) {
   };
 
   const handleBooking = async () => {
-    if (selectedSeats.length > 0 && customerName && customerMobile) {
+    if (!customerName || !customerMobile || !customerEmail) {
+      toast.error("Please fill in all customer details.");
+      return;
+    }
+    setIsBooking(true);
+    try {
       const seatIds = selectedSeats.map((seat) => seat._id);
       await dispatch(
         bookSeat({
@@ -210,13 +208,15 @@ export default function SeatData({ open, onClose, id, carData }) {
           bookedBy: customerName,
           vehicleNumber: carData?.vehicleNumber,
           customerMobile: customerMobile,
+          customerEmail: customerEmail,
         }),
-      );
-      setSelectedSeats([]);
-      setCustomerName("");
-      setCustomerMobile("");
-      setIsBookingDialogOpen(false);
-      onClose();
+      ).unwrap();
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error(error.message || "Booking failed. Please try again.");
+      setIsBooking(false);
     }
   };
 
@@ -284,12 +284,8 @@ export default function SeatData({ open, onClose, id, carData }) {
                       borderTop: "none",
                       zIndex: -1,
                     },
-                    "::before": {
-                      left: "15%",
-                    },
-                    "::after": {
-                      right: "15%",
-                    },
+                    "::before": { left: "15%" },
+                    "::after": { right: "15%" },
                   }}
                 >
                   <Box
@@ -321,46 +317,26 @@ export default function SeatData({ open, onClose, id, carData }) {
                     sx={{
                       p: 1,
                       display: "grid",
-                      gridTemplateColumns: "repeat(5, 1fr)",
+                      gridTemplateColumns: "repeat(2, 1fr) 45px repeat(3, 1fr)",
                       gap: { xs: 1, sm: 1.5 },
                       justifyContent: "center",
                       alignItems: "center",
                     }}
                   >
-                    {Array.isArray(seatData) && seatData.length > 0 ? (
-                      seatData[0].seats.map((seat, index) => (
-                        <Box
-                          key={seat._id}
-                          sx={{
-                            gridColumn: index % 5 === 2 ? "span 1" : "auto",
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                          }}
-                        >
-                          {index % 5 === 2 ? (
-                            <Box sx={{ width: 45 }} />
-                          ) : (
-                            <Seat
-                              seat={seat}
-                              onSeatClick={handleSeatClick}
-                              isSelected={selectedSeats.some(
-                                (s) => s._id === seat._id,
-                              )}
-                            />
-                          )}
-                        </Box>
-                      ))
-                    ) : (
-                      <Typography gridColumn="span 5">
-                        No seats available for this vehicle.
-                      </Typography>
-                    )}
+                    {seatData[0].seats.map((seat) => (
+                      <Seat
+                        key={seat._id}
+                        seat={seat}
+                        onSeatClick={handleSeatClick}
+                        isSelected={selectedSeats.some(
+                          (s) => s._id === seat._id,
+                        )}
+                      />
+                    ))}
                   </Box>
                 </Box>
               </Paper>
             </Grid>
-
             <Grid item xs={12} md={5}>
               <Paper
                 variant="outlined"
@@ -405,7 +381,7 @@ export default function SeatData({ open, onClose, id, carData }) {
                         color="text.secondary"
                         sx={{ p: 1 }}
                       >
-                        Please select a seat.
+                        Please select a seat to booking
                       </Typography>
                     )}
                   </Box>
@@ -462,7 +438,6 @@ export default function SeatData({ open, onClose, id, carData }) {
           </Grid>
         </DialogContent>
       </Dialog>
-
       <Dialog
         open={isBookingDialogOpen}
         onClose={() => setIsBookingDialogOpen(false)}
@@ -495,6 +470,18 @@ export default function SeatData({ open, onClose, id, carData }) {
               startAdornment: <Phone sx={{ color: "action.active", mr: 1 }} />,
             }}
           />
+          <TextField
+            margin="dense"
+            label="Customer Email"
+            type="email"
+            fullWidth
+            variant="outlined"
+            value={customerEmail}
+            onChange={(e) => setCustomerEmail(e.target.value)}
+            InputProps={{
+              startAdornment: <Email sx={{ color: "action.active", mr: 1 }} />,
+            }}
+          />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setIsBookingDialogOpen(false)} color="inherit">
@@ -503,9 +490,14 @@ export default function SeatData({ open, onClose, id, carData }) {
           <Button
             onClick={handleBooking}
             variant="contained"
-            disabled={!customerName || !customerMobile}
+            disabled={
+              !customerName || !customerMobile || !customerEmail || isBooking
+            }
+            startIcon={
+              isBooking ? <CircularProgress size={20} color="inherit" /> : null
+            }
           >
-            Confirm Booking
+            {isBooking ? "Confirming..." : "Confirm Booking"}
           </Button>
         </DialogActions>
       </Dialog>

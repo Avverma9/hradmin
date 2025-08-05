@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
   Avatar,
@@ -9,7 +9,7 @@ import {
   Stack,
   Skeleton,
   Button,
-} from '@mui/material';
+} from "@mui/material";
 import {
   DataGrid,
   GridToolbarContainer,
@@ -17,14 +17,14 @@ import {
   GridToolbarFilterButton,
   GridToolbarDensitySelector,
   useGridApiContext,
-} from '@mui/x-data-grid';
-import Papa from 'papaparse';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
-import { userDetails } from 'src/components/redux/reducers/user';
-import UserDetailsModal from './user-details';
-import { useLoader } from '../../../../utils/loader';
+} from "@mui/x-data-grid";
+import Papa from "papaparse";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
+import { userDetails } from "src/components/redux/reducers/user";
+import UserDetailsModal from "./user-details";
+import { useLoader } from "../../../../utils/loader";
 
 // --- Helper Functions ---
 
@@ -33,7 +33,7 @@ function stringToColor(string) {
   for (let i = 0; i < string.length; i += 1) {
     hash = string.charCodeAt(i) + ((hash << 5) - hash);
   }
-  let color = '#';
+  let color = "#";
   for (let i = 0; i < 3; i += 1) {
     const value = (hash >> (i * 8)) & 0xff;
     color += `00${value.toString(16)}`.slice(-2);
@@ -42,10 +42,12 @@ function stringToColor(string) {
 }
 
 function stringAvatar(name) {
-  const safeName = typeof name === 'string' && name ? name : 'No Name';
-  const nameParts = safeName.split(' ');
+  const safeName = typeof name === "string" && name ? name : "No Name";
+  const nameParts = safeName.split(" ");
   const children =
-    nameParts.length > 1 && nameParts[1] ? `${nameParts[0][0]}${nameParts[1][0]}` : safeName[0];
+    nameParts.length > 1 && nameParts[1]
+      ? `${nameParts[0][0]}${nameParts[1][0]}`
+      : safeName[0];
 
   return {
     sx: {
@@ -53,7 +55,7 @@ function stringAvatar(name) {
       color: (theme) => theme.palette.getContrastText(stringToColor(safeName)),
       width: 36,
       height: 36,
-      fontSize: '0.9rem',
+      fontSize: "0.9rem",
     },
     children: children.toUpperCase(),
   };
@@ -72,7 +74,7 @@ const CustomExportButton = ({ userDataMap }) => {
         userName: user.name,
         userEmail: user.email,
         userMobile: user.mobile,
-        userProfileUrl: user.profile?.[0] || '',
+        userProfileUrl: user.profile?.[0] || "",
       };
 
       if (user.bookings && user.bookings.length > 0) {
@@ -112,25 +114,31 @@ const CustomExportButton = ({ userDataMap }) => {
       usersToExport = rowIds.map((id) => userDataMap.get(id));
     } else {
       const visibleRowModels = apiRef.current.getSortedRows();
-      usersToExport = visibleRowModels.map((rowModel) => userDataMap.get(rowModel.id));
+      usersToExport = visibleRowModels.map((rowModel) =>
+        userDataMap.get(rowModel.id),
+      );
     }
 
     const flattenedData = flattenUserDataForExport(usersToExport);
     const csv = Papa.unparse(flattenedData);
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'user_bookings_export.csv');
-    link.style.visibility = 'hidden';
+    link.setAttribute("href", url);
+    link.setAttribute("download", "user_bookings_export.csv");
+    link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   return (
-    <Button onClick={handleExport} startIcon={<FileDownloadIcon />} size="small">
+    <Button
+      onClick={handleExport}
+      startIcon={<FileDownloadIcon />}
+      size="small"
+    >
       Export Bookings
     </Button>
   );
@@ -152,7 +160,7 @@ function CustomToolbar({ userDataMap }) {
 function CustomNoRowsOverlay() {
   return (
     <Stack height="100%" alignItems="center" justifyContent="center">
-      <PeopleOutlineIcon sx={{ fontSize: 60, color: 'grey.400' }} />
+      <PeopleOutlineIcon sx={{ fontSize: 60, color: "grey.400" }} />
       <Typography variant="h6" color="text.secondary">
         No Users Found
       </Typography>
@@ -183,7 +191,7 @@ const AllUser = () => {
       try {
         await dispatch(userDetails());
       } catch (error) {
-        console.error('Failed to fetch user details:', error);
+        console.error("Failed to fetch user details:", error);
       } finally {
         hideLoader();
       }
@@ -204,8 +212,8 @@ const AllUser = () => {
   const columns = useMemo(
     () => [
       {
-        field: 'name',
-        headerName: 'Name',
+        field: "name",
+        headerName: "Name",
         flex: 1,
         minWidth: 200,
         renderCell: (params) => (
@@ -213,40 +221,51 @@ const AllUser = () => {
             <Avatar
               alt={params?.row?.name}
               src={params?.row?.profile?.[0]}
-              {...(!params?.row?.profile?.[0] && stringAvatar(params?.row?.name))}
+              {...(!params?.row?.profile?.[0] &&
+                stringAvatar(params?.row?.name))}
             />
             <Typography variant="body2" fontWeight="bold">
-              {params?.row?.name || '-'}
+              {params?.row?.name || "-"}
             </Typography>
           </Stack>
         ),
       },
       {
-        field: 'email',
-        headerName: 'Email',
+        field: "email",
+        headerName: "Email",
         flex: 1,
         minWidth: 220,
       },
       {
-        field: 'mobile',
-        headerName: 'Mobile',
+        field: "mobile",
+        headerName: "Mobile",
         width: 150,
       },
       {
-        field: 'bookingCount',
-        headerName: 'Bookings',
+        field: "bookingCount",
+        headerName: "Bookings",
         width: 120,
-        align: 'center',
-        headerAlign: 'center',
-        // FIXED: Added optional chaining to prevent crash if params is undefined.
-        valueGetter: (params) => params?.row?.bookings?.length || 0,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => (
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="center"
+            spacing={1}
+          >
+            <Typography variant="body2" fontWeight="bold">
+              {params?.row?.bookings?.length || 0}
+            </Typography>
+          </Stack>
+        ),
       },
       {
-        field: 'actions',
-        headerName: 'Actions',
+        field: "actions",
+        headerName: "Actions",
         width: 100,
-        align: 'center',
-        headerAlign: 'center',
+        align: "center",
+        headerAlign: "center",
         sortable: false,
         filterable: false,
         renderCell: (params) => (
@@ -263,17 +282,40 @@ const AllUser = () => {
         ),
       },
     ],
-    [handleOpen]
+    [handleOpen],
   );
 
-  const rows = useMemo(() => userData.map((user) => ({ ...user, id: user.userId })), [userData]);
+  const rows = useMemo(
+    () => userData.map((user) => ({ ...user, id: user.userId })),
+    [userData],
+  );
 
   return (
     <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 2 }}>
+      <Typography
+        variant="h4"
+        component="h1"
+        sx={{ fontWeight: "bold", mb: 2 }}
+      >
         User Management
       </Typography>
-      <Box sx={{ height: '70vh', width: '100%', '& .MuiDataGrid-root': { border: 'none', borderRadius: 2, }, '& .MuiDataGrid-cell': { borderBottom: (theme) => `1px solid ${theme.palette.divider}`, }, '& .MuiDataGrid-columnHeaders': { backgroundColor: 'action.hover', fontWeight: 'bold', }, '& .MuiDataGrid-footerContainer': { borderTop: (theme) => `1px solid ${theme.palette.divider}`, }, }} >
+      <Box
+        sx={{
+          height: "70vh",
+          width: "100%",
+          "& .MuiDataGrid-root": { border: "none", borderRadius: 2 },
+          "& .MuiDataGrid-cell": {
+            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+          },
+          "& .MuiDataGrid-columnHeaders": {
+            backgroundColor: "action.hover",
+            fontWeight: "bold",
+          },
+          "& .MuiDataGrid-footerContainer": {
+            borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+          },
+        }}
+      >
         <DataGrid
           rows={rows}
           columns={columns}
@@ -296,7 +338,13 @@ const AllUser = () => {
           }}
         />
       </Box>
-      {selectedUser && <UserDetailsModal user={selectedUser} open={open} onClose={handleClose} />}
+      {selectedUser && (
+        <UserDetailsModal
+          user={selectedUser}
+          open={open}
+          onClose={handleClose}
+        />
+      )}
     </Box>
   );
 };

@@ -1,23 +1,19 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-
 import {
   Box,
   Card,
   Grid,
   Stack,
-  Button,
   Container,
-  Divider,
   Typography,
   CardHeader,
   Avatar,
   IconButton,
   CardContent,
   Rating,
-  TablePagination,
   Skeleton,
   Paper,
   TextField,
@@ -36,7 +32,6 @@ import { localUrl } from '../../../../utils/util';
 import { fToNow } from '../../../../utils/format-time';
 import { useLoader } from '../../../../utils/loader';
 
-// Custom hook for debouncing input
 const useDebounce = (value, delay) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -48,20 +43,17 @@ const useDebounce = (value, delay) => {
   return debouncedValue;
 };
 
-
-// --- The Main Page Component ---
 export default function ReviewsPage() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const { showLoader, hideLoader } = useLoader();
 
-  // State for filtering and pagination
   const [searchTerm, setSearchTerm] = useState('');
   const [ratingFilter, setRatingFilter] = useState(0);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [visibleCount, setVisibleCount] = useState(10);
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const throttleRef = useRef(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -81,6 +73,45 @@ export default function ReviewsPage() {
     fetchData();
   }, []);
 
+  const filteredReviews = useMemo(() =>
+    list.filter(review => {
+      const matchesSearch = debouncedSearchTerm
+        ? review.userName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+          review.hotelName.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+        : true;
+      const matchesRating = ratingFilter > 0 ? review.rating === ratingFilter : true;
+      return matchesSearch && matchesRating;
+    }),
+    [list, debouncedSearchTerm, ratingFilter]
+  );
+
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [debouncedSearchTerm, ratingFilter]);
+
+  const handleLoadMore = useCallback(() => {
+    if (throttleRef.current) return;
+
+    if (visibleCount < filteredReviews.length) {
+      throttleRef.current = true;
+      setTimeout(() => {
+        setVisibleCount(prevCount => prevCount + 10);
+        throttleRef.current = false;
+      }, 500);
+    }
+  }, [visibleCount, filteredReviews.length]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 200) {
+        handleLoadMore();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleLoadMore]);
+
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this review?')) {
       showLoader();
@@ -99,33 +130,23 @@ export default function ReviewsPage() {
     }
   };
 
-  const filteredReviews = useMemo(() => 
-    list.filter(review => {
-      const matchesSearch = debouncedSearchTerm 
-        ? review.userName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) || 
-          review.hotelName.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-        : true;
-      const matchesRating = ratingFilter > 0 ? review.rating === ratingFilter : true;
-      return matchesSearch && matchesRating;
-    }),
-    [list, debouncedSearchTerm, ratingFilter]
-  );
-  
-  const paginatedReviews = filteredReviews.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const displayedReviews = filteredReviews.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredReviews.length;
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" sx={{ mb: 3, fontWeight: 'bold' }}>
         User Reviews
       </Typography>
 
-      <Card elevation={3} sx={{ mb: 3 }}>
+      <Card elevation={3} sx={{ mb: 3, p: 2 }}>
         <CardContent>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={8}>
-              <TextField 
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={8}>
+              <TextField
                 fullWidth
                 label="Search by User or Hotel Name"
+                variant="outlined"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
@@ -133,8 +154,8 @@ export default function ReviewsPage() {
                 }}
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
-              <FormControl fullWidth>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth variant="outlined">
                 <InputLabel>Filter by Rating</InputLabel>
                 <Select
                   value={ratingFilter}
@@ -157,37 +178,25 @@ export default function ReviewsPage() {
       <Stack spacing={3}>
         {loading ? (
           Array.from(new Array(5)).map((_, index) => <ReviewItemSkeleton key={index} />)
-        ) : paginatedReviews.length > 0 ? (
-          paginatedReviews.map((review) => (
-            <ReviewItem key={review._id} review={review} onDelete={handleDelete} />
-          ))
+        ) : displayedReviews.length > 0 ? (
+          <>
+            {displayedReviews.map((review) => (
+              <ReviewItem key={review._id} review={review} onDelete={handleDelete} />
+            ))}
+            {hasMore && <ReviewItemSkeleton />}
+          </>
         ) : (
-          <Paper sx={{ textAlign: 'center', p: 5 }}>
+          <Paper sx={{ textAlign: 'center', p: 5, mt: 3 }}>
             <RateReviewOutlinedIcon sx={{ fontSize: 64, color: 'text.secondary' }} />
             <Typography variant="h6" sx={{ mt: 1 }}>No Reviews Found</Typography>
             <Typography color="text.secondary">Try adjusting your search filters.</Typography>
           </Paper>
         )}
       </Stack>
-
-      <TablePagination
-        component="div"
-        count={filteredReviews.length}
-        page={page}
-        onPageChange={(e, newPage) => setPage(newPage)}
-        rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={(e) => {
-          setRowsPerPage(parseInt(e.target.value, 10));
-          setPage(0);
-        }}
-        rowsPerPageOptions={[5, 10, 25]}
-        sx={{ mt: 3 }}
-      />
     </Container>
   );
 }
 
-// --- Reusable component for a single review item ---
 function ReviewItem({ review, onDelete }) {
   const { _id, userImage, userName, hotelName, comment, rating, createdAt } = review;
 
@@ -206,11 +215,11 @@ function ReviewItem({ review, onDelete }) {
         subheader={`posted ${fToNow(new Date(createdAt))}`}
       />
       <CardContent sx={{ pt: 0 }}>
-        <Stack spacing={1}>
+        <Stack spacing={1.5}>
           <Typography variant="body2" color="text.secondary">
             Review for: <strong>{hotelName}</strong>
           </Typography>
-          <Rating value={rating} readOnly />
+          <Rating value={rating} readOnly precision={0.5} />
           <Typography variant="body1" sx={{ fontStyle: 'italic', pl: 0.5 }}>
             "{comment}"
           </Typography>
@@ -220,7 +229,6 @@ function ReviewItem({ review, onDelete }) {
   );
 }
 
-// --- Reusable Skeleton for loading state ---
 function ReviewItemSkeleton() {
   return (
     <Card variant="outlined">
@@ -231,7 +239,7 @@ function ReviewItemSkeleton() {
         subheader={<Skeleton animation="wave" height={15} width="20%" />}
       />
       <CardContent sx={{ pt: 0 }}>
-        <Skeleton animation="wave" height={20} width="50%" />
+        <Skeleton animation="wave" height={20} width="50%" sx={{ mb: 1 }} />
         <Skeleton animation="wave" height={25} width="40%" sx={{ my: 1 }} />
         <Skeleton animation="wave" height={40} width="90%" />
       </CardContent>
@@ -239,7 +247,6 @@ function ReviewItemSkeleton() {
   );
 }
 
-// --- Prop Types ---
 ReviewsPage.propTypes = {
   title: PropTypes.string,
   subheader: PropTypes.string,
