@@ -43,11 +43,13 @@ const AdminBookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
     bookingStatus: "",
     numRooms: "",
     guests: "",
+    cancellationReason: "", // --- 1. Added new field to state ---
   });
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const updated = useSelector((state) => state.booking.updated);
-  const { showLoader, hideLoader } = useLoader()
+  const { showLoader, hideLoader } = useLoader();
+
   useEffect(() => {
     if (bookingData) {
       const formatDate = (dateInput) => {
@@ -67,6 +69,7 @@ const AdminBookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
         bookingStatus: bookingData.bookingStatus || "",
         numRooms: bookingData.numRooms || "",
         guests: bookingData.guests || "",
+        cancellationReason: bookingData.cancellationReason || "", // Pre-fill if it exists
       });
     }
   }, [bookingData]);
@@ -83,9 +86,8 @@ const AdminBookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
 
   const handleSave = async () => {
     setLoading(true);
-    showLoader()
+    showLoader();
     try {
-    
       await dispatch(
         updateBooking({
           bookingId: bookingData.bookingId,
@@ -106,12 +108,12 @@ const AdminBookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
       console.error("Error updating booking:", error);
     } finally {
       setLoading(false);
-      hideLoader()
+      hideLoader();
     }
   };
 
   const isDisabled =
-    bookingData?.status === "Cancelled" || bookingData?.status === "Checked-out";
+    bookingData?.bookingStatus === "Cancelled" || bookingData?.bookingStatus === "Checked-out";
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={modalStyle}>
@@ -220,6 +222,24 @@ const AdminBookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
                 disabled={isDisabled}
               />
             </Grid>
+            
+            {/* --- 2. Conditionally render the new field --- */}
+            {formData.bookingStatus === 'Cancelled' && (
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="Cancellation Reason"
+                  name="cancellationReason"
+                  value={formData.cancellationReason}
+                  onChange={handleChange}
+                  margin="dense"
+                  disabled={isDisabled}
+                  placeholder="Enter the reason for cancellation"
+                />
+              </Grid>
+            )}
 
             <Grid item xs={12} md={6}>
               <TextField
@@ -270,14 +290,15 @@ AdminBookingUpdateModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   bookingData: PropTypes.shape({
     bookingId: PropTypes.string.isRequired,
-    checkInDate: PropTypes.string.isRequired,
-    checkOutDate: PropTypes.string.isRequired,
+    checkInDate: PropTypes.string,
+    checkOutDate: PropTypes.string,
     checkInTime: PropTypes.string,
     checkOutTime: PropTypes.string,
-    price: PropTypes.number.isRequired,
-    status: PropTypes.string.isRequired,
-    numRooms: PropTypes.number.isRequired,
-    guests: PropTypes.number.isRequired,
+    price: PropTypes.number,
+    bookingStatus: PropTypes.string,
+    numRooms: PropTypes.number,
+    guests: PropTypes.number,
+    cancellationReason: PropTypes.string, // --- 3. Added to PropTypes ---
   }).isRequired,
   onSave: PropTypes.func.isRequired,
 };

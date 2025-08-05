@@ -119,7 +119,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
     <Modal open={open} onClose={onClose}>
       <Box sx={modalStyle}>
         <Typography variant="h6" component="h2" gutterBottom>
-          Update Booking
+          Update Booking - (PMS)
         </Typography>
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <Grid container spacing={2}>

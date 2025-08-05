@@ -165,7 +165,7 @@ export default function BookingsView() {
     // --- DataGrid Columns and Rows ---
     const columns = [
 
-        { field: "actions", headerName: "Actions", width: 180, sortable: false, renderCell: (params) => ( <Box display="flex" gap={1}> <Button variant="contained" size="small" onClick={() => handleView(params.row.bookingId)}>View</Button> <Button variant="contained" color="secondary" size="small" onClick={() => handleUpdate(params.row)}>Update</Button> </Box> ), },
+        { field: "actions", headerName: "Actions", width: 120, align: 'center', headerAlign: 'center', sortable: false, renderCell: (params) => ( <Stack direction="row" spacing={1}> <Tooltip title="View Details"> <IconButton size="small" onClick={() => navigate(`/your-booking-details/${params.row.bookingId}`)}> <VisibilityIcon fontSize="small" /> </IconButton> </Tooltip> <Tooltip title="Update Booking"> <IconButton size="small" color="warning" onClick={() => handleUpdate(params.row.bookingId)}> <EditIcon fontSize="small" /> </IconButton> </Tooltip> </Stack> ), },
                 { field: "bookingId", headerName: "Booking ID", width: 150 },
                 {field: "status", headerName: "Status", width: 130, renderCell: (params) => <BookingStatusChip status={params.value} />, },
                 { field: "user", headerName: "User", width: 220, renderCell: (params) => ( <Typography variant="body2" noWrap>{params.value}</Typography> ) },

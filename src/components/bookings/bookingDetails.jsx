@@ -4,9 +4,8 @@ import { LuHotel } from "react-icons/lu";
 import { FaPhone } from "react-icons/fa";
 import React, { useState, useEffect } from "react";
 import { IoMailOpenOutline } from "react-icons/io5";
-import { LiaRupeeSignSolid } from "react-icons/lia";
 import { useLocation, useNavigate } from "react-router-dom";
-import { MdAccessTime, MdOutlineHouse } from "react-icons/md";
+import { MdAccessTime, MdOutlineHouse, MdErrorOutline } from "react-icons/md"; // Added MdErrorOutline
 import { useDispatch, useSelector } from "react-redux";
 import { useLoader } from "../../../utils/loader";
 import { makeStyles } from "@mui/styles";
@@ -20,13 +19,12 @@ import {
   Typography,
 } from "@mui/material";
 
-import { localUrl } from "../../../utils/util";
 import { fDate, fDateTime, indianTime } from "../../../utils/format-time";
 import { fetchFilteredBookings } from "../redux/reducers/booking";
 
 const BookingDetail = () => {
   const navigate = useNavigate();
-  const [booking, setBooking] = useState([]);
+  const [booking, setBooking] = useState(null); // Initialize with null
   const location = useLocation();
   const path = location.pathname;
   const segments = path.split("/");
@@ -35,6 +33,7 @@ const BookingDetail = () => {
   const filtered = useSelector((state) => state.booking.filtered);
   const { showLoader, hideLoader } = useLoader();
   const role = localStorage.getItem("user_role");
+
   const useStyles = makeStyles((theme) => ({
     paper: {
       padding: theme.spacing(3),
@@ -46,6 +45,7 @@ const BookingDetail = () => {
       padding: theme.spacing(2),
       border: "1px solid #ccc",
       borderRadius: theme.shape.borderRadius,
+      height: '100%', // Make sections equal height
     },
     avatar: {
       width: theme.spacing(7),
@@ -53,9 +53,7 @@ const BookingDetail = () => {
     },
   }));
   const classes = useStyles();
-  const visibleTo = () => {
-    role === "PMS" || role === "TMS";
-  };
+
   useEffect(() => {
     const fetchBookingData = async () => {
       showLoader();
@@ -68,21 +66,30 @@ const BookingDetail = () => {
       }
     };
 
-    fetchBookingData();
-  }, [bookingId, dispatch, showLoader, hideLoader]);
+    if (bookingId) {
+        fetchBookingData();
+    }
+  }, [bookingId, dispatch]);
+
   useEffect(() => {
     if (filtered?.length > 0) {
-      setBooking(filtered[0]); // Assuming you're getting a list and want the first item
+      setBooking(filtered[0]);
     }
   }, [filtered]);
+
   const handleBack = () => {
     navigate(-1);
   };
 
-  if (filtered?.length < 0) {
-    showLoader();
-  } else {
-    hideLoader();
+  // Return a loading state or null if no booking data yet
+  if (!booking) {
+    return (
+        <Box mt={3} mx={3}>
+            <Typography variant="h4" gutterBottom>
+                Loading Booking Details...
+            </Typography>
+        </Box>
+    );
   }
 
   return (
@@ -90,119 +97,112 @@ const BookingDetail = () => {
       <Typography variant="h4" gutterBottom>
         Booking Details
       </Typography>
-      <Button variant="outlined" color="primary" onClick={handleBack}>
+      <Button variant="outlined" color="primary" onClick={handleBack} sx={{mb: 2}}>
         Back
       </Button>
-      <hr />
-      <Paper elevation={3} className={classes.paper}>
+      <Divider />
+      <Paper elevation={3} className={classes.paper} sx={{mt: 2}}>
         <Grid container spacing={3}>
           {/* Customer, Hotel and Owner Info Section */}
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid item xs={12} md={4}>
             <Box className={classes.section}>
-              <Grid container alignItems="center" spacing={2}>
+              <Grid container alignItems="center" spacing={2} sx={{ mb: 2 }}>
                 <Grid item>
                   <Avatar
                     alt="User Avatar"
-                    src={booking?.user?.profile}
+                    src={booking.user?.profile}
                     className={classes.avatar}
                   />
                 </Grid>
-                <Grid item>
-                  <Typography variant="h6">{booking?.user?.name}</Typography>
-                </Grid>
-                <Grid item>
-                  <Typography variant="h6">
-                    {booking?.bookingId} ({booking?.bookingStatus})
+                <Grid item xs>
+                  <Typography variant="h6" noWrap>{booking.user?.name}</Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {booking.bookingId} ({booking.bookingStatus})
                   </Typography>
                 </Grid>
               </Grid>
 
-              <Grid item>
-                <Box marginTop={1}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Pricing Summary
-                  </Typography>
+              <Divider sx={{ my: 2 }} />
+              
+              <Typography variant="subtitle1" gutterBottom>
+                Pricing Summary
+              </Typography>
 
-                  {/* Base Price incl GST */}
-                  <Typography variant="body2">
-                    Price (incl. GST): ₹{booking?.price}
-                  </Typography>
+              <Typography variant="body2">
+                Price (incl. GST): ₹{booking.price}
+              </Typography>
 
-                  {/* GST Amount */}
-                  {booking?.gstPrice ? (
-                    <Typography variant="body2">
-                      GST ({booking.gstPrice}%): ₹
-                      {(
-                        booking.price -
-                        booking.price / (1 + booking.gstPrice / 100)
-                      ).toFixed(2)}
-                    </Typography>
-                  ) : (
-                    <Typography variant="body2">GST: Not Applicable</Typography>
-                  )}
+              {booking.gstPrice ? (
+                <Typography variant="body2">
+                  GST ({booking.gstPrice}%): ₹
+                  {(
+                    booking.price -
+                    booking.price / (1 + booking.gstPrice / 100)
+                  ).toFixed(2)}
+                </Typography>
+              ) : (
+                <Typography variant="body2">GST: Not Applicable</Typography>
+              )}
 
-                  {/* Food Price */}
-                  {booking?.foodDetails?.length > 0 && (
-                    <Typography variant="body2">
-                      Food Charges: ₹
-                      {booking.foodDetails.reduce((total, item) => total + item.price, 0)}
-                    </Typography>
-                  )}
+              {booking.foodDetails?.length > 0 && (
+                <Typography variant="body2">
+                  Food Charges: ₹
+                  {booking.foodDetails.reduce((total, item) => total + item.price, 0)}
+                </Typography>
+              )}
 
-                  {/* Coupon Discount */}
-                  {booking?.discountPrice > 0 && (
-                    <Typography variant="body2" color="success.main">
-                      Coupon Discount: - ₹{booking?.discountPrice}
-                    </Typography>
-                  )}
-                  {/* Total Final Price */}
-                  <Typography variant="h6">
-                    Total : ₹
-                    {(() => {
-                      const gst = booking?.gstPrice
-                        ? booking.price -
-                        booking.price / (1 + booking.gstPrice / 100)
-                        : 0;
-                      const food = booking?.foodDetails?.reduce(
-                        (total, item) => total + item.price,
-                        0
-                      );
-                      const discount = booking?.discountPrice || 0;
-                      return (booking.price + food - discount).toFixed(2);
-                    })()}
-                  </Typography>
-                </Box>
-              </Grid>
-              <Divider sx={{ margin: "16px 0" }} />
-              <Typography variant="subtitle1">
+              {booking.discountPrice > 0 && (
+                <Typography variant="body2" color="success.main">
+                  Coupon Discount: - ₹{booking.discountPrice}
+                </Typography>
+              )}
+              <Typography variant="h6" sx={{mt: 1}}>
+                Total : ₹
+                {(() => {
+                  const food = booking.foodDetails?.reduce(
+                    (total, item) => total + item.price,
+                    0
+                  ) || 0;
+                  const discount = booking.discountPrice || 0;
+                  return (booking.price + food - discount).toFixed(2);
+                })()}
+              </Typography>
+              
+              <Divider sx={{ my: 2 }} />
+
+              <Typography variant="subtitle1" sx={{display: 'flex', alignItems: 'center', gap: 1}}>
                 <CiUser /> Customer Name
               </Typography>
               <Typography variant="body2" gutterBottom>
-                {booking?.user?.name}
+                {booking.user?.name}
               </Typography>
-              <Typography variant="subtitle1">
+
+              <Typography variant="subtitle1" sx={{display: 'flex', alignItems: 'center', gap: 1}}>
                 <LuHotel /> Hotel Name
               </Typography>
               <Typography variant="body2" gutterBottom>
-                {booking?.hotelDetails?.hotelName}
+                {booking.hotelDetails?.hotelName}
               </Typography>
+
               <Typography variant="subtitle1">Hotel Owner Name:</Typography>
               <Typography variant="body2" gutterBottom>
-                {booking?.hotelDetails?.hotelOwnerName}
+                {booking.hotelDetails?.hotelOwnerName}
               </Typography>
-              {(role !== "PMS" || role !== "TMS") && (
+
+              {/* Corrected role check */}
+              {role !== "PMS" && role !== "TMS" && (
                 <>
-                  <Typography variant="subtitle1">
+                  <Typography variant="subtitle1" sx={{display: 'flex', alignItems: 'center', gap: 1}}>
                     <IoMailOpenOutline /> Email
                   </Typography>
                   <Typography variant="body2" gutterBottom>
-                    {booking?.user?.email}
+                    {booking.user?.email}
                   </Typography>
-                  <Typography variant="subtitle1">
+                  <Typography variant="subtitle1" sx={{display: 'flex', alignItems: 'center', gap: 1}}>
                     <FaPhone /> Mobile
                   </Typography>
                   <Typography variant="body2" gutterBottom>
-                    {booking?.user?.mobile}
+                    {booking.user?.mobile}
                   </Typography>
                 </>
               )}
@@ -210,53 +210,73 @@ const BookingDetail = () => {
           </Grid>
 
           {/* Check-in/Check-out and Booking Status Section */}
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid item xs={12} md={4}>
             <Box className={classes.section}>
               <Typography variant="subtitle1">Check-In / Check-out</Typography>
               <Typography variant="body2" gutterBottom>
-                {fDate(booking?.checkInDate)} / {fDate(booking?.checkOutDate)}
+                {fDate(booking.checkInDate)} / {fDate(booking.checkOutDate)}
               </Typography>
-              <Typography variant="subtitle1">
+              <Typography variant="subtitle1" sx={{display: 'flex', alignItems: 'center', gap: 1}}>
                 <LuHotel /> Rooms / <CiUser /> Guests
               </Typography>
               <Typography variant="body2" gutterBottom>
-                {booking?.numRooms}- Room / {booking?.guests}- Guest
+                {booking.numRooms}- Room / {booking.guests}- Guest
               </Typography>
-              <hr />
-              <Typography variant="subtitle1">
-                <CiUser /> Booking {booking?.bookingStatus} on
+              
+              <Divider sx={{ my: 2 }} />
+
+              <Typography variant="subtitle1">Booking Status:</Typography>
+              <Typography variant="body2" gutterBottom>
+                {booking.bookingStatus}
+              </Typography>
+              
+              {/* --- ADDED CANCELLATION REASON SECTION --- */}
+              {booking.bookingStatus === 'Cancelled' && booking.cancellationReason && (
+                <>
+                  <Typography variant="subtitle1" sx={{display: 'flex', alignItems: 'center', gap: 1,color: 'error.main'}}>
+                    <MdErrorOutline /> Cancellation Reason
+                  </Typography>
+                  <Typography variant="body2" gutterBottom sx={{color: 'error.main'}}>
+                    {booking.cancellationReason}
+                  </Typography>
+                </>
+              )}
+
+              <Typography variant="subtitle1" sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                <CiUser /> Status Updated On
               </Typography>
               <Typography variant="body2" gutterBottom>
-                {indianTime(booking?.updatedAt)}
+                {indianTime(booking.updatedAt)}
               </Typography>
-              <Typography variant="subtitle1">
+              
+              <Typography variant="subtitle1" sx={{display: 'flex', alignItems: 'center', gap: 1}}>
                 <CiUser /> Created/Updated By
               </Typography>
               <Typography variant="body2" gutterBottom>
-                {booking?.createdBy?.user} ({booking?.createdBy?.email})
+                {booking.createdBy?.user} ({booking.createdBy?.email})
               </Typography>
-              <hr />
-              <Typography variant="subtitle1">Booking Status:</Typography>
-              <Typography variant="body2" gutterBottom>
-                {booking?.bookingStatus}
-              </Typography>
-              <Typography variant="subtitle1">
-                <MdAccessTime /> Booking time
+              
+              <Divider sx={{ my: 2 }} />
+
+              <Typography variant="subtitle1" sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                <MdAccessTime /> Booking Time
               </Typography>
               <Typography variant="body2" gutterBottom>
-                {fDate(booking?.createdAt)}
+                {fDateTime(booking.createdAt)}
               </Typography>
-              <Typography variant="subtitle1">
-                <MdAccessTime /> Check in time
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                {fDateTime(booking?.checkInTime) || "Not Checked in"}
-              </Typography>
-              <Typography variant="subtitle1">
-                <MdAccessTime /> Check out time
+              
+              <Typography variant="subtitle1" sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                <MdAccessTime /> Check-in Time
               </Typography>
               <Typography variant="body2" gutterBottom>
-                {fDateTime(booking?.checkOutTime) || "Not Checked out"}
+                {fDateTime(booking.checkInTime) || "Not Checked in"}
+              </Typography>
+              
+              <Typography variant="subtitle1" sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                <MdAccessTime /> Check-out Time
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                {fDateTime(booking.checkOutTime) || "Not Checked out"}
               </Typography>
             </Box>
           </Grid>
@@ -268,45 +288,29 @@ const BookingDetail = () => {
                 Services
               </Typography>
               <Box display="flex" flexDirection="column">
-                {/* Room Details */}
-                <Box marginBottom={2}>
-                  {booking?.roomDetails?.map((room, index) => (
-                    <Box key={index} marginTop={1}>
-                      <Typography variant="subtitle1">
-                        <LuHotel /> Room Details
-                      </Typography>
-                      <Typography variant="body2">
-                        Type: {room?.type} <MdOutlineHouse />
-                      </Typography>
-                      <Typography variant="body2">
-                        Bed Type: {room?.bedTypes}
-                      </Typography>
-                      <Typography variant="body2">
-                        Price: {room?.price}
-                      </Typography>
-                      {index !== booking.roomDetails.length - 1 && <Divider />}
-                    </Box>
-                  ))}
-                </Box>
-                {/* Food Details */}
-                <Box>
-                  {booking?.foodDetails?.map((food, index) => (
-                    <Box key={index} marginTop={1}>
-                      <Typography variant="subtitle1">Food Details:</Typography>
-                      <Typography variant="body2">
-                        Food Name: {food?.name}
-                      </Typography>
-                      <Typography variant="body2">
-                        Price: {food?.price}
-                      </Typography>
-                      {index !== booking.foodDetails.length - 1 && <Divider />}
-                    </Box>
-                  ))}
-                </Box>
+                {booking.roomDetails?.map((room, index) => (
+                  <Box key={index} mb={2}>
+                    <Typography variant="subtitle1" sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                        <LuHotel /> Room Details #{index + 1}
+                    </Typography>
+                    <Typography variant="body2">Type: {room?.type}</Typography>
+                    <Typography variant="body2">Bed Type: {room?.bedTypes}</Typography>
+                    <Typography variant="body2">Price: ₹{room?.price}</Typography>
+                  </Box>
+                ))}
+                
+                {booking.roomDetails?.length > 0 && booking.foodDetails?.length > 0 && <Divider sx={{my: 1}} />}
+
+                {booking.foodDetails?.map((food, index) => (
+                  <Box key={index} mt={1}>
+                    <Typography variant="subtitle1">Food Details #{index + 1}</Typography>
+                    <Typography variant="body2">Name: {food?.name}</Typography>
+                    <Typography variant="body2">Price: ₹{food?.price}</Typography>
+                  </Box>
+                ))}
               </Box>
             </Box>
           </Grid>
-
         </Grid>
       </Paper>
     </Box>
