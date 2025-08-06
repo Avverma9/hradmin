@@ -323,7 +323,7 @@ export default function SeatData({ open, onClose, id, carData }) {
                       alignItems: "center",
                     }}
                   >
-                    {seatData[0].seats.map((seat) => (
+                    {seatData[0]?.seats?.map((seat) => (
                       <Seat
                         key={seat._id}
                         seat={seat}
