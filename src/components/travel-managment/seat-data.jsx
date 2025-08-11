@@ -211,9 +211,9 @@ export default function SeatData({ open, onClose, id, carData }) {
           customerEmail: customerEmail,
         }),
       ).unwrap();
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+
+      window.location.reload();
+
     } catch (error) {
       console.error(error.message || "Booking failed. Please try again.");
       setIsBooking(false);
