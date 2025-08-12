@@ -115,7 +115,7 @@ function AllNotificationsDialog({ open, onClose, notifications, onNotificationCl
     return (
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" scroll="paper">
             <DialogTitle sx={{ pb: 1 }}>All Notifications</DialogTitle>
-            
+
             <Tabs value={currentTab} onChange={handleTabChange} sx={{ px: 3, borderBottom: 1, borderColor: 'divider' }}>
                 <Tab label="All" value="all" />
                 <Tab label="Unread" value="unread" />
@@ -126,16 +126,16 @@ function AllNotificationsDialog({ open, onClose, notifications, onNotificationCl
                 {filteredNotifications.length > 0 ? (
                     <List disablePadding>
                         {filteredNotifications.map((notification) => (
-                            <NotificationItem 
-                                key={notification.id} 
-                                notification={notification} 
-                                onClick={() => onNotificationClick(notification)} 
+                            <NotificationItem
+                                key={notification.id}
+                                notification={notification}
+                                onClick={() => onNotificationClick(notification)}
                             />
                         ))}
                     </List>
                 ) : (
                     <Box sx={{ p: 4, textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
-                        <Iconify icon="solar:chat-round-dots-line-duotone" width={80} sx={{ color: 'text.disabled', mb: 1, mx: 'auto' }}/>
+                        <Iconify icon="solar:chat-round-dots-line-duotone" width={80} sx={{ color: 'text.disabled', mb: 1, mx: 'auto' }} />
                         <Typography variant="h6">No Notifications</Typography>
                         <Typography color="text.secondary">There are no {currentTab} notifications.</Typography>
                     </Box>
@@ -162,7 +162,7 @@ export default function NotificationsPopover() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [viewAllOpen, setViewAllOpen] = useState(false);
-    
+
     const navigate = useNavigate();
     const userId = localStorage.getItem('user_id');
 
@@ -182,7 +182,7 @@ export default function NotificationsPopover() {
                 id: n._id, title: n.name, description: n.message, type: 'user',
                 createdAt: new Date(n.createdAt), isUnRead: n.seenBy?.[userId] === false, path: n.path,
             }));
-            
+
             const allNotifications = [...globalNotifications, ...userNotifications];
             allNotifications.sort((a, b) => b.createdAt - a.createdAt);
             setNotifications(allNotifications);
@@ -195,10 +195,8 @@ export default function NotificationsPopover() {
     }, [userId]);
 
     useEffect(() => {
-        if (open) {
-          fetchNotifications();
-        }
-    }, [open, fetchNotifications]);
+        fetchNotifications();
+    }, []);
 
     const unreadCount = useMemo(() => notifications.filter((n) => n.isUnRead).length, [notifications]);
     const newNotifications = useMemo(() => notifications.filter((n) => n.isUnRead), [notifications]);
@@ -222,7 +220,7 @@ export default function NotificationsPopover() {
             console.error('Error marking all notifications as read:', err);
         }
     };
-    
+
     const handleNotificationClick = async (notification, closeDialog = false) => {
         try {
             if (closeDialog) {
@@ -231,12 +229,12 @@ export default function NotificationsPopover() {
                 handleClose();
             }
             navigate(notification.path);
-            
+
             const updatedNotifications = notifications.map((n) =>
                 n.id === notification.id ? { ...n, isUnRead: false } : n
             );
             setNotifications(updatedNotifications);
-            
+
             const endpoint = notification.type === 'user'
                 ? `${localUrl}/fetch-all-new-notification-to-the-panel/and-mark-seen/dashboard-user/notification/${notification.id}/seen`
                 : `${localUrl}/fetch-all-new-notification-to-the-panel/and-mark-seen/dashboard/${userId}/${notification.id}/seen`;
@@ -246,7 +244,7 @@ export default function NotificationsPopover() {
             console.error('Error handling notification click:', err);
         }
     };
-    
+
     const renderPopoverContent = () => {
         if (isLoading) {
             return (
@@ -258,7 +256,7 @@ export default function NotificationsPopover() {
         if (error) {
             return (
                 <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', p: 2, textAlign: 'center' }}>
-                    <Iconify icon="solar:danger-triangle-bold-duotone" width={64} sx={{ color: 'error.main', mb: 1 }}/>
+                    <Iconify icon="solar:danger-triangle-bold-duotone" width={64} sx={{ color: 'error.main', mb: 1 }} />
                     <Typography variant="h6" gutterBottom>Error</Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{error}</Typography>
                     <Button variant="outlined" onClick={fetchNotifications}>Try Again</Button>
@@ -268,7 +266,7 @@ export default function NotificationsPopover() {
         if (notifications.length === 0) {
             return (
                 <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', p: 2, textAlign: 'center' }}>
-                    <Iconify icon="solar:chat-round-dots-line-duotone" width={80} sx={{ color: 'text.disabled', mb: 1 }}/>
+                    <Iconify icon="solar:chat-round-dots-line-duotone" width={80} sx={{ color: 'text.disabled', mb: 1 }} />
                     <Typography variant="h6" gutterBottom>No Notifications</Typography>
                     <Typography variant="body2" color="text.secondary">You're all caught up!</Typography>
                 </Box>
@@ -327,7 +325,7 @@ export default function NotificationsPopover() {
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', py: 2, px: 2.5 }}>
-                     <Box sx={{ flexGrow: 1 }}>
+                    <Box sx={{ flexGrow: 1 }}>
                         <Typography variant="subtitle1">Notifications</Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                             You have {unreadCount} unread messages
@@ -346,9 +344,9 @@ export default function NotificationsPopover() {
                 <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
                     {renderPopoverContent()}
                 </Box>
-                
+
                 <Divider sx={{ borderStyle: 'dashed' }} />
-                
+
                 <Box sx={{ p: 1 }}>
                     <Button fullWidth onClick={handleOpenViewAll}>
                         View All
