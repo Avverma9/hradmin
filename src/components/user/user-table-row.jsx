@@ -79,7 +79,7 @@ export default function UserTableRow({
           <Stack direction="row" alignItems="center" spacing={1}>
             <Avatar alt={name} src={avatarUrl} />
             <Typography variant="subtitle2" noWrap>
-              {name}
+              {name?.slice(0, 20)}
             </Typography>
           </Stack>
         </TableCell>
@@ -98,7 +98,7 @@ export default function UserTableRow({
         <TableCell>
           <Stack direction="row" alignItems="center" spacing={1}>
             <Typography variant="body2" noWrap>
-              {city}
+              {city?.slice(0, 10)}
             </Typography>
            
           </Stack>
