@@ -28,8 +28,10 @@ import CloseIcon from '@mui/icons-material/Close';
 // Local Imports
 import { localUrl } from '../../../utils/util';
 import { useHotelAmenities } from '../../../utils/additional/hotelAmenities';
+import { useDispatch } from 'react-redux';
 
 export default function Amenities({ open, onClose, hotelId }) {
+  const dispatch =  useDispatch()
   const [currentAmenities, setCurrentAmenities] = useState([]);
   const [amenitiesToAdd, setAmenitiesToAdd] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
