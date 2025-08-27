@@ -23,6 +23,7 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 import { getPartnersStatistics } from 'src/components/redux/reducers/statistics/statistics';
+import { role } from '../../../../utils/util';
 
 const generateYearOptions = () => {
     const currentYear = new Date().getFullYear();
@@ -115,7 +116,9 @@ const PartnerChart = () => {
 
         return `Total for ${selectedYear}: ${breakdown}`;
     }, [loading, hasData, selectedYear, roleTotals]);
-
+if(role !== 'Admin' && role !== 'Developer'){
+    return null;    
+}
     return (
         <Card elevation={4} sx={{ borderRadius: 3 }}>
             <CardHeader

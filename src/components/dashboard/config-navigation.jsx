@@ -54,7 +54,10 @@ const fetchMenuItems = async () => {
             headers: {
                 Authorization: token,
             },
-        });    const items = response.data.menuItems;
+        });    
+        sessionStorage.setItem('auth_items', JSON.stringify(response.data.menuItems));
+ 
+        const items = response.data.menuItems;
         if (!Array.isArray(items)) return [];
         return items
             .filter((item) => item && typeof item.title === 'string')
@@ -127,10 +130,10 @@ const getNavConfig = async () => {
             title: 'Hotels',
             icon: icons.hotels,
             children: [
-                { title: 'Complaints', path: '/your-complaints', icon: icons.complaints },
+                { title: 'PMS Complaints', path: '/your-complaints', icon: icons.complaints },
                 { title: 'Your Hotel', icon: icons.hotels, path: '/your-hotels' },
-                { title: 'Set Monthly Price', icon: icons.setMonthlyPrice, path: '/hotels/monthly-price-pms' },
-                { title: 'Manage Coupons', path: '/apply-pms-coupon', icon: icons.coupon },
+                { title: 'PMS Monthly Price', icon: icons.setMonthlyPrice, path: '/hotels/monthly-price-pms' },
+                { title: 'PMS Coupons', path: '/apply-pms-coupon', icon: icons.coupon },
             ],
         },
         {

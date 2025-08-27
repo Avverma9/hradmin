@@ -22,6 +22,7 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 import { getHotelDataByYear } from 'src/components/redux/reducers/statistics/statistics';
+import { role } from '../../../../utils/util';
 
 const generateYearOptions = () => {
     const currentYear = new Date().getFullYear();
@@ -90,7 +91,9 @@ const HotelChart = () => {
             maxValue: maxVal,
         };
     }, [hotelChartData]);
-
+if(role !== 'Admin' && role !== 'Developer'){
+    return null;    
+}
     return (
         <Card elevation={4} sx={{ borderRadius: 3 }}>
             <CardHeader

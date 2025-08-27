@@ -1,19 +1,14 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { Box, Grid, Container, Typography, Skeleton } from "@mui/material";
-
 import { role, localUrl } from "../../../../utils/util";
-
 import AppWidgetSummary from "../app-widget-summary";
 import { useLoader } from "../../../../utils/loader";
 import HotelChart from "./hotel-chart";
 import PartnerChart from "./partners-chart";
 import Rooms from "src/components/rooms/Rooms";
 import BookingChart from "./bookings-chart";
-
-// ----------------------------------------------------------------------
 
 export default function AppView() {
   const [hotelCount, setHotelCount] = useState(0);
@@ -35,7 +30,6 @@ export default function AppView() {
             axios.get(`${localUrl}/get-hotels/count`),
             axios.get(`${localUrl}/get-total/user-details`),
           ]);
-
         setBookingCount(bookingResponse.data);
         setHotelCount(hotelResponse.data);
         setUserCount(userResponse.data);
@@ -46,7 +40,6 @@ export default function AppView() {
         hideLoader();
       }
     };
-
     fetchData();
   }, []);
 
@@ -54,12 +47,13 @@ export default function AppView() {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
-
     return () => clearInterval(timer);
   }, []);
 
   const name = localStorage.getItem("user_name");
-
+  const authItems = JSON.parse(sessionStorage.getItem("auth_items")) || [];
+  const filtered = authItems.map((item) => item.title);
+console.log("Filtered items:", filtered);
   const handleWidgetClick = (title) => {
     const routes = {
       Bookings: role === "PMS" ? "/your-bookings" : "/all-bookings",
@@ -71,15 +65,13 @@ export default function AppView() {
       Messenger: "/messenger",
       Availability: role === "Admin" ? "/hotels/availability" : null,
       Coupons: "/apply-pms-coupon",
-      "Monthly Price": "/hotels/monthly-price",
+      "Monthly Price": "/hotels/monthly-price-pms",
       "Travel locations": "/add-travel-location",
       Reviews: "/all-reviews",
     };
     const path = routes[title];
     if (path) {
       navigate(path);
-    } else {
-      console.warn("Unknown or unauthorized widget title:", title);
     }
   };
 
@@ -161,24 +153,28 @@ export default function AppView() {
     },
   ];
 
+  const menuToWidgetMap = {
+    "PMS Bookings": "Bookings",
+    "PMS Hotels": "Hotels",
+    "PMS Complaints": "Reports",
+    Messenger: "Messenger",
+    "PMS Coupons": "Coupons",
+    "PMS Monthly Price": "Monthly Price",
+    Dashboard: null,
+  };
+
+  const userRole = localStorage.getItem("user_role");
+  const allowedWidgetTitles = filtered
+    .map((item) => menuToWidgetMap[item])
+    .filter(Boolean);
+
   const filteredWidgets =
-    role === "Admin"
+    userRole === "Admin" || userRole === "Developer"
       ? widgets
-      : widgets.filter(
-          (widget) =>
-            ![
-              "Users",
-              "Partners",
-              "Reviews",
-              "Travel locations",
-              "Notifications",
-              "Availability",
-            ].includes(widget.title),
-        );
+      : widgets.filter((widget) => allowedWidgetTitles.includes(widget.title));
 
   return (
     <Container maxWidth="xl">
-      {/* -- Header Section -- */}
       <Box sx={{ mb: 5 }}>
         <Typography variant="h4" component="h1">
           Hi, Welcome back {name} 👋
@@ -187,6 +183,7 @@ export default function AppView() {
           {formattedDate} | {formattedTime}
         </Typography>
       </Box>
+
       {(role === "Admin" || role === "Developer") && (
         <Grid container spacing={3} sx={{ mb: 5 }}>
           <Grid item xs={12} md={6}>
@@ -201,9 +198,6 @@ export default function AppView() {
         </Grid>
       )}
 
-      {/* -- Charts Section -- */}
-
-      {/* -- Dashboard Shortcuts Section -- */}
       <Typography variant="h5" sx={{ mb: 3 }}>
         Dashboard Shortcuts
       </Typography>
