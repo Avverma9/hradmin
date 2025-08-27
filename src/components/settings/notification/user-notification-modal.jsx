@@ -42,6 +42,7 @@ const UserNotification = () => {
     const paths = useMenuItems();
 
     useEffect(() => {
+        
         const fetchUsers = async () => {
             setIsLoadingUsers(true);
             try {

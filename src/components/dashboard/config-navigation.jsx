@@ -49,16 +49,19 @@ const icons = {
 // Function to get menu items
 const fetchMenuItems = async () => {
     try {
-        const response = await axios.get(`${localUrl}/login/dashboard/get/all/user/${userId}`, {
+        if(userId){
+           const response = await axios.get(`${localUrl}/login/dashboard/get/all/user/${userId}`, {
             headers: {
                 Authorization: token,
             },
-        });
-        const items = response.data.menuItems;
+        });    const items = response.data.menuItems;
         if (!Array.isArray(items)) return [];
         return items
             .filter((item) => item && typeof item.title === 'string')
-            .map((item) => item.title.toLowerCase());
+            .map((item) => item.title.toLowerCase());  
+        }
+      
+     
     } catch (error) {
         console.error("Error fetching menu items:", error?.response?.data || error.message);
         return [];
