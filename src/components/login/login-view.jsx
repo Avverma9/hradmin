@@ -226,7 +226,7 @@ export default function LoginView() {
 
   // MODIFIED: This function now triggers the popup instead of a toast
   const handleLoginSuccess = (data) => {
-    localStorage.setItem("user_id", data.loggedUserId);
+    sessionStorage.setItem("user_id", data.loggedUserId);
     localStorage.setItem("user_role", data.loggedUserRole);
     localStorage.setItem("user_email", data.loggedUserEmail);
     localStorage.setItem("user_image", data.loggedUserImage);

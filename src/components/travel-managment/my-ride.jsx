@@ -49,6 +49,7 @@ import SeatConfigUpdate from "./update-seats";
 import { fDate } from "../../../utils/format-time";
 import { useLoader } from "../../../utils/loader";
 import { getCarOwnerByEmail } from "../redux/reducers/travel/carOwner";
+import { userId } from "../../../utils/util";
 
 // ... (The DetailItem and MyCarCard components remain unchanged)
 const DetailItem = ({ icon, text }) => (
@@ -240,7 +241,7 @@ const DetailItem = ({ icon, text }) => (
 const MyCar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate(); // Initialize useNavigate
-  const userId = localStorage.getItem("user_id");
+
   const { ownerCar: carData, loading } = useSelector((state) => state.car);
   const { data: ownerData } = useSelector((state) => state.owner);
   const { showLoader, hideLoader } = useLoader();
