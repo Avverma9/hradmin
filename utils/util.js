@@ -8,13 +8,13 @@ export const searchQuery = [
     { name: 'Dashboard Users', path: '/dashboard-user' },
 ];
 
-// export const localUrl = "https://hotel-backend-ntbh.onrender.com";
-export const localUrl = 'http://localhost:5000';
-export const hotelEmail = localStorage.getItem('user_email');
-export const role = localStorage.getItem('user_role');
+export const localUrl = "https://hotel-backend-ntbh.onrender.com";
+// export const localUrl = 'http://localhost:5000';
+export const hotelEmail = sessionStorage.getItem('user_email');
+export const role = sessionStorage.getItem('user_role');
 export const userId = sessionStorage.getItem('user_id');
-export const userName = localStorage.getItem('user_name');
-export const token = localStorage.getItem('rs_token');
+export const userName = sessionStorage.getItem('user_name');
+export const token = sessionStorage.getItem('rs_token');
 
 export const notify = (statusCode, data) => {
     const toastId = toast.loading('Processing...');

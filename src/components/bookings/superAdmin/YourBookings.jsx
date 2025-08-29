@@ -26,7 +26,7 @@ import { fDate } from "../../../../utils/format-time";
 import BookingUpdateModal from "../booking-update-modal";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchFilteredBookings, searchBooking } from "src/components/redux/reducers/booking";
-import { hotelEmail } from "../../../../utils/util";
+import { hotelEmail, role } from "../../../../utils/util";
 
 function CustomToolbar(props) {
     const {
@@ -118,8 +118,7 @@ export default function SuperAdminBookingsView() {
     const filtered = useSelector((state) => state.booking.filtered) || [];
     const search = useSelector((state) => state.booking.search) || [];
     
-    const role = localStorage.getItem("user_role");
-    const hotelEmail = localStorage.getItem("user_email");
+    
     
     const bookings = search.length ? search : filtered;
 

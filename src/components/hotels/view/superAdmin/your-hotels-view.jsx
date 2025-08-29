@@ -11,7 +11,7 @@ import YourHotelCard from './your-hotel-card';
 export default function YourHotelsView() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true); // Add loading state
-  const hotelEmail = localStorage.getItem('user_email');
+  const hotelEmail = sessionStorage.getItem('user_email');
 
   useEffect(() => {
     const getAllHotels = async () => {

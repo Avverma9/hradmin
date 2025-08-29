@@ -110,7 +110,7 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
   const roomItems = Array.isArray(room) ? room[room.length - 1] : room;
 
   const userId = sessionStorage.getItem("subid");
-  const hotelId = localStorage.getItem("subhotelId");
+  const hotelId = sessionStorage.getItem("subhotelId");
 
   const roomSectionRef = useRef(null);
   const foodSectionRef = useRef(null);

@@ -50,7 +50,7 @@ export default function AppView() {
     return () => clearInterval(timer);
   }, []);
 
-  const name = localStorage.getItem("user_name");
+  const name = sessionStorage.getItem("user_name");
   const authItems = JSON.parse(sessionStorage.getItem("auth_items")) || [];
   const filtered = authItems.map((item) => item.title);
 console.log("Filtered items:", filtered);
@@ -163,7 +163,7 @@ console.log("Filtered items:", filtered);
     Dashboard: null,
   };
 
-  const userRole = localStorage.getItem("user_role");
+  const userRole = sessionStorage.getItem("user_role");
   const allowedWidgetTitles = filtered
     .map((item) => menuToWidgetMap[item])
     .filter(Boolean);

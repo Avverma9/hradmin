@@ -21,6 +21,7 @@ import {
 
 import { fDate, fDateTime, indianTime } from "../../../utils/format-time";
 import { fetchFilteredBookings } from "../redux/reducers/booking";
+import { role } from "../../../utils/util";
 
 const BookingDetail = () => {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ const BookingDetail = () => {
   const dispatch = useDispatch();
   const filtered = useSelector((state) => state.booking.filtered);
   const { showLoader, hideLoader } = useLoader();
-  const role = localStorage.getItem("user_role");
+
 
   const useStyles = makeStyles((theme) => ({
     paper: {

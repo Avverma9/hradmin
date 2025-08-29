@@ -46,8 +46,8 @@ export default function MonthlyPrice() {
     const [hotels, setHotels] = useState([]);
     const [selectedHotel, setSelectedHotel] = useState('');
     const [selectedRoom, setSelectedRoom] = useState(''); // New state for selected room
-    const hotelEmail = localStorage.getItem('user_email');
-    const role = localStorage.getItem('user_role');
+    const hotelEmail = sessionStorage.getItem('user_email');
+    const role = sessionStorage.getItem('user_role');
 
     const fetchHotels = useCallback(async () => {
         try {

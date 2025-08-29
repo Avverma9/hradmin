@@ -187,7 +187,7 @@ const Hotel = () => {
 
     const handleBookNow = (hotelId) => {
         if (!hotelId) return;
-        localStorage.setItem('subhotelId', hotelId);
+        sessionStorage.setItem('subhotelId', hotelId);
         navigate(`/book-now-page/${hotelId}`);
     };
 

@@ -33,9 +33,9 @@ export default function Nav({ openNav, onCloseNav }) {
   const pathname = usePathname();
   const upLg = useResponsive('up', 'lg');
 
-  const userImage = localStorage.getItem('user_image');
-  const userName = localStorage.getItem('user_name');
-  const userRole = localStorage.getItem('user_role');
+  const userImage = sessionStorage.getItem('user_image');
+  const userName = sessionStorage.getItem('user_name');
+  const userRole = sessionStorage.getItem('user_role');
 
   const capitalizeFirstLetter = (string) => {
     if (!string) return '';

@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { updateBooking } from "../redux/reducers/booking";
-import { hotelEmail, userName } from "../../../utils/util";
+import { hotelEmail, role, userName } from "../../../utils/util";
 import { useLoader } from "../../../utils/loader";
 
 const modalStyle = {
@@ -48,7 +48,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
   const dispatch = useDispatch();
   const {showLoader,hideLoader} =useLoader()
   const updated = useSelector((state) => state.booking.updated);
-  const role = localStorage.getItem("user_role");
+ 
   useEffect(() => {
     if (bookingData) {
       const formatDate = (dateInput) => {

@@ -164,7 +164,7 @@ export default function NotificationsPopover() {
     const [viewAllOpen, setViewAllOpen] = useState(false);
 
     const navigate = useNavigate();
-    const userId = localStorage.getItem('user_id');
+    const userId = sessionStorage.getItem('user_id');
 
     const fetchNotifications = useCallback(async () => {
         setIsLoading(true);

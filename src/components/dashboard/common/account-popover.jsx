@@ -38,14 +38,14 @@ export default function AccountPopover() {
     setOpen(null);
   };
 
-  const userImage = localStorage.getItem('user_image');
-  const userName = localStorage.getItem('user_name');
-  const userEmail = localStorage.getItem('user_email');
-  const userId = localStorage.getItem('user_id');
+  const userImage = sessionStorage.getItem('user_image');
+  const userName = sessionStorage.getItem('user_name');
+  const userEmail = sessionStorage.getItem('user_email');
+  const userId = sessionStorage.getItem('user_id');
 
   const handleAuth = () => {
     navigate('/');
-    localStorage.clear();
+    sessionStorage.clear();
   };
   return (
     <>
