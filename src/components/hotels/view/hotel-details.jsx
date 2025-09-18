@@ -11,9 +11,20 @@ import {
   IoMailOpenOutline,
 } from "react-icons/io5";
 import { GrStatusGood } from "react-icons/gr";
-import { styled, Container, IconButton, LinearProgress } from "@mui/material";
+import {
+  styled,
+  Container,
+  IconButton,
+  LinearProgress,
+  Box,
+  Paper,
+  Typography,
+  Chip,
+  Divider,
+  Button as MuiButton,
+} from "@mui/material";
 import { role, localUrl } from "../../../../utils/util";
-import { Edit } from "@mui/icons-material";
+import { Edit, CheckCircleOutline } from "@mui/icons-material";
 import AddFoodModal from "../manage-foods"; // Import the AddFoodModal component
 
 import "./hotelDetails.css";
@@ -450,97 +461,63 @@ export default function HotelDetails({
       <hr />
       <br />
       {/* -----------------------------------------amenities details--------------------------------- */}
-      <div
-        style={{
-          border: "1px solid #000", // Thicker border and darker color
-          borderRadius: "8px", // Rounded corners
-          padding: "16px", // Padding inside the div
-          margin: "16px 0", // Margin outside the div
-          backgroundColor: "#fff", // Background color should contrast with the border
-          boxSizing: "border-box", // Include padding and border in total size
-        }}
-      >
+      <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, my: 2 }}>
         {/* Header Section */}
-        <div
-          style={{
+        <Box
+          sx={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            marginBottom: "1rem",
+            mb: 2,
           }}
         >
-          <h3 style={{ margin: 0 }} className="heading-text">
+          <Typography variant="h6" fontWeight="bold" className="heading-text">
             Amenities
-          </h3>
+          </Typography>
           <IconButton
-            style={{
-              backgroundColor: "#007bff", // Same color as the button
-              color: "white",
-              marginLeft: "1rem",
-              borderRadius: "50%", // Circular shape
-              padding: "10px", // Adjust padding for circular appearance
-            }}
+            color="primary"
             onClick={() => handleOpenAmenities()} // Function to open the amenities modal
           >
             <Edit />
           </IconButton>
-        </div>
+        </Box>
 
         {/* Amenities List */}
-        <div
-          className="amenities-list"
-          style={{
+        <Box
+          sx={{
             display: "grid",
-            gap: "1rem",
-            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+            gap: 1.5,
+            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
           }}
         >
           {amenitiesToShow.map((amenityName, index) => (
-            <div
+            <Chip
               key={index}
-              className="amenity-item"
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "0.5rem",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                backgroundColor: "#f9f9f9",
+              icon={<CheckCircleOutline fontSize="small" />}
+              label={amenityName}
+              variant="outlined"
+              sx={{
+                justifyContent: "flex-start",
+                p: 2,
+                height: "auto",
+                "& .MuiChip-label": {
+                  whiteSpace: "normal",
+                },
               }}
-            >
-              <p style={{ margin: 0 }}>{amenityName}</p>
-            </div>
+            />
           ))}
-        </div>
-        <hr />
-        {!showAllAmenities &&
-          amenitiesToShow.length <
-            hotel.amenities.flatMap((a) => a.amenities).length && (
-            <Button
-              onClick={() => setShowAllAmenities(true)}
-              style={{
-                backgroundColor: "rgb(171 171 171 / 13%)",
-                color: "black",
-              }}
-              className="mt-2"
-            >
-              Show More ...
-            </Button>
-          )}
-        {showAllAmenities && (
-          <Button
-            onClick={() => setShowAllAmenities(false)}
-            style={{
-              backgroundColor: "rgb(171 171 171 / 13%)",
-              color: "black",
-            }}
-            className="mt-2"
-          >
-            Show Less ...
-          </Button>
+        </Box>
+        {hotel.amenities.flatMap((a) => a.amenities).length > 5 && (
+          <>
+            <Divider sx={{ my: 2 }} />
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
+              <MuiButton onClick={() => setShowAllAmenities(!showAllAmenities)}>
+                {showAllAmenities ? "Show Less" : "Show More ..."}
+              </MuiButton>
+            </Box>
+          </>
         )}
-      </div>
+      </Paper>
       <br />
 
       {/* ------------------------------------policies details---------------------------------------- */}

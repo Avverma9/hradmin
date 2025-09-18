@@ -27,7 +27,6 @@ import { updateHotelPolicy } from "../redux/reducers/hotel";
 
 export default function Policies({ hotel }) {
   const dispatch = useDispatch();
-  const hotelId = hotel?.hotelId;
   const [editedPolicies, setEditedPolicies] = useState(hotel?.policies || []);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -45,7 +44,7 @@ export default function Policies({ hotel }) {
   const handleSave = () => {
     dispatch(
       updateHotelPolicy({
-        hotelId,
+        hotelId: hotel?.hotelId,
         policies: editedPolicies,
       })
     );
@@ -68,9 +67,10 @@ export default function Policies({ hotel }) {
 
   const multiLinePolicies = [
     "hotelsPolicy",
-    "returnPolicy",
+    "refundPolicy",
     "checkInPolicy",
     "checkOutPolicy",
+    "cancellationPolicy",
   ];
 
   const labelMap = {
@@ -80,7 +80,7 @@ export default function Policies({ hotel }) {
     outsideFoodPolicy: "Outside Food Policy",
     cancellationPolicy: "Cancellation Policy",
     paymentMode: "Payment Mode",
-    returnPolicy: "Return Policy",
+    refundPolicy: "Refund Policy",
     onDoubleSharing: "On Season Double Sharing",
     onQuadSharing: "On Season Quad Sharing",
     onTrippleSharing: "On Season Triple Sharing",
@@ -134,14 +134,14 @@ export default function Policies({ hotel }) {
   };
 
   const renderPolicyValue = (policyIdx, key, value) => {
-    if (!value || key === "_id") return null;
-
+    if ((!isEditing && !value) || key === "_id") return null;
+    
     if (isEditing) {
       if (yesNoPolicies.includes(key)) {
         return (
           <Select
             size="small"
-            value={value}
+            value={value || "No"}
             onChange={(e) => handlePolicyChange(policyIdx, key, e.target.value)}
             sx={{ minWidth: 120, bgcolor: "background.paper" }}
           >
@@ -157,7 +157,7 @@ export default function Policies({ hotel }) {
             fullWidth
             multiline
             rows={3}
-            value={value}
+            value={value || ""}
             onChange={(e) => handlePolicyChange(policyIdx, key, e.target.value)}
             onKeyDown={(e) => handleBulletInput(e, policyIdx, key)}
             placeholder="• Start writing policy points here..."
@@ -168,7 +168,7 @@ export default function Policies({ hotel }) {
         <TextField
           size="small"
           fullWidth
-          value={value}
+          value={value || ""}
           onChange={(e) => handlePolicyChange(policyIdx, key, e.target.value)}
         />
       );
@@ -203,6 +203,9 @@ export default function Policies({ hotel }) {
       );
     }
   };
+
+  const firstColumnPolicies = ["hotelsPolicy", "cancellationPolicy"];
+  const secondColumnPolicies = ["refundPolicy", "checkInPolicy", "checkOutPolicy"];
 
   return (
     <Box sx={{ maxWidth: 1000, mx: "auto", mt: 4, px: 2 }}>
@@ -245,19 +248,31 @@ export default function Policies({ hotel }) {
                   <Typography variant="h6" fontWeight="bold" mb={2}>
                     <HiOutlineDocumentText /> General Policies
                   </Typography>
-                  <Grid container spacing={2}>
-                    {multiLinePolicies.map((key) =>
-                      policy[key] ? (
-                        <Grid item xs={12} md={6} key={key}>
-                          <Box sx={{ mb: 2 }}>
+                  <Grid container spacing={4}>
+                    <Grid item xs={12} md={6}>
+                      {firstColumnPolicies.map((key) =>
+                        (isEditing || policy[key]) ? (
+                          <Box sx={{ mb: 2 }} key={key}>
                             <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
                               {labelMap[key]}
                             </Typography>
                             {renderPolicyValue(pIdx, key, policy[key])}
                           </Box>
-                        </Grid>
-                      ) : null
-                    )}
+                        ) : null
+                      )}
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      {secondColumnPolicies.map((key) =>
+                        (isEditing || policy[key]) ? (
+                          <Box sx={{ mb: 2 }} key={key}>
+                            <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                              {labelMap[key]}
+                            </Typography>
+                            {renderPolicyValue(pIdx, key, policy[key])}
+                          </Box>
+                        ) : null
+                      )}
+                    </Grid>
                   </Grid>
                 </Grid>
                 <Grid item xs={12}>
@@ -266,7 +281,7 @@ export default function Policies({ hotel }) {
                   </Typography>
                   <Grid container spacing={2}>
                     {yesNoPolicies.map((key) =>
-                      policy[key] ? (
+                    (isEditing || policy[key]) ? (
                         <Grid item xs={12} sm={6} md={4} key={key}>
                           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                             <Box sx={{ fontSize: 22, color: "text.secondary" }}>
@@ -290,7 +305,7 @@ export default function Policies({ hotel }) {
                   </Typography>
                   <Grid container spacing={2}>
                     {Object.entries(policy).map(([key, value]) =>
-                      !value ||
+                    (!isEditing && !value) ||
                       key === "_id" ||
                       multiLinePolicies.includes(key) ||
                       yesNoPolicies.includes(key)
