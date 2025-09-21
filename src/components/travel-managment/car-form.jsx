@@ -93,16 +93,23 @@ export default function CarForm() {
     };
     
     const handleSeaterChange = (e) => {
-        const numSeats = parseInt(e.target.value, 10) || 0;
         setFormData(prev => ({ ...prev, seater: e.target.value }));
-        setSeatConfig(Array.from({ length: numSeats }, (_, i) => ({
-            seatType: "AC",
-            seatNumber: `S${i + 1}`,
-            seatPrice: "",
-            isBooked: false,
-            bookedBy: "",
-        })));
     };
+
+    useEffect(() => {
+        if (formData.sharingType === 'Shared') {
+            const numSeats = parseInt(formData.seater, 10) || 0;
+            setSeatConfig(Array.from({ length: numSeats }, (_, i) => ({
+                seatType: "AC",
+                seatNumber: `S${i + 1}`,
+                seatPrice: "",
+                isBooked: false,
+                bookedBy: "",
+            })));
+        } else {
+            setSeatConfig([]);
+        }
+    }, [formData.sharingType, formData.seater]);
     
     const handleSeatChange = (index, field, value) => {
         const updatedSeats = [...seatConfig];
@@ -207,8 +214,14 @@ export default function CarForm() {
                     <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Vehicle Number" name="vehicleNumber" value={formData.vehicleNumber} onChange={handleInputChange} /></Grid>
                     <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Color</InputLabel><Select name="color" value={formData.color} label="Color" onChange={handleInputChange}>{["Red", "Blue", "Black", "White", "Silver", "Green"].map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}</Select></FormControl></Grid>
                     <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Fuel Type</InputLabel><Select name="fuelType" value={formData.fuelType} label="Fuel Type" onChange={handleInputChange}>{["Petrol", "Diesel", "Electric", "Hybrid"].map(f => <MenuItem key={f} value={f}>{f}</MenuItem>)}</Select></FormControl></Grid>
-                    <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Vehicle Type</InputLabel><Select name="vehicleType" value={formData.vehicleType} label="Vehicle Type" onChange={handleInputChange}><MenuItem value="Car">Car</MenuItem><MenuItem value="Bike">Bike</MenuItem><MenuItem value="Bus">Bus</MenuItem></Select></FormControl></Grid>
-                   <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Sharing Type</InputLabel><Select name="sharingType" value={formData.sharingType} label="Sharing Type" onChange={handleInputChange}><MenuItem value="Private">Private</MenuItem><MenuItem value="Shared">Shared</MenuItem></Select></FormControl></Grid>
+                    <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Vehicle Type</InputLabel><Select name="vehicleType" value={formData.vehicleType} label="Vehicle Type" onChange={handleInputChange}><MenuItem value="Car">Car</MenuItem><MenuItem value="Bike">Bike</MenuItem><MenuItem value="Bus">Bus</MenuItem></Select></FormControl></Grid>                   
+                   <Grid item xs={12} sm={6} md={3}>
+                        <FormControl fullWidth>
+                            <InputLabel>Sharing Type</InputLabel>
+                            <Select name="sharingType" value={formData.sharingType} label="Sharing Type" onChange={handleInputChange}><MenuItem value="Private">Private</MenuItem><MenuItem value="Shared">Shared</MenuItem></Select>
+                            {formData.sharingType === 'Private' && <FormHelperText>Seat configuration is not required for private rides.</FormHelperText>}
+                        </FormControl>
+                    </Grid>
                     <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Transmission</InputLabel><Select name="transmission" value={formData.transmission} label="Transmission" onChange={handleInputChange}><MenuItem value="Automatic">Automatic</MenuItem><MenuItem value="Manual">Manual</MenuItem></Select></FormControl></Grid>
                     <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Mileage (KM/L)" type="number" name="mileage" value={formData.mileage} onChange={handleInputChange} onWheel={(e) => e.target.blur()} InputProps={{ startAdornment: <InputAdornment position="start"><Speed/></InputAdornment> }} /></Grid>
                 </Grid>
@@ -243,22 +256,27 @@ export default function CarForm() {
                         </Button>
                     </Grid>
                     {formData.images.length > 0 && <Grid item xs={12}><Stack direction="row" spacing={1} flexWrap="wrap">{Array.from(formData.images).map((file, i) => <Avatar key={i} src={URL.createObjectURL(file)} variant="rounded" />)}</Stack></Grid>}
-                    <Grid item xs={12}><Divider>Seat Configuration</Divider></Grid>
-                    {seatConfig.map((seat, index) => (
-                        <Grid item xs={12} sm={6} md={4} key={index}>
-                           <Paper variant="outlined" sx={{p: 2, position: 'relative'}}>
-                               <Typography variant="subtitle2" gutterBottom>Seat {index + 1}</Typography>
-                               <Grid container spacing={1}>
-                                    <Grid item xs={12}><FormControl fullWidth size="small"><InputLabel>Type</InputLabel><Select name="seatType" value={seat.seatType} label="Type" onChange={(e) => handleSeatChange(index, 'seatType', e.target.value)}><MenuItem value="AC">AC</MenuItem><MenuItem value="Non-AC">Non-AC</MenuItem></Select></FormControl></Grid>
-                                    <Grid item xs={12}><TextField fullWidth size="small" label="Number" name="seatNumber" value={seat.seatNumber} onChange={(e) => handleSeatChange(index, 'seatNumber', e.target.value)} /></Grid>
-                                    <Grid item xs={12}><TextField fullWidth size="small" label="Price" name="seatPrice" type="number" value={seat.seatPrice} onChange={(e) => handleSeatChange(index, 'seatPrice', e.target.value)} onWheel={(e) => e.target.blur()} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
-                                    <Grid item xs={12}><FormControl fullWidth size="small"><InputLabel>Status</InputLabel><Select name="isBooked" value={seat.isBooked} label="Status" onChange={(e) => handleSeatChange(index, 'isBooked', e.target.value)}><MenuItem value={false}>Available</MenuItem><MenuItem value={true}>Booked</MenuItem></Select></FormControl></Grid>
-                                    {seat.isBooked && <Grid item xs={12}><TextField fullWidth size="small" label="Booked By" name="bookedBy" value={seat.bookedBy} onChange={(e) => handleSeatChange(index, 'bookedBy', e.target.value)} /></Grid>}
-                               </Grid>
-                           </Paper>
-                        </Grid>
-                    ))}
-                    {formData.seater && <Grid item xs={12}><Button variant="text" onClick={addNewSeat}>Add More Seats</Button></Grid>}
+                    
+                    {formData.sharingType === 'Shared' && (
+                        <>
+                            <Grid item xs={12}><Divider>Seat Configuration</Divider></Grid>
+                            {seatConfig.map((seat, index) => (
+                                <Grid item xs={12} sm={6} md={4} key={index}>
+                                   <Paper variant="outlined" sx={{p: 2, position: 'relative'}}>
+                                       <Typography variant="subtitle2" gutterBottom>Seat {index + 1}</Typography>
+                                       <Grid container spacing={1}>
+                                            <Grid item xs={12}><FormControl fullWidth size="small"><InputLabel>Type</InputLabel><Select name="seatType" value={seat.seatType} label="Type" onChange={(e) => handleSeatChange(index, 'seatType', e.target.value)}><MenuItem value="AC">AC</MenuItem><MenuItem value="Non-AC">Non-AC</MenuItem></Select></FormControl></Grid>
+                                            <Grid item xs={12}><TextField fullWidth size="small" label="Number" name="seatNumber" value={seat.seatNumber} onChange={(e) => handleSeatChange(index, 'seatNumber', e.target.value)} /></Grid>
+                                            <Grid item xs={12}><TextField fullWidth size="small" label="Price" name="seatPrice" type="number" value={seat.seatPrice} onChange={(e) => handleSeatChange(index, 'seatPrice', e.target.value)} onWheel={(e) => e.target.blur()} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
+                                            <Grid item xs={12}><FormControl fullWidth size="small"><InputLabel>Status</InputLabel><Select name="isBooked" value={seat.isBooked} label="Status" onChange={(e) => handleSeatChange(index, 'isBooked', e.target.value)}><MenuItem value={false}>Available</MenuItem><MenuItem value={true}>Booked</MenuItem></Select></FormControl></Grid>
+                                            {seat.isBooked && <Grid item xs={12}><TextField fullWidth size="small" label="Booked By" name="bookedBy" value={seat.bookedBy} onChange={(e) => handleSeatChange(index, 'bookedBy', e.target.value)} /></Grid>}
+                                       </Grid>
+                                   </Paper>
+                                </Grid>
+                            ))}
+                            {formData.seater && <Grid item xs={12}><Button variant="text" onClick={addNewSeat}>Add More Seats</Button></Grid>}
+                        </>
+                    )}
                 </Grid>
             </Section>
 

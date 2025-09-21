@@ -41,6 +41,8 @@ import {
   LocationOn,
   Map,
   CalendarToday,
+  DirectionsCar,
+  People,
 } from '@mui/icons-material';
 
 // Local Imports
@@ -55,7 +57,7 @@ const CarCard = ({ car, onBookNow }) => {
     carData?.images && Array.isArray(carData.images) && carData.images.length > 0
       ? carData.images[0]
       : "https://placehold.co/600x400/e0e0e0/757575?text=Car";
-      
+
   const availableSeats = car.seatConfig?.filter(seat => !seat.bookedBy).length || 0;
 
   return (
@@ -66,6 +68,18 @@ const CarCard = ({ car, onBookNow }) => {
         image={handleCarImage(car)}
         alt={`${car.make} ${car.model}`}
       />
+        <Chip
+          label={car.vehicleType}
+          size="small"
+          sx={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            backgroundColor: 'rgba(255, 0, 0, 0.7)',
+            color: 'white',
+            fontWeight: 'bold',
+          }}
+        />
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
         <CardContent sx={{ flex: '1 0 auto' }}>
           <Box display="flex" justifyContent="space-between" alignItems="flex-start">
@@ -80,32 +94,36 @@ const CarCard = ({ car, onBookNow }) => {
             {car.recommended && <Chip label="Recommended" color="success" size="small" variant="filled" />}
           </Box>
           <Grid container spacing={1.5} mt={0.5}>
-            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><LocalGasStation fontSize="small" color="action"/> <Typography variant="body2">{car.fuelType}</Typography></Grid>
-            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><EventSeat fontSize="small" color="action"/> <Typography variant="body2">{car.seater} Seater</Typography></Grid>
-            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><Work fontSize="small" color="action"/> <Typography variant="body2">{car.luggage} Luggage</Typography></Grid>
-            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><Speed fontSize="small" color="action"/> <Typography variant="body2">₹{car.extraKm}/km Extra</Typography></Grid>
-            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><LocationOn fontSize="small" color="action"/> <Typography variant="body2">From: {car.pickupP}</Typography></Grid>
-            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><Map fontSize="small" color="action"/> <Typography variant="body2">To: {car.dropP}</Typography></Grid>
-            <Grid item xs={12} display="flex" alignItems="center" gap={1}><CalendarToday fontSize="small" color="action"/> <Typography variant="body2">{format(new Date(car.pickupD), 'p, dd MMM')} to {format(new Date(car.dropD), 'p, dd MMM')}</Typography></Grid>
+            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><DirectionsCar fontSize="small" color="action" /> <Typography variant="body2">{car.vehicleType}</Typography></Grid>
+            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><People fontSize="small" color="action" /> <Typography variant="body2">{car.sharingType}</Typography></Grid>
+            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><LocalGasStation fontSize="small" color="action" /> <Typography variant="body2">{car.fuelType}</Typography></Grid>
+            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><EventSeat fontSize="small" color="action" /> <Typography variant="body2">{car.seater} Seater</Typography></Grid>
+            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><Work fontSize="small" color="action" /> <Typography variant="body2">{car.luggage} Luggage</Typography></Grid>
+            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><Speed fontSize="small" color="action" /> <Typography variant="body2">₹{car.extraKm}/km Extra</Typography></Grid>
+            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><LocationOn fontSize="small" color="action" /> <Typography variant="body2">From: {car.pickupP}</Typography></Grid>
+            <Grid item xs={6} sm={6} display="flex" alignItems="center" gap={1}><Map fontSize="small" color="action" /> <Typography variant="body2">To: {car.dropP}</Typography></Grid>
+            <Grid item xs={12} display="flex" alignItems="center" gap={1}><CalendarToday fontSize="small" color="action" /> <Typography variant="body2">{format(new Date(car.pickupD), 'p, dd MMM')} to {format(new Date(car.dropD), 'p, dd MMM')}</Typography></Grid>
           </Grid>
           <Box mt={1.5}>
-              {car.badges?.map((badge, index) => <Chip key={index} label={badge} size="small" sx={{ mr: 0.5, mb: 0.5 }} />)}
+            {car.badges?.map((badge, index) => <Chip key={index} label={badge} size="small" sx={{ mr: 0.5, mb: 0.5 }} />)}
           </Box>
         </CardContent>
         <Divider />
         <CardActions sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, bgcolor: 'grey.50' }}>
-           <Box>
-                <Typography variant="h6" fontWeight="bold">₹{car.price}</Typography>
-                <Typography variant="caption" color="text.secondary">Full ride</Typography>
-           </Box>
-           <Box textAlign="right">
-              <Button variant="contained" size="medium" onClick={onBookNow}>
-                Book Now
-              </Button>
+          <Box>
+            <Typography variant="h6" fontWeight="bold">₹{car.price}</Typography>
+            <Typography variant="caption" color="text.secondary">Full ride</Typography>
+          </Box>
+          <Box textAlign="right">
+            <Button variant="contained" size="medium" onClick={onBookNow}>
+              Book Now
+            </Button>
+            {car.sharingType === 'Shared' && (
               <Typography variant="caption" display="block" color="text.secondary" mt={0.5}>
                 {availableSeats} seats available
               </Typography>
-           </Box>
+            )}
+          </Box>
         </CardActions>
       </Box>
     </Card>
@@ -119,24 +137,28 @@ CarCard.propTypes = {
 
 // Skeleton Loader for CarCard
 const CarCardSkeleton = () => (
-    <Card variant="outlined" sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, mb: 2, borderRadius: 3 }}>
-        <Skeleton variant="rectangular" sx={{ width: { xs: '100%', sm: 220 }, height: { xs: 180, sm: 250 } }} />
-        <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, p: 2 }}>
-            <Skeleton variant="text" width="60%" height={32} />
-            <Skeleton variant="text" width="40%" height={20} />
-            <Grid container spacing={2} mt={1}>
-                <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
-                <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
-                <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
-                <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
-                <Grid item xs={12}><Skeleton variant="text" width="90%" /></Grid>
-            </Grid>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto' }}>
-                <Skeleton variant="text" width={80} height={40} />
-                <Skeleton variant="rectangular" width={100} height={40} />
-            </Box>
-        </Box>
-    </Card>
+  <Card variant="outlined" sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, mb: 2, borderRadius: 3 }}>
+    <Skeleton variant="rectangular" sx={{ width: { xs: '100%', sm: 220 }, height: { xs: 180, sm: 250 } }} />
+    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, p: 2 }}>
+      <Skeleton variant="text" width="60%" height={32} />
+      <Skeleton variant="text" width="40%" height={20} />
+      <Grid container spacing={2} mt={1}>
+        <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
+        <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
+        <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
+        <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
+        <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
+        <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
+        <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
+        <Grid item xs={6}><Skeleton variant="text" width="80%" /></Grid>
+        <Grid item xs={12}><Skeleton variant="text" width="90%" /></Grid>
+      </Grid>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto' }}>
+        <Skeleton variant="text" width={80} height={40} />
+        <Skeleton variant="rectangular" width={100} height={40} />
+      </Box>
+    </Box>
+  </Card>
 );
 
 const Cars = () => {
@@ -153,8 +175,8 @@ const Cars = () => {
   const [toDate, setToDate] = useState(null);
   useEffect(() => {
     const fetchData = async () => {
-     
-      try { 
+
+      try {
         showLoader();
         const response = await dispatch(getAllCars());
         setData(response.payload);
@@ -179,8 +201,8 @@ const Cars = () => {
     setFilters(newFilters);
     showLoader();
     try {
-        const response = await dispatch(filterCar({ query: key, value }));
-        setData(response.payload);
+      const response = await dispatch(filterCar({ query: key, value }));
+      setData(response.payload);
     } catch (error) {
       console.error('Filter failed:', error);
     } finally {
@@ -207,7 +229,7 @@ const Cars = () => {
       formattedFromDate && `pickupD=${formattedFromDate}`,
       formattedToDate && `dropD=${formattedToDate}`,
     ].filter(Boolean).join('&');
-    
+
     showLoader();
     try {
       const response = await axios.get(`${localUrl}/travel/filter-car/by-query?${queryParams}`);
@@ -223,67 +245,67 @@ const Cars = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-        <Paper variant="outlined" sx={{ p: 2, mb: 3, borderRadius: 3 }}>
-            <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} sm={6} md={2.5}><TextField fullWidth label="Pickup" value={pickupP} onChange={(e) => setPickupP(e.target.value)} InputProps={{startAdornment: <InputAdornment position="start"><LocationOn /></InputAdornment>}}/></Grid>
-                <Grid item xs={12} sm={6} md={2.5}><TextField fullWidth label="Drop" value={dropP} onChange={(e) => setDropP(e.target.value)} InputProps={{startAdornment: <InputAdornment position="start"><Map /></InputAdornment>}}/></Grid>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                    <Grid item xs={12} sm={6} md={2}><DatePicker label="From" value={fromDate} onChange={setFromDate} renderInput={(params) => <TextField {...params} fullWidth />} /></Grid>
-                    <Grid item xs={12} sm={6} md={2}><DatePicker label="To" value={toDate} onChange={setToDate} renderInput={(params) => <TextField {...params} fullWidth />} /></Grid>
-                </LocalizationProvider>
-                <Grid item xs={12} md={3} display="flex" gap={1}>
-                    <Button fullWidth variant="contained" onClick={handleSearch} startIcon={<Search />} sx={{ height: 56 }}>Search</Button>
-                    <Button fullWidth variant="outlined" onClick={handleClear} startIcon={<Clear />} sx={{ height: 56 }}>Clear</Button>
-                </Grid>
-            </Grid>
-        </Paper>
-
-        <Grid container spacing={3}>
-            <Grid item xs={12} md={3}>
-                <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, position: 'sticky', top: 20 }}>
-                    <Typography variant="h6" gutterBottom>Filters</Typography>
-                    <Divider sx={{ mb: 2 }}/>
-                    <Box mb={2}>
-                        <Typography variant="subtitle1" fontWeight="bold">Car Type</Typography>
-                        <FormGroup>
-                            {Array.from(new Set(filterList?.map((car) => car.make))).map((make) => (
-                                <FormControlLabel key={make} control={<Checkbox checked={filters.make.includes(make)} onChange={() => handleFilterChange('make', make)} />} label={make} />
-                            ))}
-                        </FormGroup>
-                    </Box>
-                    <Divider sx={{ my: 2 }}/>
-                    <Box>
-                        <Typography variant="subtitle1" fontWeight="bold">Fuel Type</Typography>
-                        <FormGroup>
-                            {Array.from(new Set(filterList?.map((car) => car.fuelType))).map((fuelType) => (
-                                <FormControlLabel key={fuelType} control={<Checkbox checked={filters.fuelType.includes(fuelType)} onChange={() => handleFilterChange('fuelType', fuelType)} />} label={fuelType} />
-                            ))}
-                        </FormGroup>
-                    </Box>
-                </Paper>
-            </Grid>
-
-            <Grid item xs={12} md={9}>
-                {isLoading ? (
-                    <Stack spacing={2}>
-                        <CarCardSkeleton />
-                        <CarCardSkeleton />
-                        <CarCardSkeleton />
-                    </Stack>
-                ) : data?.length > 0 ? (
-                    data.map((car) => (
-                        <CarCard key={car._id} car={car} onBookNow={() => handleSeatDataOpen(car)} />
-                    ))
-                ) : (
-                    <Box textAlign="center" p={5}>
-                        <Typography variant="h6">No Cars Found</Typography>
-                        <Typography color="text.secondary">Try adjusting your search or filters.</Typography>
-                    </Box>
-                )}
-            </Grid>
+      <Paper variant="outlined" sx={{ p: 2, mb: 3, borderRadius: 3 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={6} md={2.5}><TextField fullWidth label="Pickup" value={pickupP} onChange={(e) => setPickupP(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><LocationOn /></InputAdornment> }} /></Grid>
+          <Grid item xs={12} sm={6} md={2.5}><TextField fullWidth label="Drop" value={dropP} onChange={(e) => setDropP(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><Map /></InputAdornment> }} /></Grid>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <Grid item xs={12} sm={6} md={2}><DatePicker label="From" value={fromDate} onChange={setFromDate} renderInput={(params) => <TextField {...params} fullWidth />} /></Grid>
+            <Grid item xs={12} sm={6} md={2}><DatePicker label="To" value={toDate} onChange={setToDate} renderInput={(params) => <TextField {...params} fullWidth />} /></Grid>
+          </LocalizationProvider>
+          <Grid item xs={12} md={3} display="flex" gap={1}>
+            <Button fullWidth variant="contained" onClick={handleSearch} startIcon={<Search />} sx={{ height: 56 }}>Search</Button>
+            <Button fullWidth variant="outlined" onClick={handleClear} startIcon={<Clear />} sx={{ height: 56 }}>Clear</Button>
+          </Grid>
         </Grid>
-        
-        {selectedCar && <SeatData open={openSeatData} onClose={handleSeatDataClose} id={selectedCar._id} carData={selectedCar} />}
+      </Paper>
+
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={3}>
+          <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, position: 'sticky', top: 20 }}>
+            <Typography variant="h6" gutterBottom>Filters</Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box mb={2}>
+              <Typography variant="subtitle1" fontWeight="bold">Car Type</Typography>
+              <FormGroup>
+                {Array.from(new Set(filterList?.map((car) => car.make))).map((make) => (
+                  <FormControlLabel key={make} control={<Checkbox checked={filters.make.includes(make)} onChange={() => handleFilterChange('make', make)} />} label={make} />
+                ))}
+              </FormGroup>
+            </Box>
+            <Divider sx={{ my: 2 }} />
+            <Box>
+              <Typography variant="subtitle1" fontWeight="bold">Fuel Type</Typography>
+              <FormGroup>
+                {Array.from(new Set(filterList?.map((car) => car.fuelType))).map((fuelType) => (
+                  <FormControlLabel key={fuelType} control={<Checkbox checked={filters.fuelType.includes(fuelType)} onChange={() => handleFilterChange('fuelType', fuelType)} />} label={fuelType} />
+                ))}
+              </FormGroup>
+            </Box>
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12} md={9}>
+          {isLoading ? (
+            <Stack spacing={2}>
+              <CarCardSkeleton />
+              <CarCardSkeleton />
+              <CarCardSkeleton />
+            </Stack>
+          ) : data?.length > 0 ? (
+            data.map((car) => (
+              <CarCard key={car._id} car={car} onBookNow={() => handleSeatDataOpen(car)} />
+            ))
+          ) : (
+            <Box textAlign="center" p={5}>
+              <Typography variant="h6">No Cars Found</Typography>
+              <Typography color="text.secondary">Try adjusting your search or filters.</Typography>
+            </Box>
+          )}
+        </Grid>
+      </Grid>
+
+      {selectedCar && <SeatData open={openSeatData} onClose={handleSeatDataClose} id={selectedCar._id} carData={selectedCar} />}
     </Container>
   );
 };

@@ -5,7 +5,6 @@ import {
   Box,
   Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   Paper,
@@ -18,6 +17,8 @@ import {
   Tooltip,
   Stack,
   CircularProgress,
+  Avatar,
+  InputAdornment,
 } from "@mui/material";
 import {
   EventSeat,
@@ -26,45 +27,47 @@ import {
   Phone,
   Email,
   AirlineSeatReclineNormal,
+  CarRental,
 } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import { bookSeat, getSeatsData } from "../redux/reducers/travel/car";
 import { getGst } from "../redux/reducers/gst";
 
+// Seat component with modern styling
 const Seat = ({ seat, onSeatClick, isSelected }) => {
   const getSeatStyle = () => {
     if (seat.isBooked) {
       return {
-        bgcolor: "grey.400",
-        color: "grey.800",
+        bgcolor: "#e0e0e0",
+        color: "#757575",
         cursor: "not-allowed",
         border: "1px solid #bdbdbd",
+        boxShadow: "inset 0 1px 2px rgba(0,0,0,0.1)",
       };
     }
     if (isSelected) {
       return {
-        bgcolor: "primary.main",
-        color: "primary.contrastText",
-        "&:hover": { bgcolor: "primary.dark" },
+        background: "linear-gradient(45deg, #1976d2 30%, #2196f3 90%)",
+        color: "white",
+        "&:hover": { boxShadow: "0 4px 12px rgba(33, 150, 243, 0.4)" },
         transform: "scale(1.1)",
-        boxShadow: 3,
+        boxShadow: "0 2px 8px rgba(33, 150, 243, 0.3)",
       };
     }
     return {
       bgcolor: "white",
-      color: "text.primary",
-      border: "1px solid #ccc",
-      "&:hover": { bgcolor: "grey.200" },
+      color: "#424242",
+      border: "1px solid #e0e0e0",
+      "&:hover": {
+        bgcolor: "#e3f2fd",
+        borderColor: "#90caf9",
+      },
     };
   };
 
   return (
     <Tooltip
-      title={
-        seat.isBooked
-          ? `Booked`
-          : `Seat ${seat.seatNumber} - ₹${seat.seatPrice}`
-      }
+      title={seat.isBooked ? "Booked" : `Seat ${seat.seatNumber} - ₹${seat.seatPrice}`}
       placement="top"
     >
       <Box
@@ -74,20 +77,17 @@ const Seat = ({ seat, onSeatClick, isSelected }) => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          borderRadius: 1.5,
+          borderRadius: 2,
           textAlign: "center",
           transition: "all 0.2s ease-in-out",
-          width: 42,
-          height: 42,
+          width: 45,
+          height: 45,
           userSelect: "none",
           ...getSeatStyle(),
         }}
       >
-        <EventSeat sx={{ fontSize: 22 }} />
-        <Typography
-          variant="caption"
-          sx={{ lineHeight: 1, fontSize: "0.6rem" }}
-        >
+        <EventSeat sx={{ fontSize: 22, color: isSelected ? 'white' : 'inherit' }} />
+        <Typography variant="caption" sx={{ lineHeight: 1, fontWeight: '600' }}>
           {seat.seatNumber}
         </Typography>
       </Box>
@@ -101,45 +101,19 @@ Seat.propTypes = {
   isSelected: PropTypes.bool.isRequired,
 };
 
+// Seat legend with modern styling
 const SeatLegend = () => (
-  <Stack direction="row" spacing={2} justifyContent="center" mb={2}>
+  <Stack direction="row" spacing={2.5} justifyContent="center" mb={2}>
     <Box display="flex" alignItems="center" gap={1}>
-      <Box
-        sx={{
-          width: 16,
-          height: 16,
-          bgcolor: "white",
-          border: 1,
-          borderColor: "grey.400",
-          borderRadius: 0.5,
-        }}
-      />
+      <Box sx={{ width: 16, height: 16, bgcolor: "white", border: 1, borderColor: "grey.400", borderRadius: 1 }} />
       <Typography variant="caption">Available</Typography>
     </Box>
     <Box display="flex" alignItems="center" gap={1}>
-      <Box
-        sx={{
-          width: 16,
-          height: 16,
-          bgcolor: "primary.main",
-          border: 1,
-          borderColor: "primary.dark",
-          borderRadius: 0.5,
-        }}
-      />
+      <Box sx={{ width: 16, height: 16, background: "linear-gradient(45deg, #1976d2 30%, #2196f3 90%)", borderRadius: 1 }} />
       <Typography variant="caption">Selected</Typography>
     </Box>
     <Box display="flex" alignItems="center" gap={1}>
-      <Box
-        sx={{
-          width: 16,
-          height: 16,
-          bgcolor: "grey.400",
-          border: 1,
-          borderColor: "grey.600",
-          borderRadius: 0.5,
-        }}
-      />
+      <Box sx={{ width: 16, height: 16, bgcolor: "#e0e0e0", border: 1, borderColor: "grey.500", borderRadius: 1 }} />
       <Typography variant="caption">Booked</Typography>
     </Box>
   </Stack>
@@ -153,69 +127,68 @@ export default function SeatData({ open, onClose, id, carData }) {
   const [customerName, setCustomerName] = useState("");
   const [customerMobile, setCustomerMobile] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
-  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
 
-  useEffect(() => {
-    if (id && open) {
-      dispatch(getSeatsData(id));
-    } else {
-      setSelectedSeats([]);
-    }
-  }, [id, open, dispatch]);
+  const isPrivateBooking = carData && carData.sharingType === "Private";
 
-  const basePrice = selectedSeats.reduce(
-    (sum, seat) => sum + seat.seatPrice,
-    0,
-  );
+  useEffect(() => {
+    if (id && open && !isPrivateBooking) {
+      dispatch(getSeatsData(id));
+    }
+    if (!open) {
+      setSelectedSeats([]);
+      setCustomerName("");
+      setCustomerMobile("");
+      setCustomerEmail("");
+    }
+  }, [id, open, dispatch, isPrivateBooking]);
+
+  const basePrice = isPrivateBooking
+    ? carData?.price || 0
+    : selectedSeats.reduce((sum, seat) => sum + seat.seatPrice, 0);
 
   useEffect(() => {
     if (basePrice > 0) {
-      const payload = { type: "Travel", gstThreshold: basePrice };
-      dispatch(getGst(payload));
+      dispatch(getGst({ type: "Travel", gstThreshold: basePrice }));
     }
   }, [basePrice, dispatch]);
 
   const handleSeatClick = useCallback((seat) => {
     if (seat.isBooked) return;
-    setSelectedSeats((prevSelected) => {
-      const isSelected = prevSelected.find((s) => s._id === seat._id);
-      if (isSelected) {
-        return prevSelected.filter((s) => s._id !== seat._id);
-      }
-      return [...prevSelected, seat];
-    });
+    setSelectedSeats((prev) =>
+      prev.find((s) => s._id === seat._id)
+        ? prev.filter((s) => s._id !== seat._id)
+        : [...prev, seat]
+    );
   }, []);
-
-  const handleOpenBookingDialog = () => {
-    if (selectedSeats.length > 0) {
-      setIsBookingDialogOpen(true);
-    }
-  };
 
   const handleBooking = async () => {
     if (!customerName || !customerMobile || !customerEmail) {
       toast.error("Please fill in all customer details.");
       return;
     }
+    if (!isPrivateBooking && selectedSeats.length === 0) {
+      toast.error("Please select at least one seat.");
+      return;
+    }
+
     setIsBooking(true);
     try {
-      const seatIds = selectedSeats.map((seat) => seat._id);
-      await dispatch(
-        bookSeat({
-          seats: seatIds,
-          carId: id,
-          bookedBy: customerName,
-          vehicleNumber: carData?.vehicleNumber,
-          customerMobile: customerMobile,
-          customerEmail: customerEmail,
-        }),
-      ).unwrap();
-
+      const payload = {
+        seats: isPrivateBooking ? [] : selectedSeats.map((s) => s._id),
+        carId: id,
+        bookedBy: customerName,
+        sharingType: carData?.sharingType,
+        vehicleType: carData?.vehicleType,
+        vehicleNumber: carData?.vehicleNumber,
+        customerMobile,
+        customerEmail,
+      };
+      await dispatch(bookSeat(payload)).unwrap();
       window.location.reload();
-
     } catch (error) {
-      console.error(error.message || "Booking failed. Please try again.");
+      toast.error(error?.message || "Booking failed. Please try again.");
+    } finally {
       setIsBooking(false);
     }
   };
@@ -224,284 +197,116 @@ export default function SeatData({ open, onClose, id, carData }) {
   const gstAmount = basePrice * (gstPercentage / 100);
   const totalPrice = basePrice + gstAmount;
 
-  return (
-    <>
-      <Dialog
-        open={open}
-        onClose={onClose}
-        fullWidth
-        maxWidth="md"
-        PaperProps={{
-          sx: { borderRadius: 4, height: "auto", maxHeight: "95vh" },
-        }}
-      >
-        <DialogTitle sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Typography variant="h6" fontWeight="600">
-              Select Your Seats
-            </Typography>
-            <IconButton onClick={onClose} size="small">
-              <Close />
-            </IconButton>
+  const renderSharedBooking = () => (
+    <Grid container spacing={3}>
+      <Grid item xs={12} md={7}>
+        <Paper elevation={0} sx={{ p: 2, display: "flex", flexDirection: "column", height: "100%", bgcolor: 'transparent' }}>
+          <SeatLegend />
+           <Box sx={{
+              p: {xs: 1.5, sm: 3}, pt: {xs: 4, sm: 6}, mt: 2, border: "2px solid #cfd8dc", borderBottomWidth: "10px",
+              borderRadius: "50px 50px 8px 8px", position: "relative", bgcolor: "#eceff1",
+              flexGrow: 1,
+            }} >
+            <Box sx={{ position: "absolute", top: 12, left: 15 }}>
+              <Tooltip title="Driver"><AirlineSeatReclineNormal sx={{ fontSize: 32, color: "grey.600", transform: "rotate(-90deg)" }} /></Tooltip>
+            </Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr) 40px repeat(3, 1fr)", gap: { xs: 1, sm: 1.5 }, justifyContent: "center" }}>
+              {seatData[0]?.seats?.map((seat) => (
+                <Seat key={seat._id} seat={seat} onSeatClick={handleSeatClick} isSelected={selectedSeats.some((s) => s._id === seat._id)} />
+              ))}
+            </Box>
           </Box>
-        </DialogTitle>
-        <DialogContent sx={{ p: { xs: 1.5, sm: 2 }, bgcolor: "grey.50" }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={7}>
-              <Paper
-                variant="outlined"
-                sx={{
-                  p: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  height: "100%",
-                }}
-              >
-                <SeatLegend />
-                <Box
-                  sx={{
-                    p: 3,
-                    pt: 6,
-                    mt: 2,
-                    border: "3px solid #b0bec5",
-                    borderBottomWidth: "15px",
-                    borderRadius: "60px 60px 10px 10px",
-                    position: "relative",
-                    bgcolor: "#eceff1",
-                    height: "100%",
-                    "::before, ::after": {
-                      content: '""',
-                      position: "absolute",
-                      bottom: "-25px",
-                      width: "50px",
-                      height: "20px",
-                      border: "3px solid #b0bec5",
-                      borderRadius: "0 0 25px 25px",
-                      borderTop: "none",
-                      zIndex: -1,
-                    },
-                    "::before": { left: "15%" },
-                    "::after": { right: "15%" },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 15,
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      width: "60%",
-                      height: "25px",
-                      bgcolor: "transparent",
-                      border: "3px solid #b0bec5",
-                      borderTop: "none",
-                      borderRadius: "0 0 20px 20px",
-                    }}
-                  />
-                  <Box sx={{ position: "absolute", top: 12, left: 15 }}>
-                    <Tooltip title="Driver">
-                      <AirlineSeatReclineNormal
-                        sx={{
-                          fontSize: 32,
-                          color: "grey.600",
-                          transform: "rotate(-90deg)",
-                        }}
-                      />
-                    </Tooltip>
-                  </Box>
-                  <Box
-                    sx={{
-                      p: 1,
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, 1fr) 45px repeat(3, 1fr)",
-                      gap: { xs: 1, sm: 1.5 },
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    {seatData[0]?.seats?.map((seat) => (
-                      <Seat
-                        key={seat._id}
-                        seat={seat}
-                        onSeatClick={handleSeatClick}
-                        isSelected={selectedSeats.some(
-                          (s) => s._id === seat._id,
-                        )}
-                      />
-                    ))}
-                  </Box>
-                </Box>
-              </Paper>
-            </Grid>
-            <Grid item xs={12} md={5}>
-              <Paper
-                variant="outlined"
-                sx={{
-                  p: 2.5,
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  Booking Summary
-                </Typography>
-                <Divider sx={{ my: 1 }} />
-                <Box sx={{ mb: 2, flexGrow: 1 }}>
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Selected Seats:
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: 0.5,
-                      minHeight: 32,
-                    }}
-                  >
-                    {selectedSeats.length > 0 ? (
-                      selectedSeats.map((seat) => (
-                        <Chip
-                          key={seat._id}
-                          label={seat.seatNumber}
-                          size="small"
-                        />
-                      ))
-                    ) : (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ p: 1 }}
-                      >
-                        Please select a seat to booking
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-                {selectedSeats.length > 0 && (
-                  <>
-                    <Divider sx={{ my: 1 }} />
-                    <Typography
-                      variant="subtitle2"
-                      color="text.secondary"
-                      gutterBottom
-                    >
-                      Pricing Details:
-                    </Typography>
-                    <Stack spacing={0.5}>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography variant="body2">Base Price</Typography>
-                        <Typography variant="body2">
-                          ₹{basePrice.toFixed(2)}
-                        </Typography>
-                      </Box>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography variant="body2">
-                          GST ({gstPercentage}%)
-                        </Typography>
-                        <Typography variant="body2">
-                          ₹{gstAmount.toFixed(2)}
-                        </Typography>
-                      </Box>
-                    </Stack>
-                    <Divider sx={{ my: 1.5 }} />
-                    <Box display="flex" justifyContent="space-between" mb={2}>
-                      <Typography variant="h6" fontWeight="bold">
-                        Total Price
-                      </Typography>
-                      <Typography variant="h6" fontWeight="bold">
-                        ₹{totalPrice.toFixed(2)}
-                      </Typography>
-                    </Box>
-                  </>
-                )}
-                <Button
-                  fullWidth
-                  variant="contained"
-                  size="large"
-                  onClick={handleOpenBookingDialog}
-                  disabled={selectedSeats.length === 0}
-                  sx={{ mt: "auto", py: 1.5 }}
-                >
-                  Book Now ({selectedSeats.length})
-                </Button>
-              </Paper>
-            </Grid>
-          </Grid>
-        </DialogContent>
-      </Dialog>
-      <Dialog
-        open={isBookingDialogOpen}
-        onClose={() => setIsBookingDialogOpen(false)}
-        PaperProps={{ sx: { borderRadius: 3 } }}
-      >
-        <DialogTitle fontWeight="bold">Enter Customer Details</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Customer Name"
-            type="text"
-            fullWidth
-            variant="outlined"
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            InputProps={{
-              startAdornment: <Person sx={{ color: "action.active", mr: 1 }} />,
-            }}
-          />
-          <TextField
-            margin="dense"
-            label="Customer Mobile"
-            type="tel"
-            fullWidth
-            variant="outlined"
-            value={customerMobile}
-            onChange={(e) => setCustomerMobile(e.target.value)}
-            InputProps={{
-              startAdornment: <Phone sx={{ color: "action.active", mr: 1 }} />,
-            }}
-          />
-          <TextField
-            margin="dense"
-            label="Customer Email"
-            type="email"
-            fullWidth
-            variant="outlined"
-            value={customerEmail}
-            onChange={(e) => setCustomerEmail(e.target.value)}
-            InputProps={{
-              startAdornment: <Email sx={{ color: "action.active", mr: 1 }} />,
-            }}
-          />
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setIsBookingDialogOpen(false)} color="inherit">
-            Cancel
+        </Paper>
+      </Grid>
+      <Grid item xs={12} md={5}>
+        <Paper elevation={2} sx={{ p: 2.5, height: "100%", display: "flex", flexDirection: "column", borderRadius: 3, background: 'linear-gradient(to top, #ffffff, #f8fafc)' }}>
+          <Typography variant="h6" fontWeight="700" gutterBottom>Booking Summary</Typography>
+          <Divider sx={{ mb: 2 }} />
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>Selected Seats:</Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, minHeight: 32 }}>
+              {selectedSeats.length > 0 ? (
+                selectedSeats.map((seat) => <Chip key={seat._id} label={seat.seatNumber} size="small" color="primary" variant="filled" />)
+              ) : (
+                <Typography variant="body2" color="text.secondary" sx={{ py: 0.5 }}>Please select a seat</Typography>
+              )}
+            </Box>
+          </Box>
+
+          <Typography variant="subtitle1" fontWeight="600">Passenger Details</Typography>
+          <TextField margin="dense" size="small" label="Name" fullWidth value={customerName} onChange={(e) => setCustomerName(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><Person fontSize="small" /></InputAdornment> }} />
+          <TextField margin="dense" size="small" label="Mobile" fullWidth value={customerMobile} onChange={(e) => setCustomerMobile(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><Phone fontSize="small" /></InputAdornment> }}/>
+          <TextField margin="dense" size="small" label="Email" fullWidth value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><Email fontSize="small" /></InputAdornment> }}/>
+
+          {basePrice > 0 && (
+            <Stack spacing={1.5} sx={{ mt: 2, p: 2, background: 'rgba(236, 239, 241, 0.5)', borderRadius: 2 }}>
+              <Box display="flex" justifyContent="space-between"><Typography variant="body2" color="text.secondary">Base Price</Typography><Typography variant="body2" fontWeight="500">₹{basePrice.toFixed(2)}</Typography></Box>
+              <Box display="flex" justifyContent="space-between"><Typography variant="body2" color="text.secondary">GST ({gstPercentage}%)</Typography><Typography variant="body2" fontWeight="500">₹{gstAmount.toFixed(2)}</Typography></Box>
+              <Divider sx={{ my: 0.5 }} />
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="h6" fontWeight="bold">Total</Typography>
+                <Typography variant="h6" fontWeight="bold">₹{totalPrice.toFixed(2)}</Typography>
+              </Box>
+            </Stack>
+          )}
+
+          <Button fullWidth variant="contained" size="large" onClick={handleBooking} disabled={selectedSeats.length === 0 || !customerName || !customerMobile || !customerEmail || isBooking} sx={{ mt: "auto", py: 1.5, borderRadius: 2.5 }}>
+            {isBooking ? <CircularProgress size={24} color="inherit" /> : `Book Now`}
           </Button>
-          <Button
-            onClick={handleBooking}
-            variant="contained"
-            disabled={
-              !customerName || !customerMobile || !customerEmail || isBooking
-            }
-            startIcon={
-              isBooking ? <CircularProgress size={20} color="inherit" /> : null
-            }
-          >
-            {isBooking ? "Confirming..." : "Confirm Booking"}
+        </Paper>
+      </Grid>
+    </Grid>
+  );
+
+  const renderPrivateBooking = () => (
+    <Grid container justifyContent="center">
+      <Grid item xs={12} sm={10} md={8}>
+        <Paper elevation={2} sx={{ p: 3, borderRadius: 3, background: 'linear-gradient(to top, #ffffff, #f8fafc)' }}>
+          <Typography variant="h5" fontWeight="bold" gutterBottom>Confirm Your Private Ride</Typography>
+          <Stack direction="row" spacing={2} alignItems="center" my={2} p={2} bgcolor="rgba(236, 239, 241, 0.5)" borderRadius={2}>
+            <Avatar src={carData?.images?.[0]} sx={{ width: 64, height: 64 }} variant="rounded"><CarRental /></Avatar>
+            <Box><Typography variant="h6">{carData?.make} {carData?.model}</Typography><Typography variant="body2" color="text.secondary">{carData?.vehicleNumber}</Typography></Box>
+          </Stack>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="h6" fontWeight="600">Passenger Details</Typography>
+          <TextField autoFocus margin="dense" size="small" label="Name" fullWidth value={customerName} onChange={(e) => setCustomerName(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><Person fontSize="small" /></InputAdornment> }} />
+          <TextField margin="dense" size="small" label="Mobile" fullWidth value={customerMobile} onChange={(e) => setCustomerMobile(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><Phone fontSize="small" /></InputAdornment> }}/>
+          <TextField margin="dense" size="small" label="Email" fullWidth value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><Email fontSize="small" /></InputAdornment> }}/>
+          <Stack spacing={1.5} sx={{ mt: 2.5, p: 2, background: 'rgba(236, 239, 241, 0.5)', borderRadius: 2 }}>
+              <Box display="flex" justifyContent="space-between"><Typography variant="body1" color="text.secondary">Base Price</Typography><Typography variant="body1" fontWeight="500">₹{basePrice.toFixed(2)}</Typography></Box>
+              <Box display="flex" justifyContent="space-between"><Typography variant="body1" color="text.secondary">GST ({gstPercentage}%)</Typography><Typography variant="body1" fontWeight="500">₹{gstAmount.toFixed(2)}</Typography></Box>
+              <Divider sx={{ my: 0.5 }} />
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="h6" fontWeight="bold">Total Price</Typography>
+                <Typography variant="h6" fontWeight="bold">₹{totalPrice.toFixed(2)}</Typography>
+              </Box>
+            </Stack>
+          <Button fullWidth variant="contained" size="large" onClick={handleBooking} disabled={!customerName || !customerMobile || !customerEmail || isBooking} sx={{ mt: 3, py: 1.5, borderRadius: 2.5 }}>
+            {isBooking ? <CircularProgress size={24} color="inherit" /> : 'Confirm & Book Ride'}
           </Button>
-        </DialogActions>
-      </Dialog>
-    </>
+        </Paper>
+      </Grid>
+    </Grid>
+  );
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth={isPrivateBooking ? "sm" : "md"} PaperProps={{ sx: { borderRadius: 4, maxHeight: "95vh" } }}>
+      <DialogTitle sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6" fontWeight="600">{isPrivateBooking ? "Book Private Car" : "Select Your Seats"}</Typography>
+          <IconButton onClick={onClose} size="small"><Close /></IconButton>
+        </Box>
+      </DialogTitle>
+      <DialogContent sx={{ p: { xs: 1.5, sm: 3 }, bgcolor: "#f1f5f9" }}>
+        {!carData ? (
+          <Box display="flex" justifyContent="center" alignItems="center" height="400px"><CircularProgress /></Box>
+        ) : isPrivateBooking ? (
+          renderPrivateBooking()
+        ) : (
+          renderSharedBooking()
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -511,3 +316,4 @@ SeatData.propTypes = {
   id: PropTypes.string,
   carData: PropTypes.object,
 };
+
