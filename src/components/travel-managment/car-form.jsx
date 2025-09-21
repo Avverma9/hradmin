@@ -61,6 +61,7 @@ export default function CarForm() {
 
     const [formData, setFormData] = useState({
         make: '', model: '', year: '', vehicleNumber: '', color: '',
+        sharingType: '', vehicleType: '',
         fuelType: '', transmission: '', mileage: '', seater: '',
         price: '', perPersonCost: '', extraKm: '',
         pickupP: '', dropP: '', pickupD: '', dropD: '',
@@ -206,6 +207,8 @@ export default function CarForm() {
                     <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Vehicle Number" name="vehicleNumber" value={formData.vehicleNumber} onChange={handleInputChange} /></Grid>
                     <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Color</InputLabel><Select name="color" value={formData.color} label="Color" onChange={handleInputChange}>{["Red", "Blue", "Black", "White", "Silver", "Green"].map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}</Select></FormControl></Grid>
                     <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Fuel Type</InputLabel><Select name="fuelType" value={formData.fuelType} label="Fuel Type" onChange={handleInputChange}>{["Petrol", "Diesel", "Electric", "Hybrid"].map(f => <MenuItem key={f} value={f}>{f}</MenuItem>)}</Select></FormControl></Grid>
+                    <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Vehicle Type</InputLabel><Select name="vehicleType" value={formData.vehicleType} label="Vehicle Type" onChange={handleInputChange}><MenuItem value="Car">Car</MenuItem><MenuItem value="Bike">Bike</MenuItem><MenuItem value="Bus">Bus</MenuItem></Select></FormControl></Grid>
+                   <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Sharing Type</InputLabel><Select name="sharingType" value={formData.sharingType} label="Sharing Type" onChange={handleInputChange}><MenuItem value="Private">Private</MenuItem><MenuItem value="Shared">Shared</MenuItem></Select></FormControl></Grid>
                     <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Transmission</InputLabel><Select name="transmission" value={formData.transmission} label="Transmission" onChange={handleInputChange}><MenuItem value="Automatic">Automatic</MenuItem><MenuItem value="Manual">Manual</MenuItem></Select></FormControl></Grid>
                     <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Mileage (KM/L)" type="number" name="mileage" value={formData.mileage} onChange={handleInputChange} onWheel={(e) => e.target.blur()} InputProps={{ startAdornment: <InputAdornment position="start"><Speed/></InputAdornment> }} /></Grid>
                 </Grid>
