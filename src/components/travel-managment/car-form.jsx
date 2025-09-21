@@ -202,12 +202,12 @@ export default function CarForm() {
                 <Grid container spacing={2}>
                     <Grid item xs={12} sm={6} md={3}><Autocomplete options={makes} value={formData.make} onChange={(_, val) => handleAutocompleteChange('make', val)} renderInput={(params) => <TextField {...params} label="Make" />} /></Grid>
                     <Grid item xs={12} sm={6} md={3}><Autocomplete options={filteredModels.map(c => c.model)} value={formData.model} onChange={(_, val) => handleAutocompleteChange('model', val)} renderInput={(params) => <TextField {...params} label="Model" />} /></Grid>
-                    <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Year" type="number" name="year" value={formData.year} onChange={handleInputChange} /></Grid>
+                    <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Year" type="number" name="year" value={formData.year} onChange={handleInputChange} onWheel={(e) => e.target.blur()} /></Grid>
                     <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Vehicle Number" name="vehicleNumber" value={formData.vehicleNumber} onChange={handleInputChange} /></Grid>
                     <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Color</InputLabel><Select name="color" value={formData.color} label="Color" onChange={handleInputChange}>{["Red", "Blue", "Black", "White", "Silver", "Green"].map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}</Select></FormControl></Grid>
                     <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Fuel Type</InputLabel><Select name="fuelType" value={formData.fuelType} label="Fuel Type" onChange={handleInputChange}>{["Petrol", "Diesel", "Electric", "Hybrid"].map(f => <MenuItem key={f} value={f}>{f}</MenuItem>)}</Select></FormControl></Grid>
                     <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Transmission</InputLabel><Select name="transmission" value={formData.transmission} label="Transmission" onChange={handleInputChange}><MenuItem value="Automatic">Automatic</MenuItem><MenuItem value="Manual">Manual</MenuItem></Select></FormControl></Grid>
-                    <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Mileage (KM/L)" type="number" name="mileage" value={formData.mileage} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start"><Speed/></InputAdornment> }} /></Grid>
+                    <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Mileage (KM/L)" type="number" name="mileage" value={formData.mileage} onChange={handleInputChange} onWheel={(e) => e.target.blur()} InputProps={{ startAdornment: <InputAdornment position="start"><Speed/></InputAdornment> }} /></Grid>
                 </Grid>
             </Section>
 
@@ -217,9 +217,9 @@ export default function CarForm() {
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Drop Location" name="dropP" value={formData.dropP} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start"><Map/></InputAdornment> }} /></Grid>
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Pickup Date & Time" type="datetime-local" name="pickupD" value={formData.pickupD} onChange={handleInputChange} InputLabelProps={{ shrink: true }} /></Grid>
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Drop Date & Time" type="datetime-local" name="dropD" value={formData.dropD} onChange={handleInputChange} InputLabelProps={{ shrink: true }} /></Grid>
-                    <Grid item xs={12} sm={4}><TextField fullWidth label="Full Ride Price" name="price" value={formData.price} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
-                    <Grid item xs={12} sm={4}><TextField fullWidth label="Per Person Cost" type="number" name="perPersonCost" value={formData.perPersonCost} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
-                    <Grid item xs={12} sm={4}><TextField fullWidth label="Extra KM Charge (₹)" type="number" name="extraKm" value={formData.extraKm} onChange={handleInputChange} /></Grid>
+                    <Grid item xs={12} sm={4}><TextField fullWidth label="Full Ride Price" name="price" type="number" value={formData.price} onChange={handleInputChange} onWheel={(e) => e.target.blur()} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
+                    <Grid item xs={12} sm={4}><TextField fullWidth label="Per Person Cost" type="number" name="perPersonCost" value={formData.perPersonCost} onChange={handleInputChange} onWheel={(e) => e.target.blur()} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
+                    <Grid item xs={12} sm={4}><TextField fullWidth label="Extra KM Charge (₹)" type="number" name="extraKm" value={formData.extraKm} onChange={handleInputChange} onWheel={(e) => e.target.blur()} /></Grid>
                 </Grid>
             </Section>
 
@@ -248,7 +248,7 @@ export default function CarForm() {
                                <Grid container spacing={1}>
                                     <Grid item xs={12}><FormControl fullWidth size="small"><InputLabel>Type</InputLabel><Select name="seatType" value={seat.seatType} label="Type" onChange={(e) => handleSeatChange(index, 'seatType', e.target.value)}><MenuItem value="AC">AC</MenuItem><MenuItem value="Non-AC">Non-AC</MenuItem></Select></FormControl></Grid>
                                     <Grid item xs={12}><TextField fullWidth size="small" label="Number" name="seatNumber" value={seat.seatNumber} onChange={(e) => handleSeatChange(index, 'seatNumber', e.target.value)} /></Grid>
-                                    <Grid item xs={12}><TextField fullWidth size="small" label="Price" name="seatPrice" type="number" value={seat.seatPrice} onChange={(e) => handleSeatChange(index, 'seatPrice', e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
+                                    <Grid item xs={12}><TextField fullWidth size="small" label="Price" name="seatPrice" type="number" value={seat.seatPrice} onChange={(e) => handleSeatChange(index, 'seatPrice', e.target.value)} onWheel={(e) => e.target.blur()} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
                                     <Grid item xs={12}><FormControl fullWidth size="small"><InputLabel>Status</InputLabel><Select name="isBooked" value={seat.isBooked} label="Status" onChange={(e) => handleSeatChange(index, 'isBooked', e.target.value)}><MenuItem value={false}>Available</MenuItem><MenuItem value={true}>Booked</MenuItem></Select></FormControl></Grid>
                                     {seat.isBooked && <Grid item xs={12}><TextField fullWidth size="small" label="Booked By" name="bookedBy" value={seat.bookedBy} onChange={(e) => handleSeatChange(index, 'bookedBy', e.target.value)} /></Grid>}
                                </Grid>

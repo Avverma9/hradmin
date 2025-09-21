@@ -158,6 +158,7 @@ const SeatConfigUpdate = ({ open, onClose, car }) => {
                       type="number"
                       value={seat.seatPrice || ""}
                       onChange={(e) => handleSeatChange(index, "seatPrice", e.target.value)}
+                      onWheel={(e) => e.target.blur()}
                       InputProps={{
                           startAdornment: (
                           <InputAdornment position="start">
