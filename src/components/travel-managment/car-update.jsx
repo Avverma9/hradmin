@@ -29,6 +29,8 @@ const initialFormData = {
     price: "",
     pickupP: "",
     dropP: "",
+    sharingType: "",
+    vehicleType: "",
     pickupD: "",
     dropD: "",
     perPersonCost: "",
@@ -84,6 +86,8 @@ export default function CarUpdate({ car, onClose, open, onUpdateSuccess }) {
                 dropD: formatDateTimeForInput(car.dropD),
                 perPersonCost: car.perPersonCost || "",
                 seater: car.seater || "",
+                    sharingType: car.sharingType || "",
+                vehicleType: car.vehicleType || "",
                 extraKm: car.extraKm || "",
                 color: car.color || "",
                 mileage: car.mileage || "",
@@ -225,6 +229,27 @@ export default function CarUpdate({ car, onClose, open, onUpdateSuccess }) {
                                 <InputLabel>Fuel Type</InputLabel>
                                 <Select name="fuelType" value={formData.fuelType} onChange={handleChange} label="Fuel Type">
                                     {["Petrol", "Diesel", "Electric", "Hybrid"].map((type) => (
+                                        <MenuItem key={type} value={type}>{type}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                     
+                        <Grid item xs={12} sm={4}>
+                            <FormControl fullWidth>
+                                <InputLabel>Vehicle Type</InputLabel>
+                                <Select name="vehicleType" value={formData.vehicleType} onChange={handleChange} label="Vehicle Type">
+                                    {["Car", "Bike", "Bus"].map((type) => (
+                                        <MenuItem key={type} value={type}>{type}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <FormControl fullWidth>
+                                <InputLabel>Sharing Type</InputLabel>
+                                <Select name="sharingType" value={formData.sharingType} onChange={handleChange} label="Sharing Type">
+                                    {["Private", "Shared"].map((type) => (
                                         <MenuItem key={type} value={type}>{type}</MenuItem>
                                     ))}
                                 </Select>
