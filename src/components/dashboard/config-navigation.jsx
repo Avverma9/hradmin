@@ -92,7 +92,7 @@ const getNavConfig = async () => {
             icon: icons.messenger,
         },
         {
-            title: 'Your Bookings',
+            title: 'PMS Bookings',
             icon: icons.bookings,
             path: '/your-bookings',
         },

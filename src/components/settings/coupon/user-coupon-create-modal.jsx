@@ -159,19 +159,6 @@ const CreateCouponModal = ({
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-
-            {/* Quantity */}
-            <Grid item xs={12}>
-              <TextField
-                size="small"
-                fullWidth
-                label="Quantity"
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                required
-              />
-            </Grid>
           </Grid>
 
           {/* Buttons */}
