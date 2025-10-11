@@ -130,7 +130,7 @@ const BookingDetail = () => {
               </Typography>
 
               <Typography variant="body2">
-                Price (incl. GST): ₹{booking.price}
+                Price (incl. GST): ₹{booking.roomDetails.reduce((total, room) => total + room.price, 0)}
               </Typography>
 
               {booking.gstPrice ? (
@@ -158,15 +158,8 @@ const BookingDetail = () => {
                 </Typography>
               )}
               <Typography variant="h6" sx={{mt: 1}}>
-                Total : ₹
-                {(() => {
-                  const food = booking.foodDetails?.reduce(
-                    (total, item) => total + item.price,
-                    0
-                  ) || 0;
-                  const discount = booking.discountPrice || 0;
-                  return (booking.price + food - discount).toFixed(2);
-                })()}
+                Total :₹
+                {booking?.price}
               </Typography>
               
               <Divider sx={{ my: 2 }} />
