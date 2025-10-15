@@ -12,18 +12,20 @@ import {
   Typography,
   Paper,
   InputAdornment,
-  Stack,
+  Stack
 } from '@mui/material';
 import { Search, Clear, Edit, Add } from '@mui/icons-material';
 import { tourList } from '../redux/reducers/tour/tour';
 import { iconsList } from '../../../utils/icon';
-import { useLoader } from '../../../utils/loader';
 
 const TourList = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { data = [], loading } = useSelector((state) => state.tour);
-  const [searchText, setSearchText] = useState('');
+
+  // Separate state for each search bar
+  const [searchId, setSearchId] = useState('');
+  const [searchAgency, setSearchAgency] = useState('');
 
   useEffect(() => {
     dispatch(tourList());
@@ -33,7 +35,9 @@ const TourList = () => {
     const iconObj = iconsList.find(
       (icon) => icon.label.toLowerCase() === amenity.toLowerCase()
     );
-    return iconObj ? React.cloneElement(iconObj.icon, { sx: { fontSize: '1rem', verticalAlign: 'middle', mr: 0.5 }}) : null;
+    return iconObj
+      ? React.cloneElement(iconObj.icon, { sx: { fontSize: '1rem', verticalAlign: 'middle', mr: 0.5 } })
+      : null;
   };
 
   const handleUpdate = (id) => {
@@ -41,131 +45,185 @@ const TourList = () => {
   };
 
   const handleAddNew = () => {
-    navigate('/add-tour-data'); // Assuming this is the route to add a new tour
+    navigate('/add-tour-data');
   };
 
+  // Multi-field filter logic: applies both searchId & searchAgency
+  const filteredData = Array.isArray(data)
+    ? data.filter(pkg =>
+        (!searchId || String(pkg._id).toLowerCase().includes(searchId.toLowerCase())) &&
+        (!searchAgency || String(pkg.travelAgencyName).toLowerCase().includes(searchAgency.toLowerCase()))
+      )
+    : [];
+
   const columns = [
-    { field: '_id', headerName: 'ID', width: 20 },
-    { field: 'travelAgencyName', headerName: 'Agency Name', width: 150 },
-    { field: 'nights', headerName: 'Nights', width: 70, align: 'center', headerAlign: 'center' },
-    { field: 'days', headerName: 'Days', width: 50, align: 'center', headerAlign: 'center' },
-    { 
-        field: 'price', 
-        headerName: 'Price', 
-        width: 120,
-        renderCell: (params) => `₹${params.value.toLocaleString('en-IN')}`
+    { field: 'agencyId', headerName: 'ID', width: 150 },
+    { field: 'travelAgencyName', headerName: 'Agency', width: 170 },
+    { field: 'nights', headerName: 'Nights', width: 80, align: 'center', headerAlign: 'center' },
+    { field: 'days', headerName: 'Days', width: 80, align: 'center', headerAlign: 'center' },
+    {
+      field: 'price',
+      headerName: 'Price',
+      width: 120,
+      renderCell: (params) => (
+        <Typography color="primary" fontWeight="bold">
+          ₹{params.value.toLocaleString('en-IN')}
+        </Typography>
+      ),
     },
     {
       field: 'amenities',
       headerName: 'Amenities',
-      width: 200,
+      width: 220,
       sortable: false,
       renderCell: (params) => (
-        <Box sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <Stack direction="row" spacing={1}>
           {params.value?.slice(0, 3).map((amenity, idx) => (
-            <span key={idx} style={{ marginRight: '8px' }}>
+            <Box key={idx} sx={{
+              display: 'flex',
+              alignItems: 'center',
+              bgcolor: 'grey.100',
+              px: 1,
+              py: 0.5,
+              borderRadius: 2
+            }}>
               {getAmenityIcon(amenity)}
-              <Typography variant="caption" sx={{ verticalAlign: 'middle' }}>{amenity}</Typography>
-            </span>
+              <Typography variant="caption" sx={{ ml: 0.5 }}>{amenity}</Typography>
+            </Box>
           ))}
-        </Box>
+        </Stack>
       ),
     },
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 150,
+      width: 170,
       sortable: false,
       align: 'center',
       headerAlign: 'center',
       renderCell: (params) => (
         <Tooltip title="Edit this tour">
-          <Button 
-            variant="outlined" 
-            size="small" 
+          <Button
+            variant="contained"
+            size="small"
+            color="secondary"
             startIcon={<Edit />}
             onClick={() => handleUpdate(params.row._id)}
+            sx={{ boxShadow: 2 }}
           >
-            View & Update
+            Update
           </Button>
         </Tooltip>
       ),
     },
   ];
 
-  const handleSearchChange = (event) => {
-    setSearchText(event.target.value);
-  };
-
-  const filteredData = Array.isArray(data) ? data.filter((pkg) =>
-    Object.values(pkg).some((val) =>
-      String(val).toLowerCase().includes(searchText.toLowerCase())
-    )
-  ) : [];
-
   return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h4" fontWeight="bold">Tour Packages</Typography>
-            <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={handleAddNew}
-            >
-                Add New Tour
-            </Button>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Paper elevation={6} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 5 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={2} mb={3}>
+          <Typography variant="h4" fontWeight="bold" sx={{ color: 'primary.main', letterSpacing: 1 }}>
+            Tour Packages
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<Add />}
+            onClick={handleAddNew}
+            sx={{
+              borderRadius: 3,
+              px: 3,
+              textTransform: 'none',
+              fontWeight: 'bold',
+              boxShadow: 2,
+              '&:hover': { background: 'linear-gradient(90deg,#1976d2,#42a5f5)' }
+            }}
+          >
+            Add Tour
+          </Button>
+        </Stack>
+        {/* Advanced search bar section */}
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="flex-end" alignItems="center" mb={2}>
+          <TextField
+            label="Search by ID"
+            variant="outlined"
+            size="small"
+            value={searchId}
+            onChange={e => setSearchId(e.target.value)}
+            placeholder="Enter Tour ID"
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><Search /></InputAdornment>,
+              endAdornment: (
+                <IconButton onClick={() => setSearchId('')} style={{ visibility: searchId ? "visible" : "hidden" }} size="small">
+                  <Clear />
+                </IconButton>
+              ),
+            }}
+            sx={{
+              minWidth: { xs: 120, sm: 160 },
+              bgcolor: 'grey.100',
+              borderRadius: 2,
+            }}
+          />
+          <TextField
+            label="Search by Agency"
+            variant="outlined"
+            size="small"
+            value={searchAgency}
+            onChange={e => setSearchAgency(e.target.value)}
+            placeholder="Agency Name"
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><Search /></InputAdornment>,
+              endAdornment: (
+                <IconButton onClick={() => setSearchAgency('')} style={{ visibility: searchAgency ? "visible" : "hidden" }} size="small">
+                  <Clear />
+                </IconButton>
+              ),
+            }}
+            sx={{
+              minWidth: { xs: 130, sm: 200 },
+              bgcolor: 'grey.100',
+              borderRadius: 2,
+            }}
+          />
+        </Stack>
+        <Box sx={{
+          height: { xs: 440, md: 650 },
+          width: "100%",
+          bgcolor: 'grey.50',
+          borderRadius: 3,
+          boxShadow: 1,
+        }}>
+          <DataGrid
+            rows={filteredData}
+            columns={columns}
+            loading={loading}
+            getRowId={row => row._id}
+            pageSizeOptions={[10, 25, 50]}
+            initialState={{
+              pagination: { paginationModel: { pageSize: 10, page: 0 } },
+            }}
+            slots={{ toolbar: GridToolbar }}
+            sx={{
+              border: 'none',
+              '& .MuiDataGrid-cell': {
+                borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+                py: 1,
+              },
+              '& .MuiDataGrid-columnHeaders': {
+                bgcolor: 'grey.200',
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                letterSpacing: 0.5,
+              },
+              '& .MuiDataGrid-row:hover': {
+                bgcolor: 'grey.100',
+                boxShadow: 1,
+              },
+            }}
+          />
         </Box>
-        <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
-            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                 <TextField
-                    variant="outlined"
-                    size="small"
-                    value={searchText}
-                    onChange={handleSearchChange}
-                    placeholder="Search tours..."
-                    InputProps={{
-                    startAdornment: <InputAdornment position="start"><Search /></InputAdornment>,
-                    endAdornment: (
-                      <IconButton
-                        onClick={() => setSearchText("")}
-                        style={{ visibility: searchText ? "visible" : "hidden" }}
-                        size="small"
-                      >
-                        <Clear />
-                      </IconButton>
-                    ),
-                  }}
-                />
-            </Box>
-
-            <Box sx={{ height: 650, width: "100%" }}>
-                <DataGrid
-                    rows={filteredData}
-                    columns={columns}
-                    loading={loading}
-                    getRowId={(row) => row._id}
-                    pageSizeOptions={[10, 25, 50]}
-                    initialState={{
-                        pagination: {
-                          paginationModel: { pageSize: 10, page: 0 },
-                        },
-                    }}
-                    slots={{
-                        toolbar: GridToolbar,
-                    }}
-                    sx={{
-                        border: 'none',
-                        '& .MuiDataGrid-cell': {
-                            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
-                        },
-                        '& .MuiDataGrid-columnHeaders': {
-                            bgcolor: 'grey.100',
-                            fontWeight: 'bold',
-                        },
-                    }}
-                />
-            </Box>
-        </Paper>
+      </Paper>
     </Container>
   );
 };

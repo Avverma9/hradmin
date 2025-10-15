@@ -111,7 +111,7 @@ const BookingDetail = () => {
         return null;
     }
   };
-
+console.log("role",role)
   // Loading skeleton component
   if (!booking) {
     return (
@@ -288,7 +288,7 @@ const BookingDetail = () => {
                   />
                 </ListItem>
 
-                {role !== "PMS" && role !== "TMS" && (
+                {(role === "Admin" || role === "Developer") && (
                   <>
                     <ListItem sx={{ px: 0 }}>
                       <ListItemIcon>

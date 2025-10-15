@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from "react";
-import { FaSmile, FaPaperclip, FaPaperPlane, FaSearch, FaBell, FaPhone, FaVideo, FaEllipsisV } from "react-icons/fa";
+import { FaSmile, FaPaperclip, FaPaperPlane, FaSearch, FaBell, FaPhone, FaVideo, FaEllipsisV, FaTimes } from "react-icons/fa";
 import Picker from "emoji-picker-react";
 import { useDispatch, useSelector } from "react-redux";
 import { getPartnerById } from "src/components/redux/reducers/partner";
@@ -14,469 +13,9 @@ import {
 } from "src/components/redux/reducers/messenger/messenger";
 import { localUrl, userId, userName } from "../../../utils/util";
 import { toast } from "react-toastify";
-
-// Styles for the entire messenger app
-const styles = {
-messengerWrapper: {
-  display: 'flex',
-  position: 'fixed',
-  width: '100%',      // ✅ Full available width
-  height: '90vh',     // Use 100vh if you want full viewport height
-  backgroundColor: '#f0f2f5',
-  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-  overflow: 'hidden',
-},
+import { styles } from "./styles";
 
 
-  // Sidebar Styles
-  sidebar: {
-    width: '340px',
-    backgroundColor: '#ffffff',
-    borderRight: '1px solid #e4e6ea',
-    display: 'flex',
-    flexDirection: 'column',
-    boxShadow: '2px 0 10px rgba(0,0,0,0.08)'
-  },
-
-  profileSection: {
-    padding: '20px',
-    borderBottom: '1px solid #e4e6ea',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    backgroundColor: '#fff'
-  },
-
-  profileAvatar: {
-    width: '44px',
-    height: '44px',
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: 'white',
-    fontSize: '18px',
-    fontWeight: '600'
-  },
-
-  profileInfo: {
-    flex: 1
-  },
-
-  profileName: {
-    fontSize: '16px',
-    fontWeight: '600',
-    color: '#1c1e21',
-    margin: 0
-  },
-
-  status: {
-    fontSize: '12px',
-    color: '#65676b',
-    margin: '2px 0 0 0'
-  },
-
-  notificationContainer: {
-    position: 'relative'
-  },
-
-  bellIcon: {
-    fontSize: '18px',
-    color: '#65676b',
-    cursor: 'pointer',
-    padding: '8px',
-    borderRadius: '50%',
-    transition: 'all 0.2s ease'
-  },
-
-  searchBar: {
-    margin: '16px 20px',
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center'
-  },
-
-  searchInput: {
-    width: '100%',
-    padding: '12px 40px 12px 16px',
-    border: '1px solid #e4e6ea',
-    borderRadius: '20px',
-    fontSize: '14px',
-    outline: 'none',
-    backgroundColor: '#f0f2f5',
-    transition: 'all 0.2s ease'
-  },
-
-  searchIcon: {
-    position: 'absolute',
-    right: '14px',
-    color: '#65676b',
-    fontSize: '14px'
-  },
-
-  tabButtons: {
-    display: 'flex',
-    margin: '0 20px',
-    marginBottom: '16px'
-  },
-
-  tabButton: {
-    flex: 1,
-    padding: '10px',
-    border: 'none',
-    backgroundColor: 'transparent',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    borderRadius: '8px',
-    transition: 'all 0.2s ease',
-    color: '#65676b'
-  },
-
-  activeTab: {
-    backgroundColor: '#e7f3ff',
-    color: '#1877f2'
-  },
-
-  chatList: {
-    flex: 1,
-    overflowY: 'auto',
-    padding: '0 8px'
-  },
-
-  chatItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '12px 16px',
-    margin: '2px 0',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease'
-  },
-
-  activeChatItem: {
-    backgroundColor: '#e7f3ff'
-  },
-
-  avatar: {
-    width: '48px',
-    height: '48px',
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: 'white',
-    fontSize: '16px',
-    fontWeight: '600',
-    flexShrink: 0
-  },
-
-  chatInfo: {
-    flex: 1,
-    minWidth: 0
-  },
-
-  chatName: {
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#1c1e21',
-    margin: '0 0 2px 0',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis'
-  },
-
-  lastMessage: {
-    fontSize: '13px',
-    color: '#65676b',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis'
-  },
-
-  time: {
-    fontSize: '11px',
-    color: '#65676b',
-    flexShrink: 0
-  },
-
-  // Chat Area Styles
-  chatArea: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    backgroundColor: '#ffffff',
-    minHeight: 0 // Prevents flex child from overflowing parent
-  },
-
-  chatPanel: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden' // Prevents the panel from growing beyond its flex container
-  },
-
-  chatHeader: {
-    padding: '16px 20px',
-    borderBottom: '1px solid #e4e6ea',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
-  },
-
-  chatHeaderInfo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px'
-  },
-
-  chatHeaderAvatar: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: 'white',
-    fontSize: '14px',
-    fontWeight: '600'
-  },
-
-  chatHeaderDetails: {
-    display: 'flex',
-    flexDirection: 'column'
-  },
-
-  chatHeaderName: {
-    fontSize: '16px',
-    fontWeight: '600',
-    color: '#1c1e21',
-    margin: 0
-  },
-
-  activeStatus: {
-    fontSize: '12px',
-    color: '#42b883',
-    margin: '2px 0 0 0'
-  },
-
-  inactiveStatus: {
-    fontSize: '12px',
-    color: '#65676b',
-    margin: '2px 0 0 0'
-  },
-
-  chatIcons: {
-    display: 'flex',
-    gap: '8px'
-  },
-
-  iconBtn: {
-    padding: '8px',
-    border: 'none',
-    backgroundColor: 'transparent',
-    borderRadius: '50%',
-    cursor: 'pointer',
-    color: '#65676b',
-    fontSize: '16px',
-    transition: 'all 0.2s ease'
-  },
-
-  chatMessages: {
-    flex: 1,
-    overflowY: 'auto',
-    padding: '16px 20px',
-    backgroundColor: '#f8f9fa'
-  },
-
-  noMessagesContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    color: '#65676b'
-  },
-
-  noMessagesImage: {
-    width: '120px',
-    height: '120px',
-    opacity: 0.6
-  },
-
-  message: {
-    marginBottom: '16px',
-    display: 'flex',
-    flexDirection: 'column'
-  },
-
-  messageRight: {
-    alignItems: 'flex-end'
-  },
-
-  messageLeft: {
-    alignItems: 'flex-start'
-  },
-
-  bubble: {
-    maxWidth: '70%',
-    padding: '12px 16px',
-    borderRadius: '18px',
-    position: 'relative',
-    wordWrap: 'break-word'
-  },
-
-  bubbleRight: {
-    backgroundColor: '#0084ff',
-    color: 'white',
-    borderBottomRightRadius: '4px'
-  },
-
-  bubbleLeft: {
-    backgroundColor: '#ffffff',
-    color: '#1c1e21',
-    border: '1px solid #e4e6ea',
-    borderBottomLeftRadius: '4px'
-  },
-
-  senderName: {
-    fontSize: '10px',
-    marginBottom: '4px',
-    opacity: 0.7
-  },
-
-  messageText: {
-    fontSize: '14px',
-    lineHeight: '1.4',
-    margin: 0
-  },
-
-  messageImage: {
-    maxWidth: '200px',
-    borderRadius: '8px',
-    marginBottom: '8px'
-  },
-
-  timestamp: {
-    fontSize: '11px',
-    color: '#65676b',
-    margin: '4px 8px 0',
-    alignSelf: 'flex-end'
-  },
-
-  // Chat Input Styles
-  chatInputWrapper: {
-    borderTop: '1px solid #e4e6ea',
-    backgroundColor: '#ffffff',
-    padding: '16px 20px'
-  },
-
-  previewContainer: {
-    display: 'flex',
-    gap: '8px',
-    marginBottom: '12px',
-    flexWrap: 'wrap'
-  },
-
-  previewWrapper: {
-    position: 'relative',
-    borderRadius: '8px',
-    overflow: 'hidden'
-  },
-
-  previewImg: {
-    width: '60px',
-    height: '60px',
-    objectFit: 'cover',
-    borderRadius: '8px'
-  },
-
-  removeBtn: {
-    position: 'absolute',
-    top: '-6px',
-    right: '-6px',
-    width: '20px',
-    height: '20px',
-    border: 'none',
-    borderRadius: '50%',
-    backgroundColor: '#f02849',
-    color: 'white',
-    fontSize: '12px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-
-  chatInput: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '8px 16px',
-    border: '1px solid #e4e6ea',
-    borderRadius: '20px',
-    backgroundColor: '#f0f2f5'
-  },
-
-  messageInput: {
-    flex: 1,
-    border: 'none',
-    outline: 'none',
-    backgroundColor: 'transparent',
-    fontSize: '14px',
-    padding: '8px 0'
-  },
-
-  inputIcon: {
-    fontSize: '18px',
-    color: '#65676b',
-    cursor: 'pointer',
-    padding: '4px',
-    borderRadius: '50%',
-    transition: 'all 0.2s ease'
-  },
-
-  sendBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    padding: '8px 16px',
-    backgroundColor: '#0084ff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '20px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease'
-  },
-
-  emojiPicker: {
-    position: 'absolute',
-    bottom: '80px',
-    right: '20px',
-    zIndex: 1000,
-    borderRadius: '12px',
-    overflow: 'hidden',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
-  },
-
-  // Utility styles
-  hide: {
-    display: 'none'
-  }
-};
-
-// ChatInput Component
 const ChatInput = ({
     message,
     setMessage,
@@ -487,6 +26,7 @@ const ChatInput = ({
     setFilePreviews,
 }) => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [isTyping, setIsTyping] = useState(false);
     const fileInputRef = useRef(null);
 
     const handleEmojiClick = (emojiData) => {
@@ -498,6 +38,11 @@ const ChatInput = ({
             e.preventDefault();
             onSend(e);
         }
+    };
+
+    const handleInputChange = (e) => {
+        setMessage(e.target.value);
+        setIsTyping(e.target.value.length > 0);
     };
 
     const handleFileChange = (e) => {
@@ -544,19 +89,23 @@ const ChatInput = ({
                                 onClick={() => handleRemoveFile(index)}
                                 aria-label="Remove image"
                             >
-                                ×
+                                <FaTimes />
                             </button>
                         </div>
                     ))}
                 </div>
             )}
 
-            <div style={styles.chatInput}>
+            <div style={{
+                ...styles.chatInput,
+                borderColor: isTyping ? '#667eea' : '#e2e8f0',
+                backgroundColor: isTyping ? '#ffffff' : '#f8fafc'
+            }}>
                 <input
                     type="text"
-                    placeholder="Type a message..."
+                    placeholder="Type your message..."
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
                     style={styles.messageInput}
                     name="message"
@@ -578,13 +127,18 @@ const ChatInput = ({
                         ref={fileInputRef}
                         style={{ display: "none" }}
                         onChange={handleFileChange}
+                        accept="image/*"
                     />
                 </label>
                 <button
-                    style={styles.sendBtn}
+                    style={{
+                        ...styles.sendBtn,
+                        opacity: (message.trim() || selectedFiles.length > 0) ? 1 : 0.6
+                    }}
                     onClick={onSend}
                     type="button"
                     aria-label="Send message"
+                    disabled={!message.trim() && selectedFiles.length === 0}
                 >
                     <FaPaperPlane /> Send
                 </button>
@@ -592,17 +146,25 @@ const ChatInput = ({
 
             {showEmojiPicker && (
                 <div style={styles.emojiPicker}>
-                    <Picker onEmojiClick={handleEmojiClick} height={350} width={280} />
+                    <Picker 
+                        onEmojiClick={handleEmojiClick} 
+                        height={380} 
+                        width={320}
+                        theme="light"
+                        previewConfig={{
+                            showPreview: false
+                        }}
+                    />
                 </div>
             )}
         </div>
     );
 };
 
-// ChatPanel Component
 const ChatPanel = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const dispatch = useDispatch();
   const socket = useRef(null);
@@ -613,11 +175,14 @@ const ChatPanel = () => {
 
   useEffect(() => {
     if (receiverId) {
+      setIsLoading(true);
       const payload = {
         userId1: receiverId,
         userId2: userId,
       };
-      dispatch(getMessages(payload));
+      dispatch(getMessages(payload)).finally(() => {
+        setIsLoading(false);
+      });
     }
   }, [receiverId, dispatch]);
 
@@ -665,6 +230,19 @@ const ChatPanel = () => {
     msg.content.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  if (!receiverId) {
+    return (
+      <div style={styles.chatArea}>
+        <div style={styles.emptyState}>
+          <div style={styles.emptyStateTitle}>Welcome to Messenger</div>
+          <div style={styles.emptyStateText}>
+            Select a conversation to start messaging
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.chatPanel}>
       <div style={styles.chatHeader}>
@@ -674,7 +252,7 @@ const ChatPanel = () => {
           </div>
           <div style={styles.chatHeaderDetails}>
             <div style={styles.chatHeaderName}>
-              {partner?.name === userName ? "You" : partner?.name}
+              {partner?.name === userName ? "You" : partner?.name || "User"}
             </div>
             {messages.length > 0 && (
               <div style={partner?.isOnline ? styles.activeStatus : styles.inactiveStatus}>
@@ -685,12 +263,14 @@ const ChatPanel = () => {
         </div>
 
         <div style={styles.chatIcons}>
-          <button style={styles.iconBtn}>
+          {/* 
+          <button style={styles.iconBtn} title="Voice call">
             <FaPhone />
           </button>
-          <button style={styles.iconBtn}>
+          <button style={styles.iconBtn} title="Video call">
             <FaVideo />
-          </button>
+          </button> 
+          */}
           <button
             style={styles.iconBtn}
             onClick={() => setShowSearch(!showSearch)}
@@ -698,36 +278,38 @@ const ChatPanel = () => {
           >
             <FaSearch />
           </button>
-          <button style={styles.iconBtn}>
+          {/* <button style={styles.iconBtn} title="More options">
             <FaEllipsisV />
-          </button>
+          </button> */}
         </div>
       </div>
 
       {showSearch && (
-        <input
-          type="text"
-          style={{
-            ...styles.searchInput,
-            margin: '12px 20px',
-            display: showSearch ? 'block' : 'none'
-          }}
-          placeholder="Search messages..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <div style={{ padding: '16px 28px', backgroundColor: '#f8fafc' }}>
+          <input
+            type="text"
+            style={styles.searchInput}
+            placeholder="Search messages..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       )}
 
       <div style={styles.chatMessages}>
-        {messages.length === 0 ? (
+        {isLoading ? (
+          <div style={styles.loading}>
+            Loading messages...
+          </div>
+        ) : messages.length === 0 ? (
           <div style={styles.noMessagesContainer}>
             <img
               src="/assets/messenger.gif"
               style={styles.noMessagesImage}
               alt="No messages"
             />
-            <p>No messages yet</p>
-            <p>Start a conversation!</p>
+            <div style={styles.emptyStateTitle}>No messages yet</div>
+            <div style={styles.emptyStateText}>Start a conversation!</div>
           </div>
         ) : (
           <>
@@ -750,7 +332,7 @@ const ChatPanel = () => {
                     ...(isCurrentUser ? styles.bubbleRight : styles.bubbleLeft)
                   }}>
                     <div style={styles.senderName}>
-                      {msg.sender === userId ? "You" : partner?.name}
+                      {msg.sender === userId ? "You" : partner?.name || "User"}
                     </div>
                     {msg?.images?.length > 0 && (
                       <img
@@ -775,16 +357,13 @@ const ChatPanel = () => {
   );
 };
 
-// Sidebar Component
 const Sidebar = ({ activeTab, setActiveTab, searchQuery, setSearchQuery }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const dispatch = useDispatch();
 
   const contacts = useSelector((state) => state.messenger.contacts);
   const chats = useSelector((state) => state.messenger.chats);
-  const activeReceiverId = useSelector(
-    (state) => state.messenger.activeReceiverId
-  );
+  const activeReceiverId = useSelector((state) => state.messenger.activeReceiverId);
 
   useEffect(() => {
     if (userId) {
@@ -804,18 +383,32 @@ const Sidebar = ({ activeTab, setActiveTab, searchQuery, setSearchQuery }) => {
   const renderTickIcon = () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="12"
-      height="12"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#0084ff"
-      strokeWidth="2"
+      stroke="#667eea"
+      strokeWidth="2.5"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );
+
+  const getAvatarGradient = (index) => {
+    const gradients = [
+      'linear-gradient(135deg, #667eea, #764ba2)',
+      'linear-gradient(135deg, #f093fb, #f5576c)',
+      'linear-gradient(135deg, #4facfe, #00f2fe)',
+      'linear-gradient(135deg, #43e97b, #38f9d7)',
+      'linear-gradient(135deg, #fa709a, #fee140)',
+      'linear-gradient(135deg, #a8edea, #fed6e3)',
+      'linear-gradient(135deg, #ff9a9e, #fecfef)',
+      'linear-gradient(135deg, #a18cd1, #fbc2eb)'
+    ];
+    return gradients[index % gradients.length];
+  };
 
   return (
     <div style={styles.sidebar}>
@@ -824,21 +417,20 @@ const Sidebar = ({ activeTab, setActiveTab, searchQuery, setSearchQuery }) => {
           {userName ? userName.charAt(0).toUpperCase() : 'U'}
         </div>
         <div style={styles.profileInfo}>
-          <div style={styles.profileName}>{userName}</div>
+          <div style={styles.profileName}>{userName || 'User'}</div>
           <div style={styles.status}>Active</div>
         </div>
-        <div style={styles.notificationContainer}>
-          <FaBell
-            style={{
-              ...styles.bellIcon,
-              backgroundColor: showNotifications ? '#e7f3ff' : 'transparent'
-            }}
-            onClick={() => setShowNotifications(!showNotifications)}
-          />
-        </div>
+        <FaBell
+          style={{
+            ...styles.bellIcon,
+            backgroundColor: showNotifications ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+          }}
+          onClick={() => setShowNotifications(!showNotifications)}
+        />
       </div>
 
       <div style={styles.searchBar}>
+        <FaSearch style={styles.searchIcon} />
         <input
           type="text"
           placeholder="Search conversations..."
@@ -846,7 +438,6 @@ const Sidebar = ({ activeTab, setActiveTab, searchQuery, setSearchQuery }) => {
           onChange={(e) => setSearchQuery(e.target.value)}
           style={styles.searchInput}
         />
-        <FaSearch style={styles.searchIcon} />
       </div>
 
       <div style={styles.tabButtons}>
@@ -867,55 +458,47 @@ const Sidebar = ({ activeTab, setActiveTab, searchQuery, setSearchQuery }) => {
       {activeTab === "Chat" && (
         <div style={styles.chatList}>
           {filteredChats.length === 0 ? (
-            <div style={{ padding: '40px 20px', textAlign: 'center', color: '#65676b' }}>
-              <p>No recent chats</p>
-              <p style={{ fontSize: '12px' }}>Start a new conversation from Contacts</p>
+            <div style={styles.emptyState}>
+              <div style={styles.emptyStateTitle}>No recent chats</div>
+              <div style={styles.emptyStateText}>
+                Start a new conversation from Contacts
+              </div>
             </div>
           ) : (
             filteredChats.map((chat, index) => (
-              <div key={chat.receiver}>
-                <div
-                  style={{
-                    ...styles.chatItem,
-                    ...(activeReceiverId === chat.receiverId ? styles.activeChatItem : {}),
-                    ':hover': { backgroundColor: '#f2f3f5' }
-                  }}
-                  onClick={() => dispatch(setActiveReceiverId(chat.receiverId))}
-                >
-                  <div style={{
-                    ...styles.avatar,
-                    background: `linear-gradient(135deg, ${['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'][index % 5]}, ${['#ee5a24', '#00d2d3', '#3867d6', '#5f27cd', '#ff9ff3'][index % 5]})`
-                  }}>
-                    {chat?.name ? chat.name.charAt(0).toUpperCase() : 'U'}
-                  </div>
+              <div
+                key={chat.receiver || index}
+                style={{
+                  ...styles.chatItem,
+                  ...(activeReceiverId === chat.receiverId ? styles.activeChatItem : {})
+                }}
+                onClick={() => dispatch(setActiveReceiverId(chat.receiverId))}
+              >
+                <div style={{
+                  ...styles.avatar,
+                  background: getAvatarGradient(index)
+                }}>
+                  {chat?.name ? chat.name.charAt(0).toUpperCase() : 'U'}
+                </div>
 
-                  <div style={styles.chatInfo}>
-                    <div style={styles.chatName}>
-                      {chat.name === userName ? "You" : chat?.name}
-                    </div>
-                    <div style={styles.lastMessage}>
-                      {chat.receiverId !== userId && renderTickIcon()}
-                      <span style={{ marginLeft: chat.receiverId !== userId ? '4px' : '0' }}>
-                        {chat.content.length > 30 ? chat.content.substring(0, 30) + '...' : chat.content}
-                      </span>
-                    </div>
+                <div style={styles.chatInfo}>
+                  <div style={styles.chatName}>
+                    {chat.name === userName ? "You" : chat?.name || "User"}
                   </div>
-
-                  <div style={styles.time}>
-                    {new Date(chat.timestamp).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                  <div style={styles.lastMessage}>
+                    {chat.receiverId !== userId && renderTickIcon()}
+                    <span style={{ marginLeft: chat.receiverId !== userId ? '8px' : '0' }}>
+                      {chat.content.length > 32 ? chat.content.substring(0, 32) + '...' : chat.content}
+                    </span>
                   </div>
                 </div>
 
-                {index < filteredChats.length - 1 && (
-                  <div style={{ 
-                    height: '1px', 
-                    backgroundColor: '#f0f2f5', 
-                    margin: '0 16px' 
-                  }} />
-                )}
+                <div style={styles.time}>
+                  {new Date(chat.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
               </div>
             ))
           )}
@@ -925,25 +508,28 @@ const Sidebar = ({ activeTab, setActiveTab, searchQuery, setSearchQuery }) => {
       {activeTab === "Contacts" && (
         <div style={styles.chatList}>
           {filteredContacts.length === 0 ? (
-            <div style={{ padding: '40px 20px', textAlign: 'center', color: '#65676b' }}>
-              <p>No contacts found</p>
+            <div style={styles.emptyState}>
+              <div style={styles.emptyStateTitle}>No contacts found</div>
+              <div style={styles.emptyStateText}>
+                {searchQuery ? 'Try a different search term' : 'Your contacts will appear here'}
+              </div>
             </div>
           ) : (
             filteredContacts.map((contact, index) => (
               <div
-                key={contact._id}
+                key={contact._id || index}
                 style={styles.chatItem}
                 onClick={() => dispatch(setActiveReceiverId(contact.userId))}
               >
                 <div style={{
                   ...styles.avatar,
-                  background: `linear-gradient(135deg, ${['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'][index % 5]}, ${['#764ba2', '#f093fb', '#00f2fe', '#0fa2e6', '#fee140'][index % 5]})`
+                  background: getAvatarGradient(index)
                 }}>
                   {contact?.name ? contact.name.charAt(0).toUpperCase() : 'U'}
                 </div>
                 <div style={styles.chatInfo}>
-                  <div style={styles.chatName}>{contact.name}</div>
-                  <div style={styles.lastMessage}>{contact.mobile}</div>
+                  <div style={styles.chatName}>{contact.name || 'User'}</div>
+                  <div style={styles.lastMessage}>{contact.mobile || 'No phone'}</div>
                 </div>
               </div>
             ))
@@ -954,13 +540,13 @@ const Sidebar = ({ activeTab, setActiveTab, searchQuery, setSearchQuery }) => {
   );
 };
 
-// Main Messenger Component
 const Messenger = () => {
     const [activeTab, setActiveTab] = useState("Contacts");
     const [searchQuery, setSearchQuery] = useState("");
     const [message, setMessage] = useState("");
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [filePreviews, setFilePreviews] = useState([]);
+    const [isSending, setIsSending] = useState(false);
 
     const dispatch = useDispatch();
     const receiverId = useSelector((state) => state.messenger.activeReceiverId);
@@ -997,6 +583,8 @@ const Messenger = () => {
         if (!message.trim() && selectedFiles.length === 0)
             return toast.error("Please enter a message or select a file.");
 
+        setIsSending(true);
+
         const formData = new FormData();
         formData.append("senderId", senderId);
         formData.append("receiverId", receiverId);
@@ -1019,9 +607,12 @@ const Messenger = () => {
             setMessage("");
             setSelectedFiles([]);
             setFilePreviews([]);
+            toast.success("Message sent!");
         } catch (error) {
             console.error("Error sending message:", error);
             toast.error("Failed to send message.");
+        } finally {
+            setIsSending(false);
         }
     };
 
@@ -1032,7 +623,6 @@ const Messenger = () => {
     };
 
     const handleMessageDeleted = (deletedId) => {
-        // Optional future enhancement
     };
 
     return (

@@ -1,7 +1,7 @@
 import { toast } from "react-toastify";
 import * as React from "react";
 import { DataGrid, GridToolbarContainer, GridToolbarExport } from "@mui/x-data-grid";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import {
@@ -19,8 +19,10 @@ import {
     InputLabel,
     Chip,
     Tooltip,
+    IconButton,
+    InputAdornment,
 } from "@mui/material";
-import { Refresh, Search, FileDownload } from '@mui/icons-material';
+import { Refresh, Search, FileDownload, Clear } from '@mui/icons-material';
 
 import { fDate } from "../../../../utils/format-time";
 import BookingUpdateModal from "../booking-update-modal";
@@ -28,16 +30,32 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchFilteredBookings, searchBooking } from "src/components/redux/reducers/booking";
 import { hotelEmail, role } from "../../../../utils/util";
 
+// A well-defined, reusable status chip component
+const RenderStatusChip = ({ status }) => {
+    const statusMap = {
+        Confirmed: { color: 'success', label: 'Confirmed' },
+        Pending: { color: 'warning', label: 'Pending' },
+        Cancelled: { color: 'error', label: 'Cancelled' },
+        'Checked-out': { color: 'info', label: 'Checked-out' },
+        'Checked-in': { color: 'primary', label: 'Checked-in' },
+    };
+    const { color, label } = statusMap[status] || { color: 'default', label: status };
+    return <Chip label={label} color={color} size="small" variant="filled" />;
+};
+
+// Custom Toolbar for a cleaner and more organized structure
 function CustomToolbar(props) {
     const {
-        bookingId, setBookingId, handleSearch,
+        bookingId, setBookingId,
         status, setStatus,
         filterDate, setFilterDate,
-        handleRefresh
+        handleSearch, handleRefresh,
+        isSearchActive
     } = props;
 
     return (
-        <GridToolbarContainer sx={{ p: 2, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+        <GridToolbarContainer sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+            {/* Left side: Filters and Search */}
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
                 <TextField
                     label="Search by Booking ID"
@@ -46,6 +64,15 @@ function CustomToolbar(props) {
                     value={bookingId}
                     onChange={(e) => setBookingId(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    InputProps={{
+                        endAdornment: bookingId && (
+                            <InputAdornment position="end">
+                                <IconButton size="small" onClick={() => setBookingId('')} aria-label="clear search">
+                                    <Clear fontSize="small" />
+                                </IconButton>
+                            </InputAdornment>
+                        )
+                    }}
                 />
                 <FormControl size="small" sx={{ minWidth: 150 }}>
                     <InputLabel>Status</InputLabel>
@@ -58,6 +85,8 @@ function CustomToolbar(props) {
                         <MenuItem value="Confirmed">Confirmed</MenuItem>
                         <MenuItem value="Pending">Pending</MenuItem>
                         <MenuItem value="Cancelled">Cancelled</MenuItem>
+                        <MenuItem value="Checked-in">Checked-in</MenuItem>
+                        <MenuItem value="Checked-out">Checked-out</MenuItem>
                     </Select>
                 </FormControl>
                 <TextField
@@ -74,17 +103,15 @@ function CustomToolbar(props) {
                     Search
                 </Button>
             </Box>
+
+            {/* Right side: Actions */}
             <Box sx={{ display: 'flex', gap: 1 }}>
                 <GridToolbarExport
                     csvOptions={{ fileName: `bookings-export-${new Date().toLocaleDateString()}` }}
-                    component={Button}
-                    startIcon={<FileDownload />}
-                >
-                    Export
-                </GridToolbarExport>
-                <Tooltip title="Clear filters and refresh">
+                />
+                <Tooltip title={isSearchActive ? "Clear filters and refresh" : "Refresh data"}>
                     <Button variant="outlined" onClick={handleRefresh} startIcon={<Refresh />}>
-                        Refresh
+                        {isSearchActive ? "Clear" : "Refresh"}
                     </Button>
                 </Tooltip>
             </Box>
@@ -92,153 +119,151 @@ function CustomToolbar(props) {
     );
 }
 
-const renderStatusChip = (statusVal) => {
-    const statusMap = {
-        Confirmed: { color: 'success', label: 'Confirmed' },
-        Pending: { color: 'warning', label: 'Pending' },
-        Cancelled: { color: 'error', label: 'Cancelled' },
-        'Checked-out': { color: 'info', label: 'Checked-out' },
-        'Checked-in': { color: 'primary', label: 'Checked-in' },
-    };
-    const { color, label } = statusMap[statusVal] || { color: 'default', label: statusVal };
-    return <Chip label={label} color={color} size="small" variant="filled"/>;
-};
-
 export default function SuperAdminBookingsView() {
+    // State
     const [bookingId, setBookingId] = useState("");
     const [status, setStatus] = useState("");
     const [filterDate, setFilterDate] = useState("");
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [openModal, setOpenModal] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
 
+    // Redux & Navigation
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    
     const filtered = useSelector((state) => state.booking.filtered) || [];
-    const search = useSelector((state) => state.booking.search) || [];
-    
-    
-    
-    const bookings = search.length ? search : filtered;
+    const searchResults = useSelector((state) => state.booking.search) || [];
 
-    const [paginationModel, setPaginationModel] = useState({
-        page: 0,
-        pageSize: 25,
-    });
+    const isSearchActive = bookingId || status || filterDate;
+    const bookings = searchResults.length ? searchResults : filtered;
 
-    const handleView = (id) => navigate(`/your-booking-details/${id}`);
+    // Handlers
+    const handleView = useCallback((id) => navigate(`/your-booking-details/${id}`), [navigate]);
 
-    const handleUpdate = (booking) => {
+    const handleUpdate = useCallback((booking) => {
         setSelectedBooking(booking);
         setOpenModal(true);
-    };
+    }, []);
 
-    const columns = [
-        { field: "actions", headerName: "Actions", width: 180, sortable: false, renderCell: (params) => ( <Box display="flex" gap={1}> <Button variant="contained" size="small" onClick={() => handleView(params.row.bookingId)}>View</Button> <Button variant="contained" color="secondary" size="small" onClick={() => handleUpdate(params.row)}>Update</Button> </Box> ), },
-        { field: "bookingId", headerName: "Booking ID", width: 150 },
-        { field: "status", headerName: "Status", width: 120, renderCell: (params) => renderStatusChip(params.value) },
-        { field: "user", headerName: "User Name", width: 150, renderCell: (params) => params.row?.user?.name || "Not available"},
-        { field: "source", headerName: "Source", width: 130 , renderCell: (params) => params.row?.bookingSource},
-        { field: "mop", headerName: "Payment Mode", width: 130, renderCell: (params) => params.row?.pm },
-        { field: "checkInDate", headerName: "Check-In", width: 150, renderCell: (params) => fDate(params?.row?.checkInDate) },
-        { field: "checkOutDate", headerName: "Check-Out", width: 150, renderCell: (params) => fDate(params?.row?.checkOutDate) },
-        { field: "createdAt", headerName: "Booking Date", width: 150, renderCell: (params) => fDate(params?.row?.createdAt) },
-    ];
+    const handleSave = useCallback(() => {
+        setOpenModal(false);
+        setSelectedBooking(null);
+        // Refetch data after saving
+        dispatch(fetchFilteredBookings(`hotelEmail=${hotelEmail}`));
+    }, [dispatch]);
 
-    const rows = bookings.map(booking => ({ ...booking, id: booking._id || booking.bookingId, status: booking.bookingStatus, source: booking.bookingSource || 'Site', mop: booking.pm || 'Offline' }));
-    
-    useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true);
-            try {
+    const fetchData = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            if (bookingId.trim()) {
+                await dispatch(searchBooking(bookingId)).unwrap();
+            } else {
                 let filters = `hotelEmail=${hotelEmail}`;
                 if (status) filters += `&bookingStatus=${status}`;
                 if (filterDate) filters += `&date=${filterDate}`;
-                
                 await dispatch(fetchFilteredBookings(filters)).unwrap();
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            } finally {
-                setIsLoading(false);
             }
-        };
-
-        fetchData();
-    }, [dispatch, hotelEmail, status, filterDate]);
-
-    const handleSearch = async () => {
-        if (!bookingId.trim()) {
-            toast.info("Please enter a Booking ID to search.");
-            return;
-        }
-        setIsLoading(true);
-        try {
-            await dispatch(searchBooking(bookingId)).unwrap();
         } catch (error) {
-            console.error("Error searching:", error);
-            toast.error(error.message || "Search failed. Please try again.");
+            console.error("Error fetching data:", error);
+            toast.error(error.message || "Failed to fetch bookings.");
         } finally {
             setIsLoading(false);
         }
+    }, [dispatch, bookingId, status, filterDate]);
+
+    const handleSearch = () => {
+        fetchData();
     };
 
-    const handleRefresh = () => {
+    const handleRefresh = useCallback(() => {
         setBookingId('');
         setStatus('');
         setFilterDate('');
         dispatch({ type: "booking/clearSearch" });
-    };
+        // Fetch initial data after clearing
+        dispatch(fetchFilteredBookings(`hotelEmail=${hotelEmail}`));
+    }, [dispatch]);
 
-    const handleSave = () => {
-        setOpenModal(false);
-        setSelectedBooking(null);
-        handleRefresh();
-    };
-    
+    // Effects
+    useEffect(() => {
+        // Initial data fetch on component mount
+        dispatch(fetchFilteredBookings(`hotelEmail=${hotelEmail}`));
+    }, [dispatch]);
+
+    // Columns Definition
+    const columns = [
+        {
+            field: "actions",
+            headerName: "Actions",
+            width: 180,
+            sortable: false,
+            renderCell: (params) => (
+                <Box display="flex" gap={1}>
+                    <Button variant="contained" size="small" onClick={() => handleView(params.row.bookingId)}>
+                        View
+                    </Button>
+                    <Button variant="contained" color="secondary" size="small" onClick={() => handleUpdate(params.row)}>
+                        Update
+                    </Button>
+                </Box>
+            ),
+        },
+        { field: "bookingId", headerName: "Booking ID", width: 150 },
+        { field: "bookingStatus", headerName: "Status", width: 120, renderCell: (params) => <RenderStatusChip status={params.value} /> },
+        { field: "user", headerName: "User Name", width: 150, valueGetter: (value, row) => row?.user?.name || "N/A" },
+        { field: "bookingSource", headerName: "Source", width: 130 },
+        { field: "pm", headerName: "Payment Mode", width: 130 },
+        { field: "checkInDate", headerName: "Check-In", width: 150, renderCell: (params) => fDate(params.value) },
+        { field: "checkOutDate", headerName: "Check-Out", width: 150, renderCell: (params) => fDate(params.value) },
+        { field: "createdAt", headerName: "Booking Date", width: 150, renderCell: (params) => fDate(params.value) },
+    ];
+
+    const rows = bookings.map(booking => ({ ...booking, id: booking._id || booking.bookingId }));
     const disableEditFields = role === "Developer" || role === "TMS" || role === "Admin";
 
     return (
         <Container maxWidth="xl" sx={{ my: 4 }}>
-            <Card variant="outlined" sx={{ borderRadius: 2 }}>
+            <Card variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
                 <CardHeader
                     title="Manage Bookings"
                     subheader={`Found ${rows.length} bookings`}
                 />
                 <Divider />
-                
-                <CardContent>
-                    <DataGrid
-                        rows={rows}
-                        columns={columns}
-                        loading={isLoading}
-                        paginationModel={paginationModel}
-                        onPaginationModelChange={setPaginationModel}
-                        pageSizeOptions={[10, 25, 50, 100]}
-                        checkboxSelection
-                        disableRowSelectionOnClick
-                        autoHeight
-                        slots={{
-                            toolbar: CustomToolbar,
-                            noRowsOverlay: () => <Box sx={{ p: 4, textAlign: 'center' }}>No bookings found.</Box>,
-                        }}
-                        slotProps={{
-                            toolbar: {
-                                bookingId, setBookingId, handleSearch,
-                                status, setStatus,
-                                filterDate, setFilterDate,
-                                handleRefresh
-                            },
-                        }}
-                        sx={{
-                            border: 0,
-                            '& .MuiDataGrid-columnHeaders': {
-                                backgroundColor: (theme) => theme.palette.grey[100],
-                                fontWeight: 'bold',
-                            },
-                        }}
-                    />
-                </CardContent>
+                <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    loading={isLoading}
+                    paginationModel={paginationModel}
+                    onPaginationModelChange={setPaginationModel}
+                    pageSizeOptions={[10, 25, 50, 100]}
+                    checkboxSelection
+                    disableRowSelectionOnClick
+                    autoHeight
+                    slots={{
+                        toolbar: CustomToolbar,
+                        noRowsOverlay: () => <Box sx={{ p: 4, textAlign: 'center' }}>No bookings found.</Box>,
+                    }}
+                    slotProps={{
+                        toolbar: {
+                            bookingId, setBookingId,
+                            status, setStatus,
+                            filterDate, setFilterDate,
+                            handleSearch, handleRefresh,
+                            isSearchActive,
+                        },
+                    }}
+                    sx={{
+                        border: 0,
+                        '& .MuiDataGrid-columnHeaders': {
+                            backgroundColor: (theme) => theme.palette.grey[100],
+                            fontWeight: 'bold',
+                        },
+                        '& .MuiDataGrid-toolbarContainer': {
+                            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+                        },
+                    }}
+                />
             </Card>
 
             {selectedBooking && (

@@ -45,37 +45,37 @@ import AdminBookingUpdateModal from "./admin-booking-update";
 
 const BookingStatusChip = ({ status }) => {
   const statusStyles = {
-    Confirmed: { 
-      color: "success", 
+    Confirmed: {
+      color: "success",
       variant: "filled",
-      icon: "✓"
+      icon: "✓",
     },
-    Pending: { 
-      color: "warning", 
+    Pending: {
+      color: "warning",
       variant: "filled",
-      icon: "⏳"
+      icon: "⏳",
     },
-    Cancelled: { 
-      color: "error", 
+    Cancelled: {
+      color: "error",
       variant: "filled",
-      icon: "✗"
+      icon: "✗",
     },
-    "Checked-out": { 
-      color: "info", 
+    "Checked-out": {
+      color: "info",
       variant: "outlined",
-      icon: "📤"
+      icon: "📤",
     },
-    "Checked-in": { 
-      color: "primary", 
+    "Checked-in": {
+      color: "primary",
       variant: "filled",
-      icon: "🏨"
+      icon: "🏨",
     },
   };
 
-  const style = statusStyles[status] || { 
-    color: "default", 
+  const style = statusStyles[status] || {
+    color: "default",
     variant: "outlined",
-    icon: "?" 
+    icon: "?",
   };
 
   return (
@@ -84,10 +84,10 @@ const BookingStatusChip = ({ status }) => {
       color={style.color}
       variant={style.variant}
       size="small"
-      sx={{ 
+      sx={{
         fontWeight: 600,
         minWidth: 100,
-        '& .MuiChip-label': { px: 1.5 }
+        "& .MuiChip-label": { px: 1.5 },
       }}
     />
   );
@@ -129,233 +129,314 @@ export default function BookingsView() {
   const filteredBookings = useSelector((state) => state.booking.filtered);
   const searchResults = useSelector((state) => state.booking.search);
 
-  const [searchQuery, setSearchQuery] = useState({ 
-    bookingId: "", 
-    couponCode: "" 
+  const [searchQuery, setSearchQuery] = useState({
+    bookingId: "",
+    couponCode: "",
   });
-  const [filters, setFilters] = useState({ 
-    status: "", 
-    date: "", 
-    city: "" 
+  const [filters, setFilters] = useState({
+    status: "",
+    date: "",
+    city: "",
   });
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [openModal, setOpenModal] = useState(false);
-  const [paginationModel, setPaginationModel] = useState({ 
-    page: 0, 
-    pageSize: 25 
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 25,
   });
 
   const isSearchActive = searchResults.length > 0;
   const bookings = isSearchActive ? searchResults : filteredBookings;
 
-  const getBookingStats = () => {
-    const total = bookings.length;
-    const confirmed = bookings.filter(b => b.bookingStatus === 'Confirmed').length;
-    const pending = bookings.filter(b => b.bookingStatus === 'Pending').length;
-    const cancelled = bookings.filter(b => b.bookingStatus === 'Cancelled').length;
-    return { total, confirmed, pending, cancelled };
-  };
+// ✅ Main Booking Component
 
-  const stats = getBookingStats();
+const getBookingStats = () => {
+  const total = bookings.length;
+  const confirmed = bookings.filter((b) => b.bookingStatus === "Confirmed").length;
+  const pending = bookings.filter((b) => b.bookingStatus === "Pending").length;
+  const cancelled = bookings.filter((b) => b.bookingStatus === "Cancelled").length;
 
-  const fetchData = useCallback((currentFilters) => {
+  return { total, confirmed, pending, cancelled };
+};
+
+const stats = getBookingStats();
+
+// ✅ Fetch Bookings with Filters
+const fetchData = useCallback(
+  async (currentFilters) => {
     showLoader();
     try {
       const queryParams = new URLSearchParams();
-      if (currentFilters.status) 
+
+      if (currentFilters.status)
         queryParams.append("bookingStatus", currentFilters.status);
-      if (currentFilters.date) 
+      if (currentFilters.date)
         queryParams.append("date", currentFilters.date);
-      if (currentFilters.city) 
+      if (currentFilters.city)
         queryParams.append("hotelCity", currentFilters.city);
-      
-      dispatch(fetchFilteredBookings(queryParams.toString()));
+
+      await dispatch(fetchFilteredBookings(queryParams.toString()));
     } catch (error) {
       console.error("Error fetching bookings:", error);
       toast.error("Failed to load bookings");
     } finally {
       hideLoader();
     }
-  }, [dispatch, showLoader, hideLoader]);
+  },
+  [dispatch]
+);
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      fetchData(filters);
-    }, 500);
-    return () => clearTimeout(handler);
-  }, [filters, fetchData]);
+// ✅ Debounce Filtered Fetch
+useEffect(() => {
+  const handler = setTimeout(() => {
+    fetchData(filters);
+  }, 500);
+  return () => clearTimeout(handler);
+}, [filters, fetchData]);
 
-  useEffect(() => {
-    dispatch(getHotelsCity());
-    return () => {
-      dispatch({ type: "booking/clearSearch" });
-    };
-  }, [dispatch]);
-
-  const handleFilterChange = (e) => {
-    setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSearchChange = (e) => {
-    setSearchQuery(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSearch = async () => {
-    if (!searchQuery.bookingId && !searchQuery.couponCode) {
-      toast.warn("Please enter a Booking ID or Coupon Code to search.");
-      return;
-    }
+// ✅ Fetch City List on Mount
+useEffect(() => {
+  const init = async () => {
     showLoader();
     try {
-      await dispatch(searchBooking(searchQuery));
-      toast.success("Search completed successfully!");
+      await dispatch(getHotelsCity());
     } catch (error) {
-      console.error("Error searching:", error);
-      toast.error("Search failed.");
+      console.error("Error fetching hotel cities:", error);
+      toast.error("Failed to load hotel cities");
     } finally {
       hideLoader();
     }
   };
+  init();
 
-  const handleClearSearch = () => {
-    setSearchQuery({ bookingId: "", couponCode: "" });
+  return () => {
     dispatch({ type: "booking/clearSearch" });
   };
+}, [dispatch]);
 
-  const handleClearFilters = () => {
+// ✅ Handle Filter Change
+const handleFilterChange = async (e) => {
+  showLoader();
+  try {
+    setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  } catch (error) {
+    console.error("Error updating filters:", error);
+    toast.error("Something went wrong while changing filters!");
+  } finally {
+    hideLoader();
+  }
+};
+
+// ✅ Handle Search Input Change
+const handleSearchChange = (e) => {
+  setSearchQuery((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+};
+
+// ✅ Handle Search Action
+const handleSearch = async () => {
+  if (!searchQuery.bookingId && !searchQuery.couponCode) {
+    toast.warn("Please enter a Booking ID or Coupon Code to search.");
+    return;
+  }
+  showLoader();
+  try {
+    await dispatch(searchBooking(searchQuery));
+    toast.success("Search completed successfully!");
+  } catch (error) {
+    console.error("Error searching:", error);
+    toast.error("Search failed.");
+  } finally {
+    hideLoader();
+  }
+};
+
+// ✅ Clear Search
+const handleClearSearch = async () => {
+  showLoader();
+  try {
+    setSearchQuery({ bookingId: "", couponCode: "" });
+    dispatch({ type: "booking/clearSearch" });
+    toast.info("Search cleared successfully.");
+  } catch (error) {
+    console.error("Error clearing search:", error);
+  } finally {
+    hideLoader();
+  }
+};
+
+// ✅ Clear Filters
+const handleClearFilters = async () => {
+  showLoader();
+  try {
     setFilters({ status: "", date: "", city: "" });
-  };
+    toast.info("Filters cleared successfully.");
+  } catch (error) {
+    console.error("Error clearing filters:", error);
+  } finally {
+    hideLoader();
+  }
+};
 
-  const handleUpdate = (bookingId) => {
+// ✅ Handle Booking Update
+const handleUpdate = async (bookingId) => {
+  showLoader();
+  try {
     const fullBooking = bookings.find((b) => b.bookingId === bookingId);
     setSelectedBooking(fullBooking);
     setOpenModal(true);
-  };
+  } catch (error) {
+    console.error("Error updating booking:", error);
+    toast.error("Failed to open booking details.");
+  } finally {
+    hideLoader();
+  }
+};
 
-  const handleSave = () => {
+// ✅ Handle Save Booking
+const handleSave = async () => {
+  showLoader();
+  try {
     setOpenModal(false);
     setSelectedBooking(null);
-    fetchData(filters);
+    await fetchData(filters);
     toast.success("Booking updated successfully!");
-  };
+  } catch (error) {
+    console.error("Error saving booking:", error);
+    toast.error("Booking update failed.");
+  } finally {
+    hideLoader();
+  }
+};
 
-const columns = [
-  {
-    field: "actions",
-    headerName: "Actions",
-    width: 120,
-    align: "center",
-    headerAlign: "center",
-    sortable: false,
-    renderCell: (params) => (
-      <Stack direction="row" spacing={0.5}>
-        <Tooltip title="View Details">
-          <IconButton
-            size="small"
-            color="primary"
-            onClick={() => navigate(`/your-booking-details/${params.row.bookingId}`)}
-            sx={{ backgroundColor: "primary.light", color: "white" }}
-          >
-            <VisibilityIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Edit Booking">
-          <IconButton
-            size="small"
-            color="warning"
-            onClick={() => handleUpdate(params.row.bookingId)}
-            sx={{ backgroundColor: "warning.light", color: "white" }}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Stack>
-    ),
-  },
-  {
-    field: "bookingId",
-    headerName: "Booking ID",
-    width: 150,
-    renderCell: (params) => (
-      <Typography variant="body2" fontWeight="bold" color="primary.main">
-        #{params.value}
-      </Typography>
-    ),
-  },
-  {
-    field: "status",
-    headerName: "Status",
-    width: 140,
-    renderCell: (params) => <BookingStatusChip status={params.value} />,
-  },
-  {
-    field: "user",
-    headerName: "User",
-    width: 200,
-    renderCell: (params) => (
-      <Typography variant="body2" noWrap>
-        {params.value}
-      </Typography>
-    ),
-  },
-  {
-    field: "source",
-    headerName: "Source",
-    width: 120,
-    renderCell: (params) => (
-      <Chip
-        label={params.row.bookingSource}
-        size="small"
-        variant="outlined"
-        color={params.row.bookingSource === "Site" ? "success" : "default"}
-      />
-    ),
-  },
-  {
-    field: "mop",
-    headerName: "Payment",
-    width: 120,
-    renderCell: (params) => (
-      <Chip
-        label={params.row.pm}
-        size="small"
-        variant="filled"
-        color={params.row.pm === "Online" ? "info" : "secondary"}
-      />
-    ),
-  },
-  {
-    field: "checkInDate",
-    headerName: "Check-In",
-    width: 130,
-    renderCell: (params) => <Typography variant="body2">{fDate(params.row.checkInDate)}</Typography>,
-  },
-  {
-    field: "checkOutDate",
-    headerName: "Check-Out",
-    width: 130,
-    renderCell: (params) => <Typography variant="body2">{fDate(params.row.checkOutDate)}</Typography>,
-  },
-  {
-    field: "createdAt",
-    headerName: "Booked On",
-    width: 130,
-    renderCell: (params) => <Typography variant="body2">{fDateTime(params.row.createdAt)}</Typography>,
-  },
-];
+  const columns = [
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 120,
+      align: "center",
+      headerAlign: "center",
+      sortable: false,
+      renderCell: (params) => (
+        <Stack direction="row" spacing={0.5}>
+          <Tooltip title="View Details">
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() =>
+                navigate(`/your-booking-details/${params.row.bookingId}`)
+              }
+              sx={{ backgroundColor: "primary.light", color: "white" }}
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Edit Booking">
+            <IconButton
+              size="small"
+              color="warning"
+              onClick={() => handleUpdate(params.row.bookingId)}
+              sx={{ backgroundColor: "warning.light", color: "white" }}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      ),
+    },
+    {
+      field: "bookingId",
+      headerName: "Booking ID",
+      width: 150,
+      renderCell: (params) => (
+        <Typography variant="body2" fontWeight="bold" color="primary.main">
+          #{params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "status",
+      headerName: "Status",
+      width: 140,
+      renderCell: (params) => <BookingStatusChip status={params.value} />,
+    },
+    {
+      field: "user",
+      headerName: "User",
+      width: 200,
+      renderCell: (params) => (
+        <Typography variant="body2" noWrap>
+          {params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "source",
+      headerName: "Source",
+      width: 120,
+      renderCell: (params) => (
+        <Chip
+          label={params.row.bookingSource}
+          size="small"
+          variant="outlined"
+          color={params.row.bookingSource === "Site" ? "success" : "default"}
+        />
+      ),
+    },
+    {
+      field: "mop",
+      headerName: "Payment",
+      width: 120,
+      renderCell: (params) => (
+        <Chip
+          label={params.row.pm}
+          size="small"
+          variant="filled"
+          color={params.row.pm === "Online" ? "info" : "secondary"}
+        />
+      ),
+    },
+    {
+      field: "checkInDate",
+      headerName: "Check-In",
+      width: 130,
+      renderCell: (params) => (
+        <Typography variant="body2">{fDate(params.row.checkInDate)}</Typography>
+      ),
+    },
+    {
+      field: "checkOutDate",
+      headerName: "Check-Out",
+      width: 130,
+      renderCell: (params) => (
+        <Typography variant="body2">
+          {fDate(params.row.checkOutDate)}
+        </Typography>
+      ),
+    },
+    {
+      field: "createdAt",
+      headerName: "Booked On",
+      width: 130,
+      renderCell: (params) => (
+        <Typography variant="body2">
+          {fDateTime(params.row.createdAt)}
+        </Typography>
+      ),
+    },
+  ];
 
-// Map rows using actual bookingSource
-const rows = bookings.map((booking) => ({
-  id: booking._id,
-  bookingId: booking.bookingId,
-  user: booking.user.name,
-  status: booking.bookingStatus,
-  bookingSource: booking.bookingSource, // include this field
-  pm: booking.pm,
-  checkInDate: booking.checkInDate,
-  checkOutDate: booking.checkOutDate,
-  createdAt: booking.createdAt,
-}));
+  // Map rows using actual bookingSource
+  const rows = bookings.map((booking) => ({
+    id: booking._id,
+    bookingId: booking.bookingId,
+    user: booking.user.name,
+    status: booking.bookingStatus,
+    bookingSource: booking.bookingSource, // include this field
+    pm: booking.pm,
+    checkInDate: booking.checkInDate,
+    checkOutDate: booking.checkOutDate,
+    createdAt: booking.createdAt,
+  }));
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
@@ -519,13 +600,17 @@ const rows = bookings.map((booking) => ({
                     onChange={handleFilterChange}
                   >
                     <MenuItem value="">All Statuses</MenuItem>
-                    {["Confirmed", "Pending", "Cancelled", "Checked-in", "Checked-out"].map(
-                      (status) => (
-                        <MenuItem key={status} value={status}>
-                          {status}
-                        </MenuItem>
-                      )
-                    )}
+                    {[
+                      "Confirmed",
+                      "Pending",
+                      "Cancelled",
+                      "Checked-in",
+                      "Checked-out",
+                    ].map((status) => (
+                      <MenuItem key={status} value={status}>
+                        {status}
+                      </MenuItem>
+                    ))}
                   </TextField>
                 </Grid>
                 <Grid item xs={12} sm={4}>
@@ -547,7 +632,6 @@ const rows = bookings.map((booking) => ({
                   variant="outlined"
                   startIcon={<ClearIcon />}
                   onClick={handleClearFilters}
-                  fullWidth
                 >
                   Clear All Filters
                 </Button>
@@ -559,7 +643,11 @@ const rows = bookings.map((booking) => ({
         <Divider />
 
         <Box sx={{ p: 2, backgroundColor: "#f8f9fa" }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Typography variant="body2" color="text.secondary">
               {isSearchActive ? (
                 <Badge badgeContent="Search Results" color="primary">

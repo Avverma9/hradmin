@@ -1,311 +1,349 @@
-import { toast } from "react-toastify";
-import * as React from "react";
-import { useState, useEffect } from "react";
-import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
-import InfiniteScroll from 'react-infinite-scroll-component';
-
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Box,
-    Chip,
-    Grid,
-    Paper,
-    Button,
-    Tooltip,
-    Container,
-    TextField,
-    Typography,
-    MenuItem,
-    CardHeader,
-    Divider,
-    FormControl,
-    InputLabel,
-    Select,
-    CircularProgress,
-    Card,
-    CardContent,
-    CardActions,
-} from "@mui/material";
-import { Search, FileDownload, Clear } from "@mui/icons-material";
+  Box,
+  Button,
+  CardHeader,
+  CircularProgress,
+  Container,
+  Divider,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  TextField,
+  Tooltip,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  Chip,
+} from '@mui/material';
+import { Search, FileDownload, Clear } from '@mui/icons-material';
+import InfiniteScroll from 'react-infinite-scroll-component';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 
-import { fDate, fDateTime } from "../../../../utils/format-time";
-import { useDispatch, useSelector } from "react-redux";
-import { useLoader } from "../../../../utils/loader";
+import 'react-toastify/dist/ReactToastify.css';
+import { fDate, fDateTime } from '../../../../utils/format-time';
+import { useLoader } from '../../../../utils/loader';
+import { getHotelsCity } from 'src/components/redux/reducers/hotel';
+import { fetchFilteredBookings, searchBooking } from 'src/components/redux/reducers/booking';
+import BookingUpdateModal from 'src/components/bookings/booking-update-modal';
+import { hotelEmail } from '../../../../utils/util';
 
-import { getHotelsCity } from "src/components/redux/reducers/hotel";
-import BookingUpdateModal from "src/components/bookings/booking-update-modal";
-import { fetchFilteredBookings, searchBooking } from "src/components/redux/reducers/booking";
-import { hotelEmail } from "../../../../utils/util";
+const STATUS_OPTIONS = ['', 'Confirmed', 'Pending', 'Cancelled', 'Checked-in', 'Checked-out'];
+const PAGE_SIZE = 10;
 
-const renderStatusChip = (statusVal) => {
-    const statusMap = {
-        Confirmed: { color: 'success', label: 'Confirmed' },
-        Pending: { color: 'warning', label: 'Pending' },
-        Cancelled: { color: 'error', label: 'Cancelled' },
-        'Checked-out': { color: 'info', label: 'Checked-out' },
-        'Checked-in': { color: 'primary', label: 'Checked-in' },
-    };
-    const { color, label } = statusMap[statusVal] || { color: 'default', label: statusVal };
-    return <Chip label={label} color={color} size="small" variant="filled" />;
+const StatusChip = ({ status }) => {
+  const map = {
+    Confirmed: { color: 'success', label: 'Confirmed' },
+    Pending: { color: 'warning', label: 'Pending' },
+    Cancelled: { color: 'error', label: 'Cancelled' },
+    'Checked-in': { color: 'primary', label: 'Checked-in' },
+    'Checked-out': { color: 'info', label: 'Checked-out' },
+  };
+  const { color, label } = map[status] || { color: 'default', label: status || 'N/A' };
+  return <Chip label={label} color={color} size="small" variant="filled" />;
 };
 
-const BookingCard = React.memo(({ booking, onUpdate, onView }) => (
-    <Card sx={{ mb: 2 }} variant="outlined">
-        <CardContent>
-            <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} sm={6} md={2}>
-                    <Typography variant="subtitle2" gutterBottom>Booking ID</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-all' }}>{booking.bookingId}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6} md={2}>
-                    <Typography variant="subtitle2" gutterBottom>User</Typography>
-                    <Typography variant="body2" color="text.secondary">{booking.user?.name || 'N/A'}</Typography>
-                </Grid>
-                 <Grid item xs={12} sm={6} md={3}>
-                    <Typography variant="subtitle2" gutterBottom>Check-in / Check-out</Typography>
-                    <Typography variant="body2" color="text.secondary">{fDate(booking.checkInDate)} - {fDate(booking.checkOutDate)}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6} md={2}>
-                    <Typography variant="subtitle2" gutterBottom>Status</Typography>
-                    {renderStatusChip(booking.bookingStatus)}
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <Typography variant="subtitle2" gutterBottom>Created By</Typography>
-                    <Typography variant="body2" color="text.secondary" noWrap>
-                        {`${booking.createdBy?.user || ''} (${booking.createdBy?.email || ''})`}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                        {fDateTime(booking.createdAt)}
-                    </Typography>
-                </Grid>
-            </Grid>
-        </CardContent>
-        <Divider />
-        <CardActions sx={{ justifyContent: 'flex-end' }}>
-            <Button variant="contained" size="small" onClick={() => onView(booking.bookingId)}>View Details</Button>
-            <Button variant="contained" color="warning" size="small" onClick={() => onUpdate(booking)}>Update</Button>
-        </CardActions>
-    </Card>
-));
-
 export default function PanelBookings() {
-    const [bookingId, setBookingId] = useState("");
-    const [couponCode, setCouponCode] = useState("");
-    const [selectedCity, setSelectedCity] = useState("");
-    const [status, setStatus] = useState("");
-    const [filterDate, setFilterDate] = useState("");
-    const [selectedBooking, setSelectedBooking] = useState(null);
-    const [openModal, setOpenModal] = useState(false);
-    const PAGE_SIZE = 10;
-    const [displayedBookings, setDisplayedBookings] = useState([]);
-    const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
-    const [isFetching, setIsFetching] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { showLoader, hideLoader } = useLoader();
 
-    const email = hotelEmail;
-    const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const { showLoader, hideLoader } = useLoader();
+  const cities = useSelector((s) => s.hotel.byCity);
+  const filtered = useSelector((s) => s.booking.filtered);
+  const searchResults = useSelector((s) => s.booking.search);
+  const all = searchResults.length ? searchResults : filtered;
 
-    const { byCity } = useSelector((state) => state.hotel);
-    const filtered = useSelector((state) => state.booking.filtered);
-    const searchData = useSelector((state) => state.booking.search);
-    
-    const allBookings = searchData.length ? searchData : filtered;
-    const bookingCount = allBookings.length;
-    
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            if (isFetching) return;
+  const [filters, setFilters] = useState({
+    bookingId: '',
+    couponCode: '',
+    city: '',
+    status: '',
+    date: '',
+  });
+  const [page, setPage] = useState(0);
+  const [rows, setRows] = useState([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [modalData, setModalData] = useState(null);
 
-            const fetchFilteredData = async () => {
-                setIsFetching(true);
-                showLoader();
-                try {
-                    const queryParams = new URLSearchParams();
-                    if (status) queryParams.append("bookingStatus", status);
-                    if (filterDate) queryParams.append("date", filterDate);
-                    if (selectedCity) queryParams.append("hotelCity", selectedCity);
-                    if (email) queryParams.append("createdBy", email);
+  // Load cities once
+  useEffect(() => {
+    dispatch(getHotelsCity());
+    return () => dispatch({ type: 'booking/clearSearch' });
+  }, [dispatch]);
 
-                    await dispatch(fetchFilteredBookings(queryParams.toString()));
-                } catch (error) {
-                    console.error("Error:", error);
-                    toast.error("Failed to load bookings");
-                } finally {
-                    hideLoader();
-                    setIsFetching(false);
-                }
-            };
+  // Fetch bookings on filter change
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      showLoader();
+      try {
+        const params = new URLSearchParams();
+        filters.status && params.append('bookingStatus', filters.status);
+        filters.date && params.append('date', filters.date);
+        filters.city && params.append('hotelCity', filters.city);
+        hotelEmail && params.append('createdBy', hotelEmail);
+        await dispatch(fetchFilteredBookings(params.toString()));
+      } catch {
+        toast.error('Failed to load bookings');
+      } finally {
+        hideLoader();
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [dispatch, filters]);
 
-            fetchFilteredData();
-        }, 500);
+  // Update table rows
+  useEffect(() => {
+    setRows(all.slice(0, PAGE_SIZE));
+    setPage(0);
+    setHasMore(all.length > PAGE_SIZE);
+  }, [all]);
 
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [dispatch, status, filterDate, selectedCity, email]);
-    
-    useEffect(() => {
-        dispatch(getHotelsCity());
-        return () => dispatch({ type: "booking/clearSearch" });
-    }, [dispatch]);
+  const loadMore = useCallback(() => {
+    const next = (page + 1) * PAGE_SIZE;
+    setRows(all.slice(0, next + PAGE_SIZE));
+    setPage((p) => p + 1);
+    setHasMore(all.length > (page + 2) * PAGE_SIZE);
+  }, [all, page]);
 
-    useEffect(() => {
-        setPage(1);
-        const initialSlice = allBookings.slice(0, PAGE_SIZE);
-        setDisplayedBookings(initialSlice);
-        setHasMore(allBookings.length > PAGE_SIZE);
-    }, [allBookings]);
+  const handleFilterChange = (key) => (e) =>
+    setFilters((f) => ({ ...f, [key]: e.target.value }));
 
-    const loadMoreBookings = () => {
-        const nextPage = page + 1;
-        const nextSliceStart = displayedBookings.length;
-        const nextSliceEnd = nextPage * PAGE_SIZE;
-        const additionalData = allBookings.slice(nextSliceStart, nextSliceEnd);
+  const handleSearch = async () => {
+    if (!filters.bookingId && !filters.couponCode) {
+      toast.warn('Enter Booking ID or Coupon Code');
+      return;
+    }
+    showLoader();
+    try {
+      await dispatch(
+        searchBooking({
+          bookingId: filters.bookingId,
+          couponCode: filters.couponCode,
+        })
+      );
+    } catch {
+      toast.error('Search failed');
+    } finally {
+      hideLoader();
+    }
+  };
 
-        if (displayedBookings.length >= allBookings.length) {
-            setHasMore(false);
-            return;
-        }
+  const clearAll = () => {
+    setFilters({ bookingId: '', couponCode: '', city: '', status: '', date: '' });
+    dispatch({ type: 'booking/clearSearch' });
+  };
 
-        setDisplayedBookings(prev => [...prev, ...additionalData]);
-        setPage(nextPage);
-    };
+  const exportCSV = () => {
+    if (!all.length) {
+      toast.info('No data to export');
+      return;
+    }
+    const hdr = [
+      'Booking ID',
+      'User',
+      'Status',
+      'Source',
+      'Payment',
+      'Check-In',
+      'Check-Out',
+      'Created By',
+      'Created At',
+    ];
+    const data = all.map((b) => [
+      b.bookingId,
+      b.user?.name,
+      b.bookingStatus,
+      b.bookingSource || 'Site',
+      b.pm || 'Offline',
+      fDate(b.checkInDate),
+      fDate(b.checkOutDate),
+      `${b.createdBy?.user} (${b.createdBy?.email})`,
+      fDateTime(b.createdAt),
+    ]);
+    const csv = [hdr, ...data].map((r) => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `bookings_${new Date().toISOString()}.csv`;
+    link.click();
+  };
 
-    const handleSearch = async () => {
-        if (!bookingId && !couponCode) {
-            toast.warn("Please enter a Booking ID or Coupon Code to search.");
-            return;
-        }
-        showLoader();
-        try {
-            await dispatch(searchBooking({ bookingId, couponCode }));
-        } catch (error) {
-            console.error("Error:", error);
-            toast.error("Search failed");
-        } finally {
-            hideLoader();
-        }
-    };
+  return (
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Paper elevation={3} sx={{ display: 'flex', flexDirection: 'column', height: '80vh' }}>
+        {/* Header */}
+        <CardHeader
+          title="Panel Bookings"
+          subheader={`Total Bookings: ${all.length}`}
+          action={
+            <Tooltip title="Export CSV">
+              <IconButton onClick={exportCSV}>
+                <FileDownload />
+              </IconButton>
+            </Tooltip>
+          }
+          sx={{ px: 3, pt: 2 }}
+        />
+        <Divider />
 
-    const handleClearFilters = () => {
-        setBookingId("");
-        setCouponCode("");
-        setSelectedCity("");
-        setStatus("");
-        setFilterDate("");
-        dispatch({ type: "booking/clearSearch" });
-    };
+        {/* Filters */}
+        <Box sx={{ p: 2 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={2}>
+              <TextField
+                label="Booking ID"
+                size="small"
+                fullWidth
+                value={filters.bookingId}
+                onChange={handleFilterChange('bookingId')}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={2}>
+              <TextField
+                label="Coupon Code"
+                size="small"
+                fullWidth
+                value={filters.couponCode}
+                onChange={handleFilterChange('couponCode')}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>City</InputLabel>
+                <Select value={filters.city} label="City" onChange={handleFilterChange('city')}>
+                  <MenuItem value="">All Cities</MenuItem>
+                  {cities.map((c) => (
+                    <MenuItem key={c} value={c}>
+                      {c}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Status</InputLabel>
+                <Select value={filters.status} label="Status" onChange={handleFilterChange('status')}>
+                  {STATUS_OPTIONS.map((s) => (
+                    <MenuItem key={s} value={s}>
+                      {s || 'All Statuses'}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={2}>
+              <TextField
+                type="date"
+                size="small"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                value={filters.date}
+                onChange={handleFilterChange('date')}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={2} container spacing={1}>
+              <Grid item xs={6}>
+                <Button fullWidth variant="contained" onClick={handleSearch} startIcon={<Search />}>
+                  Search
+                </Button>
+              </Grid>
+              <Grid item xs={6}>
+                <Button fullWidth variant="outlined" onClick={clearAll} startIcon={<Clear />}>
+                  Clear
+                </Button>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Box>
+        <Divider />
 
-    const handleExport = () => {
-        if (allBookings.length === 0) { toast.info("No data to export."); return; }
-        const headers = ["Booking ID", "User Name", "Status", "Source", "Payment Mode", "Check-In Date", "Check-Out Date", "Created By", "Created At"];
-        const rows = allBookings.map(b => [ `"${b.bookingId || ''}"`, `"${b.user?.name || 'N/A'}"`, `"${b.bookingStatus || ''}"`, `"${b.bookingSource || "Site"}"`, `"${b.pm || "Offline"}"`, `"${fDate(b.checkInDate)}"` , `"${fDate(b.checkOutDate)}"`, `"${b.createdBy?.user || ''} (${b.createdBy?.email || ''})"` , `"${fDateTime(b.createdAt)}"`, ].join(','));
-        const csvContent = [headers.join(','), ...rows].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `bookings-export-${new Date().toISOString()}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
+        {/* Table */}
+        <TableContainer sx={{ flexGrow: 1, overflow: 'auto' }}>
+          <InfiniteScroll
+            dataLength={rows.length}
+            next={loadMore}
+            hasMore={hasMore}
+            loader={
+              <Box sx={{ textAlign: 'center', py: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            }
+            endMessage={
+              all.length > 0 && (
+                <Typography align="center" color="text.secondary" sx={{ py: 2 }}>
+                  <strong>End of list</strong>
+                </Typography>
+              )
+            }
+            scrollableTarget="scrollableDiv"
+          >
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Booking ID</TableCell>
+                  <TableCell>User</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Source</TableCell>
+                  <TableCell>Payment</TableCell>
+                  <TableCell>Check-In</TableCell>
+                  <TableCell>Check-Out</TableCell>
+                  <TableCell>Created By</TableCell>
+                  <TableCell>Created At</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {rows.map((b) => (
+                  <TableRow key={b.bookingId} hover>
+                    <TableCell>{b.bookingId}</TableCell>
+                    <TableCell>{b.user?.name || 'N/A'}</TableCell>
+                    <TableCell>
+                      <StatusChip status={b.bookingStatus} />
+                    </TableCell>
+                    <TableCell>{b.bookingSource || 'Site'}</TableCell>
+                    <TableCell>{b.pm || 'Offline'}</TableCell>
+                    <TableCell>{fDate(b.checkInDate)}</TableCell>
+                    <TableCell>{fDate(b.checkOutDate)}</TableCell>
+                    <TableCell>
+                      {b.createdBy?.user} ({b.createdBy?.email})
+                    </TableCell>
+                    <TableCell>{fDateTime(b.createdAt)}</TableCell>
+                    <TableCell align="right">
+                      <Button size="small" onClick={() => navigate(`/your-booking-details/${b.bookingId}`)}>
+                        View
+                      </Button>
+                      <Button size="small" color="warning" onClick={() => setModalData(b)}>
+                        Update
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </InfiniteScroll>
+        </TableContainer>
+      </Paper>
 
-    const handleView = (id) => navigate(`/your-booking-details/${id}`);
-    const handleUpdate = (booking) => {
-        setSelectedBooking(booking);
-        setOpenModal(true);
-    };
-    const handleSave = () => {
-        setOpenModal(false);
-        setSelectedBooking(null);
-        const currentStatus = status;
-        setStatus('');
-        setTimeout(() => setStatus(currentStatus), 0);
-    };
-
-    return (
-        <Container maxWidth="xl" sx={{ my: 4 }}>
-            <Paper elevation={3} sx={{ maxHeight: 'calc(100vh - 112px)', display: 'flex', flexDirection: 'column' }}>
-                <Box sx={{
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 1,
-                    bgcolor: 'background.paper'
-                }}>
-                    <CardHeader
-                        title="Panel Bookings"
-                        subheader={`A total of ${bookingCount} bookings found`}
-                        action={<Tooltip title="Export all bookings as CSV"><Button onClick={handleExport} variant="contained" color="secondary" startIcon={<FileDownload />}>Export</Button></Tooltip>}
-                        sx={{ px: 3, pt: 3, flexShrink: 0 }}
-                    />
-                    <Divider />
-                    <Box sx={{ p: 2, flexShrink: 0 }}>
-                        <Grid container spacing={2} alignItems="center">
-                            <Grid item xs={12} sm={6} md={2}> <TextField fullWidth label="Booking ID" variant="outlined" size="small" value={bookingId} onChange={(e) => setBookingId(e.target.value)} /> </Grid>
-                            <Grid item xs={12} sm={6} md={2}> <TextField fullWidth label="Coupon Code" variant="outlined" size="small" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} /> </Grid>
-                            <Grid item xs={12} sm={6} md={2}> <FormControl fullWidth size="small"> <InputLabel>City</InputLabel> <Select value={selectedCity} label="City" onChange={(e) => setSelectedCity(e.target.value)}> <MenuItem value="">All Cities</MenuItem> {byCity.map((city, index) => <MenuItem key={index} value={city}>{city}</MenuItem>)} </Select> </FormControl> </Grid>
-                            <Grid item xs={12} sm={6} md={2}> <FormControl fullWidth size="small"> <InputLabel>Status</InputLabel> <Select value={status} label="Status" onChange={(e) => setStatus(e.target.value)}> <MenuItem value="">All Statuses</MenuItem> {['Confirmed', 'Pending', 'Cancelled', 'Checked-in', 'Checked-out'].map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)} </Select> </FormControl> </Grid>
-                            <Grid item xs={12} sm={6} md={2}> <TextField fullWidth type="date" variant="outlined" size="small" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} InputLabelProps={{ shrink: true }} /> </Grid>
-                            <Grid item xs={12} sm={6} md={2}>
-                                <Grid container spacing={1}>
-                                    <Grid item xs={6}>
-                                        <Tooltip title="Search by ID or Coupon">
-                                            <Button fullWidth variant="contained" onClick={handleSearch} startIcon={<Search />} sx={{ height: '100%' }}></Button>
-                                        </Tooltip>
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <Tooltip title="Clear all filters">
-                                            <Button fullWidth variant="outlined" onClick={handleClearFilters} startIcon={<Clear />} sx={{ height: '100%' }}></Button>
-                                        </Tooltip>
-                                    </Grid>
-                                </Grid>
-                            </Grid>
-                        </Grid>
-                    </Box>
-                    <Divider />
-                </Box>
-                
-                <Box sx={{ p: 2, overflowY: 'auto', flexGrow: 1 }}>
-                     <InfiniteScroll
-                        dataLength={displayedBookings.length}
-                        next={loadMoreBookings}
-                        hasMore={hasMore}
-                        loader={
-                            <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-                                <CircularProgress />
-                            </Box>
-                        }
-                        endMessage={
-                            bookingCount > 0 && 
-                            <Typography sx={{ textAlign: 'center', my: 2, color: 'text.secondary' }}>
-                                <b>End of list.</b>
-                            </Typography>
-                        }
-                        scrollableTarget={document.querySelector('div[style*="overflowY: auto"]')}
-                    >
-                        {displayedBookings.map((booking) => (
-                           <BookingCard
-                                key={booking._id || booking.bookingId}
-                                booking={booking}
-                                onView={handleView}
-                                onUpdate={handleUpdate}
-                           />
-                        ))}
-                    </InfiniteScroll>
-                </Box>
-            </Paper>
-
-            {selectedBooking && (
-                <BookingUpdateModal
-                    open={openModal}
-                    onClose={() => setOpenModal(false)}
-                    bookingData={selectedBooking}
-                    onSave={handleSave}
-                />
-            )}
-        </Container>
-    );
+      {modalData && (
+        <BookingUpdateModal
+          open
+          bookingData={modalData}
+          onClose={() => setModalData(null)}
+          onSave={() => setModalData(null)}
+        />
+      )}
+    </Container>
+  );
 }
