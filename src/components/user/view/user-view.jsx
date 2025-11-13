@@ -151,6 +151,44 @@ function UserTableRow({
           />
         </TableCell>
         <TableCell>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Switch
+              checked={row.status}
+              onChange={() => handleStatusToggle(row._id, row.status)}
+              color="success"
+              size="small"
+              sx={{
+                '& .MuiSwitch-thumb': {
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                },
+              }}
+            />
+            <Typography 
+              variant="caption" 
+              fontWeight="medium"
+              color={row.status ? 'success.main' : 'text.secondary'}
+            >
+              {row.status ? 'Active' : 'Inactive'}
+            </Typography>
+          </Stack>
+        </TableCell>
+        <TableCell>
+          <Tooltip title="More Actions">
+            <IconButton 
+              onClick={openMenu} 
+              size="small"
+              sx={{
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  color: theme.palette.primary.main,
+                }
+              }}
+            >
+              <Iconify icon="eva:more-vertical-fill" />
+            </IconButton>
+          </Tooltip>
+        </TableCell>
+        <TableCell>
           <Stack direction="row" alignItems="center" spacing={2}>
             <Avatar 
               src={row.images?.[0]}
@@ -198,44 +236,6 @@ function UserTableRow({
           <Typography variant="body2" noWrap fontFamily="monospace">
             {'•'.repeat(row.password?.length || 8)}
           </Typography>
-        </TableCell>
-        <TableCell>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Switch
-              checked={row.status}
-              onChange={() => handleStatusToggle(row._id, row.status)}
-              color="success"
-              size="small"
-              sx={{
-                '& .MuiSwitch-thumb': {
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                },
-              }}
-            />
-            <Typography 
-              variant="caption" 
-              fontWeight="medium"
-              color={row.status ? 'success.main' : 'text.secondary'}
-            >
-              {row.status ? 'Active' : 'Inactive'}
-            </Typography>
-          </Stack>
-        </TableCell>
-        <TableCell align="right">
-          <Tooltip title="More Actions">
-            <IconButton 
-              onClick={openMenu} 
-              size="small"
-              sx={{
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  color: theme.palette.primary.main,
-                }
-              }}
-            >
-              <Iconify icon="eva:more-vertical-fill" />
-            </IconButton>
-          </Tooltip>
         </TableCell>
       </TableRow>
       <Popover
@@ -536,13 +536,13 @@ export default function UserPage() {
                   />
                 </TableCell>
                 {[
+                  { id: 'status', label: 'Status', width: '10%' },
+                  { id: 'actions', label: 'Actions', width: '10%' },
                   { id: 'name', label: 'Partner', width: '25%' },
                   { id: 'email', label: 'Email Address', width: '20%' },
                   { id: 'role', label: 'Role', width: '15%' },
                   { id: 'city', label: 'Location', width: '15%' },
-                  { id: 'password', label: 'Password', width: '10%' },
-                  { id: 'status', label: 'Status', width: '10%' },
-                  { id: 'actions', label: 'Actions', width: '5%' },
+                  { id: 'password', label: 'Password', width: '5%' },
                 ].map((column) => (
                   <TableCell 
                     key={column.id}
