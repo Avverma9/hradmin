@@ -1,8 +1,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import toast, { Toaster } from "react-hot-toast";
-
-const API_URL = "http://localhost:5000/hotels/bulk";
+import { localUrl as API_URL } from "../../../../utils/util";
 
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 const toStr = (v) => (v === undefined || v === null ? "" : String(v)).trim();
@@ -64,7 +63,7 @@ const safeJson = async (res) => {
 const postPayload = async (docs) => {
   const fd = new FormData();
   fd.append("payload", JSON.stringify(docs));
-  const res = await fetch(API_URL, { method: "POST", body: fd });
+  const res = await fetch(`${API_URL}/hotels/bulk`, { method: "POST", body: fd });
   const data = await safeJson(res);
   if (!res.ok) throw new Error(data?.message || data?.raw || `HTTP ${res.status}`);
   if (data && data.status === false) throw new Error(data.message || "Upload failed");
@@ -335,9 +334,22 @@ const BulkHotel = () => {
           duration: 3000,
           style: {
             borderRadius: 12,
-            background: "#111827",
-            color: "#fff",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.18)",
+            background: "#fff",
+            color: "#111827",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+            border: "1px solid #e5e7eb",
+          },
+          success: {
+            iconTheme: {
+              primary: "#10b981",
+              secondary: "#fff",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#ef4444",
+              secondary: "#fff",
+            },
           },
         }}
       />
@@ -346,15 +358,14 @@ const BulkHotel = () => {
         <div style={styles.header}>
           <div>
             <div style={styles.title}>Bulk Hotel Upload</div>
-            <div style={styles.subtitle}>Upload Excel → Preview → Bulk insert to API</div>
+            <div style={styles.subtitle}>Upload Excel → Preview → Bulk insert</div>
           </div>
 
           <div style={styles.headerActions}>
-            <Badge label={`API: ${API_URL}`} />
-            <button style={{ ...styles.btn, ...styles.btnPrimary, ...(canUpload ? null : styles.btnDisabled) }} onClick={upload} disabled={!canUpload}>
-              Start upload
+            <button style={{ ...styles.btn, ...styles.btnPrimary, ...(canUpload ? {} : styles.btnDisabled) }} onClick={upload} disabled={!canUpload}>
+              Start Upload
             </button>
-            <button style={{ ...styles.btn, ...styles.btnGhost, ...(status.state === "uploading" ? null : styles.btnDisabled) }} onClick={cancel} disabled={status.state !== "uploading"}>
+            <button style={{ ...styles.btn, ...styles.btnGhost, ...(status.state === "uploading" ? {} : styles.btnDisabled) }} onClick={cancel} disabled={status.state !== "uploading"}>
               Cancel
             </button>
           </div>
@@ -363,8 +374,7 @@ const BulkHotel = () => {
         <div style={styles.grid}>
           <div style={styles.card}>
             <div style={styles.cardHead}>
-              <div style={styles.cardTitle}>How this page works</div>
-              <div style={styles.cardHint}>Quick guide</div>
+              <div style={styles.cardTitle}>How it works</div>
             </div>
 
             <div style={styles.steps}>
@@ -380,7 +390,7 @@ const BulkHotel = () => {
                 <div style={styles.stepDot}>2</div>
                 <div>
                   <div style={styles.stepTitle}>Preview & auto-mapping</div>
-                  <div style={styles.stepText}>Common header aliases are supported; missing keys will still be sent (backend fills defaults).</div>
+                  <div style={styles.stepText}>Common header aliases are supported; missing keys get default values.</div>
                 </div>
               </div>
 
@@ -388,7 +398,7 @@ const BulkHotel = () => {
                 <div style={styles.stepDot}>3</div>
                 <div>
                   <div style={styles.stepTitle}>Start upload</div>
-                  <div style={styles.stepText}>Uploads in small batches. If a batch fails, it retries item-by-item.</div>
+                  <div style={styles.stepText}>Uploads in batches (20 items). If batch fails, retries item-by-item.</div>
                 </div>
               </div>
 
@@ -396,7 +406,7 @@ const BulkHotel = () => {
                 <div style={styles.stepDot}>4</div>
                 <div>
                   <div style={styles.stepTitle}>Live progress + ETA</div>
-                  <div style={styles.stepText}>Shows stored/failed, progress bar and remaining time estimate.</div>
+                  <div style={styles.stepText}>Shows stored/failed count, progress bar & time estimate.</div>
                 </div>
               </div>
             </div>
@@ -406,7 +416,7 @@ const BulkHotel = () => {
             <div style={styles.fileRow}>
               <label style={styles.fileLabel}>
                 <input type="file" accept=".xlsx,.xls" onChange={handleFile} style={styles.fileInput} />
-                <span style={styles.fileBtn}>Choose file</span>
+                <span style={styles.fileBtn}>Choose Excel</span>
               </label>
               <div style={styles.fileName}>{fileName || "No file selected"}</div>
             </div>
@@ -416,8 +426,7 @@ const BulkHotel = () => {
 
           <div style={styles.card}>
             <div style={styles.cardHead}>
-              <div style={styles.cardTitle}>Upload status</div>
-              <div style={styles.cardHint}>Real-time</div>
+              <div style={styles.cardTitle}>Upload Status</div>
             </div>
 
             <div style={styles.statsRow}>
@@ -453,16 +462,13 @@ const BulkHotel = () => {
               </div>
             </div>
 
-            <div style={styles.tipBox}>
-              Tip: If Excel columns are missing, backend will auto-fill defaults to avoid validation errors.
-            </div>
+            <div style={styles.tipBox}>💡 Backend auto-fills missing values to avoid validation errors.</div>
           </div>
         </div>
 
         <div style={styles.card}>
           <div style={styles.cardHead}>
-            <div style={styles.cardTitle}>Preview (first 10)</div>
-            <div style={styles.cardHint}>What will be sent to server</div>
+            <div style={styles.cardTitle}>Preview (first 10 rows)</div>
           </div>
 
           <div style={styles.tableWrap}>
@@ -482,7 +488,7 @@ const BulkHotel = () => {
               </thead>
               <tbody>
                 {payload.slice(0, 10).map((h, i) => (
-                  <tr key={i} style={styles.tr}>
+                  <tr key={i} style={i % 2 === 0 ? styles.trEven : {}}>
                     <Td>{i + 1}</Td>
                     <Td>{h.hotelName}</Td>
                     <Td>{h.state}</Td>
@@ -497,7 +503,7 @@ const BulkHotel = () => {
                 {payload.length === 0 ? (
                   <tr>
                     <td colSpan={9} style={styles.empty}>
-                      Choose an Excel file to see preview here.
+                      Choose an Excel file to preview.
                     </td>
                   </tr>
                 ) : null}
@@ -505,21 +511,10 @@ const BulkHotel = () => {
             </table>
           </div>
         </div>
-
-        <div style={styles.footerNote}>
-          Uses react-hot-toast for notifications (Toaster + toast APIs). [web:137][web:141]
-        </div>
       </div>
     </div>
   );
 };
-
-const Badge = ({ label }) => (
-  <div style={styles.badge}>
-    <span style={styles.badgeDot} />
-    <span style={styles.badgeText}>{label}</span>
-  </div>
-);
 
 const Stat = ({ label, value }) => (
   <div style={styles.stat}>
@@ -534,14 +529,14 @@ const Td = ({ children }) => <td style={styles.td}>{children}</td>;
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "radial-gradient(1200px 600px at 0% 0%, rgba(79,70,229,0.18), transparent 60%), radial-gradient(1200px 600px at 100% 0%, rgba(16,185,129,0.16), transparent 60%), #0b1220",
+    background: "#f9fafb",
     padding: 24,
   },
   shell: {
-    maxWidth: 1180,
+    maxWidth: 1200,
     margin: "0 auto",
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
-    color: "#e5e7eb",
+    color: "#111827",
   },
   header: {
     display: "flex",
@@ -549,134 +544,122 @@ const styles = {
     gap: 16,
     flexWrap: "wrap",
     alignItems: "flex-start",
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  title: { fontSize: 26, fontWeight: 900, letterSpacing: 0.2 },
-  subtitle: { marginTop: 6, color: "rgba(229,231,235,0.75)", fontSize: 14 },
+  title: { fontSize: 28, fontWeight: 900, color: "#111827" },
+  subtitle: { marginTop: 6, color: "#6b7280", fontSize: 14 },
   headerActions: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" },
 
-  grid: { display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 14, marginBottom: 14 },
+  grid: { display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 16, marginBottom: 16 },
   card: {
-    background: "rgba(17,24,39,0.7)",
-    border: "1px solid rgba(255,255,255,0.08)",
+    background: "#fff",
+    border: "1px solid #e5e7eb",
     borderRadius: 16,
-    padding: 16,
-    backdropFilter: "blur(10px)",
+    padding: 20,
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   },
-  cardHead: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline", marginBottom: 12 },
-  cardTitle: { fontSize: 16, fontWeight: 900, color: "#fff" },
-  cardHint: { fontSize: 12, color: "rgba(229,231,235,0.6)" },
+  cardHead: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline", marginBottom: 14 },
+  cardTitle: { fontSize: 17, fontWeight: 900, color: "#111827" },
 
-  steps: { display: "grid", gap: 10 },
-  stepRow: { display: "flex", gap: 10, alignItems: "flex-start" },
+  steps: { display: "grid", gap: 12 },
+  stepRow: { display: "flex", gap: 12, alignItems: "flex-start" },
   stepDot: {
-    width: 26,
-    height: 26,
+    width: 28,
+    height: 28,
     borderRadius: 10,
-    background: "rgba(79,70,229,0.25)",
-    border: "1px solid rgba(79,70,229,0.45)",
-    color: "#c7d2fe",
+    background: "#4f46e5",
+    color: "#fff",
     display: "grid",
     placeItems: "center",
     fontWeight: 900,
+    fontSize: 13,
     flex: "0 0 auto",
   },
-  stepTitle: { fontWeight: 900, color: "#fff", fontSize: 13 },
-  stepText: { marginTop: 2, fontSize: 12.5, color: "rgba(229,231,235,0.7)", lineHeight: 1.3 },
+  stepTitle: { fontWeight: 800, color: "#111827", fontSize: 14 },
+  stepText: { marginTop: 3, fontSize: 13, color: "#6b7280", lineHeight: 1.4 },
 
-  divider: { height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" },
+  divider: { height: 1, background: "#e5e7eb", margin: "16px 0" },
 
-  fileRow: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" },
+  fileRow: { display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" },
   fileLabel: { display: "inline-flex", alignItems: "center", gap: 10, cursor: "pointer" },
   fileInput: { display: "none" },
   fileBtn: {
-    padding: "10px 12px",
+    padding: "10px 16px",
     borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.06)",
-    color: "#fff",
+    border: "1px solid #d1d5db",
+    background: "#fff",
+    color: "#111827",
     fontWeight: 800,
+    fontSize: 14,
   },
-  fileName: { color: "rgba(229,231,235,0.75)", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", maxWidth: 420 },
+  fileName: { color: "#6b7280", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", maxWidth: 400 },
 
   errorBox: {
-    marginTop: 12,
+    marginTop: 14,
     padding: 12,
     borderRadius: 12,
-    border: "1px solid rgba(239,68,68,0.35)",
-    background: "rgba(239,68,68,0.12)",
-    color: "#fecaca",
-    fontWeight: 800,
+    border: "1px solid #fca5a5",
+    background: "#fef2f2",
+    color: "#b91c1c",
+    fontWeight: 700,
     fontSize: 13,
   },
 
-  statsRow: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 },
+  statsRow: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 12 },
   stat: {
-    padding: 12,
+    padding: 14,
     borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.04)",
+    border: "1px solid #e5e7eb",
+    background: "#f9fafb",
   },
-  statLabel: { fontSize: 12, color: "rgba(229,231,235,0.65)" },
-  statValue: { marginTop: 4, fontSize: 18, fontWeight: 900, color: "#fff" },
+  statLabel: { fontSize: 12, color: "#6b7280", fontWeight: 600 },
+  statValue: { marginTop: 5, fontSize: 19, fontWeight: 900, color: "#111827" },
 
-  progressWrap: { marginTop: 14 },
-  progressTop: { display: "grid", gridTemplateColumns: "1.4fr 0.8fr 0.8fr", gap: 10, marginBottom: 10 },
-  kv: { display: "flex", justifyContent: "space-between", gap: 8, padding: "10px 12px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" },
-  k: { fontSize: 12, color: "rgba(229,231,235,0.65)" },
-  v: { fontSize: 12.5, color: "#fff", fontWeight: 800 },
+  progressWrap: { marginTop: 16 },
+  progressTop: { display: "grid", gridTemplateColumns: "1.4fr 0.8fr 0.8fr", gap: 12, marginBottom: 12 },
+  kv: { display: "flex", justifyContent: "space-between", gap: 8, padding: "10px 12px", borderRadius: 12, background: "#f9fafb", border: "1px solid #e5e7eb" },
+  k: { fontSize: 12, color: "#6b7280", fontWeight: 600 },
+  v: { fontSize: 13, color: "#111827", fontWeight: 800 },
 
-  progressBar: { height: 12, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden" },
+  progressBar: { height: 14, borderRadius: 999, background: "#e5e7eb", overflow: "hidden" },
   progressFill: {
     height: "100%",
     borderRadius: 999,
-    background: "linear-gradient(90deg, rgba(79,70,229,1), rgba(16,185,129,1))",
+    background: "linear-gradient(90deg, #4f46e5, #10b981)",
     transition: "width 180ms linear",
   },
 
   tipBox: {
-    marginTop: 12,
+    marginTop: 14,
     padding: 12,
     borderRadius: 12,
-    background: "rgba(16,185,129,0.10)",
-    border: "1px solid rgba(16,185,129,0.25)",
-    color: "rgba(209,250,229,0.9)",
-    fontSize: 12.5,
-    lineHeight: 1.35,
+    background: "#ecfdf5",
+    border: "1px solid #a7f3d0",
+    color: "#065f46",
+    fontSize: 13,
+    lineHeight: 1.4,
+    fontWeight: 600,
   },
 
-  badge: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 8,
-    padding: "8px 10px",
-    borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.05)",
-  },
-  badgeDot: { width: 8, height: 8, borderRadius: 999, background: "#22c55e", boxShadow: "0 0 0 4px rgba(34,197,94,0.12)" },
-  badgeText: { fontSize: 12, color: "rgba(229,231,235,0.8)", fontWeight: 800 },
-
-  btn: { padding: "10px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.10)", fontWeight: 900, cursor: "pointer" },
-  btnPrimary: { background: "linear-gradient(90deg, #4f46e5, #22c55e)", color: "#0b1220" },
-  btnGhost: { background: "rgba(255,255,255,0.06)", color: "#fff" },
-  btnDisabled: { opacity: 0.55, cursor: "not-allowed" },
+  btn: { padding: "10px 16px", borderRadius: 12, border: "1px solid #d1d5db", fontWeight: 900, fontSize: 14, cursor: "pointer" },
+  btnPrimary: { background: "#4f46e5", color: "#fff", border: "1px solid #4f46e5" },
+  btnGhost: { background: "#fff", color: "#111827" },
+  btnDisabled: { opacity: 0.5, cursor: "not-allowed" },
 
   tableWrap: { overflowX: "auto" },
   table: { width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 13 },
   th: {
     textAlign: "left",
     padding: "12px 10px",
-    color: "rgba(229,231,235,0.75)",
-    fontWeight: 900,
-    borderBottom: "1px solid rgba(255,255,255,0.08)",
+    color: "#6b7280",
+    fontWeight: 800,
+    borderBottom: "1px solid #e5e7eb",
     whiteSpace: "nowrap",
+    background: "#f9fafb",
   },
-  tr: { background: "rgba(255,255,255,0.02)" },
-  td: { padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,0.06)", color: "#fff", whiteSpace: "nowrap" },
-  empty: { textAlign: "center", padding: 18, color: "rgba(229,231,235,0.65)" },
-
-  footerNote: { marginTop: 12, textAlign: "center", fontSize: 12, color: "rgba(229,231,235,0.55)" },
+  trEven: { background: "#f9fafb" },
+  td: { padding: "12px 10px", borderBottom: "1px solid #e5e7eb", color: "#111827", whiteSpace: "nowrap" },
+  empty: { textAlign: "center", padding: 20, color: "#9ca3af" },
 };
 
 export default BulkHotel;
