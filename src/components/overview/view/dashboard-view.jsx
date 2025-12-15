@@ -53,7 +53,6 @@ export default function AppView() {
   const name = sessionStorage.getItem("user_name");
   const authItems = JSON.parse(sessionStorage.getItem("auth_items")) || [];
   const filtered = authItems.map((item) => item.title);
-console.log("Filtered items:", filtered);
   const handleWidgetClick = (title) => {
     const routes = {
       Bookings: role === "PMS" ? "/your-bookings" : "/all-bookings",
