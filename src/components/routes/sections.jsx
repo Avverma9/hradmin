@@ -8,6 +8,7 @@ import { LoaderProvider } from '../../../utils/loader';
 
 // Navigation Configuration
 import { fetchNavConfig } from '../dashboard/config-navigation';
+import BulkHotel from '../settings/bulk-operation/BulkHotel';
 
 // --- Page Components (Lazy Loaded) ---
 const IndexPage = lazy(() => import('src/components/pages/app'));
@@ -60,6 +61,7 @@ const MyTourPage = lazy(() => import('src/components/pages/tour/my-tour-page'));
 
 const TravelBookingTMS = lazy(() => import('src/components/pages/travel/travel-bookings'));
 const TravelBookingsAdmin = lazy(() => import('src/components/settings/travelBookings/travel-booking'));
+const BulkHotelPage = lazy(()=>import("src/components/pages/admin/bulkhotel-page"))
 
 
 /**
@@ -127,6 +129,8 @@ export default function Router() {
         { path: '/hotels/availability', element: <AvailabilityPage /> },
         { path: '/gst-page', element: <GSTpage /> },
         { path: '/bulk-data-processing', element: <BulkOperation /> },
+        { path: '/bulk-hotel-import', element: <BulkHotel /> },
+
         { path: "/additional-fields", element: <AdditionalInputs /> },
         
         // Travel & Tours

@@ -157,6 +157,8 @@ const getNavConfig = async () => {
                 { title: "GST", path: "/gst-page", icon: icons.settings },
                 { title: "Additional Fields", path: "/additional-fields", icon: icons.settings },
                 { title: 'Bulk Operation', path: '/bulk-data-processing', icon: icons.settings },
+                { title: 'Bulk Hotel', path: '/bulk-hotel-import', icon: icons.settings },
+
                 { title: 'Tour Requests', path: '/tour-requests', icon: icons.travel },
 
 
