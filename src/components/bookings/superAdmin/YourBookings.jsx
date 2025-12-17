@@ -4,8 +4,7 @@ import { DataGrid, GridToolbarContainer, GridToolbarExport } from "@mui/x-data-g
 import { useState, useEffect, useCallback } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
-import {
-    Box,
+import { Box,
     Button,
     Container,
     TextField,
@@ -21,6 +20,9 @@ import {
     Tooltip,
     IconButton,
     InputAdornment,
+    Stack,
+    Grid,
+    Typography,
 } from "@mui/material";
 import { Refresh, Search, FileDownload, Clear } from '@mui/icons-material';
 
@@ -29,6 +31,7 @@ import BookingUpdateModal from "../booking-update-modal";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchFilteredBookings, searchBooking } from "src/components/redux/reducers/booking";
 import { hotelEmail, role } from "../../../../utils/util";
+import { useResponsive } from "src/hooks/use-responsive";
 
 // A well-defined, reusable status chip component
 const RenderStatusChip = ({ status }) => {
@@ -43,7 +46,7 @@ const RenderStatusChip = ({ status }) => {
     return <Chip label={label} color={color} size="small" variant="filled" />;
 };
 
-// Custom Toolbar for a cleaner and more organized structure
+// Custom Toolbar for DataGrid (desktop)
 function CustomToolbar(props) {
     const {
         bookingId, setBookingId,
@@ -119,7 +122,79 @@ function CustomToolbar(props) {
     );
 }
 
+// Mobile Filters (not inside DataGrid)
+function MobileFilters(props) {
+    const {
+        bookingId, setBookingId,
+        status, setStatus,
+        filterDate, setFilterDate,
+        handleSearch, handleRefresh,
+        isSearchActive
+    } = props;
+
+    return (
+        <Stack spacing={1.5} sx={{ mb: 2 }}>
+            <TextField
+                label="Search by Booking ID"
+                variant="outlined"
+                size="small"
+                fullWidth
+                value={bookingId}
+                onChange={(e) => setBookingId(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                InputProps={{
+                    endAdornment: bookingId && (
+                        <InputAdornment position="end">
+                            <IconButton size="small" onClick={() => setBookingId('')} aria-label="clear search">
+                                <Clear fontSize="small" />
+                            </IconButton>
+                        </InputAdornment>
+                    )
+                }}
+            />
+            <Box sx={{ display: 'flex', gap: 1 }}>
+                <FormControl size="small" fullWidth>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                        value={status}
+                        label="Status"
+                        onChange={(e) => setStatus(e.target.value)}
+                    >
+                        <MenuItem value=""><em>All</em></MenuItem>
+                        <MenuItem value="Confirmed">Confirmed</MenuItem>
+                        <MenuItem value="Pending">Pending</MenuItem>
+                        <MenuItem value="Cancelled">Cancelled</MenuItem>
+                        <MenuItem value="Checked-in">Checked-in</MenuItem>
+                        <MenuItem value="Checked-out">Checked-out</MenuItem>
+                    </Select>
+                </FormControl>
+                <TextField
+                    label="Filter by Date"
+                    type="date"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                />
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button fullWidth variant="contained" onClick={handleSearch} startIcon={<Search />}>
+                    Search
+                </Button>
+                <Tooltip title={isSearchActive ? "Clear filters" : "Refresh data"}>
+                    <Button fullWidth variant="outlined" onClick={handleRefresh} startIcon={<Refresh />}>
+                        {isSearchActive ? "Clear" : "Refresh"}
+                    </Button>
+                </Tooltip>
+            </Box>
+        </Stack>
+    );
+}
+
 export default function SuperAdminBookingsView() {
+    const mdUp = useResponsive("up", "md");
     // State
     const [bookingId, setBookingId] = useState("");
     const [status, setStatus] = useState("");
@@ -222,6 +297,73 @@ export default function SuperAdminBookingsView() {
     const rows = bookings.map(booking => ({ ...booking, id: booking._id || booking.bookingId }));
     const disableEditFields = role === "Developer" || role === "TMS" || role === "Admin";
 
+    const renderBookingCard = (booking) => (
+        <Card key={booking._id || booking.bookingId} variant="outlined" sx={{ borderRadius: 3 }}>
+            <CardContent sx={{ p: 2 }}>
+                <Stack spacing={1.25}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                        <Stack spacing={0.25}>
+                            <Typography variant="subtitle2" fontWeight={600} noWrap>
+                                {booking.bookingId}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" noWrap>
+                                {booking.user?.name || booking.bookedBy || 'N/A'}
+                            </Typography>
+                        </Stack>
+                        <RenderStatusChip status={booking.bookingStatus} />
+                    </Box>
+                    <Divider />
+                    <Grid container spacing={1}>
+                        <Grid item xs={6}>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                                Source
+                            </Typography>
+                            <Typography variant="body2">{booking.bookingSource || 'N/A'}</Typography>
+                        </Grid>
+                        <Grid item xs={6}>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                                Payment Mode
+                            </Typography>
+                            <Typography variant="body2">{booking.pm || 'N/A'}</Typography>
+                        </Grid>
+                        <Grid item xs={6}>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                                Check-In
+                            </Typography>
+                            <Typography variant="body2">{fDate(booking.checkInDate)}</Typography>
+                        </Grid>
+                        <Grid item xs={6}>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                                Check-Out
+                            </Typography>
+                            <Typography variant="body2">{fDate(booking.checkOutDate)}</Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                                Booking Date
+                            </Typography>
+                            <Typography variant="body2">{fDate(booking.createdAt)}</Typography>
+                        </Grid>
+                    </Grid>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        <Button size="small" variant="outlined" fullWidth onClick={() => handleView(booking.bookingId)}>
+                            View
+                        </Button>
+                        <Button
+                            size="small"
+                            variant="contained"
+                            fullWidth
+                            color="secondary"
+                            onClick={() => handleUpdate(booking)}
+                        >
+                            Update
+                        </Button>
+                    </Box>
+                </Stack>
+            </CardContent>
+        </Card>
+    );
+
     return (
         <Container maxWidth="xl" sx={{ my: 4 }}>
             <Card variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
@@ -230,40 +372,63 @@ export default function SuperAdminBookingsView() {
                     subheader={`Found ${rows.length} bookings`}
                 />
                 <Divider />
-                <DataGrid
-                    rows={rows}
-                    columns={columns}
-                    loading={isLoading}
-                    paginationModel={paginationModel}
-                    onPaginationModelChange={setPaginationModel}
-                    pageSizeOptions={[10, 25, 50, 100]}
-                    checkboxSelection
-                    disableRowSelectionOnClick
-                    autoHeight
-                    slots={{
-                        toolbar: CustomToolbar,
-                        noRowsOverlay: () => <Box sx={{ p: 4, textAlign: 'center' }}>No bookings found.</Box>,
-                    }}
-                    slotProps={{
-                        toolbar: {
-                            bookingId, setBookingId,
-                            status, setStatus,
-                            filterDate, setFilterDate,
-                            handleSearch, handleRefresh,
-                            isSearchActive,
-                        },
-                    }}
-                    sx={{
-                        border: 0,
-                        '& .MuiDataGrid-columnHeaders': {
-                            backgroundColor: (theme) => theme.palette.grey[100],
-                            fontWeight: 'bold',
-                        },
-                        '& .MuiDataGrid-toolbarContainer': {
-                            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
-                        },
-                    }}
-                />
+                {mdUp ? (
+                    <DataGrid
+                        rows={rows}
+                        columns={columns}
+                        loading={isLoading}
+                        paginationModel={paginationModel}
+                        onPaginationModelChange={setPaginationModel}
+                        pageSizeOptions={[10, 25, 50, 100]}
+                        checkboxSelection
+                        disableRowSelectionOnClick
+                        autoHeight
+                        slots={{
+                            toolbar: CustomToolbar,
+                            noRowsOverlay: () => <Box sx={{ p: 4, textAlign: 'center' }}>No bookings found.</Box>,
+                        }}
+                        slotProps={{
+                            toolbar: {
+                                bookingId, setBookingId,
+                                status, setStatus,
+                                filterDate, setFilterDate,
+                                handleSearch, handleRefresh,
+                                isSearchActive,
+                            },
+                        }}
+                        sx={{
+                            border: 0,
+                            '& .MuiDataGrid-columnHeaders': {
+                                backgroundColor: (theme) => theme.palette.grey[100],
+                                fontWeight: 'bold',
+                            },
+                            '& .MuiDataGrid-toolbarContainer': {
+                                borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+                            },
+                        }}
+                    />
+                ) : (
+                    <CardContent sx={{ p: 2 }}>
+                        <MobileFilters
+                            bookingId={bookingId}
+                            setBookingId={setBookingId}
+                            status={status}
+                            setStatus={setStatus}
+                            filterDate={filterDate}
+                            setFilterDate={setFilterDate}
+                            handleSearch={handleSearch}
+                            handleRefresh={handleRefresh}
+                            isSearchActive={isSearchActive}
+                        />
+                        {rows.length === 0 ? (
+                            <Box sx={{ p: 4, textAlign: 'center' }}>No bookings found.</Box>
+                        ) : (
+                            <Stack spacing={2}>
+                                {rows.map((booking) => renderBookingCard(booking))}
+                            </Stack>
+                        )}
+                    </CardContent>
+                )}
             </Card>
 
             {selectedBooking && (

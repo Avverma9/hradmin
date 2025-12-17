@@ -25,6 +25,7 @@ import {
   TableRow,
   Chip,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { Search, FileDownload, Clear } from '@mui/icons-material';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { toast } from 'react-toastify';
@@ -38,6 +39,7 @@ import { getHotelsCity } from 'src/components/redux/reducers/hotel';
 import { fetchFilteredBookings, searchBooking } from 'src/components/redux/reducers/booking';
 import BookingUpdateModal from 'src/components/bookings/booking-update-modal';
 import { hotelEmail } from '../../../../utils/util';
+import { useResponsive } from '../../../hooks/use-responsive';
 
 const STATUS_OPTIONS = ['', 'Confirmed', 'Pending', 'Cancelled', 'Checked-in', 'Checked-out'];
 const PAGE_SIZE = 10;
@@ -58,6 +60,7 @@ export default function PanelBookings() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { showLoader, hideLoader } = useLoader();
+  const mdUp = useResponsive('up', 'md');
 
   const cities = useSelector((s) => s.hotel.byCity);
   const filtered = useSelector((s) => s.booking.filtered);
@@ -269,71 +272,137 @@ export default function PanelBookings() {
         </Box>
         <Divider />
 
-        {/* Table */}
-        <TableContainer sx={{ flexGrow: 1, overflow: 'auto' }}>
-          <InfiniteScroll
-            dataLength={rows.length}
-            next={loadMore}
-            hasMore={hasMore}
-            loader={
-              <Box sx={{ textAlign: 'center', py: 2 }}>
-                <CircularProgress size={24} />
-              </Box>
-            }
-            endMessage={
-              all.length > 0 && (
-                <Typography align="center" color="text.secondary" sx={{ py: 2 }}>
-                  <strong>End of list</strong>
-                </Typography>
-              )
-            }
-            scrollableTarget="scrollableDiv"
-          >
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Booking ID</TableCell>
-                  <TableCell>User</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Source</TableCell>
-                  <TableCell>Payment</TableCell>
-                  <TableCell>Check-In</TableCell>
-                  <TableCell>Check-Out</TableCell>
-                  <TableCell>Created By</TableCell>
-                  <TableCell>Created At</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {rows.map((b) => (
-                  <TableRow key={b.bookingId} hover>
-                    <TableCell>{b.bookingId}</TableCell>
-                    <TableCell>{b.user?.name || 'N/A'}</TableCell>
-                    <TableCell>
-                      <StatusChip status={b.bookingStatus} />
-                    </TableCell>
-                    <TableCell>{b.bookingSource || 'Site'}</TableCell>
-                    <TableCell>{b.pm || 'Offline'}</TableCell>
-                    <TableCell>{fDate(b.checkInDate)}</TableCell>
-                    <TableCell>{fDate(b.checkOutDate)}</TableCell>
-                    <TableCell>
-                      {b.createdBy?.user} ({b.createdBy?.email})
-                    </TableCell>
-                    <TableCell>{fDateTime(b.createdAt)}</TableCell>
-                    <TableCell align="right">
-                      <Button size="small" onClick={() => navigate(`/your-booking-details/${b.bookingId}`)}>
-                        View
-                      </Button>
-                      <Button size="small" color="warning" onClick={() => setModalData(b)}>
-                        Update
-                      </Button>
-                    </TableCell>
+        {/* Listing: Table on desktop, compact cards on mobile */}
+        {mdUp ? (
+          <TableContainer sx={{ flexGrow: 1, overflow: 'auto' }}>
+            <InfiniteScroll
+              dataLength={rows.length}
+              next={loadMore}
+              hasMore={hasMore}
+              loader={
+                <Box sx={{ textAlign: 'center', py: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              }
+              endMessage={
+                all.length > 0 && (
+                  <Typography align="center" color="text.secondary" sx={{ py: 2 }}>
+                    <strong>End of list</strong>
+                  </Typography>
+                )
+              }
+              scrollableTarget="scrollableDiv"
+            >
+              <Table stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Booking ID</TableCell>
+                    <TableCell>User</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Source</TableCell>
+                    <TableCell>Payment</TableCell>
+                    <TableCell>Check-In</TableCell>
+                    <TableCell>Check-Out</TableCell>
+                    <TableCell>Created By</TableCell>
+                    <TableCell>Created At</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
+                </TableHead>
+                <TableBody>
+                  {rows.map((b) => (
+                    <TableRow key={b.bookingId} hover>
+                      <TableCell>{b.bookingId}</TableCell>
+                      <TableCell>{b.user?.name || 'N/A'}</TableCell>
+                      <TableCell>
+                        <StatusChip status={b.bookingStatus} />
+                      </TableCell>
+                      <TableCell>{b.bookingSource || 'Site'}</TableCell>
+                      <TableCell>{b.pm || 'Offline'}</TableCell>
+                      <TableCell>{fDate(b.checkInDate)}</TableCell>
+                      <TableCell>{fDate(b.checkOutDate)}</TableCell>
+                      <TableCell>
+                        {b.createdBy?.user} ({b.createdBy?.email})
+                      </TableCell>
+                      <TableCell>{fDateTime(b.createdAt)}</TableCell>
+                      <TableCell align="right">
+                        <Button size="small" onClick={() => navigate(`/your-booking-details/${b.bookingId}`)}>
+                          View
+                        </Button>
+                        <Button size="small" color="warning" onClick={() => setModalData(b)}>
+                          Update
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </InfiniteScroll>
+          </TableContainer>
+        ) : (
+          <Box sx={{ flexGrow: 1, overflow: 'auto', p: 1.5 }}>
+            <InfiniteScroll
+              dataLength={rows.length}
+              next={loadMore}
+              hasMore={hasMore}
+              loader={
+                <Box sx={{ textAlign: 'center', py: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              }
+              endMessage={
+                all.length > 0 && (
+                  <Typography align="center" color="text.secondary" sx={{ py: 2 }}>
+                    <strong>End of list</strong>
+                  </Typography>
+                )
+              }
+            >
+              <Grid container spacing={1.5}>
+                {rows.map((b) => (
+                  <Grid item xs={12} key={b.bookingId}>
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        borderRadius: 2,
+                        p: 1.25,
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': { boxShadow: 3, transform: 'translateY(-1px)' },
+                      }}
+                    >
+                      <Grid container alignItems="center" spacing={1.25}>
+                        <Grid item xs={8}>
+                          <Typography variant="body2" fontWeight={700} noWrap sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            #{b.bookingId} • {b.user?.name || 'N/A'}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {fDate(b.checkInDate)} → {fDate(b.checkOutDate)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {(b.bookingSource || 'Site') + ' • ' + (b.pm || 'Offline')}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {b.createdBy?.user} ({b.createdBy?.email})
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={4}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
+                            <StatusChip status={b.bookingStatus} />
+                            <Button size="small" onClick={() => navigate(`/your-booking-details/${b.bookingId}`)}>
+                              View
+                            </Button>
+                            <Button size="small" color="warning" onClick={() => setModalData(b)}>
+                              Edit
+                            </Button>
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  </Grid>
                 ))}
-              </TableBody>
-            </Table>
-          </InfiniteScroll>
-        </TableContainer>
+              </Grid>
+            </InfiniteScroll>
+          </Box>
+        )}
       </Paper>
 
       {modalData && (

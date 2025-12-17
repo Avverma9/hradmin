@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
+import { useResponsive } from "../../hooks/use-responsive";
 import {
     TextField,
     Button,
@@ -14,7 +15,12 @@ import {
     Dialog,
     DialogContent,
     Typography,
+    Divider,
+    Stack,
+    Chip,
 } from "@mui/material";
+import { LocalizationProvider, DateTimePicker } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { useDispatch } from "react-redux";
 import { FaIndianRupeeSign } from "react-icons/fa6";
 import { FaLocationArrow } from "react-icons/fa";
@@ -47,6 +53,24 @@ const formatDateTimeForInput = (dateString) => {
     if (!dateString || typeof dateString !== 'string') return "";
     return dateString.slice(0, 16);
 };
+const Section = ({ title, children }) => (
+    <Box sx={{ width: "100%" }}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+            <Typography variant="subtitle2" fontWeight={600} color="text.secondary">
+                {title}
+            </Typography>
+            <Chip label="Editable" size="small" color="primary" variant="outlined" />
+        </Box>
+        <Divider sx={{ mb: 1.5 }} />
+        {children}
+    </Box>
+);
+
+Section.propTypes = {
+    title: PropTypes.string.isRequired,
+    children: PropTypes.node.isRequired,
+};
+
 export default function CarUpdate({ car, onClose, open, onUpdateSuccess }) {
     const [formData, setFormData] = useState(initialFormData);
     const [images, setImages] = useState([]);
@@ -54,6 +78,7 @@ export default function CarUpdate({ car, onClose, open, onUpdateSuccess }) {
     const [allCarData, setAllCarData] = useState([]);
     const [makes, setMakes] = useState([]);
     const dispatch = useDispatch();
+    const mdUp = useResponsive('up', 'md');
     useEffect(() => {
         const fetchCarData = async () => {
             try {
@@ -164,148 +189,182 @@ export default function CarUpdate({ car, onClose, open, onUpdateSuccess }) {
     };
 
     return (
-        <Dialog onClose={onClose} open={open} maxWidth="xl">
-            <DialogContent sx={{ width: "80vw", p: 3 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h5" gutterBottom>
+        <Dialog onClose={onClose} open={open} maxWidth="lg" fullScreen={!mdUp}>
+            <DialogContent sx={{ width: mdUp ? "70vw" : "100%", p: mdUp ? 3 : 2 }}>
+                <Box display="flex" justifyContent="space-between" alignItems={mdUp ? "center" : "flex-start"} mb={mdUp ? 2.5 : 1.5} sx={{ flexDirection: mdUp ? 'row' : 'column', gap: mdUp ? 0 : 1 }}>
+                    <Typography variant={mdUp ? "h5" : "h6"} fontWeight={700} gutterBottom>
                         Update Car Details
                     </Typography>
-                    <Button variant="outlined" color="primary" onClick={onClose}>
+                    <Button variant="outlined" color="primary" onClick={onClose} size={mdUp ? 'medium' : 'small'}>
                         Close
                     </Button>
                 </Box>
 
-                <form onSubmit={handleSubmit}>
-                    <Grid container spacing={2}>
-                        {/* All your Grid items remain the same */}
-                        <Grid item xs={12} sm={4}>
-                            <Autocomplete
-                                value={formData.make}
-                                onChange={(e, newValue) => handleAutocompleteChange("make", newValue)}
-                                options={makes}
-                                renderInput={(params) => <TextField {...params} name="make" label="Make" variant="outlined" />}
-                                freeSolo
-                                fullWidth
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <Autocomplete
-                                value={formData.model}
-                                onChange={(e, newValue) => handleAutocompleteChange("model", newValue)}
-                                options={modelOptions}
-                                renderInput={(params) => <TextField {...params} name="model" label="Model" variant="outlined" />}
-                                freeSolo
-                                fullWidth
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField name="year" label="Year" fullWidth type="number" variant="outlined" value={formData.year} onChange={handleChange} />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField name="vehicleNumber" label="Car Number" fullWidth type="text" variant="outlined" value={formData.vehicleNumber} onChange={handleChange} />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <FormControl fullWidth>
-                                <InputLabel>Color</InputLabel>
-                                <Select name="color" value={formData.color} onChange={handleChange} label="Color">
-                                    {["Red", "Blue", "Black", "White", "Silver", "Green"].map((clr) => (
-                                        <MenuItem key={clr} value={clr}>{clr}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <FormControl fullWidth>
-                                <InputLabel>Seater</InputLabel>
-                                <Select name="seater" value={formData.seater} onChange={handleChange} label="Seater">
-                                    {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((s) => (
-                                        <MenuItem key={s} value={s}>{s}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <FormControl fullWidth>
-                                <InputLabel>Fuel Type</InputLabel>
-                                <Select name="fuelType" value={formData.fuelType} onChange={handleChange} label="Fuel Type">
-                                    {["Petrol", "Diesel", "Electric", "Hybrid"].map((type) => (
-                                        <MenuItem key={type} value={type}>{type}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                     
-                        <Grid item xs={12} sm={4}>
-                            <FormControl fullWidth>
-                                <InputLabel>Vehicle Type</InputLabel>
-                                <Select name="vehicleType" value={formData.vehicleType} onChange={handleChange} label="Vehicle Type">
-                                    {["Car", "Bike", "Bus"].map((type) => (
-                                        <MenuItem key={type} value={type}>{type}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <FormControl fullWidth>
-                                <InputLabel>Sharing Type</InputLabel>
-                                <Select name="sharingType" value={formData.sharingType} onChange={handleChange} label="Sharing Type">
-                                    {["Private", "Shared"].map((type) => (
-                                        <MenuItem key={type} value={type}>{type}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <FormControl fullWidth>
-                                <InputLabel>Transmission</InputLabel>
-                                <Select name="transmission" value={formData.transmission} onChange={handleChange} label="Transmission">
-                                    <MenuItem value="Automatic">Automatic</MenuItem>
-                                    <MenuItem value="Manual">Manual</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField name="mileage" label="Mileage (KM/L)" fullWidth type="number" variant="outlined" value={formData.mileage} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><Speed /></InputAdornment> }} />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField name="pickupP" label="Pickup Location" fullWidth value={formData.pickupP} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><FaLocationArrow /></InputAdornment> }} />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField name="dropP" label="Drop Location" fullWidth value={formData.dropP} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><FaLocationArrow /></InputAdornment> }} />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField name="pickupD" label="Pickup Time" type="datetime-local" fullWidth value={formData.pickupD} onChange={handleChange} InputLabelProps={{ shrink: true }} />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField name="dropD" label="Drop Time" type="datetime-local" fullWidth value={formData.dropD} onChange={handleChange} InputLabelProps={{ shrink: true }} />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField name="price" label="Full Ride Price" type="number" fullWidth value={formData.price} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><FaIndianRupeeSign /></InputAdornment> }} />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField name="perPersonCost" label="Per Person Cost" type="number" fullWidth value={formData.perPersonCost} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><FaIndianRupeeSign /></InputAdornment> }} />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField name="extraKm" label="Extra KM Charge" fullWidth value={formData.extraKm} onChange={handleChange} />
-                        </Grid>
-                        <Grid item xs={12}>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <form onSubmit={handleSubmit}>
+                        <Stack spacing={mdUp ? 3 : 2}>
+                        <Section title="Vehicle Information">
+                            <Grid container spacing={mdUp ? 2 : 1.25}>
+                                <Grid item xs={12} sm={4}>
+                                    <Autocomplete
+                                        value={formData.make}
+                                        onChange={(e, newValue) => handleAutocompleteChange("make", newValue)}
+                                        options={makes}
+                                        renderInput={(params) => <TextField {...params} name="make" label="Make" variant="outlined" size={mdUp ? 'medium' : 'small'} />}
+                                        freeSolo
+                                        fullWidth
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <Autocomplete
+                                        value={formData.model}
+                                        onChange={(e, newValue) => handleAutocompleteChange("model", newValue)}
+                                        options={modelOptions}
+                                        renderInput={(params) => <TextField {...params} name="model" label="Model" variant="outlined" size={mdUp ? 'medium' : 'small'} />}
+                                        freeSolo
+                                        fullWidth
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <TextField name="year" label="Year" fullWidth type="number" variant="outlined" value={formData.year} onChange={handleChange} size={mdUp ? 'medium' : 'small'} />
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <TextField name="vehicleNumber" label="Car Number" fullWidth type="text" variant="outlined" value={formData.vehicleNumber} onChange={handleChange} size={mdUp ? 'medium' : 'small'} />
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Color</InputLabel>
+                                        <Select name="color" value={formData.color} onChange={handleChange} label="Color" size={mdUp ? 'medium' : 'small'}>
+                                            {["Red", "Blue", "Black", "White", "Silver", "Green"].map((clr) => (
+                                                <MenuItem key={clr} value={clr}>{clr}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Seater</InputLabel>
+                                        <Select name="seater" value={formData.seater} onChange={handleChange} label="Seater" size={mdUp ? 'medium' : 'small'}>
+                                            {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((s) => (
+                                                <MenuItem key={s} value={s}>{s}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Fuel Type</InputLabel>
+                                        <Select name="fuelType" value={formData.fuelType} onChange={handleChange} label="Fuel Type" size={mdUp ? 'medium' : 'small'}>
+                                            {["Petrol", "Diesel", "Electric", "Hybrid"].map((type) => (
+                                                <MenuItem key={type} value={type}>{type}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Vehicle Type</InputLabel>
+                                        <Select name="vehicleType" value={formData.vehicleType} onChange={handleChange} label="Vehicle Type" size={mdUp ? 'medium' : 'small'}>
+                                            {["Car", "Bike", "Bus"].map((type) => (
+                                                <MenuItem key={type} value={type}>{type}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Sharing Type</InputLabel>
+                                        <Select name="sharingType" value={formData.sharingType} onChange={handleChange} label="Sharing Type" size={mdUp ? 'medium' : 'small'}>
+                                            {["Private", "Shared"].map((type) => (
+                                                <MenuItem key={type} value={type}>{type}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Transmission</InputLabel>
+                                        <Select name="transmission" value={formData.transmission} onChange={handleChange} label="Transmission" size={mdUp ? 'medium' : 'small'}>
+                                            <MenuItem value="Automatic">Automatic</MenuItem>
+                                            <MenuItem value="Manual">Manual</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <TextField name="mileage" label="Mileage (KM/L)" fullWidth type="number" variant="outlined" value={formData.mileage} onChange={handleChange} size={mdUp ? 'medium' : 'small'} InputProps={{ startAdornment: <InputAdornment position="start"><Speed /></InputAdornment> }} />
+                                </Grid>
+                            </Grid>
+                        </Section>
+                        <Section title="Ride Details">
+                            <Grid container spacing={mdUp ? 2 : 1.25}>
+                                <Grid item xs={12} sm={4}>
+                                    <TextField name="pickupP" label="Pickup Location" fullWidth value={formData.pickupP} onChange={handleChange} size={mdUp ? 'medium' : 'small'} InputProps={{ startAdornment: <InputAdornment position="start"><FaLocationArrow /></InputAdornment> }} />
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <TextField name="dropP" label="Drop Location" fullWidth value={formData.dropP} onChange={handleChange} size={mdUp ? 'medium' : 'small'} InputProps={{ startAdornment: <InputAdornment position="start"><FaLocationArrow /></InputAdornment> }} />
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <DateTimePicker
+                                        label="Pickup Time"
+                                        value={formData.pickupD ? new Date(formData.pickupD) : null}
+                                        onChange={(value) => handleChange({ target: { name: "pickupD", value: value ? value.toISOString() : "" } })}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                fullWidth
+                                                size={mdUp ? 'medium' : 'small'}
+                                            />
+                                        )}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <DateTimePicker
+                                        label="Drop Time"
+                                        value={formData.dropD ? new Date(formData.dropD) : null}
+                                        onChange={(value) => handleChange({ target: { name: "dropD", value: value ? value.toISOString() : "" } })}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                fullWidth
+                                                size={mdUp ? 'medium' : 'small'}
+                                            />
+                                        )}
+                                    />
+                                </Grid>
+                            </Grid>
+                        </Section>
+                        <Section title="Pricing">
+                            <Grid container spacing={mdUp ? 2 : 1.25}>
+                                <Grid item xs={12} sm={4}>
+                                    <TextField name="price" label="Full Ride Price" type="number" fullWidth value={formData.price} onChange={handleChange} size={mdUp ? 'medium' : 'small'} InputProps={{ startAdornment: <InputAdornment position="start"><FaIndianRupeeSign /></InputAdornment> }} />
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <TextField name="perPersonCost" label="Per Person Cost" type="number" fullWidth value={formData.perPersonCost} onChange={handleChange} size={mdUp ? 'medium' : 'small'} InputProps={{ startAdornment: <InputAdornment position="start"><FaIndianRupeeSign /></InputAdornment> }} />
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <TextField name="extraKm" label="Extra KM Charge" fullWidth value={formData.extraKm} onChange={handleChange} size={mdUp ? 'medium' : 'small'} />
+                                </Grid>
+                            </Grid>
+                        </Section>
+                        <Section title="Media">
                             <Button variant="outlined" component="label" fullWidth startIcon={<PhotoCamera />}>
                                 Upload New Images
                                 <input type="file" hidden accept="image/*" multiple onChange={handleFileChange} />
                             </Button>
                             {imagePreviews.length > 0 && (
-                                <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                                <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: 2 }}>
                                     {imagePreviews.map((preview, index) => (
-                                        <img key={index} src={preview} alt={`Preview ${index}`} style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "8px" }} />
+                                        <img key={index} src={preview} alt={`Preview ${index}`} style={{ width: mdUp ? "100px" : "90px", height: mdUp ? "100px" : "90px", objectFit: "cover", borderRadius: "6px" }} />
                                     ))}
                                 </Box>
                             )}
-                        </Grid>
-                    </Grid>
-                    <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 3, py: 1.5 }}>
+                        </Section>
+                    </Stack>
+                    <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: mdUp ? 3 : 2, py: mdUp ? 1.5 : 1 }} size={mdUp ? 'medium' : 'small'}>
                         Update Car
                     </Button>
                 </form>
+                </LocalizationProvider>
             </DialogContent>
         </Dialog>
     );

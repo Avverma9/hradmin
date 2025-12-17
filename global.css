@@ -1,2 +1,5 @@
-/* scrollbar */
 @import 'simplebar-react/dist/simplebar.min.css';
+@import "tailwindcss";
+@source "./index.html" "./src/**/*.{js,jsx,ts,tsx}";
+
+/* scrollbar */

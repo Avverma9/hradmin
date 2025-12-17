@@ -50,6 +50,7 @@ import { filterCar, getAllCars } from '../redux/reducers/travel/car';
 import { localUrl } from '../../../utils/util';
 import SeatData from './seat-data';
 import { useLoader } from '../../../utils/loader';
+import { useResponsive } from '../../hooks/use-responsive';
 
 // CarCard Component for individual car display
 const CarCard = ({ car, onBookNow }) => {
@@ -163,6 +164,7 @@ const CarCardSkeleton = () => (
 
 const Cars = () => {
   const dispatch = useDispatch();
+  const mdUp = useResponsive('up', 'md');
   const [data, setData] = useState([]);
   const [openSeatData, setOpenSeatData] = useState(false);
   const [selectedCar, setSelectedCar] = useState(null);
@@ -245,24 +247,24 @@ const Cars = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-      <Paper variant="outlined" sx={{ p: 2, mb: 3, borderRadius: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={2.5}><TextField fullWidth label="Pickup" value={pickupP} onChange={(e) => setPickupP(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><LocationOn /></InputAdornment> }} /></Grid>
-          <Grid item xs={12} sm={6} md={2.5}><TextField fullWidth label="Drop" value={dropP} onChange={(e) => setDropP(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><Map /></InputAdornment> }} /></Grid>
+      <Paper variant="outlined" sx={{ p: mdUp ? 2.5 : 1.5, mb: 3, borderRadius: 3 }}>
+        <Grid container spacing={mdUp ? 2 : 1.25} alignItems="center">
+          <Grid item xs={12} sm={6} md={2.5}><TextField fullWidth size={mdUp ? 'medium' : 'small'} label="Pickup" value={pickupP} onChange={(e) => setPickupP(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><LocationOn /></InputAdornment> }} /></Grid>
+          <Grid item xs={12} sm={6} md={2.5}><TextField fullWidth size={mdUp ? 'medium' : 'small'} label="Drop" value={dropP} onChange={(e) => setDropP(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><Map /></InputAdornment> }} /></Grid>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <Grid item xs={12} sm={6} md={2}><DatePicker label="From" value={fromDate} onChange={setFromDate} renderInput={(params) => <TextField {...params} fullWidth />} /></Grid>
-            <Grid item xs={12} sm={6} md={2}><DatePicker label="To" value={toDate} onChange={setToDate} renderInput={(params) => <TextField {...params} fullWidth />} /></Grid>
+            <Grid item xs={12} sm={6} md={2}><DatePicker label="From" value={fromDate} onChange={setFromDate} renderInput={(params) => <TextField {...params} fullWidth size={mdUp ? 'medium' : 'small'} />} /></Grid>
+            <Grid item xs={12} sm={6} md={2}><DatePicker label="To" value={toDate} onChange={setToDate} renderInput={(params) => <TextField {...params} fullWidth size={mdUp ? 'medium' : 'small'} />} /></Grid>
           </LocalizationProvider>
           <Grid item xs={12} md={3} display="flex" gap={1}>
-            <Button fullWidth variant="contained" onClick={handleSearch} startIcon={<Search />} sx={{ height: 56 }}>Search</Button>
-            <Button fullWidth variant="outlined" onClick={handleClear} startIcon={<Clear />} sx={{ height: 56 }}>Clear</Button>
+            <Button fullWidth variant="contained" onClick={handleSearch} startIcon={<Search />} sx={{ height: mdUp ? 56 : 44 }} size={mdUp ? 'medium' : 'small'}>Search</Button>
+            <Button fullWidth variant="outlined" onClick={handleClear} startIcon={<Clear />} sx={{ height: mdUp ? 56 : 44 }} size={mdUp ? 'medium' : 'small'}>Clear</Button>
           </Grid>
         </Grid>
       </Paper>
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={3}>
-          <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, position: 'sticky', top: 20 }}>
+          <Paper variant="outlined" sx={{ p: mdUp ? 2 : 1.5, borderRadius: 3, position: mdUp ? 'sticky' : 'static', top: mdUp ? 20 : 'auto' }}>
             <Typography variant="h6" gutterBottom>Filters</Typography>
             <Divider sx={{ mb: 2 }} />
             <Box mb={2}>

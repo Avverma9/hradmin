@@ -25,9 +25,11 @@ import { Close, Add, Save, Cancel, EventSeat } from '@mui/icons-material';
 import { FaIndianRupeeSign } from "react-icons/fa6";
 import { updateCar } from "../redux/reducers/travel/car";
 import { toast } from 'react-toastify';
+import { useResponsive } from '../../hooks/use-responsive';
 
 const SeatConfigUpdate = ({ open, onClose, car }) => {
   const dispatch = useDispatch();
+  const mdUp = useResponsive('up', 'md');
   const [localSeatConfig, setLocalSeatConfig] = useState([]);
 
   useEffect(() => {
@@ -89,8 +91,15 @@ const SeatConfigUpdate = ({ open, onClose, car }) => {
   const bookedCount = localSeatConfig.filter((seat) => seat.isBooked).length;
   const availableCount = localSeatConfig.length - bookedCount;
 
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" PaperProps={{ sx: { borderRadius: 4 } }}>
+    return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="md"
+      fullScreen={!mdUp}
+      PaperProps={{ sx: { borderRadius: mdUp ? 4 : 0 } }}
+    >
       <DialogTitle sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6" fontWeight="600">
@@ -98,19 +107,19 @@ const SeatConfigUpdate = ({ open, onClose, car }) => {
             </Typography>
             <IconButton onClick={onClose} size="small"><Close /></IconButton>
         </Box>
-        <Box display="flex" gap={3} mt={1}>
+      <Box display="flex" gap={2} mt={1} flexWrap={mdUp ? 'nowrap' : 'wrap'}>
             <Chip icon={<EventSeat />} label={`Total: ${localSeatConfig.length}`} color="default" />
             <Chip icon={<EventSeat />} label={`Available: ${availableCount}`} color="success" variant="outlined" />
             <Chip icon={<EventSeat />} label={`Booked: ${bookedCount}`} color="error" variant="outlined" />
         </Box>
       </DialogTitle>
-      <DialogContent dividers sx={{ bgcolor: 'grey.50' }}>
-        <Box sx={{ maxHeight: '60vh', overflowY: 'auto', p:0.5 }}>
+      <DialogContent dividers sx={{ bgcolor: 'grey.50', p: mdUp ? 2 : 1.5 }}>
+      <Box sx={{ maxHeight: mdUp ? '60vh' : 'unset', overflowY: mdUp ? 'auto' : 'visible', p: 0.5 }}>
             {localSeatConfig.map((seat, index) => (
             <Paper
                 key={index}
                 variant="outlined"
-                sx={{ mb: 2, p: 2, borderRadius: 2 }}
+          sx={{ mb: mdUp ? 2 : 1.5, p: mdUp ? 2 : 1.5, borderRadius: 2 }}
             >
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Typography variant="subtitle1" fontWeight="bold">
@@ -125,7 +134,7 @@ const SeatConfigUpdate = ({ open, onClose, car }) => {
                         Remove
                     </Button>
                 </Box>
-                <Grid container spacing={2}>
+          <Grid container spacing={mdUp ? 2 : 1.5}>
                   <Grid item xs={12} sm={4}>
                       <FormControl fullWidth size="small">
                       <InputLabel>Type</InputLabel>
@@ -197,17 +206,17 @@ const SeatConfigUpdate = ({ open, onClose, car }) => {
             </Paper>
         ))}
         </Box>
-        <Box textAlign="right" mt={2}>
-            <Button variant="outlined" onClick={addNewSeat} startIcon={<Add />}>
+      <Box textAlign="right" mt={mdUp ? 2 : 1.5}>
+        <Button variant="outlined" size={mdUp ? 'medium' : 'small'} onClick={addNewSeat} startIcon={<Add />}>
                 Add New Seat
             </Button>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
-        <Button onClick={onClose} variant="outlined" color="inherit" startIcon={<Cancel />}>
+      <DialogActions sx={{ p: mdUp ? 2 : 1.5, borderTop: 1, borderColor: 'divider' }}>
+      <Button onClick={onClose} variant="outlined" color="inherit" size={mdUp ? 'medium' : 'small'} startIcon={<Cancel />}>
           Cancel
         </Button>
-        <Button onClick={handleSave} variant="contained" color="primary" startIcon={<Save />}>
+      <Button onClick={handleSave} variant="contained" color="primary" size={mdUp ? 'medium' : 'small'} startIcon={<Save />}>
           Save Changes
         </Button>
       </DialogActions>

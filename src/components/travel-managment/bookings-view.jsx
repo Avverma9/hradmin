@@ -7,10 +7,18 @@ import {
     Button,
     Box,
     Chip,
+    Stack,
+    useTheme,
+    useMediaQuery,
+    IconButton,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 const BookingDetails = ({ booking, onClose }) => {
-    // Destructure all required fields from the booking object
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+
     const {
         vehicleNumber,
         pickupP,
@@ -22,8 +30,8 @@ const BookingDetails = ({ booking, onClose }) => {
         bookingDate,
         price,
         bookingId,
-        seats, // <-- Added seats array
-        totalSeatPrice, // <-- Added total price
+        seats,
+        totalSeatPrice,
     } = booking;
 
     const formatDateTime = (dateStr) => {
@@ -38,112 +46,305 @@ const BookingDetails = ({ booking, onClose }) => {
         });
     };
 
-    return (
-        <Paper
-            elevation={1}
+    // Info Row Component for cleaner code
+    const InfoRow = ({ label, value, icon }) => (
+        <Box
             sx={{
-                width: "calc(100% - 64px)",
-                margin: '20px auto',
-                border: '2px dotted #1976d2',
-                borderRadius: 3,
-                p: 2,
+                backgroundColor: 'grey.50',
+                p: isMobile ? 1 : 1.25,
+                borderRadius: 1.5,
+                borderLeft: '3px solid',
+                borderColor: 'primary.main',
+                height: '100%',
             }}
         >
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
-                <Typography variant="h6" fontWeight="bold" color="primary">
-                    Booking Details
+            <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                    display: 'block',
+                    mb: 0.25,
+                    fontSize: isMobile ? '0.7rem' : '0.75rem',
+                    fontWeight: 500,
+                }}
+            >
+                {label}
+            </Typography>
+            <Typography
+                variant="body2"
+                fontWeight={600}
+                sx={{
+                    fontSize: isMobile ? '0.8125rem' : '0.875rem',
+                    wordBreak: 'break-word',
+                }}
+            >
+                {value || 'N/A'}
+            </Typography>
+        </Box>
+    );
+
+    return (
+        <Box
+            sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                bgcolor: 'background.default',
+            }}
+        >
+            {/* Header - Sticky on mobile */}
+            <Paper
+                elevation={2}
+                sx={{
+                    position: isMobile ? 'sticky' : 'relative',
+                    top: 0,
+                    zIndex: 1,
+                    borderRadius: isMobile ? 0 : '12px 12px 0 0',
+                    p: isMobile ? 1.5 : 2,
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                }}
+            >
+                <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                >
+                    <Box>
+                        <Typography
+                            variant={isMobile ? 'subtitle1' : 'h6'}
+                            fontWeight={700}
+                            color="white"
+                        >
+                            Booking Details
+                        </Typography>
+                        <Typography
+                            variant="caption"
+                            sx={{ color: 'rgba(255,255,255,0.85)' }}
+                        >
+                            ID: {bookingId}
+                        </Typography>
+                    </Box>
+                    {onClose && (
+                        isMobile ? (
+                            <IconButton
+                                size="small"
+                                onClick={onClose}
+                                sx={{
+                                    color: 'white',
+                                    bgcolor: 'rgba(255,255,255,0.2)',
+                                }}
+                            >
+                                <CloseIcon fontSize="small" />
+                            </IconButton>
+                        ) : (
+                            <Button
+                                size="small"
+                                variant="contained"
+                                color="error"
+                                onClick={onClose}
+                                sx={{ textTransform: 'none', fontWeight: 600 }}
+                            >
+                                Close
+                            </Button>
+                        )
+                    )}
+                </Stack>
+            </Paper>
+
+            {/* Scrollable Content */}
+            <Box
+                sx={{
+                    flex: 1,
+                    overflowY: 'auto',
+                    p: isMobile ? 1.5 : 2.5,
+                    pb: isMobile ? 10 : 2.5,
+                }}
+            >
+                {/* Customer Info Section */}
+                <Typography
+                    variant="overline"
+                    sx={{
+                        display: 'block',
+                        mb: 1,
+                        color: 'primary.main',
+                        fontWeight: 700,
+                        fontSize: isMobile ? '0.7rem' : '0.75rem',
+                    }}
+                >
+                    Customer Information
                 </Typography>
-                {onClose && (
-                    <Button size="small" variant="contained" color="error" onClick={onClose}>
-                        Close
-                    </Button>
-                )}
-            </Box>
+                <Grid container spacing={isMobile ? 1 : 1.5} sx={{ mb: 2 }}>
+                    <Grid item xs={12} sm={6}>
+                        <InfoRow label="Booked By" value={bookedBy} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <InfoRow label="Mobile" value={customerMobile} />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <InfoRow label="Booking Date" value={formatDateTime(bookingDate)} />
+                    </Grid>
+                </Grid>
 
-            <Divider sx={{ mb: 1.5 }} />
+                {/* Trip Details Section */}
+                <Typography
+                    variant="overline"
+                    sx={{
+                        display: 'block',
+                        mb: 1,
+                        color: 'primary.main',
+                        fontWeight: 700,
+                        fontSize: isMobile ? '0.7rem' : '0.75rem',
+                    }}
+                >
+                    Trip Details
+                </Typography>
+                <Grid container spacing={isMobile ? 1 : 1.5} sx={{ mb: 2 }}>
+                    <Grid item xs={12}>
+                        <InfoRow label="Vehicle Number" value={vehicleNumber} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <InfoRow label="Pickup Location" value={pickupP} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <InfoRow label="Drop Location" value={dropP} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <InfoRow label="Pickup Date & Time" value={formatDateTime(pickupD)} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <InfoRow label="Drop Date & Time" value={formatDateTime(dropD)} />
+                    </Grid>
+                </Grid>
 
-            {/* Main Booking Info */}
-            <Grid container spacing={1}>
-                {[
-                    ['Booking ID', bookingId],
-                    ['Booked By', bookedBy],
-                    ['Mobile', customerMobile],
-                    ['Vehicle Number', vehicleNumber],
-                    ['Pickup Location', pickupP],
-                    ['Drop Location', dropP],
-                    ['Pickup Date', formatDateTime(pickupD)],
-                    ['Drop Date', formatDateTime(dropD)],
-                    ['Booking Date', formatDateTime(bookingDate)],
-                ]?.map(([label, value]) => (
-                    <Grid item xs={12} sm={6} key={label}>
-                        <Box
+                {/* Seat Information Section */}
+                {seats && seats.length > 0 && (
+                    <>
+                        <Typography
+                            variant="overline"
                             sx={{
-                                backgroundColor: '#f5f5f5',
-                                p: 1,
-                                borderRadius: 1,
-                                borderLeft: '4px solid #1976d2',
-                                height: '100%',
+                                display: 'block',
+                                mb: 1,
+                                color: 'primary.main',
+                                fontWeight: 700,
+                                fontSize: isMobile ? '0.7rem' : '0.75rem',
                             }}
                         >
-                            <Typography variant="caption" color="text.secondary" lineHeight={1.2}>
-                                {label}
-                            </Typography>
-                            <Typography variant="body2" fontWeight="bold">
-                                {value || 'N/A'}
-                            </Typography>
-                        </Box>
-                    </Grid>
-                ))}
-            </Grid>
+                            Seat Information ({seats.length} {seats.length === 1 ? 'Seat' : 'Seats'})
+                        </Typography>
 
-            {/* Seat Information Section */}
-            {seats && seats.length > 0 && (
-                <>
-                    <Divider sx={{ my: 2 }}>
-                        <Typography variant="overline">Seat Information</Typography>
-                    </Divider>
-
-                    <Grid container spacing={1}>
-                        {seats.map((seat, index) => (
-                            <Grid item xs={12} sm={6} md={4} key={seat._id || index}>
+                        <Stack spacing={isMobile ? 1 : 1.25} sx={{ mb: 2 }}>
+                            {seats.map((seat, index) => (
                                 <Box
+                                    key={seat._id || index}
                                     sx={{
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'center',
-                                        p: 1,
-                                        borderRadius: 1,
-                                        backgroundColor: '#e3f2fd', // Light blue background
-                                        border: '1px solid #90caf9'
+                                        p: isMobile ? 1 : 1.25,
+                                        borderRadius: 1.5,
+                                        bgcolor: 'primary.lighter',
+                                        border: '1px solid',
+                                        borderColor: 'primary.light',
+                                        transition: 'all 0.2s',
+                                        '&:hover': {
+                                            bgcolor: 'primary.light',
+                                            transform: 'translateX(4px)',
+                                        },
                                     }}
                                 >
                                     <Box>
-                                        <Typography variant="body2" fontWeight="bold">
+                                        <Typography
+                                            variant="body2"
+                                            fontWeight={700}
+                                            sx={{ mb: 0.5, fontSize: isMobile ? '0.8125rem' : '0.875rem' }}
+                                        >
                                             Seat #{seat.seatNumber}
                                         </Typography>
-                                        <Chip label={seat.seatType} color="primary" size="small" sx={{ mr: 1 }} />
+                                        <Chip
+                                            label={seat.seatType}
+                                            color="primary"
+                                            size="small"
+                                            sx={{
+                                                height: isMobile ? 20 : 24,
+                                                fontSize: isMobile ? '0.7rem' : '0.75rem',
+                                                fontWeight: 600,
+                                            }}
+                                        />
                                     </Box>
-                                    <Typography variant="body1" fontWeight="bold">
+                                    <Typography
+                                        variant={isMobile ? 'body1' : 'h6'}
+                                        fontWeight={700}
+                                        color="primary"
+                                    >
                                         ₹{seat.seatPrice}
                                     </Typography>
                                 </Box>
-                            </Grid>
-                        ))}
-                    </Grid>
-                </>
-            )}
-
-            {/* Total Price Section */}
-            <Divider sx={{ my: 2 }} />
-            <Box textAlign="right" sx={{ pr: 1 }}>
-                <Typography variant="overline" color="text.secondary">
-                    Total Amount
-                </Typography>
-                <Typography variant="h5" fontWeight="bold" color="primary">
-                    ₹{price || 0}
-                </Typography>
+                            ))}
+                        </Stack>
+                    </>
+                )}
             </Box>
-        </Paper>
+
+            {/* Total Price Section - Fixed at bottom on mobile */}
+            <Paper
+                elevation={isMobile ? 8 : 0}
+                sx={{
+                    position: isMobile ? 'fixed' : 'relative',
+                    bottom: isMobile ? 0 : 'auto',
+                    left: isMobile ? 0 : 'auto',
+                    right: isMobile ? 0 : 'auto',
+                    zIndex: 2,
+                    borderRadius: isMobile ? '16px 16px 0 0' : 0,
+                    p: isMobile ? 2 : 2.5,
+                    background: isMobile
+                        ? 'linear-gradient(to top, #ffffff 0%, #f8f9fa 100%)'
+                        : 'transparent',
+                    borderTop: isMobile ? '2px solid' : 'none',
+                    borderColor: 'divider',
+                }}
+            >
+                <Divider sx={{ mb: 1.5, display: isMobile ? 'none' : 'block' }} />
+                <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                >
+                    <Box>
+                        <Typography
+                            variant="overline"
+                            color="text.secondary"
+                            sx={{
+                                fontSize: isMobile ? '0.7rem' : '0.75rem',
+                                fontWeight: 600,
+                            }}
+                        >
+                            Total Amount
+                        </Typography>
+                        {seats && seats.length > 0 && (
+                            <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: 'block', fontSize: isMobile ? '0.65rem' : '0.7rem' }}
+                            >
+                                {seats.length} seat{seats.length > 1 ? 's' : ''} booked
+                            </Typography>
+                        )}
+                    </Box>
+                    <Typography
+                        variant={isMobile ? 'h5' : 'h4'}
+                        fontWeight={800}
+                        color="primary"
+                        sx={{
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                        }}
+                    >
+                        ₹{price || 0}
+                    </Typography>
+                </Stack>
+            </Paper>
+        </Box>
     );
 };
 

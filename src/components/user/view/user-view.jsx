@@ -53,6 +53,7 @@ import EditUserModal from './edit-modal';
 import ViewUserModal from './view-user-modal';
 import AddUserModal from './add-partner-modal';
 import EditContact from './edit-contact-messenger';
+import { useResponsive } from '../../../hooks/use-responsive';
 
 function StatsCard({ title, value, icon, color = 'primary', trend }) {
   const theme = useTheme();
@@ -298,6 +299,9 @@ export default function UserPage() {
   const dispatch = useDispatch();
   const data = useSelector((state) => state.partner.allData);
   const { showLoader, hideLoader } = useLoader();
+  const mdUp = useResponsive('up', 'md');
+  const [mobileAnchorEl, setMobileAnchorEl] = useState(null);
+  const [mobileRow, setMobileRow] = useState(null);
 
   const [users, setUsers] = useState([]);
   const [page, setPage] = useState(0);
@@ -388,6 +392,16 @@ export default function UserPage() {
         .catch(() => toast.error('Delete failed'))
         .finally(hideLoader);
     }
+  };
+
+  const openMobileMenu = (e, row) => {
+    setMobileAnchorEl(e.currentTarget);
+    setMobileRow(row);
+  };
+
+  const closeMobileMenu = () => {
+    setMobileAnchorEl(null);
+    setMobileRow(null);
   };
 
   return (
@@ -493,7 +507,7 @@ export default function UserPage() {
         />
       </Card>
 
-      {/* Main Table Card */}
+      {/* Main Listing Card (responsive) */}
       <Card elevation={4} sx={{ borderRadius: 3, overflow: 'hidden' }}>
         <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
           <Typography variant="h6" fontWeight="bold">
@@ -503,94 +517,227 @@ export default function UserPage() {
             Manage and monitor all your business partners
           </Typography>
         </Box>
-        
-        <TableContainer
-          ref={tableRef}
-          sx={{
-            maxHeight: 700,
-            width: '100%',
-            '&::-webkit-scrollbar': { 
-              width: 8, 
-              height: 8 
-            },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: alpha(theme.palette.primary.main, 0.3),
-              borderRadius: 4,
-              '&:hover': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.5),
-              }
-            },
-            '&::-webkit-scrollbar-track': {
-              backgroundColor: alpha(theme.palette.grey[300], 0.1),
-            },
-          }}
-        >
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell padding="checkbox" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
-                  <Checkbox 
+
+        {mdUp ? (
+          <TableContainer
+            ref={tableRef}
+            sx={{
+              maxHeight: 700,
+              width: '100%',
+              '&::-webkit-scrollbar': { width: 8, height: 8 },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.3),
+                borderRadius: 4,
+                '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.5) },
+              },
+              '&::-webkit-scrollbar-track': { backgroundColor: alpha(theme.palette.grey[300], 0.1) },
+            }}
+          >
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell padding="checkbox" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+                    <Checkbox
+                      indeterminate={selected.length > 0 && selected.length < sortedUsers.length}
+                      checked={sortedUsers.length > 0 && selected.length === sortedUsers.length}
+                      onChange={handleSelectAll}
+                    />
+                  </TableCell>
+                  {[
+                    { id: 'status', label: 'Status', width: '10%' },
+                    { id: 'actions', label: 'Actions', width: '10%' },
+                    { id: 'name', label: 'Partner', width: '25%' },
+                    { id: 'email', label: 'Email Address', width: '20%' },
+                    { id: 'role', label: 'Role', width: '15%' },
+                    { id: 'city', label: 'Location', width: '15%' },
+                    { id: 'password', label: 'Password', width: '5%' },
+                  ].map((column) => (
+                    <TableCell
+                      key={column.id}
+                      sx={{
+                        bgcolor: alpha(theme.palette.primary.main, 0.05),
+                        fontWeight: 700,
+                        fontSize: '0.875rem',
+                        width: column.width,
+                        cursor: column.id !== 'actions' ? 'pointer' : 'default',
+                        '&:hover': column.id !== 'actions' ? { bgcolor: alpha(theme.palette.primary.main, 0.1) } : {},
+                      }}
+                      onClick={column.id !== 'actions' ? (e) => handleSort(e, column.id) : undefined}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        {column.label}
+                        {orderBy === column.id && (
+                          <Iconify icon={order === 'asc' ? 'eva:arrow-up-fill' : 'eva:arrow-down-fill'} width={16} />
+                        )}
+                      </Stack>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {sortedUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
+                  <UserTableRow
+                    key={row._id}
+                    selected={selected.includes(row._id)}
+                    row={row}
+                    handleClick={handleClick}
+                    handleEdit={(r) => {
+                      setEditUser(r);
+                      setEditModalOpen(true);
+                    }}
+                    handleContact={(r) => {
+                      setEditContact(r);
+                      setEditContactModal(true);
+                    }}
+                    handleView={(r) => {
+                      setViewUser(r);
+                      setViewModalOpen(true);
+                    }}
+                    handleDelete={() => handleDeleteSelected([row._id])}
+                    handleStatusToggle={handleStatusToggle}
+                  />
+                ))}
+                <TableEmptyRows height={73} emptyRows={emptyRowsCount} />
+                {notFound && <TableNoData query={filterName || filterCity || filterRole} />}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          <Box sx={{ p: 1.5 }}>
+            <Stack spacing={1.5}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 0.5 }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Checkbox
                     indeterminate={selected.length > 0 && selected.length < sortedUsers.length}
                     checked={sortedUsers.length > 0 && selected.length === sortedUsers.length}
                     onChange={handleSelectAll}
+                    size="small"
                   />
-                </TableCell>
-                {[
-                  { id: 'status', label: 'Status', width: '10%' },
-                  { id: 'actions', label: 'Actions', width: '10%' },
-                  { id: 'name', label: 'Partner', width: '25%' },
-                  { id: 'email', label: 'Email Address', width: '20%' },
-                  { id: 'role', label: 'Role', width: '15%' },
-                  { id: 'city', label: 'Location', width: '15%' },
-                  { id: 'password', label: 'Password', width: '5%' },
-                ].map((column) => (
-                  <TableCell 
-                    key={column.id}
-                    sx={{ 
-                      bgcolor: alpha(theme.palette.primary.main, 0.05),
-                      fontWeight: 700,
-                      fontSize: '0.875rem',
-                      width: column.width,
-                      cursor: column.id !== 'actions' ? 'pointer' : 'default',
-                      '&:hover': column.id !== 'actions' ? {
-                        bgcolor: alpha(theme.palette.primary.main, 0.1),
-                      } : {}
-                    }}
-                    onClick={column.id !== 'actions' ? (e) => handleSort(e, column.id) : undefined}
-                  >
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      {column.label}
-                      {orderBy === column.id && (
-                        <Iconify 
-                          icon={order === 'asc' ? 'eva:arrow-up-fill' : 'eva:arrow-down-fill'} 
-                          width={16} 
-                        />
-                      )}
-                    </Stack>
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
+                  <Typography variant="caption" color="text.secondary">
+                    Select all
+                  </Typography>
+                </Stack>
+                {selected.length > 0 && (
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Typography variant="caption" color="text.secondary">
+                      {selected.length} selected
+                    </Typography>
+                    <Button size="small" variant="outlined" color="error" onClick={() => handleDeleteSelected()}>
+                      Delete
+                    </Button>
+                  </Stack>
+                )}
+              </Stack>
               {sortedUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
-                <UserTableRow
+                <Card
                   key={row._id}
-                  selected={selected.includes(row._id)}
-                  row={row}
-                  handleClick={handleClick}
-                  handleEdit={(r) => { setEditUser(r); setEditModalOpen(true); }}
-                  handleContact={(r) => { setEditContact(r); setEditContactModal(true); }}
-                  handleView={(r) => { setViewUser(r); setViewModalOpen(true); }}
-                  handleDelete={() => handleDeleteSelected([row._id])}
-                  handleStatusToggle={handleStatusToggle}
-                />
+                  variant="outlined"
+                  sx={{
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      boxShadow: theme.shadows[4],
+                      transform: 'translateY(-1px)'
+                    }
+                  }}
+                >
+                  <CardContent sx={{ py: 1, px: 1.5 }}>
+                    <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between">
+                      <Stack
+                        direction="row"
+                        spacing={1.5}
+                        alignItems="center"
+                        sx={{ flex: 1, minWidth: 0, overflow: 'hidden' }}
+                      >
+                        <Checkbox
+                          checked={selected.includes(row._id)}
+                          onChange={(e) => handleClick(e, row._id)}
+                          size="small"
+                        />
+                        <Avatar
+                          src={row.images?.[0]}
+                          sx={{ width: 40, height: 40, border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}` }}
+                        >
+                          {!row.images?.[0] && row.name[0]}
+                        </Avatar>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant="body2"
+                            fontWeight={700}
+                            noWrap
+                            sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                          >
+                            {row.name}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            noWrap
+                            sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                          >
+                            {(row.role || 'Partner') + ' • ' + (row.city || '—')}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            noWrap
+                            sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                          >
+                            {row.email}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0 }}>
+                        <Switch
+                          checked={row.status}
+                          onChange={() => handleStatusToggle(row._id, row.status)}
+                          color="success"
+                          size="small"
+                        />
+                        <Tooltip title="More Actions">
+                          <IconButton
+                            onClick={(e) => openMobileMenu(e, row)}
+                            size="small"
+                          >
+                            <Iconify icon="eva:more-vertical-fill" />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>
               ))}
-              <TableEmptyRows height={73} emptyRows={emptyRowsCount} />
               {notFound && <TableNoData query={filterName || filterCity || filterRole} />}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        
+            </Stack>
+
+            <Popover
+              open={Boolean(mobileAnchorEl)}
+              anchorEl={mobileAnchorEl}
+              onClose={closeMobileMenu}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+              PaperProps={{ sx: { borderRadius: 2 } }}
+            >
+              {[
+                { label: 'View Details', icon: 'eva:eye-fill', action: () => { setViewUser(mobileRow); setViewModalOpen(true); } },
+                { label: 'Edit Partner', icon: 'eva:edit-fill', action: () => { setEditUser(mobileRow); setEditModalOpen(true); } },
+                { label: 'Messenger Contacts', icon: 'eva:message-square-fill', action: () => { setEditContact(mobileRow); setEditContactModal(true); } },
+                { label: 'Delete', icon: 'eva:trash-2-outline', action: () => handleDeleteSelected([mobileRow?._id]) },
+              ].map((item) => (
+                <MenuItem
+                  key={item.label}
+                  onClick={() => { item.action(); closeMobileMenu(); }}
+                  sx={{ py: 1, px: 2 }}
+                >
+                  <Iconify icon={item.icon} sx={{ mr: 1 }} />
+                  <Typography variant="body2">{item.label}</Typography>
+                </MenuItem>
+              ))}
+            </Popover>
+          </Box>
+        )}
+
         <Divider />
         <TablePagination
           component="div"
@@ -601,13 +748,8 @@ export default function UserPage() {
           onRowsPerPageChange={handleChangeRowsPerPage}
           rowsPerPageOptions={[25, 50, 100, 200]}
           sx={{
-            '& .MuiTablePagination-toolbar': {
-              px: 3,
-              py: 2,
-            },
-            '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-              fontWeight: 500,
-            },
+            '& .MuiTablePagination-toolbar': { px: 3, py: 2 },
+            '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': { fontWeight: 500 },
           }}
         />
       </Card>

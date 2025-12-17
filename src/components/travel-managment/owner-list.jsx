@@ -19,7 +19,9 @@ import {
   Card,
   CardHeader,
   CardContent,
-  CircularProgress,
+  CardActions,
+  Divider,
+  Stack,
 } from "@mui/material";
 import {
   Close,
@@ -31,6 +33,7 @@ import {
 } from "@mui/icons-material";
 import { getAllOwner, deleteCarOwner } from "../redux/reducers/travel/carOwner";
 import { useLoader } from "../../../utils/loader";
+import { useResponsive } from "../../hooks/use-responsive";
 
 const CustomNoRowsOverlay = () => (
   <Box
@@ -56,10 +59,77 @@ const CustomNoRowsOverlay = () => (
   </Box>
 );
 
+const OwnerMobileCard = ({ owner, onView, onDelete }) => (
+  <Paper
+    variant="outlined"
+    sx={{
+      borderRadius: 3,
+      p: 2,
+      bgcolor: "background.paper",
+      boxShadow: 4,
+      borderColor: "divider",
+    }}
+  >
+    <Stack direction="row" spacing={2} alignItems="center">
+      <Avatar
+        src={owner.images?.[0]}
+        sx={{ width: 56, height: 56, bgcolor: "grey.100" }}
+      />
+      <Box sx={{ flex: 1 }}>
+        <Typography variant="subtitle1" fontWeight={700} noWrap>
+          {owner.name || "Unnamed Owner"}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" noWrap>
+          {owner.email || owner.mobile}
+        </Typography>
+        <Stack direction="row" spacing={2} mt={1}>
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              City
+            </Typography>
+            <Typography variant="body2">
+              {owner.city || "-"}
+            </Typography>
+          </Box>
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              DL Number
+            </Typography>
+            <Typography variant="body2">{owner.dl || "-"}</Typography>
+          </Box>
+        </Stack>
+      </Box>
+    </Stack>
+    <Divider sx={{ my: 2 }} />
+    <Stack direction="row" spacing={2} justifyContent="space-between">
+      <Button
+        variant="outlined"
+        fullWidth
+        size="small"
+        onClick={() => onView(owner.dlImage?.[0])}
+        sx={{ textTransform: "none" }}
+      >
+        View DL
+      </Button>
+      <Button
+        variant="contained"
+        color="error"
+        fullWidth
+        size="small"
+        onClick={() => onDelete(owner._id)}
+        sx={{ textTransform: "none" }}
+      >
+        Delete
+      </Button>
+    </Stack>
+  </Paper>
+);
+
 const OwnerList = () => {
   const dispatch = useDispatch();
   const { data: owners = [], loading } = useSelector((state) => state.owner);
   const { showLoader, hideLoader } = useLoader();
+  const mdUp = useResponsive("up", "md");
   const [selectedDlImage, setSelectedDlImage] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [openConfirm, setOpenConfirm] = useState(false);
@@ -178,11 +248,11 @@ const OwnerList = () => {
     : [];
 
   return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
-      <Card elevation={2}>
+    <Container maxWidth="xl" sx={{ py: mdUp ? 3 : 2 }}>
+      <Card elevation={2} sx={{ borderRadius: 3 }}>
         <CardHeader
           title={
-            <Typography variant="h5" fontWeight="bold">
+            <Typography variant={mdUp ? "h5" : "h6"} fontWeight="bold">
               Car Owners
             </Typography>
           }
@@ -190,10 +260,10 @@ const OwnerList = () => {
             <TextField
               label="Search by Mobile or DL"
               variant="outlined"
-              size="small"
+              size={mdUp ? "small" : "small"}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{ width: 300 }}
+              sx={{ width: mdUp ? 300 : "100%", mt: { xs: 1, md: 0 } }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -205,34 +275,63 @@ const OwnerList = () => {
           }
         />
         <CardContent>
-          <Box sx={{ height: 700, width: "100%" }}>
-            <DataGrid
-              rows={rows}
-              columns={columns}
-              loading={loading}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 10 } },
-              }}
-              pageSizeOptions={[10, 25, 50]}
-              checkboxSelection
-              disableRowSelectionOnClick
-              slots={{
-                noRowsOverlay: CustomNoRowsOverlay,
-                toolbar: GridToolbar,
-              }}
-              sx={{
-                border: 0,
-                "& .MuiDataGrid-columnHeaders": {
-                  backgroundColor: "action.hover",
-                  fontWeight: "bold",
-                },
-              }}
-            />
-          </Box>
+          {mdUp ? (
+            <Box sx={{ height: 700, width: "100%" }}>
+              <DataGrid
+                rows={rows}
+                columns={columns}
+                loading={loading}
+                initialState={{
+                  pagination: { paginationModel: { pageSize: 10 } },
+                }}
+                rowHeight={52}
+                columnHeaderHeight={56}
+                density="standard"
+                pageSizeOptions={[10, 25, 50]}
+                checkboxSelection
+                disableRowSelectionOnClick
+                slots={{ noRowsOverlay: CustomNoRowsOverlay, toolbar: GridToolbar }}
+                sx={{
+                  border: 0,
+                  "& .MuiDataGrid-columnHeaders": {
+                    backgroundColor: "action.hover",
+                    fontWeight: 700,
+                    fontSize: 13,
+                  },
+                  "& .MuiDataGrid-cell": {
+                    fontSize: 13,
+                    py: 1.25,
+                  },
+                  "& .MuiDataGrid-virtualScroller": {
+                    minHeight: 480,
+                  },
+                }}
+              />
+            </Box>
+          ) : (
+            <Stack spacing={1.25}>
+              {loading ? (
+                <Typography variant="body2" color="text.secondary">Loading owners...</Typography>
+              ) : filteredOwners.length === 0 ? (
+                <Paper sx={{ p: 2, textAlign: "center", borderRadius: 2 }}>
+                  <Typography variant="body2">No Owners Found</Typography>
+                </Paper>
+              ) : (
+                filteredOwners.map((owner) => (
+                  <OwnerMobileCard
+                    key={owner._id}
+                    owner={owner}
+                    onView={handleViewDlImage}
+                    onDelete={handleDeleteClick}
+                  />
+                ))
+              )}
+            </Stack>
+          )}
         </CardContent>
       </Card>
 
-      <Dialog open={!!selectedDlImage} onClose={closeDlImage} maxWidth="sm">
+      <Dialog open={!!selectedDlImage} onClose={closeDlImage} maxWidth="sm" fullScreen={!mdUp}>
         <DialogTitle
           sx={{
             display: "flex",
@@ -263,7 +362,7 @@ const OwnerList = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openConfirm} onClose={handleCloseConfirm} maxWidth="xs">
+      <Dialog open={openConfirm} onClose={handleCloseConfirm} maxWidth="xs" fullScreen={!mdUp}>
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Warning color="error" /> Are you sure?
         </DialogTitle>

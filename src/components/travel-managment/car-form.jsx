@@ -41,13 +41,26 @@ import {
 import { addCar } from '../redux/reducers/travel/car';
 import AlertDialog from '../../../utils/alertDialogue';
 import { userId, localUrl, notify } from '../../../utils/util';
+import { useResponsive } from '../../hooks/use-responsive';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { MobileDateTimePicker } from '@mui/x-date-pickers/MobileDateTimePicker';
 
-const Section = ({ title, children }) => (
-    <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, mb: 3 }}>
-        <Typography variant="h6" fontWeight="600" gutterBottom>{title}</Typography>
-        <Divider sx={{ mb: 3 }} />
-        {children}
-    </Paper>
+const Section = ({ title, children, dense = false }) => (
+        <Paper
+            variant="outlined"
+            sx={{
+                p: dense ? 2 : 3,
+                borderRadius: 3,
+                mb: dense ? 2 : 3,
+                background: (theme) => theme.palette.mode === 'light' ? 'rgba(0,0,0,0.01)' : 'rgba(255,255,255,0.03)'
+            }}
+        >
+                <Typography variant={dense ? 'subtitle1' : 'h6'} fontWeight="600" gutterBottom>{title}</Typography>
+                <Divider sx={{ mb: dense ? 2 : 3 }} />
+                {children}
+        </Paper>
 );
 
 Section.propTypes = {
@@ -58,6 +71,7 @@ Section.propTypes = {
 export default function CarForm() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const mdUp = useResponsive('up', 'md');
 
     const [formData, setFormData] = useState({
         make: '', model: '', year: '', vehicleNumber: '', color: '',
@@ -196,53 +210,88 @@ export default function CarForm() {
         }
     }, [formData.make, allCarData]);
 
+    const DateTimeField = ({ label, name, value, onChange }) => {
+        const [open, setOpen] = useState(false);
+        const dateVal = value ? new Date(value) : null;
+        const Picker = mdUp ? DateTimePicker : MobileDateTimePicker;
+        return (
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <Picker
+                    label={label}
+                    value={dateVal}
+                    onChange={(newVal) => onChange({ target: { name, value: newVal ? newVal.toISOString() : '' } })}
+                    open={open}
+                    onOpen={() => setOpen(true)}
+                    onClose={() => setOpen(false)}
+                    slotProps={{
+                        textField: {
+                            fullWidth: true,
+                            size: mdUp ? 'medium' : 'small',
+                            InputLabelProps: { shrink: true },
+                            inputProps: { readOnly: true },
+                            onClick: () => setOpen(true),
+                        },
+                    }}
+                />
+            </LocalizationProvider>
+        );
+    };
+
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
+    <Container maxWidth={mdUp ? 'lg' : 'sm'} sx={{ py: mdUp ? 3 : 2 }}>
         <Box component="form" onSubmit={handleSubmit}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                 <Typography variant="h4" fontWeight="bold">Add New Car</Typography>
-                 <Button variant="outlined" onClick={handleBack} startIcon={<ArrowBack />}>
-                    Go Back
-                 </Button>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems={mdUp ? 'center' : 'flex-start'}
+              mb={mdUp ? 3 : 2}
+              sx={{ flexDirection: mdUp ? 'row' : 'column', gap: mdUp ? 0 : 1 }}
+            >
+                 <Typography variant={mdUp ? 'h4' : 'h5'} fontWeight="bold">Add New Car</Typography>
+                 <Button variant="outlined" onClick={handleBack} startIcon={<ArrowBack />}>Go Back</Button>
             </Box>
             
-            <Section title="Car Details">
-                <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} md={3}><Autocomplete options={makes} value={formData.make} onChange={(_, val) => handleAutocompleteChange('make', val)} renderInput={(params) => <TextField {...params} label="Make" />} /></Grid>
-                    <Grid item xs={12} sm={6} md={3}><Autocomplete options={filteredModels.map(c => c.model)} value={formData.model} onChange={(_, val) => handleAutocompleteChange('model', val)} renderInput={(params) => <TextField {...params} label="Model" />} /></Grid>
-                    <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Year" type="number" name="year" value={formData.year} onChange={handleInputChange} onWheel={(e) => e.target.blur()} /></Grid>
-                    <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Vehicle Number" name="vehicleNumber" value={formData.vehicleNumber} onChange={handleInputChange} /></Grid>
-                    <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Color</InputLabel><Select name="color" value={formData.color} label="Color" onChange={handleInputChange}>{["Red", "Blue", "Black", "White", "Silver", "Green"].map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}</Select></FormControl></Grid>
-                    <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Fuel Type</InputLabel><Select name="fuelType" value={formData.fuelType} label="Fuel Type" onChange={handleInputChange}>{["Petrol", "Diesel", "Electric", "Hybrid"].map(f => <MenuItem key={f} value={f}>{f}</MenuItem>)}</Select></FormControl></Grid>
-                    <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Vehicle Type</InputLabel><Select name="vehicleType" value={formData.vehicleType} label="Vehicle Type" onChange={handleInputChange}><MenuItem value="Car">Car</MenuItem><MenuItem value="Bike">Bike</MenuItem><MenuItem value="Bus">Bus</MenuItem></Select></FormControl></Grid>                   
+            <Section title="Car Details" dense={!mdUp}>
+                <Grid container spacing={mdUp ? 2 : 1.5}>
+                    <Grid item xs={12} sm={6} md={3}><Autocomplete options={makes} value={formData.make} onChange={(_, val) => handleAutocompleteChange('make', val)} renderInput={(params) => <TextField {...params} label="Make" size={mdUp ? 'medium' : 'small'} />} /></Grid>
+                    <Grid item xs={12} sm={6} md={3}><Autocomplete options={filteredModels.map(c => c.model)} value={formData.model} onChange={(_, val) => handleAutocompleteChange('model', val)} renderInput={(params) => <TextField {...params} label="Model" size={mdUp ? 'medium' : 'small'} />} /></Grid>
+                    <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Year" type="number" name="year" value={formData.year} onChange={handleInputChange} onWheel={(e) => e.target.blur()} size={mdUp ? 'medium' : 'small'} /></Grid>
+                    <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Vehicle Number" name="vehicleNumber" value={formData.vehicleNumber} onChange={handleInputChange} size={mdUp ? 'medium' : 'small'} /></Grid>
+                    <Grid item xs={12} sm={6} md={3}><FormControl fullWidth size={mdUp ? 'medium' : 'small'}><InputLabel>Color</InputLabel><Select name="color" value={formData.color} label="Color" onChange={handleInputChange}>{["Red", "Blue", "Black", "White", "Silver", "Green"].map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}</Select></FormControl></Grid>
+                    <Grid item xs={12} sm={6} md={3}><FormControl fullWidth size={mdUp ? 'medium' : 'small'}><InputLabel>Fuel Type</InputLabel><Select name="fuelType" value={formData.fuelType} label="Fuel Type" onChange={handleInputChange}>{["Petrol", "Diesel", "Electric", "Hybrid"].map(f => <MenuItem key={f} value={f}>{f}</MenuItem>)}</Select></FormControl></Grid>
+                    <Grid item xs={12} sm={6} md={3}><FormControl fullWidth size={mdUp ? 'medium' : 'small'}><InputLabel>Vehicle Type</InputLabel><Select name="vehicleType" value={formData.vehicleType} label="Vehicle Type" onChange={handleInputChange}><MenuItem value="Car">Car</MenuItem><MenuItem value="Bike">Bike</MenuItem><MenuItem value="Bus">Bus</MenuItem></Select></FormControl></Grid>                   
                    <Grid item xs={12} sm={6} md={3}>
-                        <FormControl fullWidth>
+                        <FormControl fullWidth size={mdUp ? 'medium' : 'small'}>
                             <InputLabel>Sharing Type</InputLabel>
                             <Select name="sharingType" value={formData.sharingType} label="Sharing Type" onChange={handleInputChange}><MenuItem value="Private">Private</MenuItem><MenuItem value="Shared">Shared</MenuItem></Select>
                             {formData.sharingType === 'Private' && <FormHelperText>Seat configuration is not required for private rides.</FormHelperText>}
                         </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3}><FormControl fullWidth><InputLabel>Transmission</InputLabel><Select name="transmission" value={formData.transmission} label="Transmission" onChange={handleInputChange}><MenuItem value="Automatic">Automatic</MenuItem><MenuItem value="Manual">Manual</MenuItem></Select></FormControl></Grid>
-                    <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Mileage (KM/L)" type="number" name="mileage" value={formData.mileage} onChange={handleInputChange} onWheel={(e) => e.target.blur()} InputProps={{ startAdornment: <InputAdornment position="start"><Speed/></InputAdornment> }} /></Grid>
+                    <Grid item xs={12} sm={6} md={3}><FormControl fullWidth size={mdUp ? 'medium' : 'small'}><InputLabel>Transmission</InputLabel><Select name="transmission" value={formData.transmission} label="Transmission" onChange={handleInputChange}><MenuItem value="Automatic">Automatic</MenuItem><MenuItem value="Manual">Manual</MenuItem></Select></FormControl></Grid>
+                    <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Mileage (KM/L)" type="number" name="mileage" value={formData.mileage} onChange={handleInputChange} onWheel={(e) => e.target.blur()} size={mdUp ? 'medium' : 'small'} InputProps={{ startAdornment: <InputAdornment position="start"><Speed/></InputAdornment> }} /></Grid>
                 </Grid>
             </Section>
 
-            <Section title="Trip & Pricing">
-                <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}><TextField fullWidth label="Pickup Location" name="pickupP" value={formData.pickupP} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start"><LocationOn/></InputAdornment> }} /></Grid>
-                    <Grid item xs={12} sm={6}><TextField fullWidth label="Drop Location" name="dropP" value={formData.dropP} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start"><Map/></InputAdornment> }} /></Grid>
-                    <Grid item xs={12} sm={6}><TextField fullWidth label="Pickup Date & Time" type="datetime-local" name="pickupD" value={formData.pickupD} onChange={handleInputChange} InputLabelProps={{ shrink: true }} /></Grid>
-                    <Grid item xs={12} sm={6}><TextField fullWidth label="Drop Date & Time" type="datetime-local" name="dropD" value={formData.dropD} onChange={handleInputChange} InputLabelProps={{ shrink: true }} /></Grid>
-                    <Grid item xs={12} sm={4}><TextField fullWidth label="Full Ride Price" name="price" type="number" value={formData.price} onChange={handleInputChange} onWheel={(e) => e.target.blur()} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
-                    <Grid item xs={12} sm={4}><TextField fullWidth label="Per Person Cost" type="number" name="perPersonCost" value={formData.perPersonCost} onChange={handleInputChange} onWheel={(e) => e.target.blur()} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
-                    <Grid item xs={12} sm={4}><TextField fullWidth label="Extra KM Charge (₹)" type="number" name="extraKm" value={formData.extraKm} onChange={handleInputChange} onWheel={(e) => e.target.blur()} /></Grid>
-                </Grid>
-            </Section>
+                        <Section title="Trip & Pricing" dense={!mdUp}>
+                                <Grid container spacing={mdUp ? 2 : 1.5}>
+                                        <Grid item xs={12} sm={6}><TextField fullWidth label="Pickup Location" name="pickupP" value={formData.pickupP} onChange={handleInputChange} size={mdUp ? 'medium' : 'small'} InputProps={{ startAdornment: <InputAdornment position="start"><LocationOn/></InputAdornment> }} /></Grid>
+                                        <Grid item xs={12} sm={6}><TextField fullWidth label="Drop Location" name="dropP" value={formData.dropP} onChange={handleInputChange} size={mdUp ? 'medium' : 'small'} InputProps={{ startAdornment: <InputAdornment position="start"><Map/></InputAdornment> }} /></Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <DateTimeField label="Pickup Date & Time" name="pickupD" value={formData.pickupD} onChange={handleInputChange} />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <DateTimeField label="Drop Date & Time" name="dropD" value={formData.dropD} onChange={handleInputChange} />
+                                        </Grid>
+                                        <Grid item xs={12} sm={4}><TextField fullWidth label="Full Ride Price" name="price" type="number" value={formData.price} onChange={handleInputChange} onWheel={(e) => e.target.blur()} size={mdUp ? 'medium' : 'small'} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
+                                        <Grid item xs={12} sm={4}><TextField fullWidth label="Per Person Cost" type="number" name="perPersonCost" value={formData.perPersonCost} onChange={handleInputChange} onWheel={(e) => e.target.blur()} size={mdUp ? 'medium' : 'small'} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} /></Grid>
+                                        <Grid item xs={12} sm={4}><TextField fullWidth label="Extra KM Charge (₹)" type="number" name="extraKm" value={formData.extraKm} onChange={handleInputChange} onWheel={(e) => e.target.blur()} size={mdUp ? 'medium' : 'small'} /></Grid>
+                                </Grid>
+                        </Section>
 
-            <Section title="Capacity & Seats">
-                <Grid container spacing={2}>
+                        <Section title="Capacity & Seats" dense={!mdUp}>
+                                <Grid container spacing={mdUp ? 2 : 1.5}>
                     <Grid item xs={12} sm={4}>
-                        <FormControl fullWidth>
+                                                <FormControl fullWidth size={mdUp ? 'medium' : 'small'}>
                             <InputLabel>Seater</InputLabel>
                             <Select name="seater" value={formData.seater} label="Seater" onChange={handleSeaterChange}>
                                 {[...Array(60).keys()].map((val) => <MenuItem key={val + 1} value={val + 1}>{val + 1}</MenuItem>)}
@@ -255,7 +304,15 @@ export default function CarForm() {
                             <input type="file" hidden multiple accept="image/*" onChange={handleFileChange} />
                         </Button>
                     </Grid>
-                    {formData.images.length > 0 && <Grid item xs={12}><Stack direction="row" spacing={1} flexWrap="wrap">{Array.from(formData.images).map((file, i) => <Avatar key={i} src={URL.createObjectURL(file)} variant="rounded" />)}</Stack></Grid>}
+                                        {formData.images.length > 0 && (
+                                            <Grid item xs={12}>
+                                                <Stack direction="row" spacing={1} flexWrap="wrap">
+                                                    {Array.from(formData.images).map((file, i) => (
+                                                        <Avatar key={i} src={URL.createObjectURL(file)} variant="rounded" sx={{ width: mdUp ? 64 : 56, height: mdUp ? 64 : 56 }} />
+                                                    ))}
+                                                </Stack>
+                                            </Grid>
+                                        )}
                     
                     {formData.sharingType === 'Shared' && (
                         <>
@@ -280,8 +337,8 @@ export default function CarForm() {
                 </Grid>
             </Section>
 
-            <Box display="flex" justifyContent="flex-end" mt={3}>
-                <Button type="submit" variant="contained" size="large" startIcon={<Save />}>
+            <Box display="flex" justifyContent="flex-end" mt={mdUp ? 3 : 2}>
+                <Button type="submit" variant="contained" size={mdUp ? 'large' : 'medium'} startIcon={<Save />}>
                     Add Car
                 </Button>
             </Box>

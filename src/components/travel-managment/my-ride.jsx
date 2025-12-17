@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
-import { format } from "date-fns";
 
 // MUI Components
 import {
@@ -25,6 +24,7 @@ import {
   Skeleton,
   Stack,
 } from "@mui/material";
+import { useResponsive } from "../../hooks/use-responsive";
 
 // MUI Icons
 import {
@@ -68,7 +68,7 @@ const DetailItem = ({ icon, text }) => (
     text: PropTypes.string.isRequired,
   };
   
-  const MyCarCard = ({ car, onUpdateCar, onUpdateSeats, onStatusChange }) => {
+  const MyCarCard = ({ car, onUpdateCar, onUpdateSeats, onStatusChange, mdUp }) => {
     const handleCarImage = (carData) =>
       carData?.images &&
       Array.isArray(carData.images) &&
@@ -86,11 +86,12 @@ const DetailItem = ({ icon, text }) => (
         sx={{
           display: "flex",
           flexDirection: { xs: "column", sm: "row" },
-          mb: 2,
+          mb: { xs: 1.25, sm: 1.75 },
           borderRadius: 3,
           transition: "box-shadow 0.3s",
-          "&:hover": { boxShadow: 3 },
+          "&:hover": { boxShadow: 4 },
         }}
+        className="hover:ring-1 hover:ring-blue-200"
       >
         <CardMedia
           component="img"
@@ -99,15 +100,18 @@ const DetailItem = ({ icon, text }) => (
             height: { xs: 160, sm: "auto" },
             objectFit: "cover",
           }}
+          className="sm:rounded-l-3xl"
           image={handleCarImage(car)}
           alt={`${car.make} ${car.model}`}
         />
         <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
-          <CardContent sx={{ flex: "1 0 auto", p: 2 }}>
+          <CardContent sx={{ flex: "1 0 auto", p: { xs: 1.5, sm: 2 } }}>
             <Box
               display="flex"
               justifyContent="space-between"
               alignItems="flex-start"
+              gap={1}
+              flexWrap="wrap"
             >
               <Box>
                 <Typography component="div" variant="h6" fontWeight="bold">
@@ -122,7 +126,7 @@ const DetailItem = ({ icon, text }) => (
               )}
             </Box>
             <Divider sx={{ my: 1 }} />
-            <Grid container spacing={1.5}>
+            <Grid container spacing={mdUp ? 1.5 : 1}>
               <DetailItem
                 icon={<LocalGasStation />}
                 text={car.fuelType || "N/A"}
@@ -163,14 +167,15 @@ const DetailItem = ({ icon, text }) => (
           </CardContent>
           <CardActions
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
+              display: "grid",
+              gridTemplateColumns: { xs: "auto", sm: "repeat(3, auto)" },
               alignItems: "center",
-              p: 1.5,
+              gap: { xs: 1, sm: 2 },
+              p: { xs: 1, sm: 1.25 },
               bgcolor: "grey.50",
             }}
           >
-            <Box>
+            <Box className="rounded-md bg-gradient-to-r from-blue-50 to-indigo-50 p-2">
               <Typography variant="h6" fontWeight="bold">
                 ₹{car.price}
               </Typography>
@@ -178,7 +183,7 @@ const DetailItem = ({ icon, text }) => (
                 Full ride
               </Typography>
             </Box>
-            <Box textAlign="right">
+            <Box textAlign={{ xs: "left", sm: "right" }}>
               <Typography variant="body2" fontWeight="bold">
                 Seats: {availableSeats} Available
               </Typography>
@@ -186,45 +191,49 @@ const DetailItem = ({ icon, text }) => (
                 ({bookedSeats} Booked)
               </Typography>
             </Box>
-            <FormControl variant="standard" sx={{ minWidth: 120 }} size="small">
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={car.runningStatus || ""}
-                onChange={(e) => onStatusChange(e, car)}
-                label="Status"
+            <Box display="flex" justifyContent={{ xs: "flex-start", sm: "flex-end" }}>
+              <FormControl
+                variant="standard"
+                sx={{ minWidth: { xs: 120, sm: 150 } }}
+                size="small"
               >
-                <MenuItem value="On A Trip">On A Trip</MenuItem>
-                <MenuItem value="Available">Available</MenuItem>
-              </Select>
-            </FormControl>
-          </CardActions>
-          <CardActions
-            sx={{
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-              p: 1.5,
-              pt: 0,
-              bgcolor: "grey.50",
-              gap: 1,
-            }}
-          >
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => onUpdateCar(car)}
-              startIcon={<Edit />}
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={car.runningStatus || ""}
+                  onChange={(e) => onStatusChange(e, car)}
+                  label="Status"
+                >
+                  <MenuItem value="On A Trip">On A Trip</MenuItem>
+                  <MenuItem value="Available">Available</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+            <Box
+              display="flex"
+              justifyContent={{ xs: "flex-start", sm: "flex-end" }}
+              gap={1}
+              gridColumn={{ xs: "1 / -1", sm: "auto" }}
+              flexWrap="wrap"
             >
-              Details
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => onUpdateSeats(car)}
-              startIcon={<Settings />}
-            >
-              Seats
-            </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => onUpdateCar(car)}
+                startIcon={<Edit />}
+                sx={{ flex: mdUp ? "initial" : 1, minWidth: 120 }}
+              >
+                Details
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => onUpdateSeats(car)}
+                startIcon={<Settings />}
+                sx={{ flex: mdUp ? "initial" : 1, minWidth: 120 }}
+              >
+                Seats
+              </Button>
+            </Box>
           </CardActions>
         </Box>
       </Card>
@@ -236,11 +245,13 @@ const DetailItem = ({ icon, text }) => (
     onUpdateCar: PropTypes.func.isRequired,
     onUpdateSeats: PropTypes.func.isRequired,
     onStatusChange: PropTypes.func.isRequired,
+    mdUp: PropTypes.bool,
   };
 
 const MyCar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate(); // Initialize useNavigate
+  const mdUp = useResponsive("up", "md");
 
   const { ownerCar: carData, loading } = useSelector((state) => state.car);
   const { data: ownerData } = useSelector((state) => state.owner);
@@ -309,8 +320,8 @@ const MyCar = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
-      <Typography variant="h4" fontWeight="bold" gutterBottom>
+    <Container maxWidth="lg" sx={{ py: mdUp ? 3 : 2 }}>
+      <Typography variant={mdUp ? "h4" : "h5"} fontWeight="bold" gutterBottom>
         My Cars
       </Typography>
       <main>
@@ -319,8 +330,8 @@ const MyCar = () => {
           <Paper
             variant="outlined"
             sx={{
-              p: { xs: 3, sm: 5 },
-              mt: 4,
+              p: { xs: 2.5, sm: 5 },
+              mt: { xs: 3, sm: 4 },
               borderRadius: 3,
               display: "flex",
               flexDirection: "column",
@@ -338,7 +349,7 @@ const MyCar = () => {
             </Typography>
             <Button
               variant="contained"
-              size="large"
+              size={mdUp ? "large" : "medium"}
               onClick={handleNavigateToOwnerForm}
               sx={{ mt: 2 }}
             >
@@ -366,6 +377,7 @@ const MyCar = () => {
               onUpdateCar={handleUpdateCar}
               onUpdateSeats={handleUpdateSeats}
               onStatusChange={handleChangeRunningStatus}
+              mdUp={mdUp}
             />
           ))
         ) : (

@@ -238,7 +238,7 @@ AddUserForm.propTypes = {
   onUserCreated: PropTypes.func.isRequired,
 };
 
-export default function CreateBooking({ handleBack }) {
+export default function CreateBooking({ handleBack = null }) {
   const dispatch = useDispatch();
   const [showHotel, setShowHotel] = useState(false);
   const [showAddUser, setShowAddUser] = useState(false);
@@ -437,8 +437,4 @@ export default function CreateBooking({ handleBack }) {
 
 CreateBooking.propTypes = {
   handleBack: PropTypes.func,
-};
-
-CreateBooking.defaultProps = {
-  handleBack: null,
 };
