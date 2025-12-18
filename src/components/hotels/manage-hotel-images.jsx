@@ -1,186 +1,326 @@
 /* eslint-disable no-restricted-syntax */
-import axios from 'axios';
-import PropTypes from 'prop-types';
-import { toast } from 'react-toastify';
-import React, { useState, useEffect } from 'react';
+import axios from "axios";
+import PropTypes from "prop-types";
+import React, { useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
 
-import { Box, Modal, Button, Typography, IconButton, CircularProgress } from '@mui/material';
-import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import {
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Divider,
+  Drawer,
+  IconButton,
+  ImageList,
+  ImageListItem,
+  ImageListItemBar,
+  Stack,
+  Typography,
+  useMediaQuery,
+} from "@mui/material";
 
-import { localUrl } from '../../../utils/util';
+import {
+  Add as AddIcon,
+  Close as CloseIcon,
+  Delete as DeleteIcon,
+  CloudUpload as CloudUploadIcon,
+  InsertPhoto as InsertPhotoIcon,
+} from "@mui/icons-material";
+
+import { localUrl } from "../../../utils/util";
 
 const ImageUpload = ({ open, hotelId, onClose }) => {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [imageFiles, setImageFiles] = useState([]);
-  const [id, setId] = useState('');
+
+  const [selectedFiles, setSelectedFiles] = useState([]); // Array<File>
   const [uploading, setUploading] = useState(false);
+  const [id, setId] = useState("");
+
+  const isMobile = useMediaQuery("(max-width:600px)");
+
+  const previews = useMemo(
+    () =>
+      selectedFiles.map((file) => ({
+        name: file.name,
+        url: URL.createObjectURL(file),
+      })),
+    [selectedFiles]
+  );
+
+  useEffect(() => {
+    return () => {
+      // cleanup object URLs
+      previews.forEach((p) => URL.revokeObjectURL(p.url));
+    };
+  }, [previews]);
 
   useEffect(() => {
     const fetchImages = async () => {
+      setLoading(true);
       try {
         const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
         setImages(response.data.images || []);
         setId(response.data._id);
       } catch (error) {
-        console.error('Error fetching images:', error);
+        console.error("Error fetching images:", error);
+        toast.error("Failed to load images");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchImages();
-  }, [hotelId]);
+    if (open && hotelId) fetchImages();
+  }, [open, hotelId]);
 
   const handleDelete = async (imageUrl) => {
     try {
-      await axios.delete(`${localUrl}/hotels/${hotelId}/images/imageUrl?imageUrl=${imageUrl}`);
-      toast.success('Image deleted successfully');
-      setImages(images.filter((img) => img !== imageUrl));
+      await axios.delete(
+        `${localUrl}/hotels/${hotelId}/images/imageUrl?imageUrl=${imageUrl}`
+      );
+      toast.success("Image deleted successfully");
+      setImages((prev) => prev.filter((img) => img !== imageUrl));
     } catch (error) {
-      console.error('Error deleting image:', error);
-      toast.error('Failed to delete image');
+      console.error("Error deleting image:", error);
+      toast.error("Failed to delete image");
     }
   };
 
-  const handleFileChange = (event) => {
-    setImageFiles(event.target.files);
+  const addFiles = (files) => {
+    const arr = Array.from(files || []);
+    if (!arr.length) return;
+    setSelectedFiles((prev) => [...prev, ...arr]);
+  };
+
+  const handleFileChange = (e) => addFiles(e.target.files);
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addFiles(e.dataTransfer.files);
   };
 
   const handleUploadImages = async () => {
-    if (imageFiles.length === 0) return;
+    if (selectedFiles.length === 0) return;
 
     const formData = new FormData();
-    for (const file of imageFiles) {
-      formData.append('images', file);
-    }
+    for (const file of selectedFiles) formData.append("images", file);
 
     setUploading(true);
     try {
       await axios.patch(`${localUrl}/update-hotels-image-by-hotel-id/${id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      toast.success('Images uploaded successfully');
-      setImageFiles([]);
+
+      toast.success("Images uploaded successfully");
+      setSelectedFiles([]);
+
       const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
       setImages(response.data.images || []);
     } catch (error) {
-      console.error('Error uploading images:', error);
-      toast.error('Failed to upload images');
+      console.error("Error uploading images:", error);
+      toast.error("Failed to upload images");
     } finally {
       setUploading(false);
     }
   };
 
+  const cols = isMobile ? 2 : 3;
+
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      aria-labelledby="image-upload-modal"
-      aria-describedby="modal-to-upload-and-manage-images"
-    >
+    <Drawer anchor="right" open={open} onClose={onClose}>
       <Box
         sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '90%',
-          maxWidth: 600,
-          bgcolor: 'background.paper',
-          borderRadius: 2,
-          boxShadow: 24,
-          p: 3,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          overflow: 'auto',
+          width: isMobile ? "100vw" : 520,
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          bgcolor: "background.paper",
         }}
       >
-        <IconButton
-          edge="end"
-          color="inherit"
-          onClick={onClose}
-          aria-label="close"
-          sx={{ position: 'absolute', top: 16, right: 16 }}
+        {/* Header (sticky) */}
+        <Box
+          sx={{
+            position: "sticky",
+            top: 0,
+            zIndex: 1,
+            bgcolor: "background.paper",
+            borderBottom: "1px solid",
+            borderColor: "divider",
+            px: 2,
+            py: 1.5,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
         >
-          <CloseIcon />
-        </IconButton>
-        <Typography id="image-upload-modal" variant="h6" component="h2" gutterBottom>
-          Upload Images
-        </Typography>
-
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-            <CircularProgress />
+          <Box>
+            <Typography variant="h6" sx={{ lineHeight: 1.1 }}>
+              Hotel Images
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Drag & drop, preview, then upload
+            </Typography>
           </Box>
-        ) : (
-          <Box sx={{ width: '100%', textAlign: 'center' }}>
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 1,
-                mb: 2,
-                justifyContent: 'center',
-              }}
-            >
-              {images.length === 0 ? (
-                <Typography>No images found.</Typography>
-              ) : (
-                images.map((image, index) => (
-                  <Box key={index} sx={{ position: 'relative', width: 120, height: 120, mb: 1 }}>
-                    <img
-                      src={image}
-                      alt={`Uploaded thumbnail ${index}`}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 1 }}
-                    />
-                    <IconButton
-                      onClick={() => handleDelete(image)}
-                      sx={{
-                        position: 'absolute',
-                        top: 8,
-                        right: 8,
-                        bgcolor: 'rgba(255, 0, 0, 0.7)',
-                        color: 'white',
-                        '&:hover': { bgcolor: 'rgba(255, 0, 0, 0.9)' },
-                      }}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                ))
-              )}
-            </Box>
 
-            <Box sx={{ width: '100%' }}>
-              <input
-                type="file"
-                multiple
-                onChange={handleFileChange}
-                style={{ marginBottom: '16px', width: '100%' }}
-              />
+          <IconButton onClick={onClose} aria-label="close">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+
+        {/* Content */}
+        <Box sx={{ px: 2, py: 2, overflow: "auto", flex: 1 }}>
+          {/* Dropzone */}
+          <Box
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+            sx={{
+              border: "2px dashed",
+              borderColor: "divider",
+              borderRadius: 2,
+              p: 2,
+              textAlign: "center",
+              bgcolor: "background.default",
+            }}
+          >
+            <CloudUploadIcon color="action" />
+            <Typography variant="subtitle2" sx={{ mt: 1 }}>
+              Drop images here
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              or choose files from your device
+            </Typography>
+
+            <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 1.5 }}>
+              <Button component="label" variant="outlined" startIcon={<AddIcon />}>
+                Browse
+                <input hidden type="file" multiple accept="image/*" onChange={handleFileChange} />
+              </Button>
+
               <Button
                 variant="contained"
-                color="primary"
-                startIcon={uploading ? <CircularProgress size={24} /> : <AddIcon />}
                 onClick={handleUploadImages}
-                disabled={uploading}
-                sx={{
-                  width: '100%',
-                  maxWidth: 200,
-                  marginTop: 2, // Added margin for better spacing
-                }}
+                disabled={uploading || selectedFiles.length === 0}
+                startIcon={uploading ? <CircularProgress size={18} /> : <CloudUploadIcon />}
               >
-                {uploading ? 'Uploading...' : 'Add More Images'}
+                {uploading ? "Uploading..." : `Upload (${selectedFiles.length || 0})`}
               </Button>
-            </Box>
+            </Stack>
           </Box>
-        )}
+
+          {/* Selected queue */}
+          {selectedFiles.length > 0 && (
+            <>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Selected files
+              </Typography>
+
+              <Stack direction="row" flexWrap="wrap" gap={1}>
+                {selectedFiles.map((f, idx) => (
+                  <Chip
+                    key={`${f.name}-${idx}`}
+                    icon={<InsertPhotoIcon />}
+                    label={f.name}
+                    onDelete={() =>
+                      setSelectedFiles((prev) => prev.filter((_, i) => i !== idx))
+                    }
+                    variant="outlined"
+                  />
+                ))}
+              </Stack>
+
+              {/* Preview strip */}
+              <Stack direction="row" spacing={1} sx={{ mt: 1.5, overflowX: "auto", pb: 1 }}>
+                {previews.map((p) => (
+                  <Box
+                    key={p.url}
+                    component="img"
+                    src={p.url}
+                    alt={p.name}
+                    sx={{
+                      width: 84,
+                      height: 84,
+                      borderRadius: 2,
+                      objectFit: "cover",
+                      border: "1px solid",
+                      borderColor: "divider",
+                      flex: "0 0 auto",
+                    }}
+                  />
+                ))}
+              </Stack>
+            </>
+          )}
+
+          <Divider sx={{ my: 2 }} />
+
+          {/* Existing images */}
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Uploaded images ({images.length})
+          </Typography>
+
+          {loading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : images.length === 0 ? (
+            <Typography color="text.secondary">No images found.</Typography>
+          ) : (
+            <ImageList cols={cols} gap={10} sx={{ m: 0 }}>
+              {images.map((src, index) => (
+                <ImageListItem key={`${src}-${index}`}>
+                  <img
+                    src={src}
+                    alt={`Hotel ${index}`}
+                    loading="lazy"
+                    style={{ borderRadius: 12 }}
+                  />
+                  <ImageListItemBar
+                    title={`#${index + 1}`}
+                    subtitle={new URL(src).hostname}
+                    actionIcon={
+                      <IconButton
+                        sx={{ color: "white" }}
+                        onClick={() => handleDelete(src)}
+                        aria-label="delete"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    }
+                    sx={{
+                      borderBottomLeftRadius: 12,
+                      borderBottomRightRadius: 12,
+                    }}
+                  />
+                </ImageListItem>
+              ))}
+            </ImageList>
+          )}
+        </Box>
+
+        {/* Footer (sticky) */}
+        <Box
+          sx={{
+            position: "sticky",
+            bottom: 0,
+            bgcolor: "background.paper",
+            borderTop: "1px solid",
+            borderColor: "divider",
+            px: 2,
+            py: 1.5,
+            display: "flex",
+            gap: 1,
+            justifyContent: "flex-end",
+          }}
+        >
+          <Button onClick={onClose} color="inherit">
+            Close
+          </Button>
+        </Box>
       </Box>
-    </Modal>
+    </Drawer>
   );
 };
 
