@@ -70,59 +70,79 @@ const postPayload = async (docs) => {
   return data;
 };
 
+const tryParse = (val) => {
+  try {
+    const parsed = JSON.parse(val);
+    return (typeof parsed === 'object' && parsed !== null) ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
 const transformRow = (row, idx) => {
-  const hotelId = toStr(getCell(row, ["Hotel ID", "HotelId"])) || "";
-  const hotelName = toStr(getCell(row, ["Hotel Name", "Hotel Nar", "Hotel"])) || `Hotel ${idx + 1}`;
-  const description = toStr(getCell(row, ["Description"])) || "Comfortable stay";
-  const hotelOwnerName = toStr(getCell(row, ["Owner Name", "Owner Na"])) || "Owner";
-  const state = toStr(getCell(row, ["State"])) || "State";
-  const city = toStr(getCell(row, ["City"])) || "City";
-  const destination = toStr(getCell(row, ["Destination"])) || city;
-  const landmark = toStr(getCell(row, ["Landmark"])) || "Near main market";
-  const pinCode = clamp(toNum(getCell(row, ["Pin Code", "Pincode", "Pin Codee"]), 0), 0, 99999999);
+  const hotelId = toStr(getCell(row, ["Hotel ID", "HotelId", "hotelId"])) || "";
+  const hotelName = toStr(getCell(row, ["Hotel Name", "Hotel Nar", "Hotel", "Name", "Property Name", "hotelName"])) || "";
+  const description = toStr(getCell(row, ["Description", "description"])) || "Comfortable stay";
+  const hotelOwnerName = toStr(getCell(row, ["Owner Name", "Owner Na", "hotelOwnerName"])) || "Owner";
+  const state = toStr(getCell(row, ["State", "state"])) || "State";
+  const city = toStr(getCell(row, ["City", "city"])) || "City";
+  const destination = toStr(getCell(row, ["Destination", "destination"])) || city;
+  const landmark = toStr(getCell(row, ["Landmark", "landmark"])) || "Near main market";
+  const pinCode = clamp(toNum(getCell(row, ["Pin Code", "Pincode", "Pin Codee", "pinCode"]), 0), 0, 99999999);
 
-  const hotelCategory = toStr(getCell(row, ["Hotel Category", "Category"])) || "";
-  const numRooms = clamp(toNum(getCell(row, ["NumRooms", "No of Rooms", "Total Rooms", "Total Room"]), 0), 0, 99999999);
+  const hotelCategory = toStr(getCell(row, ["Hotel Category", "Category", "hotelCategory"])) || "";
+  const numRooms = clamp(toNum(getCell(row, ["NumRooms", "No of Rooms", "Total Rooms", "Total Room", "numRooms"]), 0), 0, 99999999);
 
-  const latitude = toStr(getCell(row, ["Latitude"])) || "";
-  const longitude = toStr(getCell(row, ["Longitude"])) || "";
+  const latitude = toStr(getCell(row, ["Latitude", "latitude"])) || "";
+  const longitude = toStr(getCell(row, ["Longitude", "longitude"])) || "";
 
-  const reviews = clamp(toNum(getCell(row, ["Reviews", "Review Count"]), 0), 0, 99999999);
-  const rating = clamp(toNum(getCell(row, ["Rating"]), 4.2), 0, 5);
-  const starRating = toStr(getCell(row, ["Star Rating", "StarRating"])) || "2";
+  const reviews = clamp(toNum(getCell(row, ["Reviews", "Review Count", "reviewCount", "reviews"]), 0), 0, 99999999);
+  const rating = clamp(toNum(getCell(row, ["Rating", "rating"]), 4.2), 0, 5);
+  const starRating = toStr(getCell(row, ["Star Rating", "StarRating", "starRating"])) || "2";
 
-  const propertyTypeRaw = getCell(row, ["Property Type", "PropertyType"]);
-  const propertyType = splitCSV(propertyTypeRaw || "Hotel");
+  const propertyTypeRaw = getCell(row, ["Property Type", "PropertyType", "propertyType"]);
+  const propertyType = tryParse(propertyTypeRaw) || splitCSV(propertyTypeRaw || "Hotel");
 
-  const contact = toNum(getCell(row, ["Hotel Contact", "Hotel Con", "Contact"]), 9999999999);
-  const isAccepted = toStr(getCell(row, ["IsAccepted", "Accepted"])).toLowerCase() === "true";
+  const contact = toNum(getCell(row, ["Hotel Contact", "Hotel Con", "Contact", "contact"]), 9999999999);
+  const isAccepted = toStr(getCell(row, ["IsAccepted", "Accepted", "isAccepted"])).toLowerCase() === "true";
 
-  const salesManagerContact = toStr(getCell(row, ["Sales Manager Contact"])) || "";
-  const generalManagerContact = toStr(getCell(row, ["General Manager Contact", "GM Contact"])) || "";
-  const localId = toStr(getCell(row, ["LocalId"])) || "Accepted";
-  const hotelEmail = toStr(getCell(row, ["Hotel Email", "Hotel Ema", "Email"])) || "";
-  const customerWelcomeNote = toStr(getCell(row, ["Customer Welcome Note", "Welcome Note", "Welcome"])) || `Welcome to ${hotelName}.`;
+  const salesManagerContact = toStr(getCell(row, ["Sales Manager Contact", "salesManagerContact"])) || "";
+  const generalManagerContact = toStr(getCell(row, ["General Manager Contact", "GM Contact", "generalManagerContact"])) || "";
+  const localId = toStr(getCell(row, ["LocalId", "localId"])) || "Accepted";
+  const hotelEmail = toStr(getCell(row, ["Hotel Email", "Hotel Ema", "Email", "hotelEmail"])) || "";
+  const customerWelcomeNote = toStr(getCell(row, ["Customer Welcome Note", "Welcome Note", "Welcome", "customerWelcomeNote"])) || `Welcome to ${hotelName}.`;
 
-  const amenitiesStr = getCell(row, ["Amenities", "Amenitie"]);
-  const amenities = splitCSV(amenitiesStr || "Wi-Fi, Parking");
+  const amenitiesRaw = getCell(row, ["Amenities", "Amenitie", "amenities"]);
+  const amenities = tryParse(amenitiesRaw) || splitCSV(amenitiesRaw || "Wi-Fi, Parking");
+
+  const imagesRaw = getCell(row, ["Images", "images"]);
+  const images = tryParse(imagesRaw) || [];
 
   const roomType = toStr(getCell(row, ["Room Type"])) || "Standard";
   const bedTypes = toStr(getCell(row, ["Bed Type", "BedTypes"])) || "Double";
   const roomPrice = clamp(toNum(getCell(row, ["Room Price", "Room Pric"]), 2000), 0, 99999999);
   const countRooms = clamp(toNum(getCell(row, ["Count Rooms", "Total Room", "Total Rooms"]), 5), 1, 99999999);
+  
+  const roomsRaw = getCell(row, ["rooms", "Rooms"]);
+  const rooms = tryParse(roomsRaw) || [{ type: roomType, bedTypes, price: roomPrice, countRooms }];
 
   const foodName = toStr(getCell(row, ["Food Name", "Food Nam"])) || "Veg Thali";
   const foodType = toStr(getCell(row, ["Food Type"])) || "Veg";
   const about = toStr(getCell(row, ["Food About", "Food Desc", "Food Description"])) || "Tasty & hygienic meals";
   const foodPrice = clamp(toNum(getCell(row, ["Food Price", "Food Pric"]), 250), 0, 99999999);
 
-  const paymentMode = toStr(getCell(row, ["Payment", "Payment Mode"])) || "Both";
+  const foodsRaw = getCell(row, ["foods", "Foods"]);
+  const foods = tryParse(foodsRaw) || [{ name: foodName, foodType, about, price: foodPrice }];
 
+  const paymentMode = toStr(getCell(row, ["Payment", "Payment Mode"])) || "Both";
   const petsAllowed = toStr(getCell(row, ["Pets Allowed", "Pets Allow", "Pets"])) || "Not Allowed";
   const bachelorAllowed = toStr(getCell(row, ["Bachelor Allowed", "Bachelor"])) || "Not Allowed";
   const smokingAllowed = toStr(getCell(row, ["Smoking"])) || "Not Allowed";
   const alcoholAllowed = toStr(getCell(row, ["Alcohol"])) || "Not Allowed";
   const unmarriedCouplesAllowed = toStr(getCell(row, ["Unmarried Couples Allowed", "Unmarried Couple"])) || "Not Allowed";
+
+  const policiesRaw = getCell(row, ["policies", "Policies"]);
+  const policies = tryParse(policiesRaw) || { paymentMode, petsAllowed, bachelorAllowed, smokingAllowed, alcoholAllowed, unmarriedCouplesAllowed };
 
   return {
     hotelId,
@@ -153,9 +173,10 @@ const transformRow = (row, idx) => {
     customerWelcomeNote,
     generalManagerContact,
     amenities,
-    rooms: [{ type: roomType, bedTypes, price: roomPrice, countRooms }],
-    foods: [{ name: foodName, foodType, about, price: foodPrice }],
-    policies: { paymentMode, petsAllowed, bachelorAllowed, smokingAllowed, alcoholAllowed, unmarriedCouplesAllowed },
+    images,
+    rooms,
+    foods,
+    policies,
   };
 };
 
