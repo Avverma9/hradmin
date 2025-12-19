@@ -1,17 +1,17 @@
-import { Helmet } from 'react-helmet-async';
+import { Helmet } from "react-helmet-async";
 
-import TourData from '../../tour-management/tour-list';
+import TourData from "../../settings/tour/tour-list";
 
 // ----------------------------------------------------------------------
 
 export default function AllUserPages() {
-    return (
-        <>
-            <Helmet>
-                <title> Tour Data | Roomsstay </title>
-            </Helmet>
+  return (
+    <>
+      <Helmet>
+        <title> Tour Data | Roomsstay </title>
+      </Helmet>
 
-            <TourData />
-        </>
-    );
+      <TourData />
+    </>
+  );
 }

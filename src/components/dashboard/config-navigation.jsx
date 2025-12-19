@@ -122,7 +122,6 @@ const getNavConfig = async () => {
             icon: icons.tour,
             children: [
                 { title: 'Add Tour', path: '/add-tour-data', icon: icons.addTour },
-                { title: 'Tour List', path: '/tour-list', icon: icons.tour },
                 { title: 'My Tour', path: '/my-tour', icon: icons.tour },
             ],
         },
@@ -158,6 +157,7 @@ const getNavConfig = async () => {
                 { title: "Additional Fields", path: "/additional-fields", icon: icons.settings },
                 { title: 'Bulk Operation', path: '/bulk-data-processing', icon: icons.settings },
                 { title: 'Bulk Hotel', path: '/bulk-hotel-import', icon: icons.settings },
+                { title: 'Tour List', path: '/tour-list', icon: icons.tour },
 
                 { title: 'Tour Requests', path: '/tour-requests', icon: icons.travel },
 
