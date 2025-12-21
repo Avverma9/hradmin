@@ -135,14 +135,14 @@ export default function ProductsView() {
   const handleLoadMore = useCallback(() => {
     if (throttleRef.current) return;
 
-    if (visibleCount < filteredData.length) {
+    if (visibleCount < filteredData?.length) {
       throttleRef.current = true;
       setTimeout(() => {
         setVisibleCount(prevCount => prevCount + 8); // Load 8 more items
         throttleRef.current = false;
       }, 500);
     }
-  }, [visibleCount, filteredData.length]);
+  }, [visibleCount, filteredData?.length]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -155,8 +155,8 @@ export default function ProductsView() {
   }, [handleLoadMore]);
 
   const displayedData = filteredData.slice(0, visibleCount);
-  const hasMore = visibleCount < filteredData.length;
-  const filteredCount = filteredData.length;
+  const hasMore = visibleCount < filteredData?.length;
+  const filteredCount = filteredData?.length;
 
   return (
     <Container maxWidth="auto">
