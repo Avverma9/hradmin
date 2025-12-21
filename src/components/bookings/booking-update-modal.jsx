@@ -223,6 +223,14 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
     const { name, value } = e.target;
     
     if (name === "bookingStatus" && value === "Cancelled") {
+      if (bookingData?.bookingStatus === "Cancelled") {
+        setFormData((prevData) => ({
+          ...prevData,
+          bookingStatus: value,
+          cancellationReason: bookingData.cancellationReason || prevData.cancellationReason
+        }));
+        return;
+      }
       setPendingStatus(value);
       setShowCancellationModal(true);
       return;
@@ -497,7 +505,7 @@ const BookingUpdateModal = ({ open, onClose, bookingData, onSave }) => {
                         <Chip label="Pending" color="warning" size="small" sx={{ mr: 1 }} />
                         Pending
                       </MenuItem>
-                      <MenuItem value="Cancelled">
+                      <MenuItem value="Cancelled" disabled={role !== "Developer" && role !== "Admin"}>
                         <Chip label="Cancelled" color="error" size="small" sx={{ mr: 1 }} />
                         Cancelled
                       </MenuItem>

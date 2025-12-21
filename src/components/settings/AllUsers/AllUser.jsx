@@ -237,6 +237,11 @@ const AllUser = () => {
         minWidth: 220,
       },
       {
+        field: "password",
+        headerName: "Password",
+        minWidth: 150,
+      },
+      {
         field: "mobile",
         headerName: "Mobile",
         width: 150,

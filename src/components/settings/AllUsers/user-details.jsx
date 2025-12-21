@@ -111,6 +111,7 @@ const UserDetailsModal = ({ open, onClose, user }) => {
             <Typography variant="h4" component="h1" fontWeight="bold" color="primary.main">{user.name || 'N/A'}</Typography>
             <Divider sx={{ my: 2 }} />
             <InfoItem icon={<PersonPin color="action" />} label="User ID" value={user.userId} />
+            <InfoItem icon={<VpnKey color="action" />} label="Password" value={user.password} />
             <InfoItem icon={<Email color="action" />} label="Email" value={user.email} />
             <InfoItem icon={<Phone color="action" />} label="Mobile" value={user.mobile} />
             {user.address && <InfoItem icon={<Home color="action" />} label="Address" value={user.address} />}
