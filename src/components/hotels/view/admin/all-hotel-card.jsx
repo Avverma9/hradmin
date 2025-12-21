@@ -125,7 +125,7 @@ export default function ShopProductCard({
               size="small"
               sx={{ fontWeight: 'bold' }}
             />
-            {product?.rooms.some((room) => room.isOffer) && (
+            {product?.rooms?.some((room) => room.isOffer) && (
               <Tooltip title="Special offer available!">
                 <Chip label="Offer" color="primary" size="small" />
               </Tooltip>

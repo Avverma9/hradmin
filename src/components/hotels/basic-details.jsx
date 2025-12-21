@@ -228,15 +228,29 @@ export default function BasicDetails({ open, onClose, hotelId }) {
         ) : hotel ? (
           <>
             <Box mb={2} className="slick-container">
-              {hotel.images?.length > 0 ? (
+              {Array.isArray(hotel.images) && hotel.images.length > 0 ? (
                 <Slider {...carouselSettings}>
                   {hotel.images.map((image, index) => (
                     <Box key={index} sx={{ p: 1 }}>
-                      <Box component="img" src={image} alt={`Hotel Image ${index + 1}`} sx={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 1.5 }} />
+                      <Box
+                        component="img"
+                        src={image}
+                        alt={`Hotel Image ${index + 1}`}
+                        sx={{
+                          width: '100%',
+                          height: 180,
+                          objectFit: 'cover',
+                          borderRadius: 1.5,
+                        }}
+                      />
                     </Box>
                   ))}
                 </Slider>
-              ) : <Typography variant="body2" color="text.secondary" textAlign="center" p={2}>No images available.</Typography>}
+              ) : (
+                <Typography variant="body2" color="text.secondary" textAlign="center" p={2}>
+                  No images available.
+                </Typography>
+              )}
             </Box>
 
             {Object.entries(fieldGroups).map(([groupName, fields]) => (
