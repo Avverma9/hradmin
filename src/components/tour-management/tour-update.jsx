@@ -1,42 +1,48 @@
-import React, { useEffect, useState, useCallback } from "react";
-import PropTypes from "prop-types";
-import { useDispatch, useSelector } from "react-redux";
-import { useParams, useNavigate } from "react-router-dom";
-import { tourById, tourUpdate } from "../redux/reducers/tour/tour";
 import {
-  Typography,
-  Box,
-  CircularProgress,
-  Alert,
-  Button,
-  Paper,
-  Divider,
-  Grid,
-  Select,
-  MenuItem,
-  FormControl,
-  Chip,
-  IconButton,
-  Tooltip,
-  Container,
-  TextField,
-  InputLabel,
-  Rating,
-} from "@mui/material";
-import {
-  Save,
-  Edit,
-  Close,
-  CheckCircle,
-  Cancel,
-  ArrowBack,
   Add,
+  ArrowBack,
+  Cancel,
+  CheckCircle,
+  Close,
+  Delete,
+  Edit,
+  Save,
 } from "@mui/icons-material";
-import { useLoader } from "../../../utils/loader";
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Container,
+  Divider,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Rating,
+  Select,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import { City, Country, State } from "country-state-city";
+import PropTypes from "prop-types";
+import { useCallback, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Country, State, City } from "country-state-city";
 import { useTourTheme } from "../../../utils/additional/tourTheme";
+import { useLoader } from "../../../utils/loader";
 import { role } from "../../../utils/util";
+import {
+  deleteTourImage,
+  tourById,
+  tourUpdate,
+  updateTourImage,
+} from "../redux/reducers/tour/tour";
 
 const deepCopy = (obj) => {
   if (typeof structuredClone === "function") {
@@ -217,6 +223,40 @@ export default function TourUpdate() {
       newDayWise.push({ day: newDayWise.length + 1, description: "" });
       return { ...prev, dayWise: newDayWise };
     });
+  };
+
+  // Image upload / delete handlers
+  const handleImageUpload = async (files) => {
+    if (!files || files.length === 0) return;
+    const formData = new FormData();
+    files.forEach((file) => formData.append("images", file));
+
+    showLoader();
+    try {
+      await dispatch(updateTourImage({ id, formData })).unwrap();
+      // refresh tour data
+      await dispatch(tourById(id)).unwrap();
+      toast.success("Images uploaded successfully");
+    } catch (err) {
+      console.error("Failed to upload images", err);
+      toast.error("Failed to upload images");
+    } finally {
+      hideLoader();
+    }
+  };
+
+  const handleImageDelete = async (index) => {
+    showLoader();
+    try {
+      await dispatch(deleteTourImage({ id, index })).unwrap();
+      await dispatch(tourById(id)).unwrap();
+      toast.success("Image deleted");
+    } catch (err) {
+      console.error("Failed to delete image", err);
+      toast.error("Failed to delete image");
+    } finally {
+      hideLoader();
+    }
   };
 
   const toggleEditSection = (section) => {
@@ -672,6 +712,74 @@ export default function TourUpdate() {
             </Grid>
           </SectionPaper>
 
+          <SectionPaper title="Images" editMode={false} onToggleEdit={null}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" fontWeight={500} sx={{ mb: 1 }}>
+                  Gallery Images
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                  {(editableData.images || []).map((img, idx) => (
+                    <Box key={idx} sx={{ position: "relative" }}>
+                      <img
+                        src={img}
+                        alt={`img-${idx}`}
+                        style={{
+                          width: 140,
+                          height: 100,
+                          objectFit: "cover",
+                          borderRadius: 8,
+                        }}
+                      />
+                      <IconButton
+                        size="small"
+                        onClick={() => handleImageDelete(idx)}
+                        sx={{
+                          position: "absolute",
+                          top: 6,
+                          right: 6,
+                          bgcolor: "rgba(0,0,0,0.6)",
+                          "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
+                        }}
+                      >
+                        <Delete sx={{ color: "#fff" }} />
+                      </IconButton>
+                    </Box>
+                  ))}
+
+                  <label>
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        width: 140,
+                        height: 100,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderStyle: "dashed",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <Box textAlign="center">
+                        <Add />
+                        <Typography variant="caption">Add</Typography>
+                      </Box>
+                    </Paper>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) =>
+                        handleImageUpload(Array.from(e.target.files))
+                      }
+                      style={{ display: "none" }}
+                    />
+                  </label>
+                </Box>
+              </Grid>
+            </Grid>
+          </SectionPaper>
+
           <SectionPaper
             title="Terms & Policies"
             editMode={editSections.terms}
@@ -785,63 +893,57 @@ export default function TourUpdate() {
           </SectionPaper>
         </Grid>
         {(role === "Admin" || role === "Developer") && (
-            <Grid item xs={12} md={4}>
-              <Paper
-                variant="outlined"
-                sx={{ p: 2, borderRadius: 3, position: "sticky", top: 24 }}
+          <Grid item xs={12} md={4}>
+            <Paper
+              variant="outlined"
+              sx={{ p: 2, borderRadius: 3, position: "sticky", top: 24 }}
+            >
+              <Typography variant="h6" fontWeight="600">
+                Tour Status
+              </Typography>
+              <Divider sx={{ my: 1.5 }} />
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                my={2}
               >
-                <Typography variant="h6" fontWeight="600">
-                  Tour Status
-                </Typography>
-                <Divider sx={{ my: 1.5 }} />
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  my={2}
-                >
-                  <Typography variant="body1">Current Status:</Typography>
-                  <Chip
-                    label={
-                      editableData.isAccepted ? "Accepted" : "Not Accepted"
-                    }
-                    color={editableData.isAccepted ? "success" : "warning"}
-                  />
-                </Box>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 2 }}
-                >
-                  Accept or decline this tour package request.
-                </Typography>
-                <Grid container spacing={1}>
-                  <Grid item xs={6}>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      color="success"
-                      onClick={() => handleAcceptanceChange(true)}
-                      startIcon={<CheckCircle />}
-                    >
-                      Accept
-                    </Button>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Button
-                      fullWidth
-                      variant="outlined"
-                      color="error"
-                      onClick={() => handleAcceptanceChange(false)}
-                      startIcon={<Cancel />}
-                    >
-                      Decline
-                    </Button>
-                  </Grid>
+                <Typography variant="body1">Current Status:</Typography>
+                <Chip
+                  label={editableData.isAccepted ? "Accepted" : "Not Accepted"}
+                  color={editableData.isAccepted ? "success" : "warning"}
+                />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Accept or decline this tour package request.
+              </Typography>
+              <Grid container spacing={1}>
+                <Grid item xs={6}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="success"
+                    onClick={() => handleAcceptanceChange(true)}
+                    startIcon={<CheckCircle />}
+                  >
+                    Accept
+                  </Button>
                 </Grid>
-              </Paper>
-            </Grid>
-          )}
+                <Grid item xs={6}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    color="error"
+                    onClick={() => handleAcceptanceChange(false)}
+                    startIcon={<Cancel />}
+                  >
+                    Decline
+                  </Button>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
       </Grid>
     </Container>
   );
