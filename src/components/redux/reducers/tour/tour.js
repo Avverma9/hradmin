@@ -163,23 +163,76 @@ export const deleteTourImage = createAsyncThunk(
     }
   }
 );
+
+export const fetchSeatMap = createAsyncThunk(
+  "travel/fetchSeatMap",
+  async ({ tourId, vehicleId }, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${localUrl}/tours/${tourId}/vehicles/${vehicleId}/seats`
+      );
+      return { tourId, vehicleId, seats: response?.data?.seats || [] };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const bookNow = createAsyncThunk(
+  "travel/bookNow",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${localUrl}/tour-booking/create-tour-booking`,
+        data
+      );
+      return response?.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const getBookings = createAsyncThunk(
+  "travel/getBookings",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.get("/tour-booking/get-users-booking", {
+        params: { userId: userId },
+      });
+      return response?.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
 const initialState = {
   data: [],
+  bookings: [],
   editData: null,
   loading: false,
   error: null,
+  seatMapByKey: {},
 };
 
 const tourSlice = createSlice({
   name: "tour",
   initialState,
+
   reducers: {},
   extraReducers: (builder) => {
     builder
-
+      .addCase(getBookings.fulfilled, (state, action) => {
+        state.bookings = action.payload;
+        state.loading = false;
+      })
       .addCase(addTour.fulfilled, (state, action) => {
         state.loading = false;
         state.data.push(action.payload);
+      })
+      .addCase(bookNow.fulfilled, (state, action) => {
+        state.data = action.payload;
+        state.loading = false;
       })
       .addCase(tourList.fulfilled, (state, action) => {
         state.loading = false;
@@ -205,6 +258,20 @@ const tourSlice = createSlice({
         if (index !== -1) {
           state.data[index] = action.payload;
         }
+      })
+
+      .addCase(fetchSeatMap.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchSeatMap.fulfilled, (state, action) => {
+        const { tourId, vehicleId, seats } = action.payload;
+        state.loading = false;
+        state.seatMapByKey[tourId + ":" + vehicleId] = seats;
+      })
+      .addCase(fetchSeatMap.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || action.error?.message;
       });
   },
 });

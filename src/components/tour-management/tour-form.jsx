@@ -1,17 +1,26 @@
 import AddIcon from "@mui/icons-material/Add";
+import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DescriptionIcon from "@mui/icons-material/Description";
 import DirectionsBusIcon from "@mui/icons-material/DirectionsBus";
-import EventIcon from "@mui/icons-material/Event";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
+import PolicyOutlinedIcon from "@mui/icons-material/PolicyOutlined";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Autocomplete,
+  Avatar,
   Box,
   Button,
-  Chip,
+  Card,
+  CardContent,
+  CardHeader,
   Container,
   Divider,
   FormControlLabel,
@@ -19,6 +28,7 @@ import {
   IconButton,
   InputAdornment,
   Paper,
+  Slide,
   Stack,
   Switch,
   TextField,
@@ -26,7 +36,7 @@ import {
   Typography,
   useMediaQuery,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { alpha, styled, useTheme } from "@mui/material/styles";
 import { City, Country, State } from "country-state-city";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -35,29 +45,77 @@ import { useTourTheme } from "../../../utils/additional/tourTheme";
 import { useLoader } from "../../../utils/loader";
 import { addTour } from "../redux/reducers/tour/tour";
 
-const cardSx = { borderRadius: 3, overflow: "hidden" };
+// --- Styled Components ---
 
-const Section = ({ title, subtitle, defaultExpanded, children }) => (
-  <Accordion
-    defaultExpanded={defaultExpanded}
-    disableGutters
-    elevation={0}
-    sx={{ "&:before": { display: "none" } }}
-  >
-    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography fontWeight={800} noWrap>
-          {title}
+const StyledCard = styled(Card)(({ theme }) => ({
+  borderRadius: 16,
+  boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.05)",
+  border: `1px solid ${theme.palette.divider}`,
+  overflow: "hidden",
+  transition: "all 0.3s ease",
+  "&:hover": {
+    boxShadow: "0px 8px 30px rgba(0, 0, 0, 0.08)",
+  },
+}));
+
+const StyledAccordion = styled(Accordion)(({ theme }) => ({
+  boxShadow: "none",
+  border: `1px solid ${theme.palette.divider}`,
+  borderRadius: "12px !important",
+  marginBottom: theme.spacing(2),
+  "&:before": { display: "none" },
+  "&.Mui-expanded": {
+    borderColor: theme.palette.primary.main,
+    backgroundColor: alpha(theme.palette.primary.main, 0.02),
+  },
+}));
+
+const UploadBox = styled(Box)(({ theme }) => ({
+  border: `2px dashed ${theme.palette.divider}`,
+  borderRadius: 12,
+  padding: theme.spacing(3),
+  textAlign: "center",
+  cursor: "pointer",
+  backgroundColor: theme.palette.background.default,
+  transition: "all 0.2s",
+  "&:hover": {
+    borderColor: theme.palette.primary.main,
+    backgroundColor: alpha(theme.palette.primary.main, 0.05),
+  },
+}));
+
+const DynamicItemBox = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.palette.grey[50],
+  borderRadius: 12,
+  padding: theme.spacing(2),
+  border: `1px solid ${theme.palette.divider}`,
+  position: "relative",
+}));
+
+const SectionHeader = ({ icon, title, subtitle }) => (
+  <Box display="flex" alignItems="center" gap={1.5}>
+    <Avatar
+      variant="rounded"
+      sx={{
+        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+        color: "primary.main",
+        width: 32,
+        height: 32,
+      }}
+    >
+      {icon}
+    </Avatar>
+    <Box>
+      <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>
+        {title}
+      </Typography>
+      {subtitle && (
+        <Typography variant="caption" color="text.secondary">
+          {subtitle}
         </Typography>
-        {subtitle && (
-          <Typography variant="body2" color="text.secondary" noWrap>
-            {subtitle}
-          </Typography>
-        )}
-      </Box>
-    </AccordionSummary>
-    <AccordionDetails sx={{ pt: 0 }}>{children}</AccordionDetails>
-  </Accordion>
+      )}
+    </Box>
+  </Box>
 );
 
 const TourForm = () => {
@@ -122,10 +180,33 @@ const TourForm = () => {
   }, [formData.country, formData.state]);
 
   const pattern = /^[0-9]+N [a-zA-Z\s]+(\|[0-9]+N [a-zA-Z\s]+)*$/;
-  const isVisitingValid = useMemo(
-    () => !formData.visitngPlaces || pattern.test(formData.visitngPlaces),
-    [formData.visitngPlaces]
-  );
+  const isVisitingValid = useMemo(() => {
+    if (!formData.visitngPlaces) return true;
+    const normalized = normalizeVisitingPlaces(formData.visitngPlaces);
+    return !!normalized;
+  }, [formData.visitngPlaces]);
+
+  // Normalize visiting places into canonical form: "1N City | 2N City"
+  function normalizeVisitingPlaces(input) {
+    if (!input) return "";
+    // split on | , / ; or multiple spaces
+    const parts = input
+      .split(/[|\/,;]+|\s{2,}/)
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    const normalized = [];
+    for (const part of parts) {
+      // Accept formats like '1N City', '1 N City', '1 City' or '1NCity'
+      const m = part.match(/^(\d+)\s*[Nn]?\s*(.+)$/);
+      if (!m) return null;
+      const days = m[1];
+      const city = m[2].replace(/\s+/g, " ").trim();
+      if (!city) return null;
+      normalized.push(`${days}N ${city}`);
+    }
+    return normalized.join(" | ");
+  }
 
   const handleChange = (e, index = null) => {
     const { name, value } = e.target;
@@ -153,39 +234,10 @@ const TourForm = () => {
     setFormData((p) => ({ ...p, [name]: value }));
   };
 
-  const autoFormatPlaces = () => {
-    if (!formData.visitngPlaces) return;
-
-    const formatted = formData.visitngPlaces
-      .split(/[|\\/,]+/) 
-      .map((seg) => {
-        const trimmed = seg.trim();
-        const match = trimmed.match(/^(\d+)\s*[nN]?\s*(.*)/);
-        
-        if (match) {
-          const nights = match[1];
-          let place = match[2].trim();
-          
-          place = place
-            .toLowerCase()
-            .split(' ')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
-
-          if (place) return `${nights}N ${place}`;
-        }
-        return trimmed;
-      })
-      .filter(Boolean)
-      .join("|");
-
-    setFormData((p) => ({ ...p, visitngPlaces: formatted }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formDataToSend = new FormData();
-
+    // ... (Keep existing form data appending logic identically)
     formDataToSend.append("city", formData.city);
     formDataToSend.append("themes", formData.themes);
     formDataToSend.append("state", formData.state);
@@ -311,872 +363,853 @@ const TourForm = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 3 } }}>
-      <Paper variant="outlined" sx={cardSx}>
-        <Box sx={{ p: { xs: 2, sm: 2.5 } }}>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={1}
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            justifyContent="space-between"
-          >
-            <Box>
-              <Typography variant="h5" fontWeight={900}>
-                Create Tour Package
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Fill required details; sections are collapsible on mobile.
-              </Typography>
-            </Box>
-            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-              <Chip size="small" label="Mobile-ready" variant="outlined" />
-              <Chip size="small" label="Compact UI" variant="outlined" />
-            </Stack>
-          </Stack>
+    <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh", pb: 10 }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Header */}
+        <Box mb={4}>
+          <Typography variant="h4" fontWeight={800} color="text.primary">
+            New Tour Package
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Create a comprehensive travel itinerary.
+          </Typography>
         </Box>
 
-        <Divider />
-
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{ p: { xs: 1.5, sm: 2 } }}
-        >
-          <Paper variant="outlined" sx={{ borderRadius: 3, mb: 1.5 }}>
-            <Section
-              title="Agency details"
-              subtitle="Identity + contact info"
-              defaultExpanded={!isMobile}
-            >
-              <Grid container spacing={1.5}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Agency name"
-                    name="travelAgencyName"
-                    value={formData.travelAgencyName}
-                    onChange={handleChange}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Agency ID"
-                    name="agencyId"
-                    value={formData.agencyId}
-                    onChange={handleChange}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="email"
-                    label="Agency email"
-                    name="agencyEmail"
-                    value={formData.agencyEmail}
-                    onChange={handleChange}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Agency phone"
-                    name="agencyPhone"
-                    value={formData.agencyPhone}
-                    onChange={handleChange}
-                    required
-                  />
-                </Grid>
-              </Grid>
-            </Section>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ borderRadius: 3, mb: 1.5 }}>
-            <Section
-              title="Package basics"
-              subtitle="Theme, location, duration, price"
-              defaultExpanded={!isMobile}
-            >
-              <Grid container spacing={1.5}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Theme"
-                    name="themes"
-                    value={formData.themes}
-                    onChange={handleChange}
-                    SelectProps={{ native: true }}
-                    required
-                  >
-                    <option value="" disabled>
-                      {Array.isArray(tourTheme) && tourTheme.length
-                        ? "Select theme"
-                        : "No themes"}
-                    </option>
-                    {Array.isArray(tourTheme) &&
-                      tourTheme.map((t) => (
-                        <option key={t._id || t.name} value={t.name}>
-                          {t.name}
-                        </option>
-                      ))}
-                  </TextField>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Price"
-                    name="price"
-                    type="number"
-                    value={formData.price}
-                    onChange={handleChange}
-                    required
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <CurrencyRupeeIcon fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Days"
-                    name="days"
-                    value={formData.days}
-                    onChange={handleChange}
-                    SelectProps={{ native: true }}
-                    required
-                  >
-                    <option value="">Select</option>
-                    {[...Array(30).keys()].map((i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {i + 1}
-                      </option>
-                    ))}
-                  </TextField>
-                </Grid>
-
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Nights"
-                    name="nights"
-                    value={formData.nights}
-                    onChange={handleChange}
-                    SelectProps={{ native: true }}
-                    required
-                  >
-                    <option value="">Select</option>
-                    {[...Array(30).keys()].map((i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {i + 1}
-                      </option>
-                    ))}
-                  </TextField>
-                </Grid>
-
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Star rating"
-                    name="starRating"
-                    value={formData.starRating}
-                    onChange={handleChange}
-                    SelectProps={{ native: true }}
-                    required
-                  >
-                    <option value="">Select</option>
-                    {[1, 2, 3, 4, 5].map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </TextField>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Places to visit (e.g., 1N Bihar|2N Patna|1N Delhi)"
-                    name="visitngPlaces"
-                    value={formData.visitngPlaces}
-                    onChange={handleChange}
-                    onBlur={autoFormatPlaces}
-                    required
-                    error={!isVisitingValid}
-                    helperText={
-                      !isVisitingValid
-                        ? "Format invalid. Use: 1N City|2N City..."
-                        : " "
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={3}>
+            {/* Left Column: Main Details */}
+            <Grid item xs={12} md={8}>
+              <Stack spacing={3}>
+                {/* Agency Details */}
+                <StyledCard>
+                  <CardHeader
+                    title={
+                      <SectionHeader
+                        icon={<InfoOutlinedIcon />}
+                        title="Agency Information"
+                        subtitle="Identity & Contact details"
+                      />
                     }
                   />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    multiline
-                    minRows={3}
-                    label="Overview"
-                    name="overview"
-                    value={formData.overview}
-                    onChange={handleChange}
-                    required
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={4}>
-                  <Typography variant="caption" color="text.secondary">
-                    Country
-                  </Typography>
-                  <Select
-                    options={countries.map((c) => ({
-                      label: c.name,
-                      value: c.isoCode,
-                    }))}
-                    value={
-                      formData.country
-                        ? { label: formData.country, value: formData.country }
-                        : null
-                    }
-                    onChange={(opt) =>
-                      setFormData((p) => ({
-                        ...p,
-                        country: opt?.value || "",
-                        state: "",
-                        city: "",
-                      }))
-                    }
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Typography variant="caption" color="text.secondary">
-                    State
-                  </Typography>
-                  <Select
-                    options={states.map((s) => ({
-                      label: s.name,
-                      value: s.isoCode,
-                    }))}
-                    value={
-                      formData.state
-                        ? { label: formData.state, value: formData.state }
-                        : null
-                    }
-                    onChange={(opt) =>
-                      setFormData((p) => ({
-                        ...p,
-                        state: opt?.value || "",
-                        city: "",
-                      }))
-                    }
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Typography variant="caption" color="text.secondary">
-                    City
-                  </Typography>
-                  <Select
-                    options={cities.map((c) => ({
-                      label: c.name,
-                      value: c.name,
-                    }))}
-                    value={
-                      formData.city
-                        ? { label: formData.city, value: formData.city }
-                        : null
-                    }
-                    onChange={(opt) =>
-                      setFormData((p) => ({ ...p, city: opt?.value || "" }))
-                    }
-                  />
-                </Grid>
-              </Grid>
-            </Section>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ borderRadius: 3, mb: 1.5 }}>
-            <Section
-              title="Schedule"
-              subtitle="Customizable or fixed start date"
-              defaultExpanded={!isMobile}
-            >
-              <Stack spacing={1.25}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.customizable}
-                      onChange={(e) =>
-                        setFormData((p) => ({
-                          ...p,
-                          customizable: e.target.checked,
-                          ...(e.target.checked
-                            ? { tourStartDate: "" }
-                            : { from: "", to: "" }),
-                        }))
-                      }
-                    />
-                  }
-                  label="Customizable package"
-                />
-
-                <Grid container spacing={1.5}>
-                  {formData.customizable ? (
-                    <>
+                  <Divider />
+                  <CardContent>
+                    <Grid container spacing={2}>
                       <Grid item xs={12} sm={6}>
                         <TextField
                           fullWidth
-                          size="small"
-                          type="date"
-                          label="From"
-                          name="from"
-                          value={formData.from}
+                          label="Agency Name"
+                          name="travelAgencyName"
+                          value={formData.travelAgencyName}
                           onChange={handleChange}
                           required
-                          InputLabelProps={{ shrink: true }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="Agency ID"
+                          name="agencyId"
+                          value={formData.agencyId}
+                          onChange={handleChange}
+                          required
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="Agency Email"
+                          name="agencyEmail"
+                          type="email"
+                          value={formData.agencyEmail}
+                          onChange={handleChange}
+                          required
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="Phone Number"
+                          name="agencyPhone"
+                          value={formData.agencyPhone}
+                          onChange={handleChange}
+                          required
+                        />
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </StyledCard>
+
+                {/* Package Basics */}
+                <StyledCard>
+                  <CardHeader
+                    title={
+                      <SectionHeader
+                        icon={<FlightTakeoffIcon />}
+                        title="Package Details"
+                        subtitle="Location, Pricing & Theme"
+                      />
+                    }
+                  />
+                  <Divider />
+                  <CardContent>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          select
+                          fullWidth
+                          name="themes"
+                          value={formData.themes}
+                          onChange={handleChange}
+                          SelectProps={{ native: true }}
+                          required
+                        >
+                          <option value="" disabled>
+                            Select theme
+                          </option>
+                          {Array.isArray(tourTheme) &&
+                            tourTheme.map((t) => (
+                              <option key={t._id || t.name} value={t.name}>
+                                {t.name}
+                              </option>
+                            ))}
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="Price"
+                          name="price"
+                          type="number"
+                          value={formData.price}
+                          onChange={handleChange}
+                          required
                           InputProps={{
                             startAdornment: (
                               <InputAdornment position="start">
-                                <EventIcon fontSize="small" />
+                                <CurrencyRupeeIcon fontSize="small" />
                               </InputAdornment>
                             ),
                           }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+
+                      {/* Location Selectors */}
+                      <Grid item xs={12}>
+                        <Box
+                          sx={{
+                            p: 2,
+                            bgcolor: "background.default",
+                            borderRadius: 2,
+                          }}
+                        >
+                          <Box
+                            display="flex"
+                            gap={1}
+                            mb={1}
+                            alignItems="center"
+                            color="text.secondary"
+                          >
+                            <LocationOnOutlinedIcon fontSize="small" />{" "}
+                            <Typography variant="caption" fontWeight="bold">
+                              DESTINATION
+                            </Typography>
+                          </Box>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} sm={4}>
+                              <Select
+                                placeholder="Country"
+                                options={countries.map((c) => ({
+                                  label: c.name,
+                                  value: c.isoCode,
+                                }))}
+                                value={
+                                  formData.country
+                                    ? {
+                                        label: formData.country,
+                                        value: formData.country,
+                                      }
+                                    : null
+                                }
+                                onChange={(opt) =>
+                                  setFormData((p) => ({
+                                    ...p,
+                                    country: opt?.value || "",
+                                    state: "",
+                                    city: "",
+                                  }))
+                                }
+                                menuPortalTarget={
+                                  typeof document !== "undefined"
+                                    ? document.body
+                                    : null
+                                }
+                                menuPosition="fixed"
+                                styles={{
+                                  menuPortal: (base) => ({
+                                    ...base,
+                                    zIndex: 1400,
+                                  }),
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={4}>
+                              <Select
+                                placeholder="State"
+                                options={states.map((s) => ({
+                                  label: s.name,
+                                  value: s.isoCode,
+                                }))}
+                                value={
+                                  formData.state
+                                    ? {
+                                        label: formData.state,
+                                        value: formData.state,
+                                      }
+                                    : null
+                                }
+                                onChange={(opt) =>
+                                  setFormData((p) => ({
+                                    ...p,
+                                    state: opt?.value || "",
+                                    city: "",
+                                  }))
+                                }
+                                menuPortalTarget={
+                                  typeof document !== "undefined"
+                                    ? document.body
+                                    : null
+                                }
+                                menuPosition="fixed"
+                                styles={{
+                                  menuPortal: (base) => ({
+                                    ...base,
+                                    zIndex: 1400,
+                                  }),
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={4}>
+                              <Select
+                                placeholder="City"
+                                options={cities.map((c) => ({
+                                  label: c.name,
+                                  value: c.name,
+                                }))}
+                                value={
+                                  formData.city
+                                    ? {
+                                        label: formData.city,
+                                        value: formData.city,
+                                      }
+                                    : null
+                                }
+                                onChange={(opt) =>
+                                  setFormData((p) => ({
+                                    ...p,
+                                    city: opt?.value || "",
+                                  }))
+                                }
+                                menuPortalTarget={
+                                  typeof document !== "undefined"
+                                    ? document.body
+                                    : null
+                                }
+                                menuPosition="fixed"
+                                styles={{
+                                  menuPortal: (base) => ({
+                                    ...base,
+                                    zIndex: 1400,
+                                  }),
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                        </Box>
+                      </Grid>
+
+                      <Grid item xs={12}>
                         <TextField
                           fullWidth
-                          size="small"
-                          type="date"
-                          label="To"
-                          name="to"
-                          value={formData.to}
+                          label="Visiting Places (Format: 2N Manali | 1N Shimla)"
+                          name="visitngPlaces"
+                          value={formData.visitngPlaces}
+                          onChange={handleChange}
+                          onBlur={() => {
+                            const normalized = normalizeVisitingPlaces(
+                              formData.visitngPlaces
+                            );
+                            if (normalized) {
+                              setFormData((p) => ({
+                                ...p,
+                                visitngPlaces: normalized,
+                              }));
+                            }
+                          }}
+                          error={!isVisitingValid}
+                          helperText={
+                            !isVisitingValid
+                              ? "Invalid Format — expected like: 2N Manali | 1N Shimla"
+                              : ""
+                          }
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          multiline
+                          minRows={3}
+                          label="Tour Overview"
+                          name="overview"
+                          value={formData.overview}
                           onChange={handleChange}
                           required
-                          InputLabelProps={{ shrink: true }}
                         />
                       </Grid>
-                    </>
-                  ) : (
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        type="date"
-                        label="Tour start date"
-                        name="tourStartDate"
-                        value={formData.tourStartDate}
-                        onChange={handleChange}
-                        required
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <EventIcon fontSize="small" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
                     </Grid>
-                  )}
-                </Grid>
-              </Stack>
-            </Section>
-          </Paper>
+                  </CardContent>
+                </StyledCard>
 
-          <Paper variant="outlined" sx={{ borderRadius: 3, mb: 1.5 }}>
-            <Section
-              title="Inclusion / Exclusion"
-              subtitle="Add multiple points"
-              defaultExpanded={!isMobile}
-            >
-              <Grid container spacing={1.5}>
-                <Grid item xs={12} sm={6}>
-                  <Stack spacing={1}>
-                    <Stack
-                      direction="row"
-                      alignItems="center"
-                      justifyContent="space-between"
-                    >
-                      <Typography fontWeight={800}>Inclusions</Typography>
-                      <Button
-                        size="small"
-                        startIcon={<AddIcon />}
-                        onClick={addInclusion}
-                      >
-                        Add
-                      </Button>
-                    </Stack>
-                    {formData.inclusion.map((val, idx) => (
-                      <TextField
-                        key={idx}
-                        fullWidth
-                        size="small"
-                        name="inclusion"
-                        label={`Inclusion ${idx + 1}`}
-                        value={val}
-                        onChange={(e) => handleChange(e, idx)}
-                        required
+                {/* Itinerary */}
+                <StyledCard>
+                  <CardHeader
+                    title={
+                      <SectionHeader
+                        icon={<DescriptionIcon />}
+                        title="Itinerary & Schedule"
+                        subtitle="Day-wise plan"
                       />
-                    ))}
-                  </Stack>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <Stack spacing={1}>
-                    <Stack
-                      direction="row"
-                      alignItems="center"
-                      justifyContent="space-between"
-                    >
-                      <Typography fontWeight={800}>Exclusions</Typography>
+                    }
+                    action={
                       <Button
-                        size="small"
                         startIcon={<AddIcon />}
-                        onClick={addExclusion}
-                      >
-                        Add
-                      </Button>
-                    </Stack>
-                    {formData.exclusion.map((val, idx) => (
-                      <TextField
-                        key={idx}
-                        fullWidth
                         size="small"
-                        name="exclusion"
-                        label={`Exclusion ${idx + 1}`}
-                        value={val}
-                        onChange={(e) => handleChange(e, idx)}
-                        required
+                        variant="outlined"
+                        onClick={addDay}
+                      >
+                        Add Day
+                      </Button>
+                    }
+                  />
+                  <Divider />
+                  <CardContent>
+                    <Box
+                      mb={3}
+                      p={2}
+                      bgcolor="primary.50"
+                      borderRadius={2}
+                      border="1px dashed"
+                      borderColor="primary.main"
+                    >
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.customizable}
+                            onChange={(e) =>
+                              setFormData((p) => ({
+                                ...p,
+                                customizable: e.target.checked,
+                                ...(e.target.checked
+                                  ? { tourStartDate: "" }
+                                  : { from: "", to: "" }),
+                              }))
+                            }
+                          />
+                        }
+                        label={
+                          <Typography fontWeight="bold">
+                            Customizable Dates
+                          </Typography>
+                        }
                       />
-                    ))}
-                  </Stack>
-                </Grid>
-              </Grid>
-            </Section>
-          </Paper>
+                      <Grid container spacing={2} mt={1}>
+                        {formData.customizable ? (
+                          <>
+                            <Grid item xs={12} sm={6}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                type="date"
+                                label="Valid From"
+                                name="from"
+                                value={formData.from}
+                                onChange={handleChange}
+                                InputLabelProps={{ shrink: true }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                type="date"
+                                label="Valid To"
+                                name="to"
+                                value={formData.to}
+                                onChange={handleChange}
+                                InputLabelProps={{ shrink: true }}
+                              />
+                            </Grid>
+                          </>
+                        ) : (
+                          <Grid item xs={12}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              type="date"
+                              label="Fixed Start Date"
+                              name="tourStartDate"
+                              value={formData.tourStartDate}
+                              onChange={handleChange}
+                              InputLabelProps={{ shrink: true }}
+                            />
+                          </Grid>
+                        )}
+                      </Grid>
+                    </Box>
 
-          <Paper variant="outlined" sx={{ borderRadius: 3, mb: 1.5 }}>
-            <Section
-              title="Day-wise itinerary"
-              subtitle="Add/remove days"
-              defaultExpanded={!isMobile}
-            >
-              <Stack spacing={1.5}>
-                {formData.dayWise.map((d, idx) => (
-                  <Paper
-                    key={idx}
-                    variant="outlined"
-                    sx={{ borderRadius: 3, p: 1.5 }}
-                  >
-                    <Grid container spacing={1.5} alignItems="center">
-                      <Grid item xs={12} sm={3}>
-                        <TextField
-                          select
-                          fullWidth
-                          size="small"
-                          label="Day"
-                          value={d.day}
-                          onChange={(e) => {
-                            const updated = [...formData.dayWise];
-                            updated[idx].day = e.target.value;
-                            setFormData((p) => ({ ...p, dayWise: updated }));
-                          }}
-                          SelectProps={{ native: true }}
-                          required
-                        >
-                          <option value="">Select</option>
-                          {[...Array(30).keys()].map((i) => (
-                            <option key={i + 1} value={i + 1}>
-                              Day {i + 1}
-                            </option>
-                          ))}
-                        </TextField>
-                      </Grid>
-                      <Grid item xs={12} sm={8}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Description"
-                          multiline
-                          minRows={2}
-                          value={d.description}
-                          onChange={(e) => {
-                            const updated = [...formData.dayWise];
-                            updated[idx].description = e.target.value;
-                            setFormData((p) => ({ ...p, dayWise: updated }));
-                          }}
-                          required
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={1}>
-                        <Tooltip title="Remove day">
-                          <span>
-                            <IconButton
-                              disabled={formData.dayWise.length <= 1}
-                              onClick={() => removeDay(idx)}
+                    <Stack spacing={2}>
+                      {formData.dayWise.map((d, idx) => (
+                        <DynamicItemBox key={idx}>
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            mb={1}
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              color="primary"
+                              fontWeight="bold"
                             >
-                              <DeleteOutlineIcon />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      </Grid>
-                    </Grid>
-                  </Paper>
-                ))}
-
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={addDay}
-                >
-                  Add Day
-                </Button>
-              </Stack>
-            </Section>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ borderRadius: 3, mb: 1.5 }}>
-            <Section
-              title="Vehicles"
-              subtitle="Mobile-friendly list (no table)"
-              defaultExpanded={!isMobile}
-            >
-              <Stack spacing={1.5}>
-                {formData.vehicles.map((v, idx) => (
-                  <Paper
-                    key={idx}
-                    variant="outlined"
-                    sx={{ borderRadius: 3, p: 1.5 }}
-                  >
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      alignItems="center"
-                      justifyContent="space-between"
-                      sx={{ mb: 1 }}
-                    >
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <DirectionsBusIcon fontSize="small" />
-                        <Typography fontWeight={800}>
-                          Vehicle {idx + 1}
-                        </Typography>
-                      </Stack>
-                      <IconButton
-                        disabled={formData.vehicles.length <= 1}
-                        onClick={() => removeVehicle(idx)}
-                      >
-                        <DeleteOutlineIcon />
-                      </IconButton>
+                              Day {idx + 1}
+                            </Typography>
+                            <Tooltip title="Remove Day">
+                              <IconButton
+                                size="small"
+                                onClick={() => removeDay(idx)}
+                                disabled={formData.dayWise.length <= 1}
+                              >
+                                <DeleteOutlineIcon
+                                  fontSize="small"
+                                  color="error"
+                                />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} sm={3}>
+                              <TextField
+                                select
+                                fullWidth
+                                size="small"
+                                value={d.day}
+                                SelectProps={{ native: true }}
+                                onChange={(e) => {
+                                  const updated = [...formData.dayWise];
+                                  updated[idx].day = e.target.value;
+                                  setFormData((p) => ({
+                                    ...p,
+                                    dayWise: updated,
+                                  }));
+                                }}
+                              >
+                                <option value="">Select</option>
+                                {[...Array(30).keys()].map((i) => (
+                                  <option key={i} value={i + 1}>
+                                    {i + 1}
+                                  </option>
+                                ))}
+                              </TextField>
+                            </Grid>
+                            <Grid item xs={12} sm={9}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                multiline
+                                minRows={4}
+                                label="Activities / Description"
+                                value={d.description}
+                                onChange={(e) => {
+                                  const updated = [...formData.dayWise];
+                                  updated[idx].description = e.target.value;
+                                  setFormData((p) => ({
+                                    ...p,
+                                    dayWise: updated,
+                                  }));
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                        </DynamicItemBox>
+                      ))}
                     </Stack>
+                  </CardContent>
+                </StyledCard>
+              </Stack>
+            </Grid>
 
-                    <Grid container spacing={1.5}>
-                      <Grid item xs={12} sm={4}>
-                        <TextField
-                          select
-                          fullWidth
-                          size="small"
-                          label="Vehicle type"
-                          value={v.name}
-                          onChange={(e) => {
-                            const updated = [...formData.vehicles];
-                            updated[idx].name = e.target.value;
-                            setFormData((p) => ({ ...p, vehicles: updated }));
-                          }}
-                          SelectProps={{ native: true }}
-                          required
-                        >
-                          <option value="">Select</option>
-                          <option value="Deluxe Bus">Deluxe Bus</option>
-                          <option value="AC Deluxe Bus">AC Deluxe Bus</option>
-                          <option value="Luxury Coach">Luxury Coach</option>
-                          <option value="Tempo Traveller">
-                            Tempo Traveller
+            {/* Right Column: Meta, Vehicles, Images */}
+            <Grid item xs={12} md={4}>
+              <Stack spacing={3}>
+                {/* Duration & Rating */}
+                <StyledCard>
+                  <CardHeader
+                    title={
+                      <Typography variant="h6" fontWeight="bold">
+                        Overview Stats
+                      </Typography>
+                    }
+                  />
+                  <Divider />
+                  <CardContent>
+                    <Stack spacing={2}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                          <TextField
+                            select
+                            fullWidth
+                            size="small"
+                            label="Days"
+                            name="days"
+                            value={formData.days}
+                            onChange={handleChange}
+                            SelectProps={{ native: true }}
+                          >
+                            <option value="">-</option>
+                            {[...Array(30).keys()].map((i) => (
+                              <option key={i} value={i + 1}>
+                                {i + 1}
+                              </option>
+                            ))}
+                          </TextField>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <TextField
+                            select
+                            fullWidth
+                            size="small"
+                            label="Nights"
+                            name="nights"
+                            value={formData.nights}
+                            onChange={handleChange}
+                            SelectProps={{ native: true }}
+                          >
+                            <option value="">-</option>
+                            {[...Array(30).keys()].map((i) => (
+                              <option key={i} value={i + 1}>
+                                {i + 1}
+                              </option>
+                            ))}
+                          </TextField>
+                        </Grid>
+                      </Grid>
+                      <TextField
+                        select
+                        fullWidth
+                        size="small"
+                        name="starRating"
+                        value={formData.starRating}
+                        onChange={handleChange}
+                        SelectProps={{ native: true }}
+                      >
+                        <option value="">Select Rating</option>
+                        {[1, 2, 3, 4, 5].map((r) => (
+                          <option key={r} value={r}>
+                            {r} Stars
                           </option>
-                          <option value="Innova Crysta">Innova Crysta</option>
-                        </TextField>
-                      </Grid>
+                        ))}
+                      </TextField>
+                    </Stack>
+                  </CardContent>
+                </StyledCard>
 
-                      <Grid item xs={12} sm={4}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Vehicle number"
-                          value={v.vehicleNumber}
-                          onChange={(e) => {
-                            const updated = [...formData.vehicles];
-                            updated[idx].vehicleNumber = e.target.value;
-                            setFormData((p) => ({ ...p, vehicles: updated }));
+                {/* Images */}
+                <StyledCard>
+                  <CardHeader
+                    title={
+                      <SectionHeader
+                        icon={<ImageOutlinedIcon />}
+                        title="Gallery"
+                      />
+                    }
+                  />
+                  <Divider />
+                  <CardContent>
+                    <Stack spacing={2}>
+                      {formData.images.map((img, idx) => (
+                        <DynamicItemBox
+                          key={idx}
+                          sx={{
+                            p: 1.5,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
                           }}
-                          required
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} sm={2}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          type="number"
-                          label="Seats"
-                          value={v.totalSeats}
-                          onChange={(e) => {
-                            const updated = [...formData.vehicles];
-                            updated[idx].totalSeats = e.target.value;
-                            setFormData((p) => ({ ...p, vehicles: updated }));
-                          }}
-                          required
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} sm={2}>
-                        <TextField
-                          select
-                          fullWidth
-                          size="small"
-                          label="Seater"
-                          value={v.seaterType}
-                          onChange={(e) => {
-                            const updated = [...formData.vehicles];
-                            updated[idx].seaterType = e.target.value;
-                            setFormData((p) => ({ ...p, vehicles: updated }));
-                          }}
-                          SelectProps={{ native: true }}
-                          required
                         >
-                          <option value="2*2">2x2</option>
-                          <option value="2*3">2x3</option>
-                        </TextField>
-                      </Grid>
+                          <Button
+                            component="label"
+                            fullWidth
+                            variant="outlined"
+                            startIcon={<AddPhotoAlternateIcon />}
+                            sx={{
+                              borderStyle: "dashed",
+                              textTransform: "none",
+                              justifyContent: "flex-start",
+                            }}
+                          >
+                            {img ? img.name : `Upload Image ${idx + 1}`}
+                            <input
+                              hidden
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) =>
+                                handleImageChange(idx, e.target.files?.[0])
+                              }
+                            />
+                          </Button>
+                          <IconButton
+                            color="error"
+                            onClick={() => removeImage(idx)}
+                            disabled={formData.images.length <= 1}
+                          >
+                            <DeleteOutlineIcon />
+                          </IconButton>
+                        </DynamicItemBox>
+                      ))}
+                      <Button
+                        variant="text"
+                        startIcon={<AddIcon />}
+                        onClick={addImage}
+                      >
+                        Add Slot
+                      </Button>
+                    </Stack>
+                  </CardContent>
+                </StyledCard>
 
-                      <Grid item xs={12} sm={4}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          type="number"
-                          label="Price per seat"
-                          value={v.pricePerSeat}
-                          onChange={(e) => {
-                            const updated = [...formData.vehicles];
-                            updated[idx].pricePerSeat = e.target.value;
-                            setFormData((p) => ({ ...p, vehicles: updated }));
-                          }}
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} sm={4}>
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={!!v.isActive}
-                              onChange={(e) => {
+                {/* Vehicles */}
+                <StyledAccordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <SectionHeader
+                      icon={<DirectionsBusIcon />}
+                      title="Vehicles"
+                    />
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Stack spacing={2}>
+                      {formData.vehicles.map((v, idx) => (
+                        <DynamicItemBox key={idx}>
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            mb={1}
+                          >
+                            <Typography variant="caption" fontWeight="bold">
+                              VEHICLE {idx + 1}
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => removeVehicle(idx)}
+                              disabled={formData.vehicles.length <= 1}
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                          <Stack spacing={2}>
+                            <Autocomplete
+                              freeSolo
+                              options={[
+                                "Innova",
+                                "Tempo Traveller",
+                                "Sedan",
+                                "Bus",
+                              ]}
+                              value={v.name}
+                              onChange={(_, val) => {
                                 const updated = [...formData.vehicles];
-                                updated[idx].isActive = e.target.checked;
+                                updated[idx].name = val || "";
                                 setFormData((p) => ({
                                   ...p,
                                   vehicles: updated,
                                 }));
                               }}
+                              renderInput={(params) => (
+                                <TextField
+                                  {...params}
+                                  size="small"
+                                  label="Name"
+                                  fullWidth
+                                />
+                              )}
                             />
-                          }
-                          label="Active"
-                        />
-                      </Grid>
-                    </Grid>
-                  </Paper>
-                ))}
-
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={addVehicle}
-                >
-                  Add Vehicle
-                </Button>
-              </Stack>
-            </Section>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ borderRadius: 3, mb: 1.5 }}>
-            <Section
-              title="Images"
-              subtitle="Upload multiple images"
-              defaultExpanded={!isMobile}
-            >
-              <Stack spacing={1.5}>
-                {formData.images.map((img, idx) => (
-                  <Paper
-                    key={idx}
-                    variant="outlined"
-                    sx={{ borderRadius: 3, p: 1.5 }}
-                  >
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      spacing={1}
-                      alignItems={{ xs: "stretch", sm: "center" }}
-                      justifyContent="space-between"
-                    >
+                            <Grid container spacing={1}>
+                              <Grid item xs={6}>
+                                <TextField
+                                  fullWidth
+                                  size="small"
+                                  label="Seats"
+                                  type="number"
+                                  value={v.totalSeats}
+                                  onChange={(e) => {
+                                    const updated = [...formData.vehicles];
+                                    updated[idx].totalSeats = e.target.value;
+                                    setFormData((p) => ({
+                                      ...p,
+                                      vehicles: updated,
+                                    }));
+                                  }}
+                                />
+                              </Grid>
+                              <Grid item xs={6}>
+                                <TextField
+                                  fullWidth
+                                  size="small"
+                                  label="Price/Seat"
+                                  type="number"
+                                  value={v.pricePerSeat}
+                                  onChange={(e) => {
+                                    const updated = [...formData.vehicles];
+                                    updated[idx].pricePerSeat = e.target.value;
+                                    setFormData((p) => ({
+                                      ...p,
+                                      vehicles: updated,
+                                    }));
+                                  }}
+                                />
+                              </Grid>
+                            </Grid>
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  size="small"
+                                  checked={v.isActive}
+                                  onChange={(e) => {
+                                    const updated = [...formData.vehicles];
+                                    updated[idx].isActive = e.target.checked;
+                                    setFormData((p) => ({
+                                      ...p,
+                                      vehicles: updated,
+                                    }));
+                                  }}
+                                />
+                              }
+                              label="Active"
+                            />
+                          </Stack>
+                        </DynamicItemBox>
+                      ))}
                       <Button
-                        component="label"
                         variant="outlined"
-                        startIcon={<PhotoCameraIcon />}
-                        fullWidth={isMobile}
+                        fullWidth
+                        startIcon={<AddIcon />}
+                        onClick={addVehicle}
                       >
-                        {img ? "Change image" : `Upload image ${idx + 1}`}
-                        <input
-                          hidden
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) =>
-                            handleImageChange(idx, e.target.files?.[0] || null)
-                          }
-                        />
-                      </Button>
-
-                      <Button
-                        color="error"
-                        variant="text"
-                        startIcon={<DeleteOutlineIcon />}
-                        onClick={() => removeImage(idx)}
-                        disabled={formData.images.length <= 1}
-                        fullWidth={isMobile}
-                      >
-                        Remove
+                        Add Vehicle
                       </Button>
                     </Stack>
-                    {img && (
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ mt: 0.75, display: "block" }}
-                      >
-                        Selected: {img?.name}
-                      </Typography>
-                    )}
-                  </Paper>
-                ))}
+                  </AccordionDetails>
+                </StyledAccordion>
 
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={addImage}
-                >
-                  Add Image
-                </Button>
+                {/* Policies Accordion */}
+                <StyledAccordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <SectionHeader
+                      icon={<PolicyOutlinedIcon />}
+                      title="Policies"
+                    />
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Stack spacing={2}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        multiline
+                        minRows={2}
+                        label="Cancellation Policy"
+                        name="cancellation"
+                        value={formData.termsAndConditions.cancellation}
+                        onChange={handleChange}
+                      />
+                      <TextField
+                        fullWidth
+                        size="small"
+                        multiline
+                        minRows={2}
+                        label="Refund Policy"
+                        name="refund"
+                        value={formData.termsAndConditions.refund}
+                        onChange={handleChange}
+                      />
+                      <TextField
+                        fullWidth
+                        size="small"
+                        multiline
+                        minRows={2}
+                        label="Booking Policy"
+                        name="bookingPolicy"
+                        value={formData.termsAndConditions.bookingPolicy}
+                        onChange={handleChange}
+                      />
+                    </Stack>
+                  </AccordionDetails>
+                </StyledAccordion>
               </Stack>
-            </Section>
-          </Paper>
+            </Grid>
+          </Grid>
 
-          <Paper
-            variant="outlined"
-            sx={{ borderRadius: 3, mb: isMobile ? 10 : 1.5 }}
-          >
-            <Section
-              title="Terms & policies"
-              subtitle="Cancellation, refund, booking"
-              defaultExpanded={!isMobile}
+          {/* Sticky Footer for Actions */}
+          <Slide direction="up" in={true} mountOnEnter unmountOnExit>
+            <Paper
+              elevation={3}
+              sx={{
+                position: "fixed",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                zIndex: 1100,
+                borderRadius: "16px 16px 0 0",
+                borderTop: "1px solid",
+                borderColor: "divider",
+              }}
             >
-              <Grid container spacing={1.5}>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    multiline
-                    minRows={3}
-                    label="Cancellation policy"
-                    name="cancellation"
-                    value={formData.termsAndConditions.cancellation}
-                    onChange={handleChange}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    multiline
-                    minRows={3}
-                    label="Refund policy"
-                    name="refund"
-                    value={formData.termsAndConditions.refund}
-                    onChange={handleChange}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    multiline
-                    minRows={3}
-                    label="Booking policy"
-                    name="bookingPolicy"
-                    value={formData.termsAndConditions.bookingPolicy}
-                    onChange={handleChange}
-                    required
-                  />
-                </Grid>
-              </Grid>
-            </Section>
-          </Paper>
+              <Container maxWidth="lg">
+                <Box
+                  py={2}
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
+                  <Box display={{ xs: "none", md: "block" }}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Review all details before publishing.
+                    </Typography>
+                  </Box>
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    sx={{ width: { xs: "100%", md: "auto" } }}
+                  >
+                    <Button
+                      fullWidth={isMobile}
+                      variant="contained"
+                      size="large"
+                      type="submit"
+                      disabled={!isVisitingValid}
+                      sx={{ px: 4, borderRadius: 2 }}
+                    >
+                      Publish Tour Package
+                    </Button>
+                  </Stack>
+                </Box>
+              </Container>
+            </Paper>
+          </Slide>
 
-          {!isMobile && (
-            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
-              <Button type="submit" variant="contained" size="large">
-                Submit Tour
-              </Button>
-            </Stack>
-          )}
-        </Box>
-
-        {isMobile && (
-          <Paper
-            elevation={8}
-            sx={{
-              position: "fixed",
-              left: 0,
-              right: 0,
-              bottom: 0,
-              p: 1.25,
-              borderTop: "1px solid",
-              borderColor: "divider",
-              bgcolor: "background.paper",
-            }}
-          >
-            <Button
-              fullWidth
-              type="submit"
-              variant="contained"
-              size="large"
-              disabled={!isVisitingValid}
-            >
-              Submit Tour
-            </Button>
-          </Paper>
-        )}
-      </Paper>
-    </Container>
+          {/* Spacer for sticky footer */}
+          <Box height={80} />
+        </form>
+      </Container>
+    </Box>
   );
 };
 
