@@ -387,7 +387,7 @@ export default function TourUpdate() {
           "days",
           "from",
           "to",
-          "customizable",
+          "isCustomizable",
           "tourStartDate",
         ],
         details: ["overview", "inclusion", "exclusion", "amenities"],
@@ -407,9 +407,9 @@ export default function TourUpdate() {
         // If the user edited 'visitingPlaces', ensure 'visitngPlaces' is also updated if backend expects it
         // Or prioritize one over the other based on your backend logic
         if (dataToUpdate.visitingPlaces) {
-            dataToUpdate.visitngPlaces = dataToUpdate.visitingPlaces;
+          dataToUpdate.visitngPlaces = dataToUpdate.visitingPlaces;
         } else if (dataToUpdate.visitngPlaces) {
-            dataToUpdate.visitingPlaces = dataToUpdate.visitngPlaces;
+          dataToUpdate.visitingPlaces = dataToUpdate.visitngPlaces;
         }
       }
 
@@ -547,7 +547,7 @@ export default function TourUpdate() {
                   <Grid item xs={12}>
                     <Divider sx={{ my: 1 }} />
                   </Grid>
-                  
+
                   {/* Location Selectors - Fixed */}
                   <Grid item xs={12} sm={4}>
                     <FormControl fullWidth size="small">
@@ -559,7 +559,7 @@ export default function TourUpdate() {
                           const val = e.target.value;
                           handleInputChange("country", val);
                           handleInputChange("state", ""); // Reset state
-                          handleInputChange("city", "");  // Reset city
+                          handleInputChange("city", ""); // Reset city
                         }}
                       >
                         {countries.map((c) => (
@@ -623,10 +623,14 @@ export default function TourUpdate() {
                       fullWidth
                       size="small"
                       label="Visiting Places (Summary)"
-                      value={editableData.visitingPlaces || editableData.visitngPlaces || ""}
+                      value={
+                        editableData.visitingPlaces ||
+                        editableData.visitngPlaces ||
+                        ""
+                      }
                       onChange={(e) => {
-                          handleInputChange("visitingPlaces", e.target.value);
-                          handleInputChange("visitngPlaces", e.target.value);
+                        handleInputChange("visitingPlaces", e.target.value);
+                        handleInputChange("visitngPlaces", e.target.value);
                       }}
                     />
                   </Grid>
@@ -729,10 +733,10 @@ export default function TourUpdate() {
                       <FormControlLabel
                         control={
                           <Switch
-                            checked={!!editableData.customizable}
+                            checked={!!editableData.isCustomizable}
                             onChange={(e) =>
                               handleInputChange(
-                                "customizable",
+                                "isCustomizable",
                                 e.target.checked
                               )
                             }
@@ -745,7 +749,7 @@ export default function TourUpdate() {
                         }
                       />
                       <Grid container spacing={2} mt={0.5}>
-                        {editableData.customizable ? (
+                        {editableData.isCustomizable ? (
                           <>
                             <Grid item xs={6}>
                               <TextField
@@ -782,7 +786,9 @@ export default function TourUpdate() {
                               type="date"
                               label="Fixed Start Date"
                               InputLabelProps={{ shrink: true }}
-                              value={formatDateForInput(editableData.tourStartDate)}
+                              value={formatDateForInput(
+                                editableData.tourStartDate
+                              )}
                               onChange={(e) =>
                                 handleInputChange(
                                   "tourStartDate",
@@ -809,11 +815,7 @@ export default function TourUpdate() {
                 <Stack spacing={2}>
                   {(editableData.dayWise || []).map((day, idx) => (
                     <DynamicItemBox key={idx}>
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        mb={1}
-                      >
+                      <Box display="flex" justifyContent="space-between" mb={1}>
                         <Typography
                           variant="subtitle2"
                           color="primary"
@@ -971,11 +973,7 @@ export default function TourUpdate() {
                 <Stack spacing={2}>
                   {(editableData.vehicles || []).map((v, idx) => (
                     <DynamicItemBox key={idx}>
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        mb={1}
-                      >
+                      <Box display="flex" justifyContent="space-between" mb={1}>
                         <Typography variant="caption" fontWeight="bold">
                           VEHICLE {idx + 1}
                         </Typography>

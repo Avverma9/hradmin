@@ -51,6 +51,12 @@ const addDays = (dateString, days) => {
   return result.toISOString().split("T")[0];
 };
 
+// Helper to extract YYYY-MM-DD from ISO string for HTML input
+const formatDateForInput = (isoDate) => {
+  if (!isoDate) return "";
+  return isoDate.split("T")[0];
+};
+
 const formatCurrency = (amount) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -74,12 +80,24 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
     return tour.price + (tour.price * gstPercent) / 100;
   }, [tour, gstData]);
 
-  const fixedStartDate = !tour?.customizable
-    ? tour?.tourStartDate || tour?.from || ""
+  // Determine allowed date range
+  const minDate = tour?.from ? formatDateForInput(tour.from) : "";
+  const maxDate = tour?.to ? formatDateForInput(tour.to) : "";
+
+  // Initialize Dates
+  // If not customizable, fix the dates. If customizable, allow empty.
+  const fixedStartDate = !tour?.isCustomizable
+    ? formatDateForInput(tour?.tourStartDate || tour?.from)
     : "";
+
+  const fixedEndDate =
+    !tour?.isCustomizable && fixedStartDate
+      ? addDays(fixedStartDate, (tour.days || 1) - 1)
+      : "";
 
   // Form State
   const [startDate, setStartDate] = useState(fixedStartDate);
+  const [endDate, setEndDate] = useState(fixedEndDate);
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [primaryMobile, setPrimaryMobile] = useState("");
@@ -93,6 +111,15 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
     if (tour?.vehicles?.length > 0) {
       const activeVehicle = tour.vehicles.find((v) => v.isActive !== false);
       if (activeVehicle) setSelectedVehicleId(activeVehicle._id);
+    }
+  }, [tour]);
+
+  // Reset/Set dates if tour changes
+  useEffect(() => {
+    if (!tour.isCustomizable) {
+      const start = formatDateForInput(tour?.tourStartDate || tour?.from);
+      setStartDate(start);
+      setEndDate(addDays(start, (tour.days || 1) - 1));
     }
   }, [tour]);
 
@@ -128,7 +155,7 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
         // Add seat and initialize passenger data
         setPassengers((prevP) => ({
           ...prevP,
-          [seatCode]: { type: "adult", fullName: "", age: "", gender: "Male" },
+          [seatCode]: { type: "adult", fullName: "", age: "", gender: "male" },
         }));
         return [...prev, seatCode];
       }
@@ -149,8 +176,6 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
       if (p?.type === "adult") {
         total += finalPrice;
       } else {
-        // Child logic: if age >= 8 full price, else half (if DOB logic used)
-        // OR simple logic: Child is half price
         total += finalPrice / 2; // Assuming simple half price for child type
       }
     });
@@ -159,7 +184,14 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
 
   const handleSubmit = () => {
     setError("");
-    if (!startDate) return setError("Select travel date.");
+    if (!startDate || !endDate)
+      return setError("Select both Start and End travel dates.");
+
+    // Date Validation
+    if (new Date(endDate) < new Date(startDate)) {
+      return setError("End date cannot be before Start date.");
+    }
+
     if (selectedSeats.length === 0)
       return setError("Please select at least one seat.");
     if (!primaryMobile || primaryMobile.length < 10)
@@ -175,7 +207,6 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
 
     if (!userId) return setError("Please login to proceed.");
 
-    const endDate = addDays(startDate, (tour.days || 1) - 1);
     const totalAmount = calculateTotal();
 
     // Format passengers for API
@@ -193,7 +224,6 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
     onBookingSubmit({
       userId,
       tourId: tour._id,
-
       vehicleId: selectedVehicleId,
       seats: selectedSeats,
       status: "pending",
@@ -204,7 +234,7 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
       from: startDate,
       to: endDate,
       tourStartDate: tour.tourStartDate || startDate,
-      customizable: tour.customizable,
+      isCustomizable: tour.isCustomizable,
       travelAgencyName: tour.travelAgencyName,
       agencyEmail: tour.agencyEmail,
       agencyPhone: tour.agencyPhone,
@@ -295,16 +325,49 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
               </Typography>
 
               <Stack spacing={2} mb={4}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Travel Date"
-                  type="date"
-                  value={startDate}
-                  disabled={!tour.customizable}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
+                {/* UPDATED DATE PICKER LOGIC: Start and End Date */}
+                <Box display="flex" gap={2}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Start Date"
+                    type="date"
+                    value={startDate}
+                    disabled={!tour.isCustomizable}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    inputProps={{
+                      min: tour.isCustomizable ? minDate : undefined,
+                      max: tour.isCustomizable ? maxDate : undefined,
+                    }}
+                  />
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="End Date"
+                    type="date"
+                    value={endDate}
+                    disabled={!tour.isCustomizable}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    inputProps={{
+                      min: tour.isCustomizable
+                        ? startDate || minDate
+                        : undefined,
+                      max: tour.isCustomizable ? maxDate : undefined,
+                    }}
+                  />
+                </Box>
+                {tour.isCustomizable && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mt: -1, display: "block" }}
+                  >
+                    Available Range: {minDate} to {maxDate}
+                  </Typography>
+                )}
+
                 <TextField
                   select
                   fullWidth
@@ -611,7 +674,7 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
                             select
                             fullWidth
                             size="small"
-                            value={passengers[seatId]?.gender || "Male"}
+                            value={passengers[seatId]?.gender || "male"}
                             onChange={(e) =>
                               handlePassengerChange(
                                 seatId,

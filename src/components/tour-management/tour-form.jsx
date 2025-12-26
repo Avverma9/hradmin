@@ -136,7 +136,7 @@ const TourForm = () => {
     from: "",
     to: "",
     tourStartDate: "",
-    customizable: false,
+    isCustomizable: false,
     amenities: [],
     inclusion: [""],
     exclusion: [""],
@@ -253,7 +253,7 @@ const TourForm = () => {
     formDataToSend.append("from", formData.from);
     formDataToSend.append("to", formData.to);
     formDataToSend.append("tourStartDate", formData.tourStartDate);
-    formDataToSend.append("customizable", !!formData.customizable);
+    formDataToSend.append("isCustomizable", !!formData.isCustomizable);
     formDataToSend.append("starRating", formData.starRating);
 
     formData.inclusion.forEach((inc) => {
@@ -703,11 +703,11 @@ const TourForm = () => {
                       <FormControlLabel
                         control={
                           <Switch
-                            checked={formData.customizable}
+                            checked={formData.isCustomizable}
                             onChange={(e) =>
                               setFormData((p) => ({
                                 ...p,
-                                customizable: e.target.checked,
+                                isCustomizable: e.target.checked,
                                 ...(e.target.checked
                                   ? { tourStartDate: "" }
                                   : { from: "", to: "" }),
@@ -722,7 +722,7 @@ const TourForm = () => {
                         }
                       />
                       <Grid container spacing={2} mt={1}>
-                        {formData.customizable ? (
+                        {formData.isCustomizable ? (
                           <>
                             <Grid item xs={12} sm={6}>
                               <TextField

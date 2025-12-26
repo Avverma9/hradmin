@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useLoader } from "../../../utils/loader";
@@ -11,11 +11,12 @@ import {
 
 // Carousel Imports
 import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import "slick-carousel/slick/slick.css";
 
 // MUI Imports
 import {
+  alpha,
   Box,
   Button,
   Card,
@@ -34,16 +35,14 @@ import {
   IconButton,
   List,
   ListItem,
-  ListItemIcon,
   ListItemText,
   MenuItem,
   Paper,
   Stack,
   TextField,
-  Typography,
   Tooltip,
+  Typography,
   useTheme,
-  alpha,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
@@ -51,6 +50,8 @@ import { styled } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import AirlineSeatReclineExtraIcon from "@mui/icons-material/AirlineSeatReclineExtra";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CloseIcon from "@mui/icons-material/Close";
@@ -58,14 +59,12 @@ import CollectionsIcon from "@mui/icons-material/Collections";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import NightsStayIcon from "@mui/icons-material/NightsStay";
 import StarIcon from "@mui/icons-material/Star";
 import TravelExploreIcon from "@mui/icons-material/TravelExplore";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 
 // --- Helpers ---
 const parseVisitingPlaces = (placesStr) => {
@@ -167,9 +166,19 @@ function ImageManagerModal({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: 1, borderColor: 'divider' }}>
+      <DialogTitle
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
         <Typography variant="h6">Manage Tour Images</Typography>
-        <IconButton onClick={onClose}><CloseIcon /></IconButton>
+        <IconButton onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
       <DialogContent sx={{ p: 3 }}>
         <Grid container spacing={2} mt={0}>
@@ -191,8 +200,13 @@ function ImageManagerModal({
                 "&:hover": { bgcolor: "primary.100" },
               }}
             >
-              <AddPhotoAlternateIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
-              <Typography variant="body2" color="primary" fontWeight="bold">Upload Images</Typography>
+              <AddPhotoAlternateIcon
+                color="primary"
+                sx={{ fontSize: 40, mb: 1 }}
+              />
+              <Typography variant="body2" color="primary" fontWeight="bold">
+                Upload Images
+              </Typography>
             </Paper>
             <input
               type="file"
@@ -205,7 +219,15 @@ function ImageManagerModal({
           </Grid>
           {images.map((image, index) => (
             <Grid item key={`${tourId}-img-${index}`} xs={12} sm={6} md={4}>
-              <Box sx={{ position: "relative", height: 180, borderRadius: 2, overflow: 'hidden', boxShadow: 2 }}>
+              <Box
+                sx={{
+                  position: "relative",
+                  height: 180,
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  boxShadow: 2,
+                }}
+              >
                 <img
                   src={image}
                   alt={`Gallery ${index}`}
@@ -256,12 +278,20 @@ function SeatMapModal({ open, onClose, tour }) {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <DialogTitle
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <Box display="flex" alignItems="center" gap={1}>
-           <AirlineSeatReclineExtraIcon color="primary" />
-           <Typography variant="h6">Seat Availability</Typography>
+          <AirlineSeatReclineExtraIcon color="primary" />
+          <Typography variant="h6">Seat Availability</Typography>
         </Box>
-        <IconButton onClick={onClose}><CloseIcon /></IconButton>
+        <IconButton onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
       <DialogContent dividers>
         <Box sx={{ display: "flex", gap: 2, alignItems: "center", mb: 3 }}>
@@ -279,30 +309,49 @@ function SeatMapModal({ open, onClose, tour }) {
               </MenuItem>
             ))}
           </TextField>
-          <Box sx={{ minWidth: 100, textAlign: 'right' }}>
-             <Typography variant="caption" display="block">Booked / Total</Typography>
-             <Typography variant="h6" fontWeight="bold">{bookedCount} / {totalCount}</Typography>
+          <Box sx={{ minWidth: 100, textAlign: "right" }}>
+            <Typography variant="caption" display="block">
+              Booked / Total
+            </Typography>
+            <Typography variant="h6" fontWeight="bold">
+              {bookedCount} / {totalCount}
+            </Typography>
           </Box>
         </Box>
 
         {loading ? (
-          <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>
+          <Box display="flex" justifyContent="center" p={4}>
+            <CircularProgress />
+          </Box>
         ) : (
           <Box>
             {seatMap.length === 0 ? (
-              <Typography color="text.secondary" align="center">No seat map available.</Typography>
+              <Typography color="text.secondary" align="center">
+                No seat map available.
+              </Typography>
             ) : (
-              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(4, 1fr)",
+                  gap: 1,
+                }}
+              >
                 {seatMap.map((seat) => (
                   <Button
                     key={seat.code}
-                    variant={seat.status === "booked" ? "contained" : "outlined"}
+                    variant={
+                      seat.status === "booked" ? "contained" : "outlined"
+                    }
                     color={seat.status === "booked" ? "inherit" : "primary"}
                     disabled={seat.status === "booked"}
-                    sx={{ 
-                      minWidth: 0, 
+                    sx={{
+                      minWidth: 0,
                       borderRadius: 1,
-                      bgcolor: seat.status === "booked" ? "action.disabledBackground" : "transparent"
+                      bgcolor:
+                        seat.status === "booked"
+                          ? "action.disabledBackground"
+                          : "transparent",
                     }}
                   >
                     {seat.code}
@@ -311,8 +360,17 @@ function SeatMapModal({ open, onClose, tour }) {
               </Box>
             )}
             <Stack direction="row" spacing={2} mt={3} justifyContent="center">
-                <Chip size="small" label="Available" variant="outlined" color="primary" />
-                <Chip size="small" label="Booked" sx={{ bgcolor: 'action.disabledBackground' }} />
+              <Chip
+                size="small"
+                label="Available"
+                variant="outlined"
+                color="primary"
+              />
+              <Chip
+                size="small"
+                label="Booked"
+                sx={{ bgcolor: "action.disabledBackground" }}
+              />
             </Stack>
           </Box>
         )}
@@ -384,12 +442,20 @@ function TourCard({ tour }) {
       <StyledCard>
         <Grid container>
           {/* Left Column: Image Slider */}
-          <Grid item xs={12} md={5} lg={4} sx={{ position: "relative", bgcolor: "black" }}>
+          <Grid
+            item
+            xs={12}
+            md={5}
+            lg={4}
+            sx={{ position: "relative", bgcolor: "black" }}
+          >
             <Box
               sx={{
                 height: "100%",
                 minHeight: { xs: 250, md: 350 },
-                "& .slick-slider, & .slick-list, & .slick-track": { height: "100%" },
+                "& .slick-slider, & .slick-list, & .slick-track": {
+                  height: "100%",
+                },
                 "& .slick-slide > div": { height: "100%" },
               }}
             >
@@ -400,13 +466,18 @@ function TourCard({ tour }) {
                       component="img"
                       image={image}
                       alt={`Tour ${index}`}
-                      sx={{ height: "100%", width: "100%", objectFit: "cover", opacity: 0.9 }}
+                      sx={{
+                        height: "100%",
+                        width: "100%",
+                        objectFit: "cover",
+                        opacity: 0.9,
+                      }}
                     />
                   </Box>
                 ))}
               </Slider>
             </Box>
-            
+
             {/* Overlay Edit Button */}
             <Tooltip title="Manage Gallery">
               <IconButton
@@ -429,21 +500,49 @@ function TourCard({ tour }) {
 
           {/* Right Column: Details */}
           <Grid item xs={12} md={7} lg={8}>
-            <CardContent sx={{ p: 3, display: "flex", flexDirection: "column", height: "100%" }}>
-              
+            <CardContent
+              sx={{
+                p: 3,
+                display: "flex",
+                flexDirection: "column",
+                height: "100%",
+              }}
+            >
               {/* Header */}
-              <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="flex-start"
+                mb={1}
+              >
                 <Box>
-                  <Chip 
-                    label={tour.themes} 
-                    size="small" 
-                    color="primary" 
-                    sx={{ borderRadius: 1, fontWeight: 600, mb: 1, textTransform: 'uppercase', fontSize: '0.7rem' }} 
+                  <Chip
+                    label={tour.themes}
+                    size="small"
+                    color="primary"
+                    sx={{
+                      borderRadius: 1,
+                      fontWeight: 600,
+                      mb: 1,
+                      textTransform: "uppercase",
+                      fontSize: "0.7rem",
+                    }}
                   />
-                  <Typography variant="h5" component="div" fontWeight="800" color="text.primary">
+                  <Typography
+                    variant="h5"
+                    component="div"
+                    fontWeight="800"
+                    color="text.primary"
+                  >
                     {tour.travelAgencyName}
                   </Typography>
-                  <Box display="flex" alignItems="center" gap={0.5} color="text.secondary" mt={0.5}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    gap={0.5}
+                    color="text.secondary"
+                    mt={0.5}
+                  >
                     <LocationOnIcon fontSize="small" color="action" />
                     <Typography variant="body2">
                       {tour.city}, {tour.state} ({tour?.country})
@@ -451,62 +550,114 @@ function TourCard({ tour }) {
                   </Box>
                 </Box>
                 <Tooltip title="Edit Details">
-                  <IconButton onClick={() => navigate(`/tour-update/${tour._id}`)}>
+                  <IconButton
+                    onClick={() => navigate(`/tour-update/${tour._id}`)}
+                  >
                     <EditIcon />
                   </IconButton>
                 </Tooltip>
               </Box>
 
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                 {parseVisitingPlaces(tour.visitngPlaces || tour.visitingPlaces)}
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  mt: 1,
+                  mb: 2,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}
+              >
+                {parseVisitingPlaces(tour.visitngPlaces || tour.visitingPlaces)}
               </Typography>
 
               {/* Info Strip */}
               <InfoStrip>
                 <Box display="flex" alignItems="center" gap={1}>
                   <WbSunnyIcon fontSize="small" color="warning" />
-                  <Typography variant="body2" fontWeight="500">{tour.days} Days</Typography>
+                  <Typography variant="body2" fontWeight="500">
+                    {tour.days} Days
+                  </Typography>
                 </Box>
-                <Divider orientation="vertical" flexItem sx={{ display: { xs: "none", sm: "block" } }} />
+                <Divider
+                  orientation="vertical"
+                  flexItem
+                  sx={{ display: { xs: "none", sm: "block" } }}
+                />
                 <Box display="flex" alignItems="center" gap={1}>
                   <NightsStayIcon fontSize="small" color="info" />
-                  <Typography variant="body2" fontWeight="500">{tour.nights} Nights</Typography>
+                  <Typography variant="body2" fontWeight="500">
+                    {tour.nights} Nights
+                  </Typography>
                 </Box>
-                <Divider orientation="vertical" flexItem sx={{ display: { xs: "none", sm: "block" } }} />
+                <Divider
+                  orientation="vertical"
+                  flexItem
+                  sx={{ display: { xs: "none", sm: "block" } }}
+                />
                 <Box display="flex" alignItems="center" gap={1}>
                   <StarIcon fontSize="small" sx={{ color: "#faaf00" }} />
-                  <Typography variant="body2" fontWeight="500">{tour.starRating} Rating</Typography>
+                  <Typography variant="body2" fontWeight="500">
+                    {tour.starRating} Rating
+                  </Typography>
                 </Box>
               </InfoStrip>
 
-              <Box flexGrow={1} /> 
+              <Box flexGrow={1} />
 
               {/* Footer Actions */}
               <Divider sx={{ my: 2 }} />
               <Grid container alignItems="center" spacing={2}>
                 <Grid item xs={12} sm={4}>
-                   <Typography variant="caption" color="text.secondary" display="block">Starts from</Typography>
-                   <Typography variant="h5" color="primary.main" fontWeight="800">
-                      ₹{(tour.price || 0).toLocaleString("en-IN")}
-                   </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                  >
+                    Starts from
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    color="primary.main"
+                    fontWeight="800"
+                  >
+                    ₹{(tour.price || 0).toLocaleString("en-IN")}
+                  </Typography>
                 </Grid>
                 <Grid item xs={12} sm={8}>
-                  <Stack direction="row" spacing={1} justifyContent={{ xs: "flex-start", sm: "flex-end" }}>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    justifyContent={{ xs: "flex-start", sm: "flex-end" }}
+                  >
                     <Button
                       variant="outlined"
                       color="inherit"
                       size="small"
                       startIcon={<AirlineSeatReclineExtraIcon />}
-                      onClick={(e) => { e.stopPropagation(); setIsSeatModalOpen(true); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsSeatModalOpen(true);
+                      }}
                     >
                       Seats
                     </Button>
                     <Button
-                       variant="outlined"
-                       color="inherit"
-                       size="small"
-                       onClick={() => setIsExpanded(!isExpanded)}
-                       endIcon={<ExpandMoreIcon sx={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)' }} />}
+                      variant="outlined"
+                      color="inherit"
+                      size="small"
+                      onClick={() => setIsExpanded(!isExpanded)}
+                      endIcon={
+                        <ExpandMoreIcon
+                          sx={{
+                            transform: isExpanded
+                              ? "rotate(180deg)"
+                              : "rotate(0)",
+                          }}
+                        />
+                      }
                     >
                       Itinerary
                     </Button>
@@ -523,51 +674,114 @@ function TourCard({ tour }) {
                   </Stack>
                 </Grid>
               </Grid>
-
             </CardContent>
           </Grid>
         </Grid>
 
         {/* Expandable Itinerary */}
         <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-          <Box sx={{ p: 4, bgcolor: "grey.50", borderTop: 1, borderColor: "divider" }}>
-             <Typography variant="h6" gutterBottom fontWeight="bold">Day-wise Itinerary</Typography>
-             <Grid container spacing={4}>
-                <Grid item xs={12} md={7}>
-                  <List sx={{ p: 0 }}>
-                    {tour.dayWise?.map((day) => (
-                      <ListItem key={day._id} alignItems="flex-start" sx={{ px: 0 }}>
-                        <Box sx={{ minWidth: 60, mr: 2, bgcolor: 'primary.main', color: 'white', borderRadius: 1, p: 0.5, textAlign: 'center' }}>
-                           <Typography variant="caption" display="block" sx={{ opacity: 0.8 }}>DAY</Typography>
-                           <Typography variant="h6" lineHeight={1} fontWeight="bold">{day.day}</Typography>
-                        </Box>
-                        <ListItemText 
-                          primary={<Typography fontWeight="500" color="text.primary">{day.description}</Typography>} 
-                        />
-                      </ListItem>
+          <Box
+            sx={{
+              p: 4,
+              bgcolor: "grey.50",
+              borderTop: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography variant="h6" gutterBottom fontWeight="bold">
+              Day-wise Itinerary
+            </Typography>
+            <Grid container spacing={4}>
+              <Grid item xs={12} md={7}>
+                <List sx={{ p: 0 }}>
+                  {tour.dayWise?.map((day) => (
+                    <ListItem
+                      key={day._id}
+                      alignItems="flex-start"
+                      sx={{ px: 0 }}
+                    >
+                      <Box
+                        sx={{
+                          minWidth: 60,
+                          mr: 2,
+                          bgcolor: "primary.main",
+                          color: "white",
+                          borderRadius: 1,
+                          p: 0.5,
+                          textAlign: "center",
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          display="block"
+                          sx={{ opacity: 0.8 }}
+                        >
+                          DAY
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          lineHeight={1}
+                          fontWeight="bold"
+                        >
+                          {day.day}
+                        </Typography>
+                      </Box>
+                      <ListItemText
+                        primary={
+                          <Typography fontWeight="500" color="text.primary">
+                            {day.description}
+                          </Typography>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Grid>
+              <Grid item xs={12} md={5}>
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: "white" }}>
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight="bold"
+                    gutterBottom
+                    color="success.main"
+                  >
+                    <CheckCircleIcon
+                      fontSize="inherit"
+                      sx={{ mr: 1, verticalAlign: "middle" }}
+                    />
+                    Inclusions
+                  </Typography>
+                  <Box display="flex" flexWrap="wrap" gap={1} mb={3}>
+                    {tour.inclusion?.map((item, i) => (
+                      <Chip key={i} label={item} size="small" />
                     ))}
-                  </List>
-                </Grid>
-                <Grid item xs={12} md={5}>
-                   <Paper variant="outlined" sx={{ p: 2, bgcolor: "white" }}>
-                      <Typography variant="subtitle2" fontWeight="bold" gutterBottom color="success.main">
-                         <CheckCircleIcon fontSize="inherit" sx={{ mr: 1, verticalAlign: 'middle' }} /> 
-                         Inclusions
-                      </Typography>
-                      <Box display="flex" flexWrap="wrap" gap={1} mb={3}>
-                         {tour.inclusion?.map((item, i) => <Chip key={i} label={item} size="small" />)}
-                      </Box>
-                      
-                      <Typography variant="subtitle2" fontWeight="bold" gutterBottom color="error.main">
-                         <CancelIcon fontSize="inherit" sx={{ mr: 1, verticalAlign: 'middle' }} /> 
-                         Exclusions
-                      </Typography>
-                      <Box display="flex" flexWrap="wrap" gap={1}>
-                         {tour.exclusion?.map((item, i) => <Chip key={i} label={item} size="small" variant="outlined" />)}
-                      </Box>
-                   </Paper>
-                </Grid>
-             </Grid>
+                  </Box>
+
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight="bold"
+                    gutterBottom
+                    color="error.main"
+                  >
+                    <CancelIcon
+                      fontSize="inherit"
+                      sx={{ mr: 1, verticalAlign: "middle" }}
+                    />
+                    Exclusions
+                  </Typography>
+                  <Box display="flex" flexWrap="wrap" gap={1}>
+                    {tour.exclusion?.map((item, i) => (
+                      <Chip
+                        key={i}
+                        label={item}
+                        size="small"
+                        variant="outlined"
+                      />
+                    ))}
+                  </Box>
+                </Paper>
+              </Grid>
+            </Grid>
           </Box>
         </Collapse>
       </StyledCard>
@@ -612,21 +826,50 @@ export default function MyTour() {
     loadMyTour();
   }, [dispatch]);
 
-  if (!tourData) {
+  if (!tourData || !Array.isArray(tourData)) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "80vh",
+        }}
+      >
         <CircularProgress />
       </Box>
     );
   }
 
-  if (tourData.length === 0) {
+  if (!Array.isArray(tourData) || tourData.length === 0) {
     return (
-      <Box sx={{ bgcolor: "grey.50", py: 10, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Box
+        sx={{
+          bgcolor: "grey.50",
+          py: 10,
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <Container maxWidth="sm">
-          <Paper elevation={0} sx={{ p: 6, textAlign: "center", borderRadius: 4, border: "1px dashed", borderColor: "divider" }}>
-            <TravelExploreIcon sx={{ fontSize: 80, color: "primary.light", mb: 2 }} />
-            <Typography variant="h5" fontWeight="bold" gutterBottom>No Tour Packages Found</Typography>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 6,
+              textAlign: "center",
+              borderRadius: 4,
+              border: "1px dashed",
+              borderColor: "divider",
+            }}
+          >
+            <TravelExploreIcon
+              sx={{ fontSize: 80, color: "primary.light", mb: 2 }}
+            />
+            <Typography variant="h5" fontWeight="bold" gutterBottom>
+              No Tour Packages Found
+            </Typography>
             <Typography color="text.secondary" sx={{ mb: 4 }}>
               Start your journey by creating your first tour package listing.
             </Typography>
@@ -650,9 +893,21 @@ export default function MyTour() {
       <CssBaseline />
       <Box sx={{ bgcolor: "#f4f6f8", py: 6, minHeight: "100vh" }}>
         <Container maxWidth="lg">
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 5 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 5,
+            }}
+          >
             <Box>
-              <Typography variant="h4" component="h1" fontWeight="800" color="text.primary">
+              <Typography
+                variant="h4"
+                component="h1"
+                fontWeight="800"
+                color="text.primary"
+              >
                 My Tours
               </Typography>
               <Typography variant="body1" color="text.secondary">
@@ -672,7 +927,7 @@ export default function MyTour() {
           </Box>
 
           <Stack spacing={4}>
-            {tourData.map((tour) => (
+            {(tourData || []).map((tour) => (
               <TourCard key={tour._id} tour={tour} />
             ))}
           </Stack>
