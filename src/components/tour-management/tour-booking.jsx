@@ -1,16 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchSeatMap } from "../redux/reducers/tour/tour"; 
 import {
   Add as AddIcon,
-  Remove as RemoveIcon,
-  Event as EventIcon,
   DirectionsBus as BusIcon,
-  AirlineSeatReclineNormal as SeatIcon,
-  Person as PersonIcon,
-  ChildCare as ChildIcon,
   CheckCircle as CheckCircleIcon,
-  ArrowForwardIos,
+  Event as EventIcon,
+  Person as PersonIcon,
+  Remove as RemoveIcon,
+  AirlineSeatReclineNormal as SeatIcon,
 } from "@mui/icons-material";
 import {
   Alert,
@@ -21,15 +16,18 @@ import {
   Divider,
   Grid,
   IconButton,
+  InputAdornment,
   MenuItem,
   Paper,
   Stack,
   TextField,
   Typography,
+  alpha,
   useTheme,
-  InputAdornment,
-  alpha
 } from "@mui/material";
+import React, { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchSeatMap } from "../redux/reducers/tour/tour";
 
 // --- Helper Functions ---
 const calculateAge = (dob) => {
@@ -73,7 +71,9 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
   const theme = useTheme();
 
   // Redux State
-  const { loading: seatLoading, seatMapByKey } = useSelector((state) => state.tour);
+  const { loading: seatLoading, seatMapByKey } = useSelector(
+    (state) => state.tour
+  );
 
   // Derived State
   const finalPrice = useMemo(() => {
@@ -82,7 +82,9 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
     return tour.price + (tour.price * gstPercent) / 100;
   }, [tour, gstData]);
 
-  const fixedStartDate = !tour?.customizable ? formatDateForInput(tour?.tourStartDate || tour?.from || "") : "";
+  const fixedStartDate = !tour?.customizable
+    ? formatDateForInput(tour?.tourStartDate || tour?.from || "")
+    : "";
 
   // Form State
   const [startDate, setStartDate] = useState(fixedStartDate);
@@ -101,7 +103,9 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
     }
     // Ensure startDate is in yyyy-MM-dd format when tour loads
     if (tour) {
-      const fd = !tour?.customizable ? formatDateForInput(tour?.tourStartDate || tour?.from || "") : "";
+      const fd = !tour?.customizable
+        ? formatDateForInput(tour?.tourStartDate || tour?.from || "")
+        : "";
       setStartDate(fd);
     }
   }, [tour]);
@@ -111,7 +115,9 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
     if (tour?._id && selectedVehicleId) {
       const key = `${tour._id}:${selectedVehicleId}`;
       if (!seatMapByKey[key]) {
-        dispatch(fetchSeatMap({ tourId: tour._id, vehicleId: selectedVehicleId }));
+        dispatch(
+          fetchSeatMap({ tourId: tour._id, vehicleId: selectedVehicleId })
+        );
       }
     }
     setSelectedSeats([]);
@@ -164,7 +170,8 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
     setError("");
     if (!startDate) return setError("Select travel date.");
     if (childDOBs.some((d) => !d)) return setError("Enter DOB for children.");
-    if (selectedSeats.length !== totalPassengers) return setError(`Select ${totalPassengers} seats.`);
+    if (selectedSeats.length !== totalPassengers)
+      return setError(`Select ${totalPassengers} seats.`);
     if (!userId) return setError("Please login.");
 
     const endDate = addDays(startDate, (tour.days || 1) - 1);
@@ -200,8 +207,10 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
   // Disabled reason for the primary action (better UX than silent disable)
   const disabledReason = useMemo(() => {
     if (!startDate) return "Select travel date.";
-    if (children > 0 && childDOBs.some((d) => !d)) return "Enter DOB for all children.";
-    if (selectedSeats.length !== totalPassengers) return `Select ${totalPassengers} seats.`;
+    if (children > 0 && childDOBs.some((d) => !d))
+      return "Enter DOB for all children.";
+    if (selectedSeats.length !== totalPassengers)
+      return `Select ${totalPassengers} seats.`;
     if (!userId) return "Please login to proceed.";
     return "";
   }, [startDate, children, childDOBs, selectedSeats, totalPassengers, userId]);
@@ -210,89 +219,185 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
 
   return (
     <Container maxWidth="md" sx={{ py: 2 }}>
-      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-        
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 3,
+          border: "1px solid",
+          borderColor: "divider",
+          overflow: "hidden",
+        }}
+      >
         {/* Compact Header */}
-        <Box sx={{ bgcolor: "grey.50", px: 3, py: 2, borderBottom: "1px solid", borderColor: "divider" }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Box
+          sx={{
+            bgcolor: "grey.50",
+            px: 3,
+            py: 2,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Box>
-              <Typography variant="h6" fontWeight="800" lineHeight={1.2}>Confirm Booking</Typography>
-              <Typography variant="caption" color="text.secondary">{tour.travelAgencyName} • {tour.days}D/{tour.nights}N</Typography>
+              <Typography variant="h6" fontWeight="800" lineHeight={1.2}>
+                Confirm Booking
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {tour.travelAgencyName} • {tour.days}D/{tour.nights}N
+              </Typography>
             </Box>
             <Box textAlign="right">
-              <Typography variant="caption" display="block" color="text.secondary">Per Adult</Typography>
-              <Typography variant="subtitle1" fontWeight="bold" color="primary.main" lineHeight={1}>{formatCurrency(finalPrice)}</Typography>
+              <Typography
+                variant="caption"
+                display="block"
+                color="text.secondary"
+              >
+                Per Adult
+              </Typography>
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                color="primary.main"
+                lineHeight={1}
+              >
+                {formatCurrency(finalPrice)}
+              </Typography>
             </Box>
           </Box>
         </Box>
 
         <Box sx={{ p: 2 }}>
-          <Stack spacing={2}> {/* Tighter spacing between sections */}
-
+          <Stack spacing={2}>
+            {" "}
+            {/* Tighter spacing between sections */}
             {/* Section 1: Details */}
             <Box>
-              <Typography variant="caption" fontWeight="bold" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+              <Typography
+                variant="caption"
+                fontWeight="bold"
+                sx={{
+                  mb: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  color: "text.secondary",
+                }}
+              >
                 <EventIcon sx={{ fontSize: 16 }} /> TRIP DETAILS
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <TextField
-                    fullWidth size="small"
-                    label="Travel Date" type="date"
-                    value={startDate} disabled={!tour.customizable}
+                    fullWidth
+                    size="small"
+                    label="Travel Date"
+                    type="date"
+                    value={startDate}
+                    disabled={!tour.customizable}
                     onChange={(e) => setStartDate(e.target.value)}
                     InputLabelProps={{ shrink: true }}
                     helperText={!tour.customizable ? "Fixed Date" : ""}
-                    FormHelperTextProps={{ sx: { m: 0 } }} 
+                    FormHelperTextProps={{ sx: { m: 0 } }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <TextField
-                    select fullWidth size="small"
-                    label="Vehicle" value={selectedVehicleId}
+                    select
+                    fullWidth
+                    size="small"
+                    label="Vehicle"
+                    value={selectedVehicleId}
                     onChange={(e) => setSelectedVehicleId(e.target.value)}
                     InputProps={{
-                      startAdornment: <InputAdornment position="start"><BusIcon fontSize="small" /></InputAdornment>,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <BusIcon fontSize="small" />
+                        </InputAdornment>
+                      ),
                     }}
                   >
-                    {(tour.vehicles || []).filter((v) => v.isActive !== false).map((v) => (
-                      <MenuItem key={v._id} value={v._id} dense>
-                        {v.name} ({v.seaterType})
-                      </MenuItem>
-                    ))}
+                    {(tour.vehicles || [])
+                      .filter((v) => v.isActive !== false)
+                      .map((v) => (
+                        <MenuItem key={v._id} value={v._id} dense>
+                          {v.name} ({v.seaterType})
+                        </MenuItem>
+                      ))}
                   </TextField>
                 </Grid>
               </Grid>
             </Box>
-
             <Divider />
-
             {/* Section 2: Passengers */}
             <Box>
-              <Typography variant="caption" fontWeight="bold" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+              <Typography
+                variant="caption"
+                fontWeight="bold"
+                sx={{
+                  mb: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  color: "text.secondary",
+                }}
+              >
                 <PersonIcon sx={{ fontSize: 16 }} /> PASSENGERS
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
-                  <CompactCounter label="Adults" sub="12+ yrs" value={adults} onAdd={() => setAdults(Math.min(10, adults + 1))} onRemove={() => setAdults(Math.max(1, adults - 1))} min={1} />
+                  <CompactCounter
+                    label="Adults"
+                    sub="12+ yrs"
+                    value={adults}
+                    onAdd={() => setAdults(Math.min(10, adults + 1))}
+                    onRemove={() => setAdults(Math.max(1, adults - 1))}
+                    min={1}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <CompactCounter label="Children" sub="0-12 yrs" value={children} onAdd={() => handleChildCountChange(1)} onRemove={() => handleChildCountChange(-1)} min={0} max={3} />
+                  <CompactCounter
+                    label="Children"
+                    sub="0-12 yrs"
+                    value={children}
+                    onAdd={() => handleChildCountChange(1)}
+                    onRemove={() => handleChildCountChange(-1)}
+                    min={0}
+                    max={3}
+                  />
                 </Grid>
               </Grid>
 
               {children > 0 && (
-                <Box mt={2} p={1.5} bgcolor="info.50" borderRadius={2} border="1px dashed" borderColor="info.main">
+                <Box
+                  mt={2}
+                  p={1.5}
+                  bgcolor="info.50"
+                  borderRadius={2}
+                  border="1px dashed"
+                  borderColor="info.main"
+                >
                   <Grid container spacing={1}>
                     {childDOBs.map((dob, idx) => (
                       <Grid item xs={12} sm={4} key={idx}>
                         <TextField
-                          fullWidth size="small" type="date"
+                          fullWidth
+                          size="small"
+                          type="date"
                           label={`Child ${idx + 1}`}
-                          value={dob} onChange={(e) => handleChildDobChange(idx, e.target.value)}
+                          value={dob}
+                          onChange={(e) =>
+                            handleChildDobChange(idx, e.target.value)
+                          }
                           InputLabelProps={{ shrink: true }}
-                          InputProps={{ sx: { bgcolor: 'white' } }}
-                          inputProps={{ max: new Date().toISOString().split("T")[0] }}
+                          InputProps={{ sx: { bgcolor: "white" } }}
+                          inputProps={{
+                            max: new Date().toISOString().split("T")[0],
+                          }}
                         />
                       </Grid>
                     ))}
@@ -300,54 +405,163 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
                 </Box>
               )}
             </Box>
-
             <Divider />
-
             {/* Section 3: Seat Map */}
             <Box>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                <Typography variant="caption" fontWeight="bold" display="flex" alignItems="center" gap={0.5} color="text.secondary">
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                mb={1}
+              >
+                <Typography
+                  variant="caption"
+                  fontWeight="bold"
+                  display="flex"
+                  alignItems="center"
+                  gap={0.5}
+                  color="text.secondary"
+                >
                   <SeatIcon sx={{ fontSize: 16 }} /> SEATS
                 </Typography>
-                <Typography variant="caption" fontWeight="bold" color={selectedSeats.length === totalPassengers ? 'success.main' : 'warning.main'}>
+                <Typography
+                  variant="caption"
+                  fontWeight="bold"
+                  color={
+                    selectedSeats.length === totalPassengers
+                      ? "success.main"
+                      : "warning.main"
+                  }
+                >
                   {selectedSeats.length}/{totalPassengers} Selected
                 </Typography>
               </Box>
 
               {seatLoading ? (
-                <Box display="flex" justifyContent="center" p={2}><CircularProgress size={20} /></Box>
+                <Box display="flex" justifyContent="center" p={2}>
+                  <CircularProgress size={20} />
+                </Box>
               ) : (
-                <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: 'grey.50', maxWidth: '320px', mx: 'auto' }}>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 1, alignItems: 'center' }}>
-                    {['A', 'B', '', 'C', 'D'].map((h, i) => (
-                      <Typography key={i} variant="caption" fontWeight="bold" align="center" color="text.disabled">{h}</Typography>
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: "grey.50",
+                    maxWidth: "320px",
+                    mx: "auto",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(5, 1fr)",
+                      gap: 1,
+                      alignItems: "center",
+                    }}
+                  >
+                    {["A", "B", "", "C", "D"].map((h, i) => (
+                      <Typography
+                        key={i}
+                        variant="caption"
+                        fontWeight="bold"
+                        align="center"
+                        color="text.disabled"
+                      >
+                        {h}
+                      </Typography>
                     ))}
                     {seatMap.length > 0 ? (
-                       Array.from({ length: Math.ceil(seatMap.length / 4) }).map((_, rowIndex) => {
-                        const rowSeats = seatMap.slice(rowIndex * 4, (rowIndex + 1) * 4);
-                        return (
-                          <React.Fragment key={rowIndex}>
-                             {renderSeatButton(rowSeats[0], selectedSeats, handleSeatToggle, totalPassengers)}
-                             {renderSeatButton(rowSeats[1], selectedSeats, handleSeatToggle, totalPassengers)}
-                             <Typography variant="caption" align="center" color="text.disabled" sx={{ fontSize: 10 }}>{rowIndex + 1}</Typography>
-                             {renderSeatButton(rowSeats[2], selectedSeats, handleSeatToggle, totalPassengers)}
-                             {renderSeatButton(rowSeats[3], selectedSeats, handleSeatToggle, totalPassengers)}
-                          </React.Fragment>
-                        );
-                      })
-                    ) : <Typography align="center" variant="caption" color="error" sx={{ gridColumn: 'span 5' }}>No Data</Typography>}
+                      Array.from({ length: Math.ceil(seatMap.length / 4) }).map(
+                        (_, rowIndex) => {
+                          const rowSeats = seatMap.slice(
+                            rowIndex * 4,
+                            (rowIndex + 1) * 4
+                          );
+                          return (
+                            <React.Fragment key={rowIndex}>
+                              {renderSeatButton(
+                                rowSeats[0],
+                                selectedSeats,
+                                handleSeatToggle,
+                                totalPassengers
+                              )}
+                              {renderSeatButton(
+                                rowSeats[1],
+                                selectedSeats,
+                                handleSeatToggle,
+                                totalPassengers
+                              )}
+                              <Typography
+                                variant="caption"
+                                align="center"
+                                color="text.disabled"
+                                sx={{ fontSize: 10 }}
+                              >
+                                {rowIndex + 1}
+                              </Typography>
+                              {renderSeatButton(
+                                rowSeats[2],
+                                selectedSeats,
+                                handleSeatToggle,
+                                totalPassengers
+                              )}
+                              {renderSeatButton(
+                                rowSeats[3],
+                                selectedSeats,
+                                handleSeatToggle,
+                                totalPassengers
+                              )}
+                            </React.Fragment>
+                          );
+                        }
+                      )
+                    ) : (
+                      <Typography
+                        align="center"
+                        variant="caption"
+                        color="error"
+                        sx={{ gridColumn: "span 5" }}
+                      >
+                        No Data
+                      </Typography>
+                    )}
                   </Box>
                 </Paper>
               )}
             </Box>
-
-            {error && <Alert severity="error" sx={{ py: 0, alignItems: 'center' }}>{error}</Alert>}
-
+            {error && (
+              <Alert severity="error" sx={{ py: 0, alignItems: "center" }}>
+                {error}
+              </Alert>
+            )}
             {/* Section 4: Pay */}
-            <Paper elevation={0} sx={{ p: 2, bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 2, border: '1px solid', borderColor: alpha(theme.palette.primary.main, 0.1) }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
-                <Typography variant="body2" fontWeight="bold" color="text.secondary">Total Payable</Typography>
-                <Typography variant="h5" fontWeight="800" color="primary.main">{formatCurrency(calculateTotal())}</Typography>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                bgcolor: alpha(theme.palette.primary.main, 0.05),
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: alpha(theme.palette.primary.main, 0.1),
+              }}
+            >
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                mb={1.5}
+              >
+                <Typography
+                  variant="body2"
+                  fontWeight="bold"
+                  color="text.secondary"
+                >
+                  Total Payable
+                </Typography>
+                <Typography variant="h5" fontWeight="800" color="primary.main">
+                  {formatCurrency(calculateTotal())}
+                </Typography>
               </Box>
               <div>
                 <Button
@@ -357,18 +571,21 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
                   disableElevation
                   onClick={handleSubmit}
                   disabled={Boolean(disabledReason)}
-                  sx={{ fontWeight: 'bold', textTransform: 'none' }}
+                  sx={{ fontWeight: "bold", textTransform: "none" }}
                 >
                   Proceed to Pay
                 </Button>
                 {disabledReason && (
-                  <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    sx={{ mt: 1, display: "block", textAlign: "center" }}
+                  >
                     {disabledReason}
                   </Typography>
                 )}
               </div>
             </Paper>
-
           </Stack>
         </Box>
       </Paper>
@@ -379,15 +596,48 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
 // --- Compact Sub-components ---
 
 const CompactCounter = ({ label, sub, value, onAdd, onRemove, min, max }) => (
-  <Paper variant="outlined" sx={{ p: 1, px: 1.5, borderRadius: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+  <Paper
+    variant="outlined"
+    sx={{
+      p: 1,
+      px: 1.5,
+      borderRadius: 2,
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+    }}
+  >
     <Box>
-      <Typography variant="body2" fontWeight="bold" lineHeight={1}>{label}</Typography>
-      <Typography variant="caption" color="text.secondary" lineHeight={1}>{sub}</Typography>
+      <Typography variant="body2" fontWeight="bold" lineHeight={1}>
+        {label}
+      </Typography>
+      <Typography variant="caption" color="text.secondary" lineHeight={1}>
+        {sub}
+      </Typography>
     </Box>
     <Box display="flex" alignItems="center" gap={0.5}>
-      <IconButton size="small" onClick={onRemove} disabled={value <= (min || 0)} sx={{ p: 0.5, bgcolor: 'grey.100' }}><RemoveIcon sx={{ fontSize: 14 }} /></IconButton>
-      <Typography fontWeight="bold" sx={{ width: 16, textAlign: 'center', fontSize: '0.9rem' }}>{value}</Typography>
-      <IconButton size="small" onClick={onAdd} disabled={max !== undefined && value >= max} sx={{ p: 0.5, bgcolor: 'grey.100' }}><AddIcon sx={{ fontSize: 14 }} /></IconButton>
+      <IconButton
+        size="small"
+        onClick={onRemove}
+        disabled={value <= (min || 0)}
+        sx={{ p: 0.5, bgcolor: "grey.100" }}
+      >
+        <RemoveIcon sx={{ fontSize: 14 }} />
+      </IconButton>
+      <Typography
+        fontWeight="bold"
+        sx={{ width: 16, textAlign: "center", fontSize: "0.9rem" }}
+      >
+        {value}
+      </Typography>
+      <IconButton
+        size="small"
+        onClick={onAdd}
+        disabled={max !== undefined && value >= max}
+        sx={{ p: 0.5, bgcolor: "grey.100" }}
+      >
+        <AddIcon sx={{ fontSize: 14 }} />
+      </IconButton>
     </Box>
   </Paper>
 );
@@ -405,13 +655,30 @@ const renderSeatButton = (seat, selectedSeats, handleToggle, limit) => {
       disabled={isDisabled}
       onClick={() => handleToggle(seat.code)}
       sx={{
-        minWidth: 0, height: 28, width: '100%', p: 0,
-        borderRadius: 1, fontSize: '0.65rem', fontWeight: 'bold',
+        minWidth: 0,
+        height: 28,
+        width: "100%",
+        p: 0,
+        borderRadius: 1,
+        fontSize: "0.65rem",
+        fontWeight: "bold",
         borderColor: isBooked ? "transparent" : "divider",
-        bgcolor: isBooked ? "action.disabledBackground" : (isSelected ? "primary.main" : "white"),
-        color: isBooked ? "text.disabled" : (isSelected ? "white" : "text.secondary"),
-        '&:hover': { bgcolor: isSelected ? "primary.dark" : "grey.100" },
-        '&.Mui-disabled': { bgcolor: isBooked ? "action.disabledBackground" : "white", border: '1px solid', borderColor: 'divider' }
+        bgcolor: isBooked
+          ? "action.disabledBackground"
+          : isSelected
+            ? "primary.main"
+            : "white",
+        color: isBooked
+          ? "text.disabled"
+          : isSelected
+            ? "white"
+            : "text.secondary",
+        "&:hover": { bgcolor: isSelected ? "primary.dark" : "grey.100" },
+        "&.Mui-disabled": {
+          bgcolor: isBooked ? "action.disabledBackground" : "white",
+          border: "1px solid",
+          borderColor: "divider",
+        },
       }}
     >
       {isSelected ? <CheckCircleIcon sx={{ fontSize: 14 }} /> : seat.code}

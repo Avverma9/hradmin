@@ -10,5 +10,6 @@ export const useMenuItems = () => {
     dispatch(getMenuItems());
   }, [dispatch]);
 
-  return menuItems;
+  // Ensure we always return a safe array (filter out falsy entries)
+  return Array.isArray(menuItems) ? menuItems.filter(Boolean) : [];
 };

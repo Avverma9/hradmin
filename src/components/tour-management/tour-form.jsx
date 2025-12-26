@@ -783,16 +783,18 @@ const TourForm = () => {
                               Day {idx + 1}
                             </Typography>
                             <Tooltip title="Remove Day">
-                              <IconButton
-                                size="small"
-                                onClick={() => removeDay(idx)}
-                                disabled={formData.dayWise.length <= 1}
-                              >
-                                <DeleteOutlineIcon
-                                  fontSize="small"
-                                  color="error"
-                                />
-                              </IconButton>
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => removeDay(idx)}
+                                  disabled={formData.dayWise.length <= 1}
+                                >
+                                  <DeleteOutlineIcon
+                                    fontSize="small"
+                                    color="error"
+                                  />
+                                </IconButton>
+                              </span>
                             </Tooltip>
                           </Box>
                           <Grid container spacing={2}>
