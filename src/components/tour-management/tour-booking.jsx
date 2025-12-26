@@ -1,26 +1,30 @@
 import {
-  Add as AddIcon,
+  ArrowForwardIos,
   DirectionsBus as BusIcon,
   CheckCircle as CheckCircleIcon,
+  ChildCare as ChildIcon,
   Event as EventIcon,
+  Face as FaceIcon,
   Person as PersonIcon,
-  Remove as RemoveIcon,
+  PhoneAndroid as PhoneIcon,
   AirlineSeatReclineNormal as SeatIcon,
 } from "@mui/icons-material";
 import {
   Alert,
   Box,
   Button,
+  Chip,
   CircularProgress,
   Container,
   Divider,
   Grid,
-  IconButton,
   InputAdornment,
   MenuItem,
   Paper,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
   alpha,
   useTheme,
@@ -47,18 +51,6 @@ const addDays = (dateString, days) => {
   return result.toISOString().split("T")[0];
 };
 
-// Format ISO/Date strings into yyyy-MM-dd for input[type=date]
-const formatDateForInput = (iso) => {
-  if (!iso) return "";
-  try {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return "";
-    return d.toISOString().split("T")[0];
-  } catch (e) {
-    return "";
-  }
-};
-
 const formatCurrency = (amount) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -83,16 +75,17 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
   }, [tour, gstData]);
 
   const fixedStartDate = !tour?.customizable
-    ? formatDateForInput(tour?.tourStartDate || tour?.from || "")
+    ? tour?.tourStartDate || tour?.from || ""
     : "";
 
   // Form State
   const [startDate, setStartDate] = useState(fixedStartDate);
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
   const [selectedSeats, setSelectedSeats] = useState([]);
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
-  const [childDOBs, setChildDOBs] = useState([]);
+  const [primaryMobile, setPrimaryMobile] = useState("");
+
+  // Passengers State: mapped by seat ID
+  const [passengers, setPassengers] = useState({});
   const [error, setError] = useState("");
 
   // Initialize Vehicle
@@ -100,13 +93,6 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
     if (tour?.vehicles?.length > 0) {
       const activeVehicle = tour.vehicles.find((v) => v.isActive !== false);
       if (activeVehicle) setSelectedVehicleId(activeVehicle._id);
-    }
-    // Ensure startDate is in yyyy-MM-dd format when tour loads
-    if (tour) {
-      const fd = !tour?.customizable
-        ? formatDateForInput(tour?.tourStartDate || tour?.from || "")
-        : "";
-      setStartDate(fd);
     }
   }, [tour]);
 
@@ -121,46 +107,51 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
       }
     }
     setSelectedSeats([]);
+    setPassengers({});
   }, [tour?._id, selectedVehicleId, dispatch, seatMapByKey]);
 
   const seatKey = `${tour?._id}:${selectedVehicleId}`;
   const seatMap = seatMapByKey[seatKey] || [];
-  const totalPassengers = adults + children;
 
   // Handlers
   const handleSeatToggle = (seatCode) => {
     setError("");
     setSelectedSeats((prev) => {
-      if (prev.includes(seatCode)) return prev.filter((s) => s !== seatCode);
-      if (prev.length >= totalPassengers) return prev;
-      return [...prev, seatCode];
+      const isSelected = prev.includes(seatCode);
+      if (isSelected) {
+        // Remove seat and passenger data
+        const newPassengers = { ...passengers };
+        delete newPassengers[seatCode];
+        setPassengers(newPassengers);
+        return prev.filter((s) => s !== seatCode);
+      } else {
+        // Add seat and initialize passenger data
+        setPassengers((prevP) => ({
+          ...prevP,
+          [seatCode]: { type: "adult", fullName: "", age: "", gender: "Male" },
+        }));
+        return [...prev, seatCode];
+      }
     });
   };
 
-  const handleChildCountChange = (delta) => {
-    const newVal = Math.max(0, Math.min(3, children + delta));
-    setChildren(newVal);
-    setChildDOBs((prev) => {
-      const newDobs = [...prev];
-      if (newVal > prev.length) return [...newDobs, ""];
-      return newDobs.slice(0, newVal);
-    });
-  };
-
-  const handleChildDobChange = (index, val) => {
-    const newDobs = [...childDOBs];
-    newDobs[index] = val;
-    setChildDOBs(newDobs);
+  const handlePassengerChange = (seatCode, field, value) => {
+    setPassengers((prev) => ({
+      ...prev,
+      [seatCode]: { ...prev[seatCode], [field]: value },
+    }));
   };
 
   const calculateTotal = () => {
-    let total = adults * finalPrice;
-    childDOBs.forEach((dob) => {
-      if (dob) {
-        const age = calculateAge(dob);
-        total += age === null || age >= 8 ? finalPrice : finalPrice / 2;
-      } else {
+    let total = 0;
+    selectedSeats.forEach((seat) => {
+      const p = passengers[seat];
+      if (p?.type === "adult") {
         total += finalPrice;
+      } else {
+        // Child logic: if age >= 8 full price, else half (if DOB logic used)
+        // OR simple logic: Child is half price
+        total += finalPrice / 2; // Assuming simple half price for child type
       }
     });
     return total;
@@ -169,33 +160,54 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
   const handleSubmit = () => {
     setError("");
     if (!startDate) return setError("Select travel date.");
-    if (childDOBs.some((d) => !d)) return setError("Enter DOB for children.");
-    if (selectedSeats.length !== totalPassengers)
-      return setError(`Select ${totalPassengers} seats.`);
-    if (!userId) return setError("Please login.");
+    if (selectedSeats.length === 0)
+      return setError("Please select at least one seat.");
+    if (!primaryMobile || primaryMobile.length < 10)
+      return setError("Please enter a valid mobile number.");
+
+    // Validate passengers
+    for (const seat of selectedSeats) {
+      const p = passengers[seat];
+      if (!p.fullName || !p.age || !p.gender) {
+        return setError(`Please fill all details for Seat ${seat}`);
+      }
+    }
+
+    if (!userId) return setError("Please login to proceed.");
 
     const endDate = addDays(startDate, (tour.days || 1) - 1);
     const totalAmount = calculateTotal();
 
-    const passengers = [
-      ...Array(adults).fill({ type: "adult" }),
-      ...childDOBs.map((dob) => ({ type: "child", dateOfBirth: dob })),
-    ];
+    // Format passengers for API
+    const passengerList = selectedSeats.map((seat) => ({
+      ...passengers[seat],
+      seatNumber: seat,
+    }));
+
+    // Calculate counts
+    const adultsCount = passengerList.filter((p) => p.type === "adult").length;
+    const childrenCount = passengerList.filter(
+      (p) => p.type === "child"
+    ).length;
 
     onBookingSubmit({
       userId,
       tourId: tour._id,
+
       vehicleId: selectedVehicleId,
       seats: selectedSeats,
       status: "pending",
-      numberOfAdults: adults,
-      numberOfChildren: children,
-      passengers,
+      numberOfAdults: adultsCount,
+      numberOfChildren: childrenCount,
+      passengers: passengerList,
+      primaryMobile,
       from: startDate,
       to: endDate,
       tourStartDate: tour.tourStartDate || startDate,
       customizable: tour.customizable,
       travelAgencyName: tour.travelAgencyName,
+      agencyEmail: tour.agencyEmail,
+      agencyPhone: tour.agencyPhone,
       basePrice: tour.price,
       totalAmount,
       country: tour.country,
@@ -204,21 +216,10 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
     });
   };
 
-  // Disabled reason for the primary action (better UX than silent disable)
-  const disabledReason = useMemo(() => {
-    if (!startDate) return "Select travel date.";
-    if (children > 0 && childDOBs.some((d) => !d))
-      return "Enter DOB for all children.";
-    if (selectedSeats.length !== totalPassengers)
-      return `Select ${totalPassengers} seats.`;
-    if (!userId) return "Please login to proceed.";
-    return "";
-  }, [startDate, children, childDOBs, selectedSeats, totalPassengers, userId]);
-
   if (!tour) return <CircularProgress />;
 
   return (
-    <Container maxWidth="md" sx={{ py: 2 }}>
+    <Container maxWidth="lg" sx={{ py: 3 }}>
       <Paper
         elevation={0}
         sx={{
@@ -228,7 +229,7 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
           overflow: "hidden",
         }}
       >
-        {/* Compact Header */}
+        {/* Header */}
         <Box
           sx={{
             bgcolor: "grey.50",
@@ -244,11 +245,11 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
             alignItems="center"
           >
             <Box>
-              <Typography variant="h6" fontWeight="800" lineHeight={1.2}>
-                Confirm Booking
+              <Typography variant="h6" fontWeight="800">
+                Complete Your Booking
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {tour.travelAgencyName} • {tour.days}D/{tour.nights}N
+                {tour.travelAgencyName}
               </Typography>
             </Box>
             <Box textAlign="right">
@@ -257,13 +258,12 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
                 display="block"
                 color="text.secondary"
               >
-                Per Adult
+                Price / Adult
               </Typography>
               <Typography
                 variant="subtitle1"
                 fontWeight="bold"
                 color="primary.main"
-                lineHeight={1}
               >
                 {formatCurrency(finalPrice)}
               </Typography>
@@ -271,17 +271,20 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
           </Box>
         </Box>
 
-        <Box sx={{ p: 2 }}>
-          <Stack spacing={2}>
-            {" "}
-            {/* Tighter spacing between sections */}
-            {/* Section 1: Details */}
-            <Box>
+        <Grid container>
+          {/* Left Side: Seat Map & Trip Details */}
+          <Grid
+            item
+            xs={12}
+            md={5}
+            sx={{ borderRight: { md: "1px solid" }, borderColor: "divider" }}
+          >
+            <Box p={3}>
               <Typography
                 variant="caption"
                 fontWeight="bold"
                 sx={{
-                  mb: 1,
+                  mb: 2,
                   display: "flex",
                   alignItems: "center",
                   gap: 0.5,
@@ -290,167 +293,100 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
               >
                 <EventIcon sx={{ fontSize: 16 }} /> TRIP DETAILS
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Travel Date"
-                    type="date"
-                    value={startDate}
-                    disabled={!tour.customizable}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    helperText={!tour.customizable ? "Fixed Date" : ""}
-                    FormHelperTextProps={{ sx: { m: 0 } }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Vehicle"
-                    value={selectedVehicleId}
-                    onChange={(e) => setSelectedVehicleId(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <BusIcon fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  >
-                    {(tour.vehicles || [])
-                      .filter((v) => v.isActive !== false)
-                      .map((v) => (
-                        <MenuItem key={v._id} value={v._id} dense>
-                          {v.name} ({v.seaterType})
-                        </MenuItem>
-                      ))}
-                  </TextField>
-                </Grid>
-              </Grid>
-            </Box>
-            <Divider />
-            {/* Section 2: Passengers */}
-            <Box>
-              <Typography
-                variant="caption"
-                fontWeight="bold"
-                sx={{
-                  mb: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  color: "text.secondary",
-                }}
-              >
-                <PersonIcon sx={{ fontSize: 16 }} /> PASSENGERS
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <CompactCounter
-                    label="Adults"
-                    sub="12+ yrs"
-                    value={adults}
-                    onAdd={() => setAdults(Math.min(10, adults + 1))}
-                    onRemove={() => setAdults(Math.max(1, adults - 1))}
-                    min={1}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <CompactCounter
-                    label="Children"
-                    sub="0-12 yrs"
-                    value={children}
-                    onAdd={() => handleChildCountChange(1)}
-                    onRemove={() => handleChildCountChange(-1)}
-                    min={0}
-                    max={3}
-                  />
-                </Grid>
-              </Grid>
 
-              {children > 0 && (
-                <Box
-                  mt={2}
-                  p={1.5}
-                  bgcolor="info.50"
-                  borderRadius={2}
-                  border="1px dashed"
-                  borderColor="info.main"
+              <Stack spacing={2} mb={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Travel Date"
+                  type="date"
+                  value={startDate}
+                  disabled={!tour.customizable}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Select Vehicle"
+                  value={selectedVehicleId}
+                  onChange={(e) => setSelectedVehicleId(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <BusIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  }}
                 >
-                  <Grid container spacing={1}>
-                    {childDOBs.map((dob, idx) => (
-                      <Grid item xs={12} sm={4} key={idx}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          type="date"
-                          label={`Child ${idx + 1}`}
-                          value={dob}
-                          onChange={(e) =>
-                            handleChildDobChange(idx, e.target.value)
-                          }
-                          InputLabelProps={{ shrink: true }}
-                          InputProps={{ sx: { bgcolor: "white" } }}
-                          inputProps={{
-                            max: new Date().toISOString().split("T")[0],
-                          }}
-                        />
-                      </Grid>
+                  {(tour.vehicles || [])
+                    .filter((v) => v.isActive !== false)
+                    .map((v) => (
+                      <MenuItem key={v._id} value={v._id} dense>
+                        {v.name} ({v.seaterType})
+                      </MenuItem>
                     ))}
-                  </Grid>
-                </Box>
-              )}
-            </Box>
-            <Divider />
-            {/* Section 3: Seat Map */}
-            <Box>
+                </TextField>
+              </Stack>
+
+              <Divider sx={{ mb: 3 }} />
+
               <Box
                 display="flex"
                 justifyContent="space-between"
                 alignItems="center"
-                mb={1}
+                mb={2}
               >
                 <Typography
-                  variant="caption"
+                  variant="subtitle2"
                   fontWeight="bold"
                   display="flex"
                   alignItems="center"
-                  gap={0.5}
-                  color="text.secondary"
+                  gap={1}
                 >
-                  <SeatIcon sx={{ fontSize: 16 }} /> SEATS
+                  <SeatIcon fontSize="small" color="action" /> SELECT SEATS
                 </Typography>
-                <Typography
-                  variant="caption"
-                  fontWeight="bold"
-                  color={
-                    selectedSeats.length === totalPassengers
-                      ? "success.main"
-                      : "warning.main"
-                  }
-                >
-                  {selectedSeats.length}/{totalPassengers} Selected
-                </Typography>
+                <Stack direction="row" spacing={1}>
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <Box
+                      width={12}
+                      height={12}
+                      border={1}
+                      borderRadius={0.5}
+                      borderColor="grey.400"
+                    />
+                    <Typography variant="caption">Avail</Typography>
+                  </Box>
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <Box
+                      width={12}
+                      height={12}
+                      borderRadius={0.5}
+                      bgcolor="primary.main"
+                    />
+                    <Typography variant="caption">Selected</Typography>
+                  </Box>
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <Box
+                      width={12}
+                      height={12}
+                      borderRadius={0.5}
+                      bgcolor="grey.300"
+                    />
+                    <Typography variant="caption">Booked</Typography>
+                  </Box>
+                </Stack>
               </Box>
 
               {seatLoading ? (
-                <Box display="flex" justifyContent="center" p={2}>
-                  <CircularProgress size={20} />
+                <Box display="flex" justifyContent="center" p={4}>
+                  <CircularProgress size={24} />
                 </Box>
               ) : (
                 <Paper
                   variant="outlined"
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: "grey.50",
-                    maxWidth: "320px",
-                    mx: "auto",
-                  }}
+                  sx={{ p: 2, bgcolor: "grey.50", maxWidth: 300, mx: "auto" }}
                 >
                   <Box
                     sx={{
@@ -483,14 +419,12 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
                               {renderSeatButton(
                                 rowSeats[0],
                                 selectedSeats,
-                                handleSeatToggle,
-                                totalPassengers
+                                handleSeatToggle
                               )}
                               {renderSeatButton(
                                 rowSeats[1],
                                 selectedSeats,
-                                handleSeatToggle,
-                                totalPassengers
+                                handleSeatToggle
                               )}
                               <Typography
                                 variant="caption"
@@ -503,14 +437,12 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
                               {renderSeatButton(
                                 rowSeats[2],
                                 selectedSeats,
-                                handleSeatToggle,
-                                totalPassengers
+                                handleSeatToggle
                               )}
                               {renderSeatButton(
                                 rowSeats[3],
                                 selectedSeats,
-                                handleSeatToggle,
-                                totalPassengers
+                                handleSeatToggle
                               )}
                             </React.Fragment>
                           );
@@ -518,149 +450,317 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
                       )
                     ) : (
                       <Typography
-                        align="center"
                         variant="caption"
                         color="error"
-                        sx={{ gridColumn: "span 5" }}
+                        sx={{ gridColumn: "span 5", textAlign: "center" }}
                       >
-                        No Data
+                        No Seats
                       </Typography>
                     )}
                   </Box>
                 </Paper>
               )}
             </Box>
-            {error && (
-              <Alert severity="error" sx={{ py: 0, alignItems: "center" }}>
-                {error}
-              </Alert>
-            )}
-            {/* Section 4: Pay */}
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                bgcolor: alpha(theme.palette.primary.main, 0.05),
-                borderRadius: 2,
-                border: "1px solid",
-                borderColor: alpha(theme.palette.primary.main, 0.1),
-              }}
+          </Grid>
+
+          {/* Right Side: Passenger Forms */}
+          <Grid item xs={12} md={7}>
+            <Box
+              p={3}
+              bgcolor={alpha(theme.palette.primary.main, 0.02)}
+              height="100%"
             >
-              <Box
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                gutterBottom
                 display="flex"
-                justifyContent="space-between"
                 alignItems="center"
-                mb={1.5}
+                gap={1}
               >
-                <Typography
-                  variant="body2"
-                  fontWeight="bold"
-                  color="text.secondary"
+                <PersonIcon color="primary" /> Passenger Details
+              </Typography>
+
+              {selectedSeats.length === 0 ? (
+                <Box
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                  justifyContent="center"
+                  height={200}
+                  border="1px dashed"
+                  borderColor="divider"
+                  borderRadius={2}
                 >
-                  Total Payable
-                </Typography>
-                <Typography variant="h5" fontWeight="800" color="primary.main">
-                  {formatCurrency(calculateTotal())}
-                </Typography>
-              </Box>
-              <div>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  size="medium"
-                  disableElevation
-                  onClick={handleSubmit}
-                  disabled={Boolean(disabledReason)}
-                  sx={{ fontWeight: "bold", textTransform: "none" }}
-                >
-                  Proceed to Pay
-                </Button>
-                {disabledReason && (
-                  <Typography
-                    variant="caption"
-                    color="error"
-                    sx={{ mt: 1, display: "block", textAlign: "center" }}
-                  >
-                    {disabledReason}
+                  <Typography variant="body2" color="text.secondary">
+                    Select seats to add passengers
                   </Typography>
-                )}
-              </div>
-            </Paper>
-          </Stack>
-        </Box>
+                </Box>
+              ) : (
+                <Stack spacing={3}>
+                  {selectedSeats.map((seatId, index) => (
+                    <Paper
+                      key={seatId}
+                      variant="outlined"
+                      sx={{ p: 2, borderRadius: 2, bgcolor: "white" }}
+                    >
+                      <Box display="flex" alignItems="center" gap={1} mb={2}>
+                        <Chip
+                          label={`SEAT ${seatId}`}
+                          color="primary"
+                          size="small"
+                          sx={{ fontWeight: "bold", borderRadius: 1 }}
+                        />
+                      </Box>
+
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={5}>
+                          <Typography
+                            variant="caption"
+                            fontWeight="bold"
+                            color="text.secondary"
+                            mb={0.5}
+                            display="block"
+                          >
+                            TYPE
+                          </Typography>
+                          <ToggleButtonGroup
+                            value={passengers[seatId]?.type || "adult"}
+                            exclusive
+                            onChange={(_, val) =>
+                              val && handlePassengerChange(seatId, "type", val)
+                            }
+                            size="small"
+                            fullWidth
+                            sx={{ height: 40 }}
+                          >
+                            <ToggleButton
+                              value="adult"
+                              sx={{ textTransform: "none", gap: 1 }}
+                            >
+                              <FaceIcon fontSize="small" /> Adult
+                            </ToggleButton>
+                            <ToggleButton
+                              value="child"
+                              sx={{ textTransform: "none", gap: 1 }}
+                            >
+                              <ChildIcon fontSize="small" /> Child
+                            </ToggleButton>
+                          </ToggleButtonGroup>
+                        </Grid>
+                        <Grid item xs={12} sm={7}>
+                          <Typography
+                            variant="caption"
+                            fontWeight="bold"
+                            color="text.secondary"
+                            mb={0.5}
+                            display="block"
+                          >
+                            FULL NAME
+                          </Typography>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            placeholder="Passenger Name"
+                            value={passengers[seatId]?.fullName || ""}
+                            onChange={(e) =>
+                              handlePassengerChange(
+                                seatId,
+                                "fullName",
+                                e.target.value
+                              )
+                            }
+                          />
+                        </Grid>
+                        <Grid item xs={6} sm={4}>
+                          <Typography
+                            variant="caption"
+                            fontWeight="bold"
+                            color="text.secondary"
+                            mb={0.5}
+                            display="block"
+                          >
+                            AGE
+                          </Typography>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            placeholder="Age"
+                            type="number"
+                            value={passengers[seatId]?.age || ""}
+                            onChange={(e) =>
+                              handlePassengerChange(
+                                seatId,
+                                "age",
+                                e.target.value
+                              )
+                            }
+                          />
+                        </Grid>
+                        <Grid item xs={6} sm={4}>
+                          <Typography
+                            variant="caption"
+                            fontWeight="bold"
+                            color="text.secondary"
+                            mb={0.5}
+                            display="block"
+                          >
+                            GENDER
+                          </Typography>
+                          <TextField
+                            select
+                            fullWidth
+                            size="small"
+                            value={passengers[seatId]?.gender || "Male"}
+                            onChange={(e) =>
+                              handlePassengerChange(
+                                seatId,
+                                "gender",
+                                e.target.value
+                              )
+                            }
+                          >
+                            <MenuItem value="male">Male</MenuItem>
+                            <MenuItem value="female">Female</MenuItem>
+                            <MenuItem value="other">Other</MenuItem>
+                          </TextField>
+                        </Grid>
+                        {/* Primary Mobile only for the first passenger */}
+                        {index === 0 && (
+                          <Grid item xs={12}>
+                            <Typography
+                              variant="caption"
+                              fontWeight="bold"
+                              color="text.secondary"
+                              mb={0.5}
+                              display="block"
+                            >
+                              PRIMARY MOBILE NUMBER
+                            </Typography>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              placeholder="10-digit mobile number"
+                              value={primaryMobile}
+                              onChange={(e) => setPrimaryMobile(e.target.value)}
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <PhoneIcon fontSize="small" />
+                                  </InputAdornment>
+                                ),
+                              }}
+                              helperText="Booking confirmation will be sent here."
+                            />
+                          </Grid>
+                        )}
+                      </Grid>
+                    </Paper>
+                  ))}
+                </Stack>
+              )}
+
+              {/* Payment Summary */}
+              {selectedSeats.length > 0 && (
+                <Box mt={4}>
+                  <Typography variant="subtitle1" fontWeight="bold" mb={2}>
+                    Payment Summary
+                  </Typography>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      bgcolor: alpha(theme.palette.primary.main, 0.05),
+                      borderStyle: "dashed",
+                    }}
+                  >
+                    <Box display="flex" justifyContent="space-between" mb={1}>
+                      <Typography variant="body2" color="text.secondary">
+                        Package Price (x{selectedSeats.length})
+                      </Typography>
+                      <Typography variant="body2" fontWeight="bold">
+                        {formatCurrency(selectedSeats.length * finalPrice)}
+                      </Typography>
+                    </Box>
+                    <Divider sx={{ my: 1.5 }} />
+                    <Box display="flex" justifyContent="space-between" mb={2}>
+                      <Typography
+                        variant="h6"
+                        fontWeight="bold"
+                        color="primary.main"
+                      >
+                        Total Amount
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        fontWeight="bold"
+                        color="primary.main"
+                      >
+                        {formatCurrency(calculateTotal())}
+                      </Typography>
+                    </Box>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      bgcolor="warning.light"
+                      p={1}
+                      borderRadius={1}
+                      color="warning.contrastText"
+                    >
+                      <Typography variant="body2" fontWeight="bold">
+                        Pay Now (20% Advance)
+                      </Typography>
+                      <Typography variant="body2" fontWeight="bold">
+                        {formatCurrency(calculateTotal() * 0.2)}
+                      </Typography>
+                    </Box>
+                  </Paper>
+
+                  {error && (
+                    <Alert severity="error" sx={{ mt: 2 }}>
+                      {error}
+                    </Alert>
+                  )}
+
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    size="large"
+                    onClick={handleSubmit}
+                    sx={{ mt: 2, borderRadius: 2, fontWeight: "bold" }}
+                    endIcon={<ArrowForwardIos fontSize="small" />}
+                  >
+                    Proceed to Pay {formatCurrency(calculateTotal() * 0.2)}
+                  </Button>
+                </Box>
+              )}
+            </Box>
+          </Grid>
+        </Grid>
       </Paper>
     </Container>
   );
 };
 
-// --- Compact Sub-components ---
-
-const CompactCounter = ({ label, sub, value, onAdd, onRemove, min, max }) => (
-  <Paper
-    variant="outlined"
-    sx={{
-      p: 1,
-      px: 1.5,
-      borderRadius: 2,
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-    }}
-  >
-    <Box>
-      <Typography variant="body2" fontWeight="bold" lineHeight={1}>
-        {label}
-      </Typography>
-      <Typography variant="caption" color="text.secondary" lineHeight={1}>
-        {sub}
-      </Typography>
-    </Box>
-    <Box display="flex" alignItems="center" gap={0.5}>
-      <IconButton
-        size="small"
-        onClick={onRemove}
-        disabled={value <= (min || 0)}
-        sx={{ p: 0.5, bgcolor: "grey.100" }}
-      >
-        <RemoveIcon sx={{ fontSize: 14 }} />
-      </IconButton>
-      <Typography
-        fontWeight="bold"
-        sx={{ width: 16, textAlign: "center", fontSize: "0.9rem" }}
-      >
-        {value}
-      </Typography>
-      <IconButton
-        size="small"
-        onClick={onAdd}
-        disabled={max !== undefined && value >= max}
-        sx={{ p: 0.5, bgcolor: "grey.100" }}
-      >
-        <AddIcon sx={{ fontSize: 14 }} />
-      </IconButton>
-    </Box>
-  </Paper>
-);
-
-const renderSeatButton = (seat, selectedSeats, handleToggle, limit) => {
+// --- Sub-component for Seat Button ---
+const renderSeatButton = (seat, selectedSeats, handleToggle) => {
   if (!seat) return <Box />;
   const isBooked = seat.status === "booked";
   const isSelected = selectedSeats.includes(seat.code);
-  const isDisabled = isBooked || (!isSelected && selectedSeats.length >= limit);
 
   return (
     <Button
       variant={isSelected ? "contained" : "outlined"}
       color={isSelected ? "primary" : "inherit"}
-      disabled={isDisabled}
+      disabled={isBooked}
       onClick={() => handleToggle(seat.code)}
       sx={{
         minWidth: 0,
-        height: 28,
+        height: 32,
         width: "100%",
         p: 0,
         borderRadius: 1,
-        fontSize: "0.65rem",
+        fontSize: "0.75rem",
         fontWeight: "bold",
         borderColor: isBooked ? "transparent" : "divider",
         bgcolor: isBooked
@@ -681,7 +781,7 @@ const renderSeatButton = (seat, selectedSeats, handleToggle, limit) => {
         },
       }}
     >
-      {isSelected ? <CheckCircleIcon sx={{ fontSize: 14 }} /> : seat.code}
+      {isSelected ? <CheckCircleIcon sx={{ fontSize: 16 }} /> : seat.code}
     </Button>
   );
 };

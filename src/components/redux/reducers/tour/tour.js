@@ -197,15 +197,16 @@ export const getBookings = createAsyncThunk(
   "travel/getBookings",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get("/tour-booking/get-users-booking", {
-        params: { userId: userId },
-      });
+      const response = await axios.get(
+        `${localUrl}/tour-booking/get-bookings/by-agency-email/${hotelEmail}`
+      );
       return response?.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
+
 const initialState = {
   data: [],
   bookings: [],

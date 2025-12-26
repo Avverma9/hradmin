@@ -18,7 +18,7 @@ import TravelBookingsTable from "./bookings-table";
 import { useLoader } from "../../../utils/loader";
 import { userId } from "../../../utils/util";
 
-export default function MyTourBookingTMS() {
+export default function MyCabBooking() {
   // --- YOUR ORIGINAL STATE AND LOGIC ---
   const dispatch = useDispatch();
   const [bookingIdSearch, setBookingIdSearch] = useState("");

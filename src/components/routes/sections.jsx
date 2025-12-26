@@ -99,6 +99,9 @@ const CarOwnerFormPage = lazy(
   () => import("src/components/pages/travel/car-owner-form")
 );
 const OwnerCar = lazy(() => import("src/components/pages/travel/owner-car"));
+const TravelBookingsPage = lazy(
+  () => import("src/components/pages/travel/travel-bookings-page")
+);
 const TourFormPage = lazy(() => import("src/components/pages/tour/tour-form"));
 const TourList = lazy(() => import("src/components/pages/tour/tour-list"));
 const TourUpdatePage = lazy(
@@ -203,7 +206,7 @@ export default function Router() {
     { path: "/tour-booking/:tourId", element: <TourBookingPage /> },
     { path: "/tour-bookings", element: <TourBookingsPage /> },
     { path: "/tour-requests", element: <TourRequest /> },
-    { path: "/travel-bookings", element: <TravelBookingTMS /> },
+    { path: "/travel-bookings", element: <TravelBookingsPage /> },
     { path: "/admin-travel/bookings", element: <TravelBookingsAdmin /> },
     { path: "/add-travel-location", element: <ListTravelPage /> },
     { path: "/my-tour", element: <MyTourPage /> },
