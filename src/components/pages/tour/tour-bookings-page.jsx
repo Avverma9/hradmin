@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import TourBookings from "../../tour-management/my-tour-bookings";
+import TourBookings from "../../tour-management/tour-bookings";
 
 export default function TourBookingsPage() {
   return (

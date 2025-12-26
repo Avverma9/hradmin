@@ -49,6 +49,18 @@ const addDays = (dateString, days) => {
   return result.toISOString().split("T")[0];
 };
 
+// Format ISO/Date strings into yyyy-MM-dd for input[type=date]
+const formatDateForInput = (iso) => {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toISOString().split("T")[0];
+  } catch (e) {
+    return "";
+  }
+};
+
 const formatCurrency = (amount) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -70,7 +82,7 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
     return tour.price + (tour.price * gstPercent) / 100;
   }, [tour, gstData]);
 
-  const fixedStartDate = !tour?.customizable ? tour?.tourStartDate || tour?.from || "" : "";
+  const fixedStartDate = !tour?.customizable ? formatDateForInput(tour?.tourStartDate || tour?.from || "") : "";
 
   // Form State
   const [startDate, setStartDate] = useState(fixedStartDate);
@@ -86,6 +98,11 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
     if (tour?.vehicles?.length > 0) {
       const activeVehicle = tour.vehicles.find((v) => v.isActive !== false);
       if (activeVehicle) setSelectedVehicleId(activeVehicle._id);
+    }
+    // Ensure startDate is in yyyy-MM-dd format when tour loads
+    if (tour) {
+      const fd = !tour?.customizable ? formatDateForInput(tour?.tourStartDate || tour?.from || "") : "";
+      setStartDate(fd);
     }
   }, [tour]);
 
@@ -179,6 +196,15 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
       city: tour.city,
     });
   };
+
+  // Disabled reason for the primary action (better UX than silent disable)
+  const disabledReason = useMemo(() => {
+    if (!startDate) return "Select travel date.";
+    if (children > 0 && childDOBs.some((d) => !d)) return "Enter DOB for all children.";
+    if (selectedSeats.length !== totalPassengers) return `Select ${totalPassengers} seats.`;
+    if (!userId) return "Please login to proceed.";
+    return "";
+  }, [startDate, children, childDOBs, selectedSeats, totalPassengers, userId]);
 
   if (!tour) return <CircularProgress />;
 
@@ -323,14 +349,24 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
                 <Typography variant="body2" fontWeight="bold" color="text.secondary">Total Payable</Typography>
                 <Typography variant="h5" fontWeight="800" color="primary.main">{formatCurrency(calculateTotal())}</Typography>
               </Box>
-              <Button
-                fullWidth variant="contained" size="medium" disableElevation
-                onClick={handleSubmit}
-                disabled={selectedSeats.length !== totalPassengers || !startDate}
-                sx={{ fontWeight: 'bold', textTransform: 'none' }}
-              >
-                Proceed to Pay
-              </Button>
+              <div>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  size="medium"
+                  disableElevation
+                  onClick={handleSubmit}
+                  disabled={Boolean(disabledReason)}
+                  sx={{ fontWeight: 'bold', textTransform: 'none' }}
+                >
+                  Proceed to Pay
+                </Button>
+                {disabledReason && (
+                  <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
+                    {disabledReason}
+                  </Typography>
+                )}
+              </div>
             </Paper>
 
           </Stack>
