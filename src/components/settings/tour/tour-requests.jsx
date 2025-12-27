@@ -1,43 +1,40 @@
-import React, { useEffect, useMemo } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import {
-  DataGrid,
-  GridToolbarContainer,
-  GridToolbarColumnsButton,
-  GridToolbarFilterButton,
-  GridToolbarDensitySelector,
-  GridToolbarExport,
-  GridToolbarQuickFilter,
-} from "@mui/x-data-grid";
+  Add,
+  ArrowForward,
+  CheckCircleOutline,
+  ListAlt,
+  PendingOutlined,
+} from "@mui/icons-material";
 import {
+  Avatar,
   Box,
   Button,
   Card,
   CardContent,
-  Container,
-  Stack,
-  Typography,
   Chip,
-  Avatar,
-  IconButton,
-  Tooltip,
-  useTheme,
+  Container,
   Grid,
-  alpha
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+  alpha,
+  useTheme,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
-  Add,
-  Edit,
-  FlightTakeoff,
-  CheckCircleOutline,
-  PendingOutlined,
-  ListAlt,
-  ArrowForward,
-  MoreVert
-} from "@mui/icons-material";
-import { tourRequest } from "src/components/redux/reducers/tour/tour"; // Check path
+  DataGrid,
+  GridToolbarColumnsButton,
+  GridToolbarContainer,
+  GridToolbarDensitySelector,
+  GridToolbarExport,
+  GridToolbarFilterButton,
+  GridToolbarQuickFilter,
+} from "@mui/x-data-grid";
+import { useEffect, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { tourRequest } from "src/components/redux/reducers/tour/tour";
 import { useLoader } from "../../../../utils/loader";
 
 // --- Styled Components ---
@@ -69,7 +66,7 @@ const StyledDataGrid = styled(DataGrid)(({ theme }) => ({
   },
 }));
 
-const StatCard = ({ title, value, icon, color, subtext }) => (
+const StatCard = ({ title, value, icon, color }) => (
   <Card
     sx={{
       height: "100%",
@@ -80,7 +77,12 @@ const StatCard = ({ title, value, icon, color, subtext }) => (
     }}
   >
     <CardContent>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        mb={2}
+      >
         <Box
           sx={{
             p: 1.5,
@@ -92,7 +94,6 @@ const StatCard = ({ title, value, icon, color, subtext }) => (
         >
           {icon}
         </Box>
-        {/* Optional decorative element or percentage could go here */}
       </Stack>
       <Typography variant="h4" fontWeight="800" sx={{ mb: 0.5 }}>
         {value}
@@ -147,7 +148,13 @@ const TourRequest = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const theme = useTheme();
-  const { data = [], loading } = useSelector((state) => state.tour);
+
+  const tourState = useSelector((state) => state.tour);
+  const rawData = tourState?.data || [];
+  // Ensure data is always an array
+  const data = Array.isArray(rawData) ? rawData : rawData.data || [];
+  const loading = tourState?.loading || false;
+
   const { showLoader, hideLoader } = useLoader();
 
   useEffect(() => {
@@ -155,6 +162,8 @@ const TourRequest = () => {
       try {
         showLoader();
         await dispatch(tourRequest());
+      } catch (error) {
+        console.error("Failed to fetch tours", error);
       } finally {
         hideLoader();
       }
@@ -181,39 +190,58 @@ const TourRequest = () => {
     () => [
       {
         field: "travelAgencyName",
-        headerName: "Agency",
+        headerName: "Agency Details",
         flex: 1.5,
-        minWidth: 220,
+        minWidth: 280,
         renderCell: (params) => (
-          <Stack direction="row" alignItems="center" spacing={2}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={2}
+            sx={{ width: "100%" }}
+          >
             <Avatar
               sx={{
                 bgcolor: params.row.isAccepted
                   ? theme.palette.primary.main
                   : theme.palette.warning.main,
                 color: "#fff",
-                width: 32,
-                height: 32,
+                width: 36,
+                height: 36,
                 fontSize: "0.875rem",
+                fontWeight: "bold",
+                boxShadow: 1,
               }}
             >
-              {params.value?.charAt(0).toUpperCase()}
+              {params.value?.charAt(0).toUpperCase() || "A"}
             </Avatar>
-            <Box>
-              <Typography variant="body2" fontWeight="600">
-                {params.value}
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="body2" fontWeight="600" noWrap>
+                {params.value || "Unknown Agency"}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                ID: {params.row.agencyId || "N/A"}
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+                noWrap
+              >
+                ID: {params.row.agencyId || params.row._id?.substring(0, 8)}
               </Typography>
             </Box>
           </Stack>
         ),
       },
       {
-        field: "city",
+        field: "location",
         headerName: "Location",
-        width: 150,
+        width: 180,
+        // FIX: Updated syntax for valueGetter (value, row)
+        valueGetter: (params) => {
+          const row = params?.row || {};
+          const city = row.city || (row.location && row.location.city) || "";
+          const state = row.state || (row.location && row.location.state) || "";
+          return city && state ? `${city}, ${state}` : city || state || "N/A";
+        },
         renderCell: (params) => (
           <Typography variant="body2" color="text.secondary">
             {params.value}
@@ -223,12 +251,19 @@ const TourRequest = () => {
       {
         field: "themes",
         headerName: "Theme",
-        width: 140,
+        width: 150,
         renderCell: (params) => (
-          <Chip 
-            label={params.value} 
-            size="small" 
-            sx={{ borderRadius: 1, bgcolor: alpha(theme.palette.info.main, 0.1), color: theme.palette.info.dark, fontWeight: 600 }} 
+          <Chip
+            label={params.value || "Standard"}
+            size="small"
+            sx={{
+              borderRadius: 1.5,
+              bgcolor: alpha(theme.palette.info.main, 0.08),
+              color: theme.palette.info.dark,
+              fontWeight: 600,
+              fontSize: "0.75rem",
+              border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
+            }}
           />
         ),
       },
@@ -238,21 +273,37 @@ const TourRequest = () => {
         width: 120,
         align: "center",
         headerAlign: "center",
-        valueGetter: (value, row) => `${row?.nights}N / ${row?.days}D`,
+        // FIX: Updated syntax for valueGetter (value, row)
+        valueGetter: (params) => {
+          const row = params?.row || {};
+          return `${row.nights || 0}N / ${row.days || 0}D`;
+        },
         renderCell: (params) => (
-            <Typography variant="body2" fontWeight="500">
-                {params.row.nights}N / {params.row.days}D
-            </Typography>
-        )
+          <Chip
+            label={params.value}
+            size="small"
+            variant="outlined"
+            sx={{
+              borderColor: theme.palette.divider,
+              color: "text.primary",
+              fontWeight: 500,
+            }}
+          />
+        ),
       },
       {
         field: "price",
-        headerName: "Price",
+        headerName: "Package Price",
         width: 140,
         align: "right",
         headerAlign: "right",
         renderCell: (params) => (
-          <Typography variant="body2" fontWeight="700" color="success.main">
+          <Typography
+            variant="body2"
+            fontWeight="700"
+            color="success.main"
+            sx={{ fontSize: "0.9rem" }}
+          >
             ₹{Number(params.value ?? 0).toLocaleString("en-IN")}
           </Typography>
         ),
@@ -267,20 +318,26 @@ const TourRequest = () => {
           const isAccepted = params.value;
           return (
             <Chip
-              icon={isAccepted ? <CheckCircleOutline fontSize="small" /> : <PendingOutlined fontSize="small" />}
+              icon={
+                isAccepted ? (
+                  <CheckCircleOutline fontSize="small" />
+                ) : (
+                  <PendingOutlined fontSize="small" />
+                )
+              }
               label={isAccepted ? "Accepted" : "Pending"}
               color={isAccepted ? "success" : "warning"}
               size="small"
               variant={isAccepted ? "filled" : "outlined"}
-              sx={{ fontWeight: 600, minWidth: 90 }}
+              sx={{ fontWeight: 600, minWidth: 100 }}
             />
           );
         },
       },
       {
         field: "actions",
-        headerName: "Actions",
-        width: 100,
+        headerName: "",
+        width: 80,
         sortable: false,
         filterable: false,
         align: "center",
@@ -290,7 +347,11 @@ const TourRequest = () => {
             <IconButton
               size="small"
               onClick={() => handleUpdate(params.row._id)}
-              sx={{ color: theme.palette.primary.main, bgcolor: alpha(theme.palette.primary.main, 0.1) }}
+              sx={{
+                color: theme.palette.primary.main,
+                bgcolor: alpha(theme.palette.primary.main, 0.08),
+                "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.15) },
+              }}
             >
               <ArrowForward fontSize="small" />
             </IconButton>
@@ -298,15 +359,12 @@ const TourRequest = () => {
         ),
       },
     ],
-    [theme]
+    [theme, handleUpdate]
   );
-
-  const rows = Array.isArray(data) ? data : [];
 
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh", pb: 4 }}>
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        
         {/* Header Section */}
         <Stack
           direction={{ xs: "column", sm: "row" }}
@@ -317,10 +375,10 @@ const TourRequest = () => {
         >
           <Box>
             <Typography variant="h4" fontWeight="800" color="text.primary">
-              Tour Requests
+              Tour Management
             </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Monitor incoming tour packages and manage approvals.
+            <Typography variant="body1" color="text.secondary" mt={0.5}>
+              Overview of all incoming tour requests and their status.
             </Typography>
           </Box>
           <Button
@@ -329,14 +387,17 @@ const TourRequest = () => {
             startIcon={<Add />}
             onClick={handleAddNew}
             sx={{
-              boxShadow: theme.shadows[4],
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
               borderRadius: 3,
               px: 4,
+              py: 1.2,
               textTransform: "none",
               fontWeight: 700,
+              background: theme.palette.primary.main,
+              "&:hover": { background: theme.palette.primary.dark },
             }}
           >
-            Create New Tour
+            Create Tour
           </Button>
         </Stack>
 
@@ -352,7 +413,7 @@ const TourRequest = () => {
           </Grid>
           <Grid item xs={12} sm={4}>
             <StatCard
-              title="Pending Approval"
+              title="Pending Action"
               value={stats.pending}
               icon={<PendingOutlined fontSize="medium" />}
               color={theme.palette.warning.main}
@@ -372,29 +433,33 @@ const TourRequest = () => {
         <Card
           sx={{
             borderRadius: 4,
-            boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.05)",
+            boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.03)",
             border: "1px solid",
             borderColor: "divider",
             overflow: "hidden",
+            bgcolor: "#fff",
           }}
         >
           <StyledDataGrid
-            rows={rows}
+            rows={stats.total > 0 ? data : []} // Ensure rows is array
             columns={columns}
             loading={loading}
-            getRowId={(row) => row._id}
+            getRowId={(row) => row._id} // Use _id from API
             disableRowSelectionOnClick
             initialState={{
               pagination: { paginationModel: { pageSize: 10, page: 0 } },
             }}
             pageSizeOptions={[10, 25, 50]}
-            rowHeight={70} // Slightly taller rows for better readability
+            rowHeight={76} // Comfortable row height for multiline text
             slots={{
               toolbar: CustomToolbar,
             }}
-            autoHeight={rows.length < 10}
+            autoHeight={data.length > 0 && data.length < 10}
             sx={{
-                minHeight: 500
+              minHeight: 500,
+              "& .MuiDataGrid-virtualScroller": {
+                bgcolor: "#fff",
+              },
             }}
           />
         </Card>

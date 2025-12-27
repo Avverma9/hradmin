@@ -35,10 +35,13 @@ import {
   InputAdornment,
   InputLabel,
   MenuItem,
+  Paper,
   Rating,
   Select,
   Stack,
   Switch,
+  Tab,
+  Tabs,
   TextField,
   Tooltip,
   Typography,
@@ -71,7 +74,6 @@ const deepCopy = (obj) => {
   }
 };
 
-// Helper to safely parse date for input value (YYYY-MM-DD)
 const formatDateForInput = (dateString) => {
   if (!dateString) return "";
   try {
@@ -82,144 +84,26 @@ const formatDateForInput = (dateString) => {
 };
 
 // --- Styled Components ---
-const StyledCard = styled(Card)(({ theme, editing }) => ({
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
   borderRadius: 16,
-  boxShadow: editing
-    ? `0 0 0 2px ${theme.palette.primary.main}, 0 4px 20px rgba(0,0,0,0.1)`
-    : "0px 4px 20px rgba(0, 0, 0, 0.05)",
-  border: `1px solid ${
-    editing ? theme.palette.primary.main : theme.palette.divider
-  }`,
-  transition: "all 0.3s ease",
-  height: "100%",
-  position: "relative",
+  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
 }));
 
-const UploadBox = styled(Box)(({ theme }) => ({
-  border: `2px dashed ${theme.palette.divider}`,
+const ImageCard = styled(Box)(({ theme }) => ({
+  position: "relative",
   borderRadius: 12,
-  height: 120,
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-  backgroundColor: theme.palette.background.default,
-  transition: "all 0.2s",
-  "&:hover": {
-    borderColor: theme.palette.primary.main,
-    backgroundColor: alpha(theme.palette.primary.main, 0.05),
+  overflow: "hidden",
+  aspectRatio: "16/9",
+  backgroundColor: theme.palette.grey[100],
+  "&:hover .delete-btn": {
+    opacity: 1,
   },
 }));
 
-const DynamicItemBox = styled(Box)(({ theme }) => ({
-  backgroundColor: theme.palette.grey[50],
-  borderRadius: 12,
-  padding: theme.spacing(2),
-  border: `1px solid ${theme.palette.divider}`,
-  marginBottom: theme.spacing(2),
-}));
-
-// --- Reusable Sub-Components ---
-
-const SectionHeader = ({ icon, title, subtitle }) => (
-  <Box display="flex" alignItems="center" gap={1.5}>
-    <Avatar
-      variant="rounded"
-      sx={{
-        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
-        color: "primary.main",
-        width: 32,
-        height: 32,
-      }}
-    >
-      {icon}
-    </Avatar>
-    <Box>
-      <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>
-        {title}
-      </Typography>
-      {subtitle && (
-        <Typography variant="caption" color="text.secondary">
-          {subtitle}
-        </Typography>
-      )}
-    </Box>
-  </Box>
-);
-
-const EditableSectionCard = ({
-  title,
-  subtitle,
-  icon,
-  editMode,
-  onToggleEdit,
-  onSave,
-  children,
-}) => {
-  return (
-    <StyledCard editing={editMode ? 1 : 0}>
-      <CardHeader
-        title={<SectionHeader icon={icon} title={title} subtitle={subtitle} />}
-        action={
-          <Box>
-            {editMode ? (
-              <Stack direction="row" spacing={1}>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="inherit"
-                  onClick={onToggleEdit}
-                  startIcon={<Close />}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={onSave}
-                  startIcon={<Save />}
-                >
-                  Save
-                </Button>
-              </Stack>
-            ) : (
-              <Tooltip title="Edit Section">
-                <IconButton onClick={onToggleEdit} size="small">
-                  <Edit fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-          </Box>
-        }
-        sx={{ pb: 1 }}
-      />
-      <Divider />
-      <CardContent
-        sx={{
-          opacity: editMode ? 1 : 0.8,
-          pointerEvents: editMode ? "auto" : "none",
-        }}
-      >
-        {children}
-      </CardContent>
-    </StyledCard>
-  );
-};
-
-EditableSectionCard.propTypes = {
-  title: PropTypes.string.isRequired,
-  icon: PropTypes.node,
-  editMode: PropTypes.bool,
-  onToggleEdit: PropTypes.func,
-  onSave: PropTypes.func,
-  children: PropTypes.node,
-};
-
 // --- Main Component ---
-
 export default function TourUpdate() {
-  const { editData, loading, error } = useSelector((state) => state?.tour);
+  const { editData, loading } = useSelector((state) => state?.tour);
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -227,201 +111,169 @@ export default function TourUpdate() {
   const { showLoader, hideLoader } = useLoader();
 
   // State
-  const [editableData, setEditableData] = useState(null);
-  const [originalData, setOriginalData] = useState(null);
-  const [editSections, setEditSections] = useState({});
-
-  // Location State
+  const [tourData, setTourData] = useState(null);
+  const [activeTab, setActiveTab] = useState(0);
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
 
   const tourTheme = useTourTheme();
 
-  // --- Effects ---
-
+  // --- Load Tour Data ---
   useEffect(() => {
     if (id) {
       showLoader();
       dispatch(tourById(id)).finally(() => hideLoader());
     }
-  }, [id, dispatch]);
+  }, [id]);
 
-  // Initial Country Load
+  // --- Process Data ---
+// --- Process Data ---
+useEffect(() => {
+  if (!loading && editData) {
+    console.log("🔥 Received editData:", editData);
+
+    let data = null;
+
+    // Handle different response formats
+    if (Array.isArray(editData) && editData.length > 0) {
+      // Case 1: Array with {success: true, data: {...}}
+      if (editData[0]?.success && editData[0]?.data) {
+        data = editData[0].data;
+      }
+      // Case 2: Array with direct object
+      else if (editData[0]?._id) {
+        data = editData[0];
+      }
+    }
+    // Case 3: Direct {success: true, data: {...}}
+    else if (editData?.success && editData?.data) {
+      data = editData.data;
+    }
+    // Case 4: Direct object
+    else if (editData?._id) {
+      data = editData;
+    }
+
+    if (data && data._id) {
+      console.log("✅ Processing data:", data);
+      
+      // Ensure all required fields
+      const processedData = {
+        ...data,
+        images: data.images || [],
+        amenities: data.amenities || [],
+        inclusion: data.inclusion || [],
+        exclusion: data.exclusion || [],
+        dayWise: data.dayWise || [],
+        vehicles: data.vehicles || [],
+        termsAndConditions: data.termsAndConditions || {},
+      };
+
+      setTourData(processedData);
+    } else {
+      console.error("❌ Invalid data structure:", editData);
+    }
+  }
+}, [editData, loading]);
+
+
+  // --- Load Countries ---
   useEffect(() => {
     setCountries(Country.getAllCountries());
   }, []);
 
-  // Sync State/City options when Country/State changes in data
+  // --- Load States/Cities ---
   useEffect(() => {
-    if (editableData?.country) {
-      // Assuming editableData.country stores the ISO Code (e.g., "IN")
-      const availableStates = State.getStatesOfCountry(editableData.country);
-      setStates(availableStates);
+    if (tourData?.country) {
+      const country = countries.find(
+        (c) => c.name === tourData.country || c.isoCode === tourData.country
+      );
 
-      if (editableData?.state) {
-        // Assuming editableData.state stores the ISO Code (e.g., "MH")
-        const availableCities = City.getCitiesOfState(
-          editableData.country,
-          editableData.state
-        );
-        setCities(availableCities);
-      } else {
-        setCities([]);
-      }
-    } else {
-      setStates([]);
-      setCities([]);
-    }
-  }, [editableData?.country, editableData?.state]);
+      if (country) {
+        const stateList = State.getStatesOfCountry(country.isoCode);
+        setStates(stateList);
 
-  // Load Data into State
-  useEffect(() => {
-    if (!loading && Array.isArray(editData) && editData.length > 0) {
-      const tourObject = deepCopy(editData[0]);
-      if (tourObject) {
-        // Ensure arrays exist
-        [
-          "images",
-          "amenities",
-          "inclusion",
-          "exclusion",
-          "dayWise",
-          "vehicles",
-        ].forEach((key) => {
-          tourObject[key] = tourObject[key] || [];
-        });
-        tourObject.termsAndConditions = tourObject.termsAndConditions || {
-          cancellation: "",
-          refund: "",
-          bookingPolicy: "",
-        };
+        if (tourData?.state) {
+          const state = stateList.find(
+            (s) => s.name === tourData.state || s.isoCode === tourData.state
+          );
 
-        setEditableData(tourObject);
-        setOriginalData(deepCopy(tourObject));
+          if (state) {
+            setCities(City.getCitiesOfState(country.isoCode, state.isoCode));
+          }
+        }
       }
     }
-  }, [editData, loading]);
+  }, [tourData?.country, tourData?.state, countries]);
 
   // --- Handlers ---
+  const updateField = useCallback((field, value) => {
+    setTourData((prev) => ({ ...prev, [field]: value }));
+  }, []);
 
-  const handleInputChange = useCallback((path, value) => {
-    setEditableData((prev) => {
+  const updateNestedField = useCallback((path, value) => {
+    setTourData((prev) => {
       const newData = deepCopy(prev);
-      let current = newData;
       const keys = path.split(".");
+      let current = newData;
+
       for (let i = 0; i < keys.length - 1; i++) {
-        // Create nested object if it doesn't exist
-        current = current[keys[i]] = current[keys[i]] || {};
+        if (!current[keys[i]]) current[keys[i]] = {};
+        current = current[keys[i]];
       }
+
       current[keys[keys.length - 1]] = value;
       return newData;
     });
   }, []);
 
-  const handleAddDay = () => {
-    setEditableData((prev) => {
-      const newData = deepCopy(prev);
-      if (!newData.dayWise) newData.dayWise = [];
-      newData.dayWise.push({
-        day: newData.dayWise.length + 1,
-        description: "",
-      });
-      return newData;
-    });
-  };
+  const handleSave = async () => {
+    if (!tourData) return;
 
-  const handleImageActions = async (action, payload) => {
     showLoader();
     try {
-      if (action === "upload") {
-        const formData = new FormData();
-        payload.forEach((file) => formData.append("images", file));
-        await dispatch(updateTourImage({ id, formData })).unwrap();
-        toast.success("Images uploaded");
-      } else if (action === "delete") {
-        await dispatch(deleteTourImage({ id, index: payload })).unwrap();
-        toast.success("Image deleted");
-      }
-      await dispatch(tourById(id)).unwrap();
+      const dataToSend = { ...tourData };
+      delete dataToSend._id;
+      delete dataToSend.__v;
+      delete dataToSend.createdAt;
+      delete dataToSend.updatedAt;
+
+      await dispatch(tourUpdate({ id, data: dataToSend })).unwrap();
+      toast.success("Tour updated successfully!");
+      dispatch(tourById(id));
     } catch (err) {
       console.error(err);
-      toast.error("Operation failed");
+      toast.error("Update failed!");
     } finally {
       hideLoader();
     }
   };
 
-  const toggleEditSection = (section) => {
-    setEditSections((prev) => {
-      const isEditing = prev[section];
-      if (isEditing) {
-        // Revert to original data on cancel
-        setEditableData(deepCopy(originalData));
-      }
-      return { [section]: !isEditing };
-    });
-  };
-
-  const handleSaveSection = async (sectionKey) => {
+  const handleImageUpload = async (files) => {
     showLoader();
     try {
-      const dataToUpdate = {};
-      const sectionsMap = {
-        basic: [
-          "travelAgencyName",
-          "agencyId",
-          "visitingPlaces",
-          "visitngPlaces", // Handle potential typo in DB
-          "country",
-          "state",
-          "city",
-          "themes",
-          "starRating",
-          "agencyEmail",
-          "agencyPhone",
-        ],
-        pricing: [
-          "price",
-          "nights",
-          "days",
-          "from",
-          "to",
-          "isCustomizable",
-          "tourStartDate",
-        ],
-        details: ["overview", "inclusion", "exclusion", "amenities"],
-        vehicles: ["vehicles"],
-        terms: ["termsAndConditions"],
-        itinerary: ["dayWise"],
-      };
+      const formData = new FormData();
+      Array.from(files).forEach((file) => formData.append("images", file));
 
-      sectionsMap[sectionKey]?.forEach((field) => {
-        if (editableData[field] !== undefined) {
-          dataToUpdate[field] = editableData[field];
-        }
-      });
-
-      // Special handling for visitingPlaces typo consistency
-      if (sectionKey === "basic") {
-        // If the user edited 'visitingPlaces', ensure 'visitngPlaces' is also updated if backend expects it
-        // Or prioritize one over the other based on your backend logic
-        if (dataToUpdate.visitingPlaces) {
-          dataToUpdate.visitngPlaces = dataToUpdate.visitingPlaces;
-        } else if (dataToUpdate.visitngPlaces) {
-          dataToUpdate.visitingPlaces = dataToUpdate.visitngPlaces;
-        }
-      }
-
-      await dispatch(tourUpdate({ id, data: dataToUpdate })).unwrap();
-
-      setOriginalData(deepCopy(editableData));
-      setEditSections((prev) => ({ ...prev, [sectionKey]: false }));
-      toast.success("Section updated successfully");
+      await dispatch(updateTourImage({ id, formData })).unwrap();
+      toast.success("Images uploaded!");
       dispatch(tourById(id));
     } catch (err) {
-      console.error(err);
-      toast.error("Update failed");
+      toast.error("Upload failed!");
+    } finally {
+      hideLoader();
+    }
+  };
+
+  const handleImageDelete = async (index) => {
+    showLoader();
+    try {
+      await dispatch(deleteTourImage({ id, index })).unwrap();
+      toast.success("Image deleted!");
+      dispatch(tourById(id));
+    } catch (err) {
+      toast.error("Delete failed!");
     } finally {
       hideLoader();
     }
@@ -431,835 +283,779 @@ export default function TourUpdate() {
     showLoader();
     try {
       await dispatch(tourUpdate({ id, data: { isAccepted } })).unwrap();
-      toast.success(`Tour ${isAccepted ? "Accepted" : "Declined"}`);
+      toast.success(`Tour ${isAccepted ? "Accepted" : "Rejected"}`);
       dispatch(tourById(id));
     } catch (err) {
-      toast.error("Status update failed");
+      toast.error("Status update failed!");
     } finally {
       hideLoader();
     }
   };
 
-  if (loading && !editableData)
+  // --- Loading State ---
+  if (loading || !tourData) {
     return (
       <Box
         minHeight="80vh"
         display="flex"
-        justifyContent="center"
         alignItems="center"
+        justifyContent="center"
       >
-        <CircularProgress />
+        <CircularProgress size={60} />
       </Box>
     );
-  if (!editableData)
-    return (
-      <Box p={4}>
-        <Alert severity="warning">Data unavailable</Alert>
-      </Box>
-    );
+  }
 
+  // --- Render ---
   return (
-    <Box bgcolor="grey.50" minHeight="100vh" pb={8}>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Box bgcolor="grey.50" minHeight="100vh" py={4}>
+      <Container maxWidth="xl">
         {/* Header */}
-        <Box
-          display="flex"
+        <Stack
+          direction="row"
           justifyContent="space-between"
           alignItems="center"
-          mb={4}
+          mb={3}
         >
           <Box>
-            <Typography variant="h4" fontWeight={800} gutterBottom>
-              Manage Tour
+            <Typography variant="h4" fontWeight={700} gutterBottom>
+              Edit Tour
             </Typography>
-            <Box display="flex" alignItems="center" gap={1}>
-              <Typography variant="body2" color="text.secondary">
-                Editing:{" "}
-              </Typography>
-              <Chip label={editableData.travelAgencyName} size="small" />
-            </Box>
+            <Typography variant="body2" color="text.secondary">
+              {tourData?.travelAgencyName} • {tourData?.city}, {tourData?.state}
+            </Typography>
           </Box>
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBack />}
-            onClick={() => navigate(-1)}
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBack />}
+              onClick={() => navigate(-1)}
+            >
+              Back
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<Save />}
+              onClick={handleSave}
+            >
+              Save Changes
+            </Button>
+          </Stack>
+        </Stack>
+
+        {/* Status Bar */}
+        {(role === "Admin" || role === "Developer") && (
+          <Alert
+            severity={tourData.isAccepted ? "success" : "warning"}
+            sx={{ mb: 3, borderRadius: 3 }}
+            action={
+              <Stack direction="row" spacing={1}>
+                <Button
+                  size="small"
+                  color="success"
+                  variant="contained"
+                  onClick={() => handleStatusChange(true)}
+                >
+                  Accept
+                </Button>
+                <Button
+                  size="small"
+                  color="error"
+                  variant="outlined"
+                  onClick={() => handleStatusChange(false)}
+                >
+                  Reject
+                </Button>
+              </Stack>
+            }
           >
-            Back
-          </Button>
-        </Box>
+            Tour Status: {tourData.isAccepted ? "Accepted ✓" : "Pending Review"}
+          </Alert>
+        )}
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} lg={8}>
-            <Stack spacing={3}>
-              <EditableSectionCard
-                title="Agency & Location"
-                subtitle="Contact info and destination details"
-                icon={<InfoOutlined />}
-                editMode={editSections.basic}
-                onToggleEdit={() => toggleEditSection("basic")}
-                onSave={() => handleSaveSection("basic")}
-              >
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Agency Name"
-                      value={editableData.travelAgencyName || ""}
-                      onChange={(e) =>
-                        handleInputChange("travelAgencyName", e.target.value)
-                      }
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Agency Email"
-                      value={editableData.agencyEmail || ""}
-                      onChange={(e) =>
-                        handleInputChange("agencyEmail", e.target.value)
-                      }
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Agency ID"
-                      value={editableData.agencyId || ""}
-                      onChange={(e) =>
-                        handleInputChange("agencyId", e.target.value)
-                      }
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Agency Phone"
-                      value={editableData.agencyPhone || ""}
-                      onChange={(e) =>
-                        handleInputChange("agencyPhone", e.target.value)
-                      }
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Divider sx={{ my: 1 }} />
-                  </Grid>
+        {/* Tabs Navigation */}
+        <Paper sx={{ borderRadius: 3, mb: 3 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(e, v) => setActiveTab(v)}
+            variant="scrollable"
+            scrollButtons="auto"
+          >
+            <Tab icon={<InfoOutlined />} label="Basic Info" />
+            <Tab icon={<FlightTakeoff />} label="Pricing" />
+            <Tab icon={<EventIcon />} label="Itinerary" />
+            <Tab icon={<DescriptionOutlined />} label="Details" />
+            <Tab icon={<DirectionsBus />} label="Vehicles" />
+            <Tab icon={<PolicyOutlined />} label="Policies" />
+            <Tab icon={<ImageOutlined />} label="Gallery" />
+          </Tabs>
+        </Paper>
 
-                  {/* Location Selectors - Fixed */}
-                  <Grid item xs={12} sm={4}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Country</InputLabel>
-                      <Select
-                        value={editableData.country || ""}
-                        label="Country"
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          handleInputChange("country", val);
-                          handleInputChange("state", ""); // Reset state
-                          handleInputChange("city", ""); // Reset city
-                        }}
-                      >
-                        {countries.map((c) => (
-                          <MenuItem key={c.isoCode} value={c.isoCode}>
-                            {c.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <FormControl
-                      fullWidth
-                      size="small"
-                      disabled={!editableData.country}
-                    >
-                      <InputLabel>State</InputLabel>
-                      <Select
-                        value={editableData.state || ""}
-                        label="State"
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          handleInputChange("state", val);
-                          handleInputChange("city", ""); // Reset city
-                        }}
-                      >
-                        {states.map((s) => (
-                          <MenuItem key={s.isoCode} value={s.isoCode}>
-                            {s.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <FormControl
-                      fullWidth
-                      size="small"
-                      disabled={!editableData.state}
-                    >
-                      <InputLabel>City</InputLabel>
-                      <Select
-                        value={editableData.city || ""}
-                        label="City"
-                        onChange={(e) =>
-                          handleInputChange("city", e.target.value)
-                        }
-                      >
-                        {cities.map((c) => (
-                          <MenuItem key={c.name} value={c.name}>
-                            {c.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
+        {/* Tab Content */}
+        <StyledPaper>
+          {/* Tab 0: Basic Info */}
+          {activeTab === 0 && (
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Typography variant="h6" fontWeight={600} mb={2}>
+                  Agency Information
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Agency Name"
+                  value={tourData.travelAgencyName || ""}
+                  onChange={(e) =>
+                    updateField("travelAgencyName", e.target.value)
+                  }
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Agency ID"
+                  value={tourData.agencyId || ""}
+                  onChange={(e) => updateField("agencyId", e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  type="email"
+                  value={tourData.agencyEmail || ""}
+                  onChange={(e) => updateField("agencyEmail", e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Phone"
+                  value={tourData.agencyPhone || ""}
+                  onChange={(e) => updateField("agencyPhone", e.target.value)}
+                />
+              </Grid>
 
-                  <Grid item xs={12}>
-                    {/* Handles both keys for backward compatibility */}
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Visiting Places (Summary)"
-                      value={
-                        editableData.visitingPlaces ||
-                        editableData.visitngPlaces ||
-                        ""
-                      }
-                      onChange={(e) => {
-                        handleInputChange("visitingPlaces", e.target.value);
-                        handleInputChange("visitngPlaces", e.target.value);
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Theme</InputLabel>
-                      <Select
-                        value={editableData.themes || ""}
-                        label="Theme"
-                        onChange={(e) =>
-                          handleInputChange("themes", e.target.value)
-                        }
-                      >
-                        {tourTheme?.map((t) => (
-                          <MenuItem key={t.name} value={t.name}>
-                            {t.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                      gap={2}
-                      height="100%"
-                      border={1}
-                      borderColor="divider"
-                      borderRadius={1}
-                      px={2}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        Star Rating:
-                      </Typography>
-                      <Rating
-                        value={Number(editableData.starRating) || 0}
-                        onChange={(_, val) =>
-                          handleInputChange("starRating", val)
-                        }
-                        readOnly={!editSections.basic}
-                      />
-                    </Box>
-                  </Grid>
-                </Grid>
-              </EditableSectionCard>
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6" fontWeight={600} mb={2}>
+                  Location Details
+                </Typography>
+              </Grid>
 
-              <EditableSectionCard
-                title="Pricing & Schedule"
-                subtitle="Cost, Duration, and Validity"
-                icon={<FlightTakeoff />}
-                editMode={editSections.pricing}
-                onToggleEdit={() => toggleEditSection("pricing")}
-                onSave={() => handleSaveSection("pricing")}
-              >
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      type="number"
-                      label="Price"
-                      value={editableData.price || ""}
-                      onChange={(e) =>
-                        handleInputChange("price", e.target.value)
-                      }
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">₹</InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={6} sm={4}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      type="number"
-                      label="Days"
-                      value={editableData.days || ""}
-                      onChange={(e) =>
-                        handleInputChange("days", e.target.value)
-                      }
-                    />
-                  </Grid>
-                  <Grid item xs={6} sm={4}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      type="number"
-                      label="Nights"
-                      value={editableData.nights || ""}
-                      onChange={(e) =>
-                        handleInputChange("nights", e.target.value)
-                      }
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Box bgcolor="background.default" p={2} borderRadius={2}>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={!!editableData?.isCustomizable}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "isCustomizable",
-                                e.target.checked
-                              )
-                            }
-                          />
-                        }
-                        label={
-                          <Typography fontWeight="bold" variant="body2">
-                            Flexible / Customizable Dates
-                          </Typography>
-                        }
-                      />
-                      <Grid container spacing={2} mt={0.5}>
-                        {editableData?.isCustomizable ? (
-                          <>
-                            <Grid item xs={6}>
-                              <TextField
-                                fullWidth
-                                size="small"
-                                type="date"
-                                label="Valid From"
-                                InputLabelProps={{ shrink: true }}
-                                value={formatDateForInput(editableData.from)}
-                                onChange={(e) =>
-                                  handleInputChange("from", e.target.value)
-                                }
-                              />
-                            </Grid>
-                            <Grid item xs={6}>
-                              <TextField
-                                fullWidth
-                                size="small"
-                                type="date"
-                                label="Valid To"
-                                InputLabelProps={{ shrink: true }}
-                                value={formatDateForInput(editableData.to)}
-                                onChange={(e) =>
-                                  handleInputChange("to", e.target.value)
-                                }
-                              />
-                            </Grid>
-                          </>
-                        ) : (
-                          <Grid item xs={12}>
-                            <TextField
-                              fullWidth
-                              size="small"
-                              type="date"
-                              label="Fixed Start Date"
-                              InputLabelProps={{ shrink: true }}
-                              value={formatDateForInput(
-                                editableData.tourStartDate
-                              )}
-                              onChange={(e) =>
-                                handleInputChange(
-                                  "tourStartDate",
-                                  e.target.value
-                                )
-                              }
-                            />
-                          </Grid>
-                        )}
-                      </Grid>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </EditableSectionCard>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Country</InputLabel>
+                  <Select
+                    value={tourData.country || ""}
+                    label="Country"
+                    onChange={(e) => {
+                      updateField("country", e.target.value);
+                      updateField("state", "");
+                      updateField("city", "");
+                    }}
+                  >
+                    {countries.map((c) => (
+                      <MenuItem key={c.isoCode} value={c.name}>
+                        {c.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
-              <EditableSectionCard
-                title="Itinerary"
-                subtitle="Day-wise breakdown"
-                icon={<EventIcon />}
-                editMode={editSections.itinerary}
-                onToggleEdit={() => toggleEditSection("itinerary")}
-                onSave={() => handleSaveSection("itinerary")}
-              >
-                <Stack spacing={2}>
-                  {(editableData.dayWise || []).map((day, idx) => (
-                    <DynamicItemBox key={idx}>
-                      <Box display="flex" justifyContent="space-between" mb={1}>
-                        <Typography
-                          variant="subtitle2"
-                          color="primary"
-                          fontWeight="bold"
-                        >
-                          Day {day.day}
-                        </Typography>
-                        {editSections.itinerary && (
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => {
-                              const newDays = editableData.dayWise.filter(
-                                (_, i) => i !== idx
-                              );
-                              handleInputChange("dayWise", newDays);
-                            }}
-                          >
-                            <DeleteOutline fontSize="small" />
-                          </IconButton>
-                        )}
-                      </Box>
-                      <TextField
-                        fullWidth
-                        multiline
-                        minRows={2}
-                        size="small"
-                        placeholder="Describe the day's activities..."
-                        value={day.description || ""}
-                        onChange={(e) =>
-                          handleInputChange(
-                            `dayWise.${idx}.description`,
-                            e.target.value
-                          )
-                        }
-                      />
-                    </DynamicItemBox>
-                  ))}
-                  {editSections.itinerary && (
-                    <Button
-                      variant="outlined"
-                      startIcon={<AddIcon />}
-                      onClick={handleAddDay}
-                    >
-                      Add Day
-                    </Button>
-                  )}
-                </Stack>
-              </EditableSectionCard>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth disabled={!tourData.country}>
+                  <InputLabel>State</InputLabel>
+                  <Select
+                    value={tourData.state || ""}
+                    label="State"
+                    onChange={(e) => {
+                      updateField("state", e.target.value);
+                      updateField("city", "");
+                    }}
+                  >
+                    {states.map((s) => (
+                      <MenuItem key={s.isoCode} value={s.name}>
+                        {s.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
-              <EditableSectionCard
-                title="Package Details"
-                subtitle="Overview, Inclusions & Amenities"
-                icon={<DescriptionOutlined />}
-                editMode={editSections.details}
-                onToggleEdit={() => toggleEditSection("details")}
-                onSave={() => handleSaveSection("details")}
-              >
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      multiline
-                      minRows={3}
-                      label="Overview"
-                      value={editableData.overview || ""}
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth disabled={!tourData.state}>
+                  <InputLabel>City</InputLabel>
+                  <Select
+                    value={tourData.city || ""}
+                    label="City"
+                    onChange={(e) => updateField("city", e.target.value)}
+                  >
+                    {cities.map((c) => (
+                      <MenuItem key={c.name} value={c.name}>
+                        {c.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Visiting Places"
+                  value={tourData.visitngPlaces || tourData.visitingPlaces || ""}
+                  onChange={(e) => {
+                    updateField("visitngPlaces", e.target.value);
+                    updateField("visitingPlaces", e.target.value);
+                  }}
+                  helperText="Comma-separated list of places"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Theme</InputLabel>
+                  <Select
+                    value={tourData.themes || ""}
+                    label="Theme"
+                    onChange={(e) => updateField("themes", e.target.value)}
+                  >
+                    {tourTheme?.map((t) => (
+                      <MenuItem key={t.name} value={t.name}>
+                        {t.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" mb={1}>
+                    Star Rating
+                  </Typography>
+                  <Rating
+                    value={Number(tourData.starRating) || 0}
+                    onChange={(e, val) => updateField("starRating", val)}
+                    size="large"
+                  />
+                </Box>
+              </Grid>
+            </Grid>
+          )}
+
+          {/* Tab 1: Pricing */}
+          {activeTab === 1 && (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="Price"
+                  type="number"
+                  value={tourData.price || ""}
+                  onChange={(e) => updateField("price", e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">₹</InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid item xs={6} md={4}>
+                <TextField
+                  fullWidth
+                  label="Days"
+                  type="number"
+                  value={tourData.days || ""}
+                  onChange={(e) => updateField("days", e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={6} md={4}>
+                <TextField
+                  fullWidth
+                  label="Nights"
+                  type="number"
+                  value={tourData.nights || ""}
+                  onChange={(e) => updateField("nights", e.target.value)}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+              </Grid>
+
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={!!tourData.isCustomizable}
                       onChange={(e) =>
-                        handleInputChange("overview", e.target.value)
+                        updateField("isCustomizable", e.target.checked)
                       }
                     />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      multiline
-                      minRows={4}
-                      label="Inclusions"
-                      helperText="One per line"
-                      value={
-                        Array.isArray(editableData.inclusion)
-                          ? editableData.inclusion.join("\n")
-                          : editableData.inclusion || ""
-                      }
-                      onChange={(e) =>
-                        handleInputChange(
-                          "inclusion",
-                          e.target.value.split("\n")
-                        )
-                      }
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      multiline
-                      minRows={4}
-                      label="Exclusions"
-                      helperText="One per line"
-                      value={
-                        Array.isArray(editableData.exclusion)
-                          ? editableData.exclusion.join("\n")
-                          : editableData.exclusion || ""
-                      }
-                      onChange={(e) =>
-                        handleInputChange(
-                          "exclusion",
-                          e.target.value.split("\n")
-                        )
-                      }
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Amenities</InputLabel>
-                      <Select
-                        multiple
-                        value={editableData.amenities || []}
-                        onChange={(e) =>
-                          handleInputChange("amenities", e.target.value)
-                        }
-                        renderValue={(selected) => (
-                          <Box display="flex" flexWrap="wrap" gap={0.5}>
-                            {selected.map((v) => (
-                              <Chip key={v} label={v} size="small" />
-                            ))}
-                          </Box>
-                        )}
-                      >
-                        {[
-                          "WiFi",
-                          "Parking",
-                          "Pool",
-                          "Gym",
-                          "Restaurant",
-                          "Guide",
-                        ].map((n) => (
-                          <MenuItem key={n} value={n}>
-                            {n}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                </Grid>
-              </EditableSectionCard>
+                  }
+                  label="Flexible Dates (Customizable)"
+                />
+              </Grid>
 
-              <EditableSectionCard
-                title="Vehicles"
-                subtitle="Manage transport options"
-                icon={<DirectionsBus />}
-                editMode={editSections.vehicles}
-                onToggleEdit={() => toggleEditSection("vehicles")}
-                onSave={() => handleSaveSection("vehicles")}
-              >
-                <Stack spacing={2}>
-                  {(editableData.vehicles || []).map((v, idx) => (
-                    <DynamicItemBox key={idx}>
-                      <Box display="flex" justifyContent="space-between" mb={1}>
-                        <Typography variant="caption" fontWeight="bold">
-                          VEHICLE {idx + 1}
-                        </Typography>
-                        {editSections.vehicles && (
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => {
-                              const newVehicles = editableData.vehicles.filter(
-                                (_, i) => i !== idx
-                              );
-                              handleInputChange("vehicles", newVehicles);
-                            }}
-                          >
-                            <DeleteOutline fontSize="small" />
-                          </IconButton>
-                        )}
-                      </Box>
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={4}>
-                          <TextField
-                            fullWidth
-                            size="small"
-                            label="Name"
-                            value={v.name || ""}
-                            onChange={(e) =>
-                              handleInputChange(
-                                `vehicles.${idx}.name`,
-                                e.target.value
-                              )
-                            }
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                          <TextField
-                            fullWidth
-                            size="small"
-                            label="Number"
-                            value={v.vehicleNumber || ""}
-                            onChange={(e) =>
-                              handleInputChange(
-                                `vehicles.${idx}.vehicleNumber`,
-                                e.target.value
-                              )
-                            }
-                          />
-                        </Grid>
-                        <Grid item xs={6} sm={2}>
-                          <TextField
-                            fullWidth
-                            size="small"
-                            type="number"
-                            label="Seats"
-                            value={v.totalSeats || ""}
-                            onChange={(e) =>
-                              handleInputChange(
-                                `vehicles.${idx}.totalSeats`,
-                                e.target.value
-                              )
-                            }
-                          />
-                        </Grid>
-                        <Grid item xs={6} sm={2}>
-                          <TextField
-                            fullWidth
-                            size="small"
-                            type="number"
-                            label="₹/Seat"
-                            value={v.pricePerSeat || ""}
-                            onChange={(e) =>
-                              handleInputChange(
-                                `vehicles.${idx}.pricePerSeat`,
-                                e.target.value
-                              )
-                            }
-                          />
-                        </Grid>
-                      </Grid>
-                    </DynamicItemBox>
-                  ))}
-                  {editSections.vehicles && (
-                    <Button
-                      variant="outlined"
-                      startIcon={<AddIcon />}
-                      onClick={() =>
-                        handleInputChange("vehicles", [
-                          ...(editableData.vehicles || []),
-                          {
-                            name: "",
-                            vehicleNumber: "",
-                            totalSeats: "",
-                            pricePerSeat: 0,
-                            isActive: true,
-                          },
-                        ])
-                      }
-                    >
-                      Add Vehicle
-                    </Button>
-                  )}
-                </Stack>
-              </EditableSectionCard>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Valid From"
+                  InputLabelProps={{ shrink: true }}
+                  value={formatDateForInput(tourData.from)}
+                  onChange={(e) => updateField("from", e.target.value)}
+                />
+              </Grid>
 
-              <EditableSectionCard
-                title="Policies"
-                subtitle="Terms, Refund & Booking"
-                icon={<PolicyOutlined />}
-                editMode={editSections.terms}
-                onToggleEdit={() => toggleEditSection("terms")}
-                onSave={() => handleSaveSection("terms")}
-              >
-                <Stack spacing={2}>
+              {tourData.isCustomizable && (
+                <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
-                    multiline
-                    minRows={2}
-                    label="Cancellation Policy"
-                    value={editableData.termsAndConditions?.cancellation || ""}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "termsAndConditions.cancellation",
-                        e.target.value
-                      )
-                    }
+                    type="date"
+                    label="Valid To"
+                    InputLabelProps={{ shrink: true }}
+                    value={formatDateForInput(tourData.to)}
+                    onChange={(e) => updateField("to", e.target.value)}
                   />
-                  <TextField
-                    fullWidth
-                    multiline
-                    minRows={2}
-                    label="Refund Policy"
-                    value={editableData.termsAndConditions?.refund || ""}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "termsAndConditions.refund",
-                        e.target.value
-                      )
-                    }
-                  />
-                  <TextField
-                    fullWidth
-                    multiline
-                    minRows={2}
-                    label="Booking Policy"
-                    value={editableData.termsAndConditions?.bookingPolicy || ""}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "termsAndConditions.bookingPolicy",
-                        e.target.value
-                      )
-                    }
-                  />
-                </Stack>
-              </EditableSectionCard>
-            </Stack>
-          </Grid>
+                </Grid>
+              )}
+            </Grid>
+          )}
 
-          <Grid item xs={12} lg={4}>
-            <Stack spacing={3} sx={{ position: { lg: "sticky" }, top: 24 }}>
-              {(role === "Admin" || role === "Developer") && (
-                <Card sx={{ borderRadius: 4, boxShadow: 3 }}>
-                  <CardHeader
-                    title="Approval Status"
-                    titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
-                  />
-                  <Divider />
-                  <CardContent>
+          {/* Tab 2: Itinerary */}
+          {activeTab === 2 && (
+            <Stack spacing={2}>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Typography variant="h6" fontWeight={600}>
+                  Day-wise Plan
+                </Typography>
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={() =>
+                    updateField("dayWise", [
+                      ...(tourData.dayWise || []),
+                      {
+                        day: (tourData.dayWise?.length || 0) + 1,
+                        description: "",
+                      },
+                    ])
+                  }
+                >
+                  Add Day
+                </Button>
+              </Box>
+
+              {(tourData.dayWise || []).map((day, idx) => (
+                <Paper key={idx} sx={{ p: 2, bgcolor: "grey.50" }}>
+                  <Stack spacing={2}>
                     <Box
                       display="flex"
                       justifyContent="space-between"
                       alignItems="center"
-                      mb={2}
-                      bgcolor="grey.50"
-                      p={2}
-                      borderRadius={2}
                     >
-                      <Typography variant="body2">Current Status:</Typography>
-                      <Chip
-                        label={
-                          editableData.isAccepted
-                            ? "Accepted"
-                            : "Pending / Declined"
-                        }
-                        color={editableData.isAccepted ? "success" : "warning"}
-                        variant="filled"
-                      />
-                    </Box>
-                    <Stack direction="row" spacing={1}>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        color="success"
-                        startIcon={<CheckCircle />}
-                        onClick={() => handleStatusChange(true)}
-                      >
-                        Accept
-                      </Button>
-                      <Button
-                        fullWidth
-                        variant="outlined"
+                      <Chip label={`Day ${day.day}`} color="primary" />
+                      <IconButton
+                        size="small"
                         color="error"
-                        startIcon={<Cancel />}
-                        onClick={() => handleStatusChange(false)}
+                        onClick={() =>
+                          updateField(
+                            "dayWise",
+                            tourData.dayWise.filter((_, i) => i !== idx)
+                          )
+                        }
                       >
-                        Decline
-                      </Button>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              )}
-
-              <StyledCard>
-                <CardHeader
-                  title={
-                    <SectionHeader
-                      icon={<ImageOutlined />}
-                      title="Gallery"
-                      subtitle="Manage images"
-                    />
-                  }
-                />
-                <Divider />
-                <CardContent>
-                  <Box
-                    display="grid"
-                    gridTemplateColumns="repeat(2, 1fr)"
-                    gap={1}
-                    mb={2}
-                  >
-                    {(editableData.images || []).map((img, idx) => (
-                      <Box
-                        key={idx}
-                        position="relative"
-                        sx={{ aspectRatio: "4/3" }}
-                      >
-                        <img
-                          src={img}
-                          alt="tour"
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            borderRadius: 8,
-                          }}
-                        />
-                        <IconButton
-                          size="small"
-                          onClick={() => handleImageActions("delete", idx)}
-                          sx={{
-                            position: "absolute",
-                            top: 4,
-                            right: 4,
-                            bgcolor: "rgba(0,0,0,0.6)",
-                            color: "white",
-                            "&:hover": { bgcolor: "red" },
-                          }}
-                        >
-                          <DeleteOutline fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    ))}
-                  </Box>
-                  <label>
-                    <UploadBox>
-                      <UploadFile
-                        color="primary"
-                        sx={{ fontSize: 40, mb: 1 }}
-                      />
-                      <Typography variant="body2" color="text.secondary">
-                        Click to Upload
-                      </Typography>
-                    </UploadBox>
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      hidden
+                        <DeleteOutline />
+                      </IconButton>
+                    </Box>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      placeholder="Describe the day's activities..."
+                      value={day.description || ""}
                       onChange={(e) =>
-                        handleImageActions("upload", Array.from(e.target.files))
+                        updateField(
+                          "dayWise",
+                          tourData.dayWise.map((d, i) =>
+                            i === idx ? { ...d, description: e.target.value } : d
+                          )
+                        )
                       }
                     />
-                  </label>
-                </CardContent>
-              </StyledCard>
+                  </Stack>
+                </Paper>
+              ))}
             </Stack>
-          </Grid>
-        </Grid>
+          )}
+
+          {/* Tab 3: Details */}
+          {activeTab === 3 && (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={6}
+                  label="Inclusions"
+                  helperText="One per line"
+                  value={
+                    Array.isArray(tourData.inclusion)
+                      ? tourData.inclusion.join("\n")
+                      : tourData.inclusion || ""
+                  }
+                  onChange={(e) =>
+                    updateField("inclusion", e.target.value.split("\n"))
+                  }
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={6}
+                  label="Exclusions"
+                  helperText="One per line"
+                  value={
+                    Array.isArray(tourData.exclusion)
+                      ? tourData.exclusion.join("\n")
+                      : tourData.exclusion || ""
+                  }
+                  onChange={(e) =>
+                    updateField("exclusion", e.target.value.split("\n"))
+                  }
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Amenities</InputLabel>
+                  <Select
+                    multiple
+                    value={tourData.amenities || []}
+                    onChange={(e) => updateField("amenities", e.target.value)}
+                    renderValue={(selected) => (
+                      <Box display="flex" flexWrap="wrap" gap={0.5}>
+                        {selected.map((v) => (
+                          <Chip key={v} label={v} size="small" />
+                        ))}
+                      </Box>
+                    )}
+                  >
+                    {[
+                      "Hotel Stay",
+                      "Breakfast & Dinner",
+                      "Sightseeing",
+                      "Tour Guide",
+                      "Transport",
+                      "WiFi",
+                      "Parking",
+                    ].map((a) => (
+                      <MenuItem key={a} value={a}>
+                        {a}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          )}
+
+          {/* Tab 4: Vehicles */}
+          {activeTab === 4 && (
+            <Stack spacing={3}>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Typography variant="h6" fontWeight={600}>
+                  Vehicles
+                </Typography>
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={() =>
+                    updateField("vehicles", [
+                      ...(tourData.vehicles || []),
+                      {
+                        name: "",
+                        vehicleNumber: "",
+                        totalSeats: 0,
+                        pricePerSeat: 0,
+                        isActive: true,
+                      },
+                    ])
+                  }
+                >
+                  Add Vehicle
+                </Button>
+              </Box>
+
+              {(tourData.vehicles || []).map((vehicle, idx) => (
+                <Paper key={idx} sx={{ p: 3, bgcolor: "grey.50" }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        mb={2}
+                      >
+                        <Typography variant="subtitle1" fontWeight={600}>
+                          Vehicle {idx + 1}
+                        </Typography>
+                        <IconButton
+                          color="error"
+                          onClick={() =>
+                            updateField(
+                              "vehicles",
+                              tourData.vehicles.filter((_, i) => i !== idx)
+                            )
+                          }
+                        >
+                          <DeleteOutline />
+                        </IconButton>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Vehicle Name"
+                        value={vehicle.name || ""}
+                        onChange={(e) =>
+                          updateField(
+                            "vehicles",
+                            tourData.vehicles.map((v, i) =>
+                              i === idx ? { ...v, name: e.target.value } : v
+                            )
+                          )
+                        }
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Vehicle Number"
+                        value={vehicle.vehicleNumber || ""}
+                        onChange={(e) =>
+                          updateField(
+                            "vehicles",
+                            tourData.vehicles.map((v, i) =>
+                              i === idx
+                                ? { ...v, vehicleNumber: e.target.value }
+                                : v
+                            )
+                          )
+                        }
+                      />
+                    </Grid>
+                    <Grid item xs={6} md={6}>
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Total Seats"
+                        value={vehicle.totalSeats || ""}
+                        onChange={(e) =>
+                          updateField(
+                            "vehicles",
+                            tourData.vehicles.map((v, i) =>
+                              i === idx
+                                ? { ...v, totalSeats: Number(e.target.value) }
+                                : v
+                            )
+                          )
+                        }
+                      />
+                    </Grid>
+                    <Grid item xs={6} md={6}>
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Price Per Seat"
+                        value={vehicle.pricePerSeat || ""}
+                        onChange={(e) =>
+                          updateField(
+                            "vehicles",
+                            tourData.vehicles.map((v, i) =>
+                              i === idx
+                                ? { ...v, pricePerSeat: Number(e.target.value) }
+                                : v
+                            )
+                          )
+                        }
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">₹</InputAdornment>
+                          ),
+                        }}
+                      />
+                    </Grid>
+                  </Grid>
+                </Paper>
+              ))}
+            </Stack>
+          )}
+
+          {/* Tab 5: Policies */}
+          {activeTab === 5 && (
+            <Stack spacing={3}>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="Booking Policy"
+                value={tourData.termsAndConditions?.booking || ""}
+                onChange={(e) =>
+                  updateNestedField("termsAndConditions.booking", e.target.value)
+                }
+              />
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="Cancellation Policy"
+                value={tourData.termsAndConditions?.cancellation || ""}
+                onChange={(e) =>
+                  updateNestedField(
+                    "termsAndConditions.cancellation",
+                    e.target.value
+                  )
+                }
+              />
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="ID Proof / Documents"
+                value={
+                  tourData.termsAndConditions?.idProof ||
+                  tourData.termsAndConditions?.documents ||
+                  ""
+                }
+                onChange={(e) => {
+                  updateNestedField("termsAndConditions.idProof", e.target.value);
+                  updateNestedField("termsAndConditions.documents", e.target.value);
+                }}
+              />
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="Other Terms"
+                value={tourData.termsAndConditions?.weather || ""}
+                onChange={(e) =>
+                  updateNestedField("termsAndConditions.weather", e.target.value)
+                }
+              />
+            </Stack>
+          )}
+
+          {/* Tab 6: Gallery */}
+          {activeTab === 6 && (
+            <Box>
+              <Box mb={3}>
+                <label>
+                  <Box
+                    p={4}
+                    border="2px dashed"
+                    borderColor="grey.300"
+                    borderRadius={3}
+                    textAlign="center"
+                    sx={{
+                      cursor: "pointer",
+                      "&:hover": {
+                        borderColor: "primary.main",
+                        bgcolor: "grey.50",
+                      },
+                    }}
+                  >
+                    <UploadFile sx={{ fontSize: 48, color: "grey.400", mb: 1 }} />
+                    <Typography variant="h6" color="text.secondary">
+                      Click to Upload Images
+                    </Typography>
+                  </Box>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    hidden
+                    onChange={(e) => handleImageUpload(e.target.files)}
+                  />
+                </label>
+              </Box>
+
+              <Grid container spacing={2}>
+                {(tourData.images || []).map((img, idx) => (
+                  <Grid item xs={6} md={4} key={idx}>
+                    <ImageCard>
+                      <img
+                        src={img}
+                        alt={`Tour ${idx + 1}`}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <IconButton
+                        className="delete-btn"
+                        onClick={() => handleImageDelete(idx)}
+                        sx={{
+                          position: "absolute",
+                          top: 8,
+                          right: 8,
+                          bgcolor: "rgba(0,0,0,0.7)",
+                          color: "white",
+                          opacity: 0,
+                          transition: "opacity 0.3s",
+                          "&:hover": {
+                            bgcolor: "error.main",
+                          },
+                        }}
+                      >
+                        <DeleteOutline />
+                      </IconButton>
+                    </ImageCard>
+                  </Grid>
+                ))}
+              </Grid>
+
+              {tourData.images?.length === 0 && (
+                <Alert severity="info">No images uploaded yet</Alert>
+              )}
+            </Box>
+          )}
+        </StyledPaper>
+
+        {/* Floating Save Button */}
+        <Box
+          position="fixed"
+          bottom={24}
+          right={24}
+          zIndex={1000}
+        >
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<Save />}
+            onClick={handleSave}
+            sx={{
+              borderRadius: 8,
+              px: 4,
+              py: 1.5,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+            }}
+          >
+            Save All Changes
+          </Button>
+        </Box>
       </Container>
     </Box>
   );

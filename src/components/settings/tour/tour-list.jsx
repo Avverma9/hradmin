@@ -1,4 +1,4 @@
-import { Add, Clear, Edit, Search } from "@mui/icons-material";
+import { Add, Clear, Edit, Search, Visibility } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -10,37 +10,65 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Chip,
+  alpha,
+  useTheme
 } from "@mui/material";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import React, { useEffect, useState } from "react";
+import { 
+  DataGrid, 
+  GridToolbarContainer, 
+  GridToolbarColumnsButton, 
+  GridToolbarFilterButton, 
+  GridToolbarDensitySelector, 
+  GridToolbarExport,
+  gridClasses 
+} from "@mui/x-data-grid";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { iconsList } from "../../../../utils/icon";
-import { tourList } from "../../redux/reducers/tour/tour";
+import { tourList } from "../../redux/reducers/tour/tour"; // Ensure correct path
+import { useLoader } from "../../../../utils/loader"; // Ensure correct path
+
+// --- Custom Toolbar ---
+function CustomToolbar() {
+  return (
+    <GridToolbarContainer sx={{ p: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+      <GridToolbarColumnsButton />
+      <GridToolbarFilterButton />
+      <GridToolbarDensitySelector />
+      <GridToolbarExport />
+    </GridToolbarContainer>
+  );
+}
 
 const TourList = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { data = [], loading } = useSelector((state) => state.tour);
+  const theme = useTheme();
+  
+  // Safe Access to Redux State
+  const tourState = useSelector((state) => state.tour);
+  const rawData = tourState?.data || [];
+  const tours = Array.isArray(rawData) ? rawData : (rawData.data || []);
+  const loading = tourState?.loading || false;
 
-  // Separate state for each search bar
+  const { showLoader, hideLoader } = useLoader();
+
+  // Search States
   const [searchId, setSearchId] = useState("");
   const [searchAgency, setSearchAgency] = useState("");
 
   useEffect(() => {
-    dispatch(tourList());
+    const fetchData = async () => {
+        try {
+            showLoader();
+            await dispatch(tourList());
+        } finally {
+            hideLoader();
+        }
+    };
+    fetchData();
   }, [dispatch]);
-
-  const getAmenityIcon = (amenity) => {
-    const iconObj = iconsList.find(
-      (icon) => icon.label.toLowerCase() === amenity.toLowerCase()
-    );
-    return iconObj
-      ? React.cloneElement(iconObj.icon, {
-          sx: { fontSize: "1rem", verticalAlign: "middle", mr: 0.5 },
-        })
-      : null;
-  };
 
   const handleUpdate = (id) => {
     navigate(`/tour-update/${id}`);
@@ -50,241 +78,238 @@ const TourList = () => {
     navigate("/add-tour-data");
   };
 
-  // Multi-field filter logic: applies both searchId & searchAgency
-  const filteredData = Array.isArray(data)
-    ? data.filter(
-        (pkg) =>
-          (!searchId ||
-            String(pkg._id).toLowerCase().includes(searchId.toLowerCase())) &&
-          (!searchAgency ||
-            String(pkg.travelAgencyName)
-              .toLowerCase()
-              .includes(searchAgency.toLowerCase()))
-      )
-    : [];
+  // Filter Logic
+  const filteredData = useMemo(() => {
+    return tours.filter((pkg) => {
+        const matchesId = !searchId || String(pkg._id).toLowerCase().includes(searchId.toLowerCase()) || String(pkg.agencyId).toLowerCase().includes(searchId.toLowerCase());
+        const matchesAgency = !searchAgency || String(pkg.travelAgencyName).toLowerCase().includes(searchAgency.toLowerCase());
+        return matchesId && matchesAgency;
+    });
+  }, [tours, searchId, searchAgency]);
 
   const columns = [
-    { field: "agencyId", headerName: "ID", width: 150 },
-    { field: "travelAgencyName", headerName: "Agency", width: 170 },
-    {
-      field: "nights",
-      headerName: "Nights",
-      width: 80,
-      align: "center",
-      headerAlign: "center",
+    { 
+      field: "agencyId", 
+      headerName: "Agency ID", 
+      width: 130,
+      valueGetter: (value, row) => row.agencyId || row._id?.slice(-6).toUpperCase(),
+      renderCell: (params) => (
+        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 500, color: 'text.secondary' }}>
+            {params.value}
+        </Typography>
+      )
+    },
+    { 
+      field: "travelAgencyName", 
+      headerName: "Agency Name", 
+      width: 220,
+      renderCell: (params) => (
+        <Typography variant="body2" fontWeight="600" color="text.primary">
+            {params.value}
+        </Typography>
+      )
     },
     {
-      field: "days",
-      headerName: "Days",
-      width: 80,
+        field: "city",
+        headerName: "City",
+        width: 150,
+        valueGetter: (value, row) => row.city || "N/A"
+    },
+    {
+        field: "state",
+        headerName: "State",
+        width: 150,
+        valueGetter: (value, row) => row.state || "N/A"
+    },
+    {
+      field: "duration",
+      headerName: "Duration",
+      width: 120,
       align: "center",
       headerAlign: "center",
+      valueGetter: (value, row) => {
+         if (!row) return '';
+         return `${row.nights || 0}N / ${row.days || 0}D`;
+      },
+      renderCell: (params) => (
+        <span style={{ fontWeight: 500 }}>{params.value}</span>
+      )
     },
     {
       field: "price",
       headerName: "Price",
-      width: 120,
+      width: 140,
+      align: 'right',
+      headerAlign: 'right',
+      type: 'number',
       renderCell: (params) => (
-        <Typography color="primary" fontWeight="bold">
-          ₹{params.value.toLocaleString("en-IN")}
+        <Typography color="text.primary" variant="body2" sx={{ fontFamily: 'monospace' }}>
+          ₹{Number(params.value).toLocaleString("en-IN")}
         </Typography>
       ),
     },
     {
-      field: "amenities",
-      headerName: "Amenities",
-      width: 220,
-      sortable: false,
-      renderCell: (params) => (
-        <Stack direction="row" spacing={1}>
-          {params.value?.slice(0, 3).map((amenity, idx) => (
-            <Box
-              key={idx}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                bgcolor: "grey.100",
-                px: 1,
-                py: 0.5,
-                borderRadius: 2,
-              }}
-            >
-              {getAmenityIcon(amenity)}
-              <Typography variant="caption" sx={{ ml: 0.5 }}>
-                {amenity}
-              </Typography>
-            </Box>
-          ))}
-        </Stack>
-      ),
+        field: "isCustomizable",
+        headerName: "Type",
+        width: 130,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => (
+            <Chip 
+                label={params.value ? "Custom" : "Fixed"} 
+                size="small" 
+                color={params.value ? "info" : "default"}
+                variant="outlined"
+                sx={{ height: 24, fontSize: '0.75rem', borderRadius: 1 }}
+            />
+        )
     },
     {
       field: "actions",
       headerName: "Actions",
-      width: 170,
+      width: 100,
       sortable: false,
       align: "center",
       headerAlign: "center",
       renderCell: (params) => (
-        <Tooltip title="Edit this tour">
-          <Button
-            variant="contained"
+        <Tooltip title="Edit Tour">
+          <IconButton
             size="small"
-            color="secondary"
-            startIcon={<Edit />}
             onClick={() => handleUpdate(params.row._id)}
-            sx={{ boxShadow: 2 }}
+            color="primary"
           >
-            Update
-          </Button>
+            <Edit fontSize="small" />
+          </IconButton>
         </Tooltip>
       ),
     },
   ];
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Paper elevation={6} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 5 }}>
+    <Box sx={{ bgcolor: "#F2F4F7", minHeight: "100vh", pb: 4 }}>
+        <Container maxWidth="xl" sx={{ py: 4 }}>
+        
+        {/* Header Section */}
         <Stack
-          direction={{ xs: "column", sm: "row" }}
-          justifyContent="space-between"
-          alignItems="center"
-          spacing={2}
-          mb={3}
+            direction={{ xs: "column", sm: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "flex-start", sm: "center" }}
+            spacing={2}
+            mb={4}
         >
-          <Typography
-            variant="h4"
-            fontWeight="bold"
-            sx={{ color: "primary.main", letterSpacing: 1 }}
-          >
-            Tour Packages
-          </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<Add />}
-            onClick={handleAddNew}
-            sx={{
-              borderRadius: 3,
-              px: 3,
-              textTransform: "none",
-              fontWeight: "bold",
-              boxShadow: 2,
-              "&:hover": {
-                background: "linear-gradient(90deg,#1976d2,#42a5f5)",
-              },
-            }}
-          >
-            Add Tour
-          </Button>
+            <Box>
+                <Typography variant="h4" fontWeight="700" color="text.primary">
+                    Tour List
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                    Detailed view of all registered tour packages.
+                </Typography>
+            </Box>
+            <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={handleAddNew}
+                sx={{
+                    bgcolor: theme.palette.primary.main,
+                    borderRadius: 1,
+                    textTransform: "none",
+                    fontWeight: "600",
+                }}
+            >
+                Add Tour
+            </Button>
         </Stack>
-        {/* Advanced search bar section */}
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          justifyContent="flex-end"
-          alignItems="center"
-          mb={2}
+
+        {/* Search Bar */}
+        <Paper elevation={0} sx={{ p: 2, mb: 3, border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                <TextField
+                    placeholder="Filter by ID..."
+                    size="small"
+                    value={searchId}
+                    onChange={(e) => setSearchId(e.target.value)}
+                    InputProps={{
+                        startAdornment: <InputAdornment position="start"><Search fontSize="small" /></InputAdornment>,
+                        endAdornment: searchId && <InputAdornment position="end"><IconButton size="small" onClick={() => setSearchId("")}><Clear fontSize="small" /></IconButton></InputAdornment>
+                    }}
+                    sx={{ width: { xs: '100%', md: 300 } }}
+                />
+                <TextField
+                    placeholder="Filter by Agency Name..."
+                    size="small"
+                    value={searchAgency}
+                    onChange={(e) => setSearchAgency(e.target.value)}
+                    InputProps={{
+                        startAdornment: <InputAdornment position="start"><Search fontSize="small" /></InputAdornment>,
+                        endAdornment: searchAgency && <InputAdornment position="end"><IconButton size="small" onClick={() => setSearchAgency("")}><Clear fontSize="small" /></IconButton></InputAdornment>
+                    }}
+                    sx={{ width: { xs: '100%', md: 300 } }}
+                />
+            </Stack>
+        </Paper>
+
+        {/* Classic Table DataGrid */}
+        <Paper 
+            elevation={2} 
+            sx={{ 
+                height: 650, 
+                width: "100%", 
+                borderRadius: 2,
+                overflow: "hidden" 
+            }}
         >
-          <TextField
-            label="Search by ID"
-            variant="outlined"
-            size="small"
-            value={searchId}
-            onChange={(e) => setSearchId(e.target.value)}
-            placeholder="Enter Tour ID"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <IconButton
-                  onClick={() => setSearchId("")}
-                  style={{ visibility: searchId ? "visible" : "hidden" }}
-                  size="small"
-                >
-                  <Clear />
-                </IconButton>
-              ),
-            }}
-            sx={{
-              minWidth: { xs: 120, sm: 160 },
-              bgcolor: "grey.100",
-              borderRadius: 2,
-            }}
-          />
-          <TextField
-            label="Search by Agency"
-            variant="outlined"
-            size="small"
-            value={searchAgency}
-            onChange={(e) => setSearchAgency(e.target.value)}
-            placeholder="Agency Name"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <IconButton
-                  onClick={() => setSearchAgency("")}
-                  style={{ visibility: searchAgency ? "visible" : "hidden" }}
-                  size="small"
-                >
-                  <Clear />
-                </IconButton>
-              ),
-            }}
-            sx={{
-              minWidth: { xs: 130, sm: 200 },
-              bgcolor: "grey.100",
-              borderRadius: 2,
-            }}
-          />
-        </Stack>
-        <Box
-          sx={{
-            height: { xs: 440, md: 650 },
-            width: "100%",
-            bgcolor: "grey.50",
-            borderRadius: 3,
-            boxShadow: 1,
-          }}
-        >
-          <DataGrid
-            rows={filteredData}
-            columns={columns}
-            loading={loading}
-            getRowId={(row) => row._id}
-            pageSizeOptions={[10, 25, 50]}
-            initialState={{
-              pagination: { paginationModel: { pageSize: 10, page: 0 } },
-            }}
-            slots={{ toolbar: GridToolbar }}
-            sx={{
-              border: "none",
-              "& .MuiDataGrid-cell": {
-                borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
-                py: 1,
-              },
-              "& .MuiDataGrid-columnHeaders": {
-                bgcolor: "grey.200",
-                fontWeight: "bold",
-                fontSize: "1rem",
-                letterSpacing: 0.5,
-              },
-              "& .MuiDataGrid-row:hover": {
-                bgcolor: "grey.100",
-                boxShadow: 1,
-              },
-            }}
-          />
-        </Box>
-      </Paper>
-    </Container>
+            <DataGrid
+                rows={filteredData}
+                columns={columns}
+                loading={loading}
+                getRowId={(row) => row._id}
+                pageSizeOptions={[10, 25, 50, 100]}
+                initialState={{
+                    pagination: { paginationModel: { pageSize: 10, page: 0 } },
+                }}
+                slots={{ toolbar: CustomToolbar }}
+                disableRowSelectionOnClick
+                
+                // --- Classic Table Styling Properties ---
+                density="standard"
+                showCellVerticalBorder={true}
+                showColumnVerticalBorder={true}
+                rowHeight={52} // Standard table row height
+                
+                sx={{
+                    border: 0,
+                    // Header Styling
+                    "& .MuiDataGrid-columnHeaders": {
+                        backgroundColor: "#f1f5f9", // Light gray background
+                        color: "#475569",
+                        fontSize: "0.80rem",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        borderBottom: "2px solid #e2e8f0",
+                    },
+                    // Cell Styling
+                    "& .MuiDataGrid-cell": {
+                        borderBottom: "1px solid #f0f0f0",
+                        color: "#334155",
+                        fontSize: "0.875rem",
+                    },
+                    // Zebra Striping
+                    [`& .${gridClasses.row}:nth-of-type(even)`]: {
+                        backgroundColor: "#fafafa",
+                    },
+                    [`& .${gridClasses.row}:hover`]: {
+                        backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                    },
+                    // Footer
+                    "& .MuiDataGrid-footerContainer": {
+                        borderTop: "2px solid #e2e8f0",
+                        backgroundColor: "#f8fafc",
+                    },
+                }}
+            />
+        </Paper>
+        </Container>
+    </Box>
   );
 };
 
