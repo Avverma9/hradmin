@@ -24,7 +24,7 @@ export default function TourBookingPage() {
       const res = await dispatch(bookNow(payload)).unwrap();
       toast.success("Booking successful");
       // If backend returns booking id or detail, navigate to bookings page
-      navigate("/travel-bookings");
+      navigate("/tour-bookings");
     } catch (err) {
       toast.error(err || "Booking failed");
     }
@@ -38,7 +38,7 @@ export default function TourBookingPage() {
       <Box sx={{ py: 6 }}>
         <Container maxWidth="md">
           <TourBookingForm
-            tour={tour}
+            tour={tour?.data}
             gstData={{}}
             userId={currentUserId}
             onBookingSubmit={handleBookingSubmit}

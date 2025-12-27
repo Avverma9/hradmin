@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useLoader } from "../../../utils/loader";
@@ -9,245 +9,238 @@ import {
   updateTourImage,
 } from "../redux/reducers/tour/tour";
 
-// Carousel Imports
-import Slider from "react-slick";
-import "slick-carousel/slick/slick-theme.css";
-import "slick-carousel/slick/slick.css";
-
-// MUI Imports
+// MUI
 import {
   alpha,
+  Avatar,
   Box,
   Button,
   Card,
   CardContent,
-  CardMedia,
   Chip,
   CircularProgress,
-  Collapse,
   Container,
-  CssBaseline,
   Dialog,
   DialogContent,
   DialogTitle,
   Divider,
+  Fab,
   Grid,
   IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  MenuItem,
   Paper,
   Stack,
   TextField,
-  Tooltip,
   Typography,
+  useMediaQuery,
   useTheme,
+  Zoom,
+  MenuItem,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
 // Icons
-import AddIcon from "@mui/icons-material/Add";
-import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
-import AirlineSeatReclineExtraIcon from "@mui/icons-material/AirlineSeatReclineExtra";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import CancelIcon from "@mui/icons-material/Cancel";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CloseIcon from "@mui/icons-material/Close";
-import CollectionsIcon from "@mui/icons-material/Collections";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import NightsStayIcon from "@mui/icons-material/NightsStay";
-import StarIcon from "@mui/icons-material/Star";
-import TravelExploreIcon from "@mui/icons-material/TravelExplore";
-import WbSunnyIcon from "@mui/icons-material/WbSunny";
+import {
+  Add,
+  AirlineSeatReclineExtra,
+  Close,
+  CurrencyRupee,
+  Delete,
+  Edit,
+  ExpandMore,
+  Image as ImageIcon,
+  LocationOn,
+  NightsStay,
+  Star,
+  Visibility,
+  WbSunny,
+  DirectionsBus,
+  CheckCircle,
+  Cancel,
+} from "@mui/icons-material";
 
-// --- Helpers ---
-const parseVisitingPlaces = (placesStr) => {
-  if (!placesStr) return "Details not available.";
-  return placesStr
-    .split("|")
-    .map((part) => {
-      const night = part.match(/(\d+)N/);
-      const city = part.replace(/(\d+)N\s*/, "");
-      return `${night ? night[1] : ""} Night${
-        night && night[1] > 1 ? "s" : ""
-      } in ${city}`;
-    })
-    .join(", ");
-};
+/* ================= STYLED COMPONENTS ================= */
 
-const FALLBACK_IMAGE_URL = "/assets/placeholder.svg";
-
-// --- Styled Components ---
-
-const StyledCard = styled(Card)(({ theme }) => ({
-  borderRadius: 16,
-  border: `1px solid ${theme.palette.divider}`,
-  boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
-  transition: "transform 0.3s ease, box-shadow 0.3s ease",
+const GradientCard = styled(Card)(({ theme }) => ({
+  borderRadius: 20,
   overflow: "hidden",
+  border: "none",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
+  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
   "&:hover": {
     transform: "translateY(-4px)",
-    boxShadow: "0 12px 24px rgba(0,0,0,0.1)",
+    boxShadow: "0 12px 48px rgba(0,0,0,0.12)",
   },
 }));
 
-const InfoStrip = styled(Box)(({ theme }) => ({
-  display: "flex",
-  gap: theme.spacing(3),
-  padding: theme.spacing(1.5, 2),
-  backgroundColor: theme.palette.grey[50],
-  borderRadius: 8,
-  border: `1px solid ${theme.palette.grey[200]}`,
-  marginTop: theme.spacing(2),
-  marginBottom: theme.spacing(2),
-  [theme.breakpoints.down("sm")]: {
-    flexDirection: "column",
-    gap: theme.spacing(1),
+const ImageOverlay = styled(Box)(({ theme }) => ({
+  position: "relative",
+  height: 280,
+  overflow: "hidden",
+  background: "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 100%)",
+  "&::before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "linear-gradient(135deg, rgba(0,0,0,0.1) 0%, transparent 100%)",
   },
 }));
 
-const SliderArrow = styled(IconButton)(({ theme }) => ({
+const FloatingBadge = styled(Box)(({ theme }) => ({
   position: "absolute",
-  top: "50%",
-  transform: "translateY(-50%)",
+  top: 16,
+  right: 16,
   zIndex: 2,
-  backgroundColor: alpha(theme.palette.common.white, 0.8),
-  "&:hover": {
-    backgroundColor: theme.palette.common.white,
-  },
-  boxShadow: theme.shadows[2],
-  width: 32,
-  height: 32,
+  backdropFilter: "blur(10px)",
+  backgroundColor: alpha(theme.palette.background.paper, 0.9),
+  borderRadius: 12,
+  padding: "6px 12px",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
 }));
 
-// --- Custom Slider Arrows ---
-function NextArrow(props) {
-  const { onClick } = props;
-  return (
-    <SliderArrow onClick={onClick} sx={{ right: 10 }}>
-      <ArrowForwardIosIcon sx={{ fontSize: 14 }} />
-    </SliderArrow>
-  );
-}
+const InfoChip = styled(Chip)(({ theme }) => ({
+  borderRadius: 8,
+  fontWeight: 600,
+  "& .MuiChip-icon": {
+    marginLeft: "6px",
+  },
+}));
 
-function PrevArrow(props) {
-  const { onClick } = props;
-  return (
-    <SliderArrow onClick={onClick} sx={{ left: 10 }}>
-      <ArrowBackIosNewIcon sx={{ fontSize: 14 }} />
-    </SliderArrow>
-  );
-}
+/* ================= IMAGE DIALOG ================= */
 
-// --- Modals ---
+function ImageDialog({ open, onClose, images, tourId }) {
+  const dispatch = useDispatch();
+  const { showLoader, hideLoader } = useLoader();
+  const fileRef = useRef(null);
 
-function ImageManagerModal({
-  open,
-  onClose,
-  images = [],
-  onImageUpload,
-  onImageDelete,
-  tourId,
-}) {
-  const fileInputRef = useRef(null);
+  const uploadImages = async (files) => {
+    const fd = new FormData();
+    files.forEach((f) => fd.append("images", f));
+    try {
+      showLoader();
+      await dispatch(updateTourImage({ id: tourId, formData: fd })).unwrap();
+      await dispatch(tourByOwner()).unwrap();
+    } finally {
+      hideLoader();
+    }
+  };
 
-  const handleFileChange = (event) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      onImageUpload(Array.from(files), tourId);
+  const deleteImage = async (index) => {
+    try {
+      showLoader();
+      await dispatch(deleteTourImage({ id: tourId, index })).unwrap();
+      await dispatch(tourByOwner()).unwrap();
+    } finally {
+      hideLoader();
     }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          borderBottom: 1,
-          borderColor: "divider",
-        }}
-      >
-        <Typography variant="h6">Manage Tour Images</Typography>
-        <IconButton onClick={onClose}>
-          <CloseIcon />
-        </IconButton>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 4 },
+      }}
+    >
+      <DialogTitle>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Stack direction="row" spacing={1} alignItems="center">
+            <ImageIcon color="primary" />
+            <Typography variant="h6" fontWeight={700}>
+              Manage Gallery
+            </Typography>
+          </Stack>
+          <IconButton onClick={onClose}>
+            <Close />
+          </IconButton>
+        </Stack>
       </DialogTitle>
-      <DialogContent sx={{ p: 3 }}>
-        <Grid container spacing={2} mt={0}>
+      <DialogContent>
+        <Grid container spacing={2}>
+          {/* Upload Button */}
           <Grid item xs={12} sm={6} md={4}>
             <Paper
-              variant="outlined"
-              onClick={() => fileInputRef.current.click()}
+              elevation={0}
               sx={{
-                height: 180,
+                height: 200,
+                borderRadius: 3,
+                border: "2px dashed",
+                borderColor: "primary.main",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
-                borderStyle: "dashed",
-                borderColor: "primary.main",
-                bgcolor: "primary.50",
-                transition: "0.2s",
-                "&:hover": { bgcolor: "primary.100" },
+                transition: "all 0.3s",
+                "&:hover": {
+                  bgcolor: alpha("#1976d2", 0.05),
+                  transform: "scale(1.02)",
+                },
               }}
+              onClick={() => fileRef.current?.click()}
             >
-              <AddPhotoAlternateIcon
-                color="primary"
-                sx={{ fontSize: 40, mb: 1 }}
-              />
-              <Typography variant="body2" color="primary" fontWeight="bold">
+              <Add sx={{ fontSize: 48, color: "primary.main", mb: 1 }} />
+              <Typography variant="body2" fontWeight={600} color="primary">
                 Upload Images
               </Typography>
             </Paper>
             <input
+              ref={fileRef}
               type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept="image/*"
-              style={{ display: "none" }}
+              hidden
               multiple
+              accept="image/*"
+              onChange={(e) => uploadImages(Array.from(e.target.files))}
             />
           </Grid>
-          {images.map((image, index) => (
-            <Grid item key={`${tourId}-img-${index}`} xs={12} sm={6} md={4}>
-              <Box
+
+          {/* Image Grid */}
+          {(images || []).map((img, i) => (
+            <Grid item xs={12} sm={6} md={4} key={i}>
+              <Paper
+                elevation={2}
                 sx={{
                   position: "relative",
-                  height: 180,
-                  borderRadius: 2,
+                  height: 200,
+                  borderRadius: 3,
                   overflow: "hidden",
-                  boxShadow: 2,
                 }}
               >
                 <img
-                  src={image}
-                  alt={`Gallery ${index}`}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  src={img}
+                  alt={`Tour ${i + 1}`}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
                 />
                 <IconButton
-                  size="small"
-                  onClick={() => onImageDelete(index, tourId)}
+                  onClick={() => deleteImage(i)}
                   sx={{
                     position: "absolute",
                     top: 8,
                     right: 8,
-                    bgcolor: "error.main",
+                    bgcolor: alpha("#d32f2f", 0.9),
                     color: "white",
-                    "&:hover": { bgcolor: "error.dark" },
+                    "&:hover": {
+                      bgcolor: "#d32f2f",
+                    },
                   }}
+                  size="small"
                 >
-                  <DeleteIcon fontSize="small" />
+                  <Delete fontSize="small" />
                 </IconButton>
-              </Box>
+              </Paper>
             </Grid>
           ))}
         </Grid>
@@ -256,683 +249,663 @@ function ImageManagerModal({
   );
 }
 
-function SeatMapModal({ open, onClose, tour }) {
-  const dispatch = useDispatch();
-  const [vehicleId, setVehicleId] = useState(() => {
-    const active = (tour?.vehicles || []).find((v) => v.isActive !== false);
-    return active?._id || tour?.vehicles?.[0]?._id || "";
-  });
+/* ================= SEAT MAP DIALOG ================= */
 
-  const { loading, seatMapByKey } = useSelector((state) => state.tour);
-  const seatKey = `${tour?._id}:${vehicleId}`;
-  const seatMap = seatMapByKey[seatKey] || [];
+function SeatDialog({ open, onClose, tour }) {
+  const dispatch = useDispatch();
+  const { seatMapByKey, loading } = useSelector((s) => s.tour);
+
+  const activeVehicle =
+    tour?.vehicles?.find((v) => v.isActive !== false) || tour?.vehicles?.[0];
+  const [vehicleId, setVehicleId] = useState(activeVehicle?._id || "");
 
   useEffect(() => {
     if (open && tour?._id && vehicleId) {
       dispatch(fetchSeatMap({ tourId: tour._id, vehicleId }));
     }
-  }, [open, vehicleId, tour?._id, dispatch]);
+  }, [open, tour?._id, vehicleId, dispatch]);
 
+  const seatKey = `${tour?._id}:${vehicleId}`;
+  const seatMap = seatMapByKey[seatKey] || [];
   const bookedCount = seatMap.filter((s) => s.status === "booked").length;
-  const totalCount = seatMap.length;
+  const availableCount = seatMap.filter((s) => s.status === "available").length;
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Box display="flex" alignItems="center" gap={1}>
-          <AirlineSeatReclineExtraIcon color="primary" />
-          <Typography variant="h6">Seat Availability</Typography>
-        </Box>
-        <IconButton onClick={onClose}>
-          <CloseIcon />
-        </IconButton>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: 4 } }}
+    >
+      <DialogTitle>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Stack direction="row" spacing={1} alignItems="center">
+            <AirlineSeatReclineExtra color="primary" />
+            <Typography variant="h6" fontWeight={700}>
+              Seat Availability
+            </Typography>
+          </Stack>
+          <IconButton onClick={onClose}>
+            <Close />
+          </IconButton>
+        </Stack>
       </DialogTitle>
-      <DialogContent dividers>
-        <Box sx={{ display: "flex", gap: 2, alignItems: "center", mb: 3 }}>
+      <DialogContent>
+        <Stack spacing={3}>
+          {/* Vehicle Selector */}
           <TextField
             select
+            fullWidth
+            size="small"
             label="Select Vehicle"
             value={vehicleId}
             onChange={(e) => setVehicleId(e.target.value)}
-            size="small"
-            fullWidth
+            sx={{ borderRadius: 2 }}
           >
             {(tour?.vehicles || []).map((v) => (
               <MenuItem key={v._id} value={v._id}>
-                {v.name} ({v.totalSeats} Seats)
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <DirectionsBus fontSize="small" />
+                  <Typography>
+                    {v.name} - {v.totalSeats} Seats
+                  </Typography>
+                </Stack>
               </MenuItem>
             ))}
           </TextField>
-          <Box sx={{ minWidth: 100, textAlign: "right" }}>
-            <Typography variant="caption" display="block">
-              Booked / Total
-            </Typography>
-            <Typography variant="h6" fontWeight="bold">
-              {bookedCount} / {totalCount}
-            </Typography>
-          </Box>
-        </Box>
 
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Box>
-            {seatMap.length === 0 ? (
-              <Typography color="text.secondary" align="center">
-                No seat map available.
-              </Typography>
-            ) : (
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(4, 1fr)",
-                  gap: 1,
-                }}
-              >
-                {seatMap.map((seat) => (
+          {/* Stats */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              bgcolor: alpha("#1976d2", 0.05),
+              borderRadius: 2,
+            }}
+          >
+            <Stack direction="row" spacing={4} justifyContent="center">
+              <Box textAlign="center">
+                <Typography variant="h4" fontWeight={700} color="success.main">
+                  {availableCount}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Available
+                </Typography>
+              </Box>
+              <Divider orientation="vertical" flexItem />
+              <Box textAlign="center">
+                <Typography variant="h4" fontWeight={700} color="error.main">
+                  {bookedCount}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Booked
+                </Typography>
+              </Box>
+            </Stack>
+          </Paper>
+
+          {/* Seat Map */}
+          {loading ? (
+            <Box display="flex" justifyContent="center" py={4}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Grid container spacing={1}>
+              {seatMap.map((s) => (
+                <Grid item xs={3} key={s.code}>
                   <Button
-                    key={seat.code}
-                    variant={
-                      seat.status === "booked" ? "contained" : "outlined"
-                    }
-                    color={seat.status === "booked" ? "inherit" : "primary"}
-                    disabled={seat.status === "booked"}
+                    fullWidth
+                    variant={s.status === "booked" ? "contained" : "outlined"}
+                    disabled={s.status === "booked"}
+                    color={s.status === "booked" ? "error" : "primary"}
                     sx={{
-                      minWidth: 0,
-                      borderRadius: 1,
-                      bgcolor:
-                        seat.status === "booked"
-                          ? "action.disabledBackground"
-                          : "transparent",
+                      borderRadius: 2,
+                      minHeight: 48,
+                      fontWeight: 600,
                     }}
                   >
-                    {seat.code}
+                    {s.code}
                   </Button>
-                ))}
-              </Box>
-            )}
-            <Stack direction="row" spacing={2} mt={3} justifyContent="center">
-              <Chip
-                size="small"
-                label="Available"
-                variant="outlined"
-                color="primary"
-              />
-              <Chip
-                size="small"
-                label="Booked"
-                sx={{ bgcolor: "action.disabledBackground" }}
-              />
-            </Stack>
-          </Box>
-        )}
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Stack>
       </DialogContent>
     </Dialog>
   );
 }
 
-// --- Main Card Component ---
+
+/* ================= TOUR CARD ================= */
 
 function TourCard({ tour }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [isSeatModalOpen, setIsSeatModalOpen] = useState(false);
-  const { showLoader, hideLoader } = useLoader();
+  const [imgOpen, setImgOpen] = useState(false);
+  const [seatOpen, setSeatOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const theme = useTheme();
 
-  const handleImageEditClick = (e) => {
-    e.stopPropagation();
-    setIsImageModalOpen(true);
-  };
+  const mainImage = tour.images?.[0] || "/assets/placeholder.svg";
 
-  const handleImageUpload = async (files, tourId) => {
-    const formData = new FormData();
-    files.forEach((file) => formData.append("images", file));
-    try {
-      showLoader();
-      await dispatch(updateTourImage({ id: tourId, formData })).unwrap();
-      await dispatch(tourByOwner()).unwrap();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      hideLoader();
-    }
-  };
-
-  const handleImageDelete = async (index, tourId) => {
-    try {
-      showLoader();
-      await dispatch(deleteTourImage({ id: tourId, index })).unwrap();
-      await dispatch(tourByOwner()).unwrap();
-      setIsImageModalOpen(false);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      hideLoader();
-    }
-  };
-
-  const imageCount = tour.images?.length || 0;
-  const imagesToShow = imageCount > 0 ? tour.images : [FALLBACK_IMAGE_URL];
-
-  const sliderSettings = {
-    dots: true,
-    infinite: imageCount > 1,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    autoplay: imageCount > 1,
-    autoplaySpeed: 4000,
-    nextArrow: <NextArrow />,
-    prevArrow: <PrevArrow />,
+  const parsePlace = (str) => {
+    if (!str) return "";
+    return str
+      .split("|")
+      .map((p) => {
+        const m = p.match(/(\d+)N\s*(.*)/);
+        return m ? `${m[1]}N ${m[2].trim()}` : p.trim();
+      })
+      .join(" • ");
   };
 
   return (
     <>
-      <StyledCard>
+      <GradientCard>
         <Grid container>
-          {/* Left Column: Image Slider */}
-          <Grid
-            item
-            xs={12}
-            md={5}
-            lg={4}
-            sx={{ position: "relative", bgcolor: "black" }}
-          >
-            <Box
-              sx={{
-                height: "100%",
-                minHeight: { xs: 250, md: 350 },
-                "& .slick-slider, & .slick-list, & .slick-track": {
+          {/* Image Section */}
+          <Grid item xs={12} md={5}>
+            <ImageOverlay>
+              <Box
+                component="img"
+                src={mainImage}
+                alt={tour.travelAgencyName}
+                sx={{
+                  width: "100%",
                   height: "100%",
-                },
-                "& .slick-slide > div": { height: "100%" },
-              }}
-            >
-              <Slider {...sliderSettings}>
-                {imagesToShow.map((image, index) => (
-                  <Box key={index} sx={{ height: "100%", width: "100%" }}>
-                    <CardMedia
-                      component="img"
-                      image={image}
-                      alt={`Tour ${index}`}
-                      sx={{
-                        height: "100%",
-                        width: "100%",
-                        objectFit: "cover",
-                        opacity: 0.9,
-                      }}
-                    />
-                  </Box>
-                ))}
-              </Slider>
-            </Box>
+                  objectFit: "cover",
+                }}
+                onError={(e) => {
+                  e.target.src = "/assets/placeholder.svg";
+                }}
+              />
 
-            {/* Overlay Edit Button */}
-            <Tooltip title="Manage Gallery">
-              <IconButton
-                onClick={handleImageEditClick}
+              {/* Floating Badge */}
+              <FloatingBadge>
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <Star sx={{ fontSize: 18, color: "#FFB400" }} />
+                  <Typography variant="body2" fontWeight={700}>
+                    {tour.starRating || "N/A"}
+                  </Typography>
+                </Stack>
+              </FloatingBadge>
+
+              {/* Bottom Actions */}
+              <Stack
+                direction="row"
+                spacing={1}
                 sx={{
                   position: "absolute",
-                  top: 12,
-                  right: 12,
-                  backgroundColor: "rgba(255,255,255,0.8)",
-                  backdropFilter: "blur(4px)",
-                  "&:hover": { backgroundColor: "white" },
-                  zIndex: 10,
+                  bottom: 16,
+                  left: 16,
+                  right: 16,
                 }}
-                size="small"
               >
-                <CollectionsIcon fontSize="small" color="action" />
-              </IconButton>
-            </Tooltip>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<ImageIcon />}
+                  onClick={() => setImgOpen(true)}
+                  sx={{
+                    borderRadius: 2,
+                    bgcolor: alpha("#fff", 0.9),
+                    color: "text.primary",
+                    "&:hover": { bgcolor: "#fff" },
+                  }}
+                >
+                  {tour.images?.length || 0} Photos
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<Edit />}
+                  onClick={() => navigate(`/tour-update/${tour._id}`)}
+                  sx={{
+                    borderRadius: 2,
+                    bgcolor: alpha("#fff", 0.9),
+                    color: "text.primary",
+                    "&:hover": { bgcolor: "#fff" },
+                  }}
+                >
+                  View & Edit
+                </Button>
+              </Stack>
+            </ImageOverlay>
           </Grid>
 
-          {/* Right Column: Details */}
-          <Grid item xs={12} md={7} lg={8}>
-            <CardContent
-              sx={{
-                p: 3,
-                display: "flex",
-                flexDirection: "column",
-                height: "100%",
-              }}
-            >
-              {/* Header */}
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="flex-start"
-                mb={1}
-              >
+          {/* Content Section */}
+          <Grid item xs={12} md={7}>
+            <CardContent sx={{ p: 3 }}>
+              <Stack spacing={2}>
+                {/* Header */}
                 <Box>
-                  <Chip
-                    label={tour.themes}
-                    size="small"
-                    color="primary"
-                    sx={{
-                      borderRadius: 1,
-                      fontWeight: 600,
-                      mb: 1,
-                      textTransform: "uppercase",
-                      fontSize: "0.7rem",
-                    }}
-                  />
-                  <Typography
-                    variant="h5"
-                    component="div"
-                    fontWeight="800"
-                    color="text.primary"
-                  >
-                    {tour.travelAgencyName}
-                  </Typography>
-                  <Box
-                    display="flex"
-                    alignItems="center"
-                    gap={0.5}
-                    color="text.secondary"
-                    mt={0.5}
-                  >
-                    <LocationOnIcon fontSize="small" color="action" />
-                    <Typography variant="body2">
-                      {tour.city}, {tour.state} ({tour?.country})
-                    </Typography>
-                  </Box>
-                </Box>
-                <Tooltip title="Edit Details">
-                  <IconButton
-                    onClick={() => navigate(`/tour-update/${tour._id}`)}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  mt: 1,
-                  mb: 2,
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                }}
-              >
-                {parseVisitingPlaces(tour.visitngPlaces || tour.visitingPlaces)}
-              </Typography>
-
-              {/* Info Strip */}
-              <InfoStrip>
-                <Box display="flex" alignItems="center" gap={1}>
-                  <WbSunnyIcon fontSize="small" color="warning" />
-                  <Typography variant="body2" fontWeight="500">
-                    {tour.days} Days
-                  </Typography>
-                </Box>
-                <Divider
-                  orientation="vertical"
-                  flexItem
-                  sx={{ display: { xs: "none", sm: "block" } }}
-                />
-                <Box display="flex" alignItems="center" gap={1}>
-                  <NightsStayIcon fontSize="small" color="info" />
-                  <Typography variant="body2" fontWeight="500">
-                    {tour.nights} Nights
-                  </Typography>
-                </Box>
-                <Divider
-                  orientation="vertical"
-                  flexItem
-                  sx={{ display: { xs: "none", sm: "block" } }}
-                />
-                <Box display="flex" alignItems="center" gap={1}>
-                  <StarIcon fontSize="small" sx={{ color: "#faaf00" }} />
-                  <Typography variant="body2" fontWeight="500">
-                    {tour.starRating} Rating
-                  </Typography>
-                </Box>
-              </InfoStrip>
-
-              <Box flexGrow={1} />
-
-              {/* Footer Actions */}
-              <Divider sx={{ my: 2 }} />
-              <Grid container alignItems="center" spacing={2}>
-                <Grid item xs={12} sm={4}>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    display="block"
-                  >
-                    Starts from
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    color="primary.main"
-                    fontWeight="800"
-                  >
-                    ₹{(tour.price || 0).toLocaleString("en-IN")}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={8}>
                   <Stack
                     direction="row"
-                    spacing={1}
-                    justifyContent={{ xs: "flex-start", sm: "flex-end" }}
+                    justifyContent="space-between"
+                    alignItems="start"
+                    mb={1}
                   >
-                    <Button
-                      variant="outlined"
-                      color="inherit"
-                      size="small"
-                      startIcon={<AirlineSeatReclineExtraIcon />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsSeatModalOpen(true);
-                      }}
-                    >
-                      Seats
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      color="inherit"
-                      size="small"
-                      onClick={() => setIsExpanded(!isExpanded)}
-                      endIcon={
-                        <ExpandMoreIcon
-                          sx={{
-                            transform: isExpanded
-                              ? "rotate(180deg)"
-                              : "rotate(0)",
-                          }}
-                        />
+                    <Box>
+                      <Typography variant="h5" fontWeight={800} gutterBottom>
+                        {tour.travelAgencyName}
+                      </Typography>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <LocationOn sx={{ fontSize: 18, color: "error.main" }} />
+                        <Typography variant="body2" color="text.secondary">
+                          {tour.city}, {tour.state}
+                        </Typography>
+                      </Stack>
+                    </Box>
+                    <Chip
+                      icon={
+                        tour.isAccepted ? (
+                          <CheckCircle fontSize="small" />
+                        ) : (
+                          <Cancel fontSize="small" />
+                        )
                       }
-                    >
-                      Itinerary
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      disableElevation
-                      startIcon={<FlightTakeoffIcon />}
-                      onClick={() => navigate(`/tour-booking/${tour._id}`)}
-                      sx={{ fontWeight: "bold" }}
-                    >
-                      Book Now
-                    </Button>
+                      label={tour.isAccepted ? "Active" : "Pending"}
+                      color={tour.isAccepted ? "success" : "warning"}
+                      size="small"
+                    />
                   </Stack>
-                </Grid>
-              </Grid>
+
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {parsePlace(tour.visitngPlaces)}
+                  </Typography>
+                </Box>
+
+                <Divider />
+
+                {/* Info Chips */}
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  <InfoChip
+                    icon={<WbSunny />}
+                    label={`${tour.days || 0}D`}
+                    size="small"
+                    variant="outlined"
+                  />
+                  <InfoChip
+                    icon={<NightsStay />}
+                    label={`${tour.nights || 0}N`}
+                    size="small"
+                    variant="outlined"
+                  />
+                  <InfoChip
+                    icon={<CurrencyRupee />}
+                    label={`₹${tour.price?.toLocaleString("en-IN") || 0}`}
+                    size="small"
+                    color="primary"
+                  />
+                  <InfoChip
+                    icon={<DirectionsBus />}
+                    label={`${tour.vehicles?.length || 0} Vehicles`}
+                    size="small"
+                    variant="outlined"
+                  />
+                </Stack>
+
+                {/* Action Buttons */}
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  <Button
+                    variant="outlined"
+                    startIcon={<AirlineSeatReclineExtra />}
+                    onClick={() => setSeatOpen(true)}
+                    sx={{ borderRadius: 2, flex: { xs: "1 1 100%", sm: 1 } }}
+                  >
+                    Seats
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<ExpandMore />}
+                    onClick={() => setExpanded(!expanded)}
+                    sx={{ borderRadius: 2, flex: { xs: "1 1 100%", sm: 1 } }}
+                  >
+                    Itinerary
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => navigate(`/tour-booking/${tour._id}`)}
+                    sx={{ borderRadius: 2, flex: { xs: "1 1 100%", sm: 1 } }}
+                  >
+                    Book Now
+                  </Button>
+                </Stack>
+
+                {/* Expanded Itinerary */}
+                {expanded && (
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      bgcolor: alpha(theme.palette.primary.main, 0.03),
+                      borderRadius: 2,
+                      maxHeight: 200,
+                      overflowY: "auto",
+                    }}
+                  >
+                    <Stack spacing={1.5}>
+                      {tour.dayWise?.map((d, i) => (
+                        <Box key={i}>
+                          <Stack direction="row" spacing={1} alignItems="start">
+                            <Avatar
+                              sx={{
+                                width: 24,
+                                height: 24,
+                                fontSize: 12,
+                                bgcolor: "primary.main",
+                              }}
+                            >
+                              {d.day}
+                            </Avatar>
+                            <Typography variant="body2">
+                              {d.description}
+                            </Typography>
+                          </Stack>
+                        </Box>
+                      ))}
+                    </Stack>
+                  </Paper>
+                )}
+              </Stack>
             </CardContent>
           </Grid>
         </Grid>
+      </GradientCard>
 
-        {/* Expandable Itinerary */}
-        <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-          <Box
-            sx={{
-              p: 4,
-              bgcolor: "grey.50",
-              borderTop: 1,
-              borderColor: "divider",
-            }}
-          >
-            <Typography variant="h6" gutterBottom fontWeight="bold">
-              Day-wise Itinerary
-            </Typography>
-            <Grid container spacing={4}>
-              <Grid item xs={12} md={7}>
-                <List sx={{ p: 0 }}>
-                  {tour.dayWise?.map((day) => (
-                    <ListItem
-                      key={day._id}
-                      alignItems="flex-start"
-                      sx={{ px: 0 }}
-                    >
-                      <Box
-                        sx={{
-                          minWidth: 60,
-                          mr: 2,
-                          bgcolor: "primary.main",
-                          color: "white",
-                          borderRadius: 1,
-                          p: 0.5,
-                          textAlign: "center",
-                        }}
-                      >
-                        <Typography
-                          variant="caption"
-                          display="block"
-                          sx={{ opacity: 0.8 }}
-                        >
-                          DAY
-                        </Typography>
-                        <Typography
-                          variant="h6"
-                          lineHeight={1}
-                          fontWeight="bold"
-                        >
-                          {day.day}
-                        </Typography>
-                      </Box>
-                      <ListItemText
-                        primary={
-                          <Typography fontWeight="500" color="text.primary">
-                            {day.description}
-                          </Typography>
-                        }
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              </Grid>
-              <Grid item xs={12} md={5}>
-                <Paper variant="outlined" sx={{ p: 2, bgcolor: "white" }}>
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight="bold"
-                    gutterBottom
-                    color="success.main"
-                  >
-                    <CheckCircleIcon
-                      fontSize="inherit"
-                      sx={{ mr: 1, verticalAlign: "middle" }}
-                    />
-                    Inclusions
-                  </Typography>
-                  <Box display="flex" flexWrap="wrap" gap={1} mb={3}>
-                    {tour.inclusion?.map((item, i) => (
-                      <Chip key={i} label={item} size="small" />
-                    ))}
-                  </Box>
-
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight="bold"
-                    gutterBottom
-                    color="error.main"
-                  >
-                    <CancelIcon
-                      fontSize="inherit"
-                      sx={{ mr: 1, verticalAlign: "middle" }}
-                    />
-                    Exclusions
-                  </Typography>
-                  <Box display="flex" flexWrap="wrap" gap={1}>
-                    {tour.exclusion?.map((item, i) => (
-                      <Chip
-                        key={i}
-                        label={item}
-                        size="small"
-                        variant="outlined"
-                      />
-                    ))}
-                  </Box>
-                </Paper>
-              </Grid>
-            </Grid>
-          </Box>
-        </Collapse>
-      </StyledCard>
-
-      {/* Render Modals */}
-      <ImageManagerModal
-        open={isImageModalOpen}
-        onClose={() => setIsImageModalOpen(false)}
+      {/* Dialogs */}
+      <ImageDialog
+        open={imgOpen}
+        onClose={() => setImgOpen(false)}
         images={tour.images}
-        onImageUpload={handleImageUpload}
-        onImageDelete={handleImageDelete}
         tourId={tour._id}
       />
-      <SeatMapModal
-        open={isSeatModalOpen}
-        onClose={() => setIsSeatModalOpen(false)}
+      <SeatDialog
+        open={seatOpen}
+        onClose={() => setSeatOpen(false)}
         tour={tour}
       />
     </>
   );
 }
 
-// --- Main Page Component ---
 
-export default function MyTour() {
+/* ================= MAIN PAGE ================= */
+
+export default function MyTours() {
   const dispatch = useDispatch();
-  const tourData = useSelector((state) => state.tour?.data);
   const { showLoader, hideLoader } = useLoader();
+  const tourState = useSelector((s) => s.tour);
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   useEffect(() => {
-    const loadMyTour = async () => {
+    const load = async () => {
       try {
         showLoader();
-        await dispatch(tourByOwner());
-      } catch (err) {
-        console.error("Failed to fetch my tours:", err);
+        await dispatch(tourByOwner()).unwrap();
       } finally {
         hideLoader();
       }
     };
-    loadMyTour();
+    load();
   }, [dispatch]);
 
-  if (!tourData || !Array.isArray(tourData)) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "80vh",
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
+  // ✅ FIXED: Proper data extraction with multiple fallbacks
+  const tourData = useMemo(() => {
+    console.log("🔍 Tour State:", tourState);
 
-  if (!Array.isArray(tourData) || tourData.length === 0) {
+    // Handle different response formats
+    if (Array.isArray(tourState?.data)) {
+      console.log("✅ Data is array:", tourState.data);
+      return tourState.data;
+    }
+    if (tourState?.data?.success && Array.isArray(tourState?.data?.data)) {
+      console.log("✅ Data from nested:", tourState.data.data);
+      return tourState.data.data;
+    }
+    if (tourState?.data?.data && Array.isArray(tourState?.data?.data)) {
+      console.log("✅ Data from data.data:", tourState.data.data);
+      return tourState.data.data;
+    }
+
+    console.log("⚠️ No valid data found, returning empty array");
+    return [];
+  }, [tourState]);
+
+  // ✅ FIXED: Only show loading on initial load
+  if (tourState?.loading && !tourData.length) {
     return (
       <Box
-        sx={{
-          bgcolor: "grey.50",
-          py: 10,
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="80vh"
+        flexDirection="column"
+        gap={2}
       >
-        <Container maxWidth="sm">
-          <Paper
-            elevation={0}
-            sx={{
-              p: 6,
-              textAlign: "center",
-              borderRadius: 4,
-              border: "1px dashed",
-              borderColor: "divider",
-            }}
-          >
-            <TravelExploreIcon
-              sx={{ fontSize: 80, color: "primary.light", mb: 2 }}
-            />
-            <Typography variant="h5" fontWeight="bold" gutterBottom>
-              No Tour Packages Found
-            </Typography>
-            <Typography color="text.secondary" sx={{ mb: 4 }}>
-              Start your journey by creating your first tour package listing.
-            </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<AddIcon />}
-              onClick={() => navigate("/add-tour-data")}
-              disableElevation
-            >
-              Create New Tour
-            </Button>
-          </Paper>
-        </Container>
+        <CircularProgress size={60} />
+        <Typography variant="body2" color="text.secondary">
+          Loading your tours...
+        </Typography>
       </Box>
     );
   }
 
   return (
-    <>
-      <CssBaseline />
-      <Box sx={{ bgcolor: "#f4f6f8", py: 6, minHeight: "100vh" }}>
-        <Container maxWidth="lg">
-          <Box
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: `linear-gradient(135deg, ${alpha(
+          theme.palette.primary.main,
+          0.02
+        )} 0%, ${alpha(theme.palette.secondary.main, 0.02)} 100%)`,
+        py: { xs: 3, md: 6 },
+      }}
+    >
+      <Container maxWidth="xl">
+        {/* Header */}
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={4}
+          flexWrap="wrap"
+          gap={2}
+        >
+          <Box>
+            <Typography
+              variant={isMobile ? "h4" : "h3"}
+              fontWeight={800}
+              gutterBottom
+            >
+              My Tours
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Manage and track all your tour packages
+            </Typography>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => navigate("/add-tour-data")}
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 5,
+              borderRadius: 3,
+              px: 3,
+              py: 1.5,
+              textTransform: "none",
+              fontWeight: 700,
+              display: { xs: "none", md: "flex" },
             }}
           >
-            <Box>
-              <Typography
-                variant="h4"
-                component="h1"
-                fontWeight="800"
-                color="text.primary"
+            Create Tour
+          </Button>
+        </Stack>
+
+        {/* Stats - Only show if data exists */}
+        {tourData.length > 0 && (
+          <Grid container spacing={2} mb={4}>
+            <Grid item xs={6} sm={3}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  borderRadius: 3,
+                  bgcolor: alpha("#1976d2", 0.05),
+                  border: `1px solid ${alpha("#1976d2", 0.1)}`,
+                }}
               >
-                My Tours
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Manage and update your active travel packages.
-              </Typography>
+                <Typography variant="h4" fontWeight={700} color="primary">
+                  {tourData.length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Total Tours
+                </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={6} sm={3}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  borderRadius: 3,
+                  bgcolor: alpha("#2e7d32", 0.05),
+                  border: `1px solid ${alpha("#2e7d32", 0.1)}`,
+                }}
+              >
+                <Typography variant="h4" fontWeight={700} color="success.main">
+                  {tourData.filter((t) => t.isAccepted).length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Active
+                </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={6} sm={3}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  borderRadius: 3,
+                  bgcolor: alpha("#ed6c02", 0.05),
+                  border: `1px solid ${alpha("#ed6c02", 0.1)}`,
+                }}
+              >
+                <Typography variant="h4" fontWeight={700} color="warning.main">
+                  {tourData.filter((t) => !t.isAccepted).length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Pending
+                </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={6} sm={3}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  borderRadius: 3,
+                  bgcolor: alpha("#9c27b0", 0.05),
+                  border: `1px solid ${alpha("#9c27b0", 0.1)}`,
+                }}
+              >
+                <Typography variant="h4" fontWeight={700} color="secondary.main">
+                  {tourData.reduce(
+                    (acc, t) => acc + (t.vehicles?.length || 0),
+                    0
+                  )}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Vehicles
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+        )}
+
+        {/* Tour List or Empty State */}
+        {tourData.length === 0 ? (
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 4, md: 8 },
+              textAlign: "center",
+              borderRadius: 4,
+              bgcolor: "background.paper",
+              border: "2px dashed",
+              borderColor: "divider",
+            }}
+          >
+            <Box
+              sx={{
+                width: { xs: 200, md: 300 },
+                height: { xs: 200, md: 300 },
+                mx: "auto",
+                mb: 3,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: alpha(theme.palette.primary.main, 0.05),
+                borderRadius: 4,
+              }}
+            >
+              <Add sx={{ fontSize: 120, color: "primary.main", opacity: 0.3 }} />
             </Box>
+            <Typography variant="h5" fontWeight={700} mb={1}>
+              No Tours Yet
+            </Typography>
+            <Typography variant="body1" color="text.secondary" mb={3}>
+              Start by creating your first amazing tour package
+            </Typography>
             <Button
               variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => navigate("/add-tour-data")}
               size="large"
-              disableElevation
-              sx={{ borderRadius: 2, fontWeight: "bold" }}
+              startIcon={<Add />}
+              onClick={() => navigate("/create-tour")}
+              sx={{ borderRadius: 3, px: 4 }}
             >
-              Add Tour
+              Create Your First Tour
             </Button>
-          </Box>
-
-          <Stack spacing={4}>
-            {(tourData || []).map((tour) => (
-              <TourCard key={tour._id} tour={tour} />
+          </Paper>
+        ) : (
+          <Stack spacing={3}>
+            {tourData.map((t) => (
+              <TourCard key={t._id} tour={t} />
             ))}
           </Stack>
-        </Container>
-      </Box>
-    </>
+        )}
+      </Container>
+
+      {/* Floating Action Button - Mobile Only */}
+      <Zoom in={true}>
+        <Fab
+          color="primary"
+          onClick={() => navigate("/create-tour")}
+          sx={{
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            display: { xs: "flex", md: "none" },
+          }}
+        >
+          <Add />
+        </Fab>
+      </Zoom>
+    </Box>
   );
 }

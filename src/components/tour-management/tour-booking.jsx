@@ -1,18 +1,27 @@
 import {
-  ArrowForwardIos,
-  DirectionsBus as BusIcon,
-  CheckCircle as CheckCircleIcon,
-  ChildCare as ChildIcon,
-  Event as EventIcon,
-  Face as FaceIcon,
-  Person as PersonIcon,
-  PhoneAndroid as PhoneIcon,
-  AirlineSeatReclineNormal as SeatIcon,
+  ArrowForward,
+  CalendarMonth,
+  ChildCare,
+  DirectionsBus,
+  EventSeat,
+  Info,
+  LocationOn,
+  Person,
+  Phone,
+  Star,
+  WbSunny,
+  Circle as SteeringIcon,
+  Cake,
+  Male,
+  Female,
 } from "@mui/icons-material";
 import {
   Alert,
+  Avatar,
   Box,
   Button,
+  Card,
+  CardContent,
   Chip,
   CircularProgress,
   Container,
@@ -22,67 +31,193 @@ import {
   MenuItem,
   Paper,
   Stack,
+  Step,
+  StepLabel,
+  Stepper,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
   alpha,
+  useMediaQuery,
   useTheme,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
+import { styled } from "@mui/material/styles";
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSeatMap } from "../redux/reducers/tour/tour";
 
-// --- Helper Functions ---
+/* ================= STYLED COMPONENTS ================= */
+
+const StyledContainer = styled(Container)(({ theme }) => ({
+  paddingTop: theme.spacing(4),
+  paddingBottom: theme.spacing(8),
+  backgroundColor: theme.palette.grey[50],
+  minHeight: "100vh",
+}));
+
+const HeaderCard = styled(Card)(({ theme }) => ({
+  borderRadius: 24,
+  boxShadow: "0 8px 32px rgba(0,0,0,0.05)",
+  background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(
+    theme.palette.primary.main,
+    0.02
+  )} 100%)`,
+  border: `1px solid ${theme.palette.divider}`,
+  marginBottom: theme.spacing(4),
+}));
+
+const VehicleSelectCard = styled(Paper)(({ theme, selected }) => ({
+  padding: theme.spacing(2),
+  borderRadius: 16,
+  border: `2px solid ${
+    selected ? theme.palette.primary.main : theme.palette.divider
+  }`,
+  backgroundColor: selected
+    ? alpha(theme.palette.primary.main, 0.04)
+    : theme.palette.background.paper,
+  cursor: "pointer",
+  transition: "all 0.2s ease-in-out",
+  display: "flex",
+  alignItems: "center",
+  gap: theme.spacing(2),
+  "&:hover": {
+    borderColor: theme.palette.primary.main,
+    transform: "translateY(-2px)",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+  },
+}));
+
+// --- Realistic Bus Layout Styles ---
+const BusChassis = styled(Box)(({ theme }) => ({
+  border: `3px solid ${theme.palette.grey[300]}`,
+  borderRadius: "30px 30px 10px 10px", 
+  padding: theme.spacing(3),
+  backgroundColor: "white",
+  position: "relative",
+  maxWidth: 380, 
+  margin: "0 auto",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
+}));
+
+const DriverCabin = styled(Box)(({ theme }) => ({
+  borderBottom: `2px dashed ${theme.palette.grey[200]}`,
+  paddingBottom: theme.spacing(2),
+  marginBottom: theme.spacing(2),
+  display: "flex",
+  justifyContent: "flex-end", 
+  color: theme.palette.grey[400],
+}));
+
+const SeatRow = styled(Box)(({ theme }) => ({
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: theme.spacing(5), // Aisle Gap
+  marginBottom: theme.spacing(1.5),
+}));
+
+const SeatGroup = styled(Box)(({ theme }) => ({
+  display: "flex",
+  gap: theme.spacing(1),
+}));
+
+const SeatButton = styled(Button)(({ theme, status }) => ({
+  minWidth: 0,
+  width: 44, // Slightly wider for "10A" text
+  height: 44,
+  padding: 0,
+  borderRadius: 8,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  border: "1px solid",
+  transition: "all 0.2s",
+  
+  ...(status === "available" && {
+    borderColor: theme.palette.grey[300],
+    color: theme.palette.text.secondary,
+    backgroundColor: "white",
+    "&:hover": {
+      borderColor: theme.palette.primary.main,
+      color: theme.palette.primary.main,
+      backgroundColor: alpha(theme.palette.primary.main, 0.05),
+    },
+  }),
+
+  ...(status === "selected" && {
+    borderColor: theme.palette.primary.main,
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.primary.contrastText,
+    boxShadow: `0 4px 10px ${alpha(theme.palette.primary.main, 0.4)}`,
+    "&:hover": { backgroundColor: theme.palette.primary.dark },
+  }),
+
+  ...(status === "booked" && {
+    borderColor: theme.palette.grey[200],
+    backgroundColor: theme.palette.grey[100],
+    color: theme.palette.text.disabled,
+    cursor: "not-allowed",
+  }),
+}));
+
+const StickySummary = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  borderRadius: 20,
+  position: "sticky",
+  top: 24,
+  backgroundColor: theme.palette.background.paper,
+  boxShadow: "0 8px 32px rgba(0,0,0,0.06)",
+  border: `1px solid ${theme.palette.divider}`,
+}));
+
+const PassengerCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  borderRadius: 16,
+  backgroundColor: theme.palette.background.paper,
+  border: `1px solid ${theme.palette.divider}`,
+  marginBottom: theme.spacing(2),
+}));
+
+/* ================= HELPERS ================= */
 const addDays = (dateString, days) => {
   if (!dateString) return "";
-  const result = new Date(dateString);
-  result.setDate(result.getDate() + days);
-  return result.toISOString().split("T")[0];
+  const d = new Date(dateString);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split("T")[0];
 };
-
-const formatDateForInput = (isoDate) => {
-  if (!isoDate) return "";
-  return isoDate.split("T")[0];
+const formatDateForInput = (date) => (date ? date.split("T")[0] : "");
+const formatDateDisplay = (dateString) => {
+  if (!dateString) return "Not Selected";
+  const options = { day: "numeric", month: "short", year: "numeric" };
+  return new Date(dateString).toLocaleDateString("en-IN", options);
 };
-
 const formatCurrency = (amount) =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
+  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);
+const validateMobileNumber = (mobile) => /^[6-9]\d{9}$/.test(mobile);
 
-const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
+/* ================= MAIN COMPONENT ================= */
+
+const TourBookingForm = ({ tour, userId, onBookingSubmit }) => {
   const dispatch = useDispatch();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  // Redux State
-  const { loading: seatLoading, seatMapByKey } = useSelector(
-    (state) => state.tour
-  );
+  const { loading: seatLoading, seatMapByKey } = useSelector((state) => state.tour);
 
-  // Derived State
-  const finalPrice = useMemo(() => {
-    if (!tour) return 0;
-    const gstPercent = gstData?.gstPrice || 0;
-    return tour.price + (tour.price * gstPercent) / 100;
-  }, [tour, gstData]);
+  const [activeStep, setActiveStep] = useState(0);
+  const steps = ["Select Seats", "Passenger Details", "Review & Pay"];
 
-  const minDate = tour?.from ? formatDateForInput(tour.from) : "";
-  const maxDate = tour?.to ? formatDateForInput(tour.to) : "";
+  // --- Dates ---
   const isCustomizable = !!tour?.isCustomizable;
+  const fixedStartDate = !isCustomizable ? formatDateForInput(tour?.tourStartDate || tour?.from) : "";
+  const fixedEndDate = !isCustomizable && fixedStartDate ? addDays(fixedStartDate, (tour?.days || 1) - 1) : "";
 
-  const fixedStartDate = !isCustomizable
-    ? formatDateForInput(tour?.tourStartDate || tour?.from)
-    : "";
-
-  const fixedEndDate =
-    !isCustomizable && fixedStartDate
-      ? addDays(fixedStartDate, (tour.days || 1) - 1)
-      : "";
-
-  // Form State
   const [startDate, setStartDate] = useState(fixedStartDate);
   const [endDate, setEndDate] = useState(fixedEndDate);
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
@@ -91,642 +226,371 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
   const [passengers, setPassengers] = useState({});
   const [error, setError] = useState("");
 
-  // Initialize Vehicle
+  // --- Select Vehicle & Dates Init ---
   useEffect(() => {
-    if (tour?.vehicles?.length > 0) {
-      const activeVehicle = tour.vehicles.find((v) => v.isActive !== false);
-      if (activeVehicle) setSelectedVehicleId(activeVehicle._id);
+    if (tour?.vehicles?.length && !selectedVehicleId) {
+      const v = tour.vehicles.find((v) => v.isActive !== false);
+      if (v) setSelectedVehicleId(v._id);
     }
-  }, [tour]);
+  }, [tour, selectedVehicleId]);
 
-  // Reset/Set dates if tour changes
   useEffect(() => {
-    if (!isCustomizable) {
-      const start = formatDateForInput(tour?.tourStartDate || tour?.from);
-      setStartDate(start);
-      setEndDate(addDays(start, (tour?.days || 1) - 1));
+    if (!isCustomizable && tour) {
+        const start = formatDateForInput(tour.tourStartDate || tour.from);
+        setStartDate(start);
+        setEndDate(addDays(start, (tour.days || 1) - 1));
     }
   }, [tour, isCustomizable]);
 
-  // Fetch Seat Map
+  const selectedVehicle = useMemo(() => tour?.vehicles?.find((v) => v._id === selectedVehicleId), [tour, selectedVehicleId]);
+
+  // --- Pricing ---
+  const seatPrice = selectedVehicle?.pricePerSeat || tour?.price || 0;
+  const totalAmount = useMemo(() => {
+    return selectedSeats.reduce((sum, seat) => {
+      const p = passengers[seat];
+      return sum + (p?.type === "child" ? seatPrice / 2 : seatPrice);
+    }, 0);
+  }, [selectedSeats, passengers, seatPrice]);
+  const advanceAmount = totalAmount * 0.2;
+  const balanceAmount = totalAmount * 0.8;
+
+  // --- Fetch Seats ---
   useEffect(() => {
     if (tour?._id && selectedVehicleId) {
       const key = `${tour._id}:${selectedVehicleId}`;
       if (!seatMapByKey[key]) {
-        dispatch(
-          fetchSeatMap({ tourId: tour._id, vehicleId: selectedVehicleId })
-        );
+        dispatch(fetchSeatMap({ tourId: tour._id, vehicleId: selectedVehicleId }));
       }
     }
-    setSelectedSeats([]);
-    setPassengers({});
   }, [tour?._id, selectedVehicleId, dispatch, seatMapByKey]);
 
-  const seatKey = `${tour?._id}:${selectedVehicleId}`;
-  const seatMap = seatMapByKey[seatKey] || [];
+  useEffect(() => {
+    setSelectedSeats([]); setPassengers({}); setError("");
+  }, [selectedVehicleId]);
 
+  const seatKey = `${tour?._id}:${selectedVehicleId}`;
+  
+  // Use seatLayout from vehicle object directly as per your JSON structure
+  const vehicleLayout = selectedVehicle?.seatLayout || []; 
+  // bookedSeats comes from API (seatMapByKey) or empty if not yet fetched
+  const bookedSeatsList = seatMapByKey[seatKey]?.bookedSeats || selectedVehicle?.bookedSeats || [];
+  
   // Handlers
   const handleSeatToggle = (seatCode) => {
     setError("");
     setSelectedSeats((prev) => {
-      const isSelected = prev.includes(seatCode);
-      if (isSelected) {
-        const newPassengers = { ...passengers };
-        delete newPassengers[seatCode];
-        setPassengers(newPassengers);
+      if (prev.includes(seatCode)) {
+        const p = { ...passengers }; delete p[seatCode]; setPassengers(p);
         return prev.filter((s) => s !== seatCode);
-      } else {
-        setPassengers((prevP) => ({
-          ...prevP,
-          [seatCode]: { type: "adult", fullName: "", age: "", gender: "male" },
-        }));
-        return [...prev, seatCode];
       }
+      setPassengers((p) => ({ ...p, [seatCode]: { type: "adult", fullName: "", gender: "male", age: "", seatNumber: seatCode } }));
+      return [...prev, seatCode];
     });
   };
 
-  const handlePassengerChange = (seatCode, field, value) => {
-    setPassengers((prev) => ({
-      ...prev,
-      [seatCode]: { ...prev[seatCode], [field]: value },
-    }));
+  const handlePassengerChange = (seat, field, value) => {
+    setPassengers((p) => ({ ...p, [seat]: { ...p[seat], [field]: value } }));
   };
 
-  const calculateTotal = () => {
-    let total = 0;
-    selectedSeats.forEach((seat) => {
-      const p = passengers[seat];
-      if (p?.type === "adult") {
-        total += finalPrice;
-      } else {
-        total += finalPrice / 2;
+  // Validation
+  const validateStep = (step) => {
+    setError("");
+    if (step === 0) {
+      if (!selectedSeats.length) return setError("Please select at least one seat.") || false;
+      if (!startDate || !endDate) return setError("Please select valid travel dates.") || false;
+    }
+    if (step === 1) {
+      if (!validateMobileNumber(primaryMobile)) return setError("Enter a valid 10-digit mobile number.") || false;
+      for (const seat of selectedSeats) {
+        const p = passengers[seat];
+        if (!p?.fullName?.trim() || !p?.age) return setError(`Fill details for Seat ${seat}`) || false;
       }
-    });
-    return total;
+    }
+    return true;
   };
+
+  const handleNext = () => { if (validateStep(activeStep)) setActiveStep((p) => p + 1); };
+  const handleBack = () => { setError(""); setActiveStep((p) => p - 1); };
 
   const handleSubmit = () => {
-    setError("");
-    if (!startDate || !endDate)
-      return setError("Select both Start and End travel dates.");
-    if (new Date(endDate) < new Date(startDate)) {
-      return setError("End date cannot be before Start date.");
-    }
-    if (selectedSeats.length === 0)
-      return setError("Please select at least one seat.");
-    if (!primaryMobile || primaryMobile.length < 10)
-      return setError("Please enter a valid mobile number.");
-
-    for (const seat of selectedSeats) {
-      const p = passengers[seat];
-      if (!p.fullName || !p.age || !p.gender) {
-        return setError(`Please fill all details for Seat ${seat}`);
-      }
-    }
-
     if (!userId) return setError("Please login to proceed.");
-
-    const totalAmount = calculateTotal();
-    const passengerList = selectedSeats.map((seat) => ({
-      ...passengers[seat],
-      seatNumber: seat,
+    const finalPassengers = selectedSeats.map((seat) => ({
+      ...passengers[seat], fullName: passengers[seat].fullName.trim(), age: parseInt(passengers[seat].age),
     }));
-
-    const adultsCount = passengerList.filter((p) => p.type === "adult").length;
-    const childrenCount = passengerList.filter(
-      (p) => p.type === "child"
-    ).length;
-
-    onBookingSubmit({
-      userId,
-      tourId: tour._id,
-      vehicleId: selectedVehicleId,
-      seats: selectedSeats,
-      status: "pending",
-      numberOfAdults: adultsCount,
-      numberOfChildren: childrenCount,
-      passengers: passengerList,
-      primaryMobile,
-      from: startDate,
-      to: endDate,
-      tourStartDate: tour.tourStartDate || startDate,
-      isCustomizable: isCustomizable,
-      travelAgencyName: tour.travelAgencyName,
-      agencyEmail: tour.agencyEmail,
-      agencyPhone: tour.agencyPhone,
-      basePrice: tour.price,
-      totalAmount,
-      country: tour.country,
-      state: tour.state,
-      city: tour.city,
-    });
+    
+    const bookingPayload = {
+      userId, tourId: tour._id, vehicleId: selectedVehicleId, seats: selectedSeats, status: "pending",
+      numberOfAdults: finalPassengers.filter((p) => p.type === "adult").length,
+      numberOfChildren: finalPassengers.filter((p) => p.type === "child").length,
+      passengers: finalPassengers, primaryMobile,
+      from: startDate, to: endDate, tourStartDate: tour.tourStartDate || startDate, isCustomizable,
+      basePrice: tour.price || 0, seatPrice: seatPrice, totalAmount,
+      travelAgencyName: tour.travelAgencyName, agencyPhone: tour.agencyPhone, agencyEmail: tour.agencyEmail,
+      country: tour.country, state: tour.state, city: tour.city,
+    };
+    onBookingSubmit(bookingPayload);
   };
 
-  if (!tour) return <CircularProgress />;
+  if (!tour) return <Box p={4} display="flex" justifyContent="center"><CircularProgress /></Box>;
+
+  // --- RENDER SEAT LAYOUT LOGIC (FIXED) ---
+  const renderBusLayout = () => {
+    if (!selectedVehicle) return null;
+    
+    // Config from JSON: "rows": 11, "left": 2, "right": 2
+    const { rows, left, right } = selectedVehicle.seatConfig || { rows: 10, left: 2, right: 2 };
+    
+    const numRows = parseInt(rows);
+    const numLeft = parseInt(left);
+    const numRight = parseInt(right);
+    const seatsPerRow = numLeft + numRight;
+
+    return (
+        <BusChassis>
+            {/* Driver */}
+            <DriverCabin>
+                <Stack alignItems="center">
+                    <SteeringIcon sx={{ fontSize: 32, transform: 'rotate(-45deg)' }} />
+                    <Typography variant="caption" sx={{ fontSize: 9 }}>DRIVER</Typography>
+                </Stack>
+            </DriverCabin>
+
+            {Array.from({ length: numRows }).map((_, rowIndex) => {
+                // Slicing logic for flat array based on row index
+                const startIndex = rowIndex * seatsPerRow;
+                
+                // Extract seat codes for this specific row from layout array
+                const rowSeats = vehicleLayout.slice(startIndex, startIndex + seatsPerRow);
+                
+                // Split row into Left side and Right side
+                const leftSideSeats = rowSeats.slice(0, numLeft);
+                const rightSideSeats = rowSeats.slice(numLeft, seatsPerRow);
+
+                if(rowSeats.length === 0) return null;
+
+                return (
+                    <SeatRow key={rowIndex}>
+                        {/* Left Side */}
+                        <SeatGroup>
+                            {leftSideSeats.map(seatCode => {
+                                const isBooked = bookedSeatsList.includes(seatCode);
+                                const isSelected = selectedSeats.includes(seatCode);
+                                return (
+                                    <Box key={seatCode} position="relative">
+                                        <SeatButton
+                                            status={isBooked ? 'booked' : isSelected ? 'selected' : 'available'}
+                                            onClick={() => !isBooked && handleSeatToggle(seatCode)}
+                                            disabled={isBooked}
+                                        >
+                                            {/* IMPORTANT: Removed regex replace. Display raw seat code */}
+                                            <span style={{fontSize:10, fontWeight:700}}>{seatCode}</span>
+                                        </SeatButton>
+                                    </Box>
+                                )
+                            })}
+                        </SeatGroup>
+
+                        {/* Right Side */}
+                        <SeatGroup>
+                            {rightSideSeats.map(seatCode => {
+                                const isBooked = bookedSeatsList.includes(seatCode);
+                                const isSelected = selectedSeats.includes(seatCode);
+                                return (
+                                    <Box key={seatCode} position="relative">
+                                        <SeatButton
+                                            status={isBooked ? 'booked' : isSelected ? 'selected' : 'available'}
+                                            onClick={() => !isBooked && handleSeatToggle(seatCode)}
+                                            disabled={isBooked}
+                                        >
+                                            {/* IMPORTANT: Removed regex replace. Display raw seat code */}
+                                            <span style={{fontSize:10, fontWeight:700}}>{seatCode}</span>
+                                        </SeatButton>
+                                    </Box>
+                                )
+                            })}
+                        </SeatGroup>
+                    </SeatRow>
+                )
+            })}
+        </BusChassis>
+    );
+  };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Paper
-        elevation={0}
-        sx={{
-          borderRadius: 4,
-          border: "1px solid",
-          borderColor: "divider",
-          overflow: "hidden",
-          boxShadow: "0px 4px 20px rgba(0,0,0,0.05)",
-        }}
-      >
-        {/* --- Header Section --- */}
-        <Box
-          sx={{
-            bgcolor: "#fff",
-            px: 4,
-            py: 3,
-            borderBottom: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Box>
-              <Typography variant="h5" fontWeight="800" color="#1a202c">
-                Complete Your Booking
-              </Typography>
-              <Typography variant="body2" color="text.secondary" mt={0.5}>
-                {tour.travelAgencyName}
-              </Typography>
-            </Box>
-            <Box textAlign="right">
-              <Typography variant="caption" color="text.secondary" display="block">
-                Price / Adult
-              </Typography>
-              <Typography variant="h5" fontWeight="800" color="primary.main">
-                {formatCurrency(finalPrice)}
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
+    <StyledContainer maxWidth="lg">
+      
+      {/* 1. Immersive Header */}
+      <HeaderCard elevation={0}>
+        <CardContent sx={{ p: { xs: 3, md: 5 }, textAlign: 'center' }}>
+            <Typography variant="overline" letterSpacing={2} color="text.secondary" fontWeight={700}>BOOKING</Typography>
+            <Typography variant={isMobile ? "h5" : "h3"} fontWeight={800} gutterBottom sx={{ mt: 1 }}>{tour.travelAgencyName}</Typography>
+            <Stack direction="row" justifyContent="center" spacing={1} flexWrap="wrap" gap={1}>
+                <Chip icon={<LocationOn sx={{ fontSize: 16 }} />} label={`${tour.city}, ${tour.state}`} sx={{ bgcolor: 'white' }} />
+                <Chip icon={<Star sx={{ fontSize: 16, color: '#faaf00 !important' }} />} label={`${tour.starRating} Star`} sx={{ bgcolor: 'white' }} />
+                <Chip icon={<WbSunny sx={{ fontSize: 16 }} />} label={`${tour.days}D / ${tour.nights}N`} sx={{ bgcolor: 'white' }} />
+            </Stack>
+        </CardContent>
+      </HeaderCard>
 
-        <Grid container>
-          {/* --- LEFT PANEL: Trip Details & Seat Selection --- */}
-          <Grid
-            item
-            xs={12}
-            md={5}
-            sx={{
-              borderRight: { md: "1px solid" },
-              borderColor: "divider",
-              bgcolor: "#fff",
-            }}
-          >
-            <Box p={4}>
-              {/* Date Selection */}
-              <Typography
-                variant="subtitle2"
-                fontWeight="700"
-                color="text.secondary"
-                sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}
-              >
-                <EventIcon fontSize="small" /> TRIP DETAILS
-              </Typography>
+      {/* 2. Stepper */}
+      <Box mb={5} maxWidth="md" mx="auto">
+        <Stepper activeStep={activeStep} alternativeLabel={!isMobile}>
+          {steps.map((label) => (<Step key={label}><StepLabel>{label}</StepLabel></Step>))}
+        </Stepper>
+      </Box>
 
-              <Stack spacing={2} mb={3}>
-                <Box display="flex" gap={2}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Start Date"
-                    type="date"
-                    value={startDate}
-                    disabled={!isCustomizable}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    inputProps={{
-                      min: isCustomizable ? minDate : undefined,
-                      max: isCustomizable ? maxDate : undefined,
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="End Date"
-                    type="date"
-                    value={endDate}
-                    disabled={!isCustomizable}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    inputProps={{
-                      min: isCustomizable ? startDate || minDate : undefined,
-                      max: isCustomizable ? maxDate : undefined,
-                    }}
-                  />
-                </Box>
-                {isCustomizable && (
-                  <Typography variant="caption" color="text.secondary">
-                    Available Range: {minDate} to {maxDate}
-                  </Typography>
-                )}
-
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  label="Select Vehicle"
-                  value={selectedVehicleId}
-                  onChange={(e) => setSelectedVehicleId(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <BusIcon fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  }}
-                >
-                  {(tour.vehicles || [])
-                    .filter((v) => v.isActive !== false)
-                    .map((v) => (
-                      <MenuItem key={v._id} value={v._id}>
-                        {v.name} ({v.seaterType})
-                      </MenuItem>
-                    ))}
-                </TextField>
-              </Stack>
-
-              <Divider sx={{ my: 3 }} />
-
-              {/* Seat Legend */}
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                mb={3}
-              >
-                <Typography
-                  variant="subtitle2"
-                  fontWeight="700"
-                  color="text.primary"
-                  display="flex"
-                  alignItems="center"
-                  gap={1}
-                >
-                  <SeatIcon color="action" /> SELECT SEATS
-                </Typography>
-                <Stack direction="row" spacing={1.5}>
-                  <LegendItem color="grey.400" border label="Avail" />
-                  <LegendItem color="primary.main" label="Selected" />
-                  <LegendItem color="grey.300" label="Booked" />
-                </Stack>
-              </Box>
-
-              {/* Grid Seat Map */}
-              {seatLoading ? (
-                <Box display="flex" justifyContent="center" p={4}>
-                  <CircularProgress size={24} />
-                </Box>
-              ) : (
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 3,
-                    bgcolor: "grey.50",
-                    borderRadius: 2,
-                    maxWidth: 320,
-                    mx: "auto",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(5, 1fr)",
-                      gap: 1.5,
-                      alignItems: "center",
-                    }}
-                  >
-                    {/* Headers A, B, C, D */}
-                    {["A", "B", "", "C", "D"].map((h, i) => (
-                      <Typography
-                        key={i}
-                        variant="caption"
-                        fontWeight="bold"
-                        align="center"
-                        color="text.disabled"
-                      >
-                        {h}
-                      </Typography>
-                    ))}
-
-                    {/* Seats Loop */}
-                    {seatMap.length > 0 ? (
-                      Array.from({ length: Math.ceil(seatMap.length / 4) }).map(
-                        (_, rowIndex) => {
-                          const rowSeats = seatMap.slice(
-                            rowIndex * 4,
-                            (rowIndex + 1) * 4
-                          );
-                          return (
-                            <React.Fragment key={rowIndex}>
-                              {renderSeatButton(rowSeats[0], selectedSeats, handleSeatToggle, "A")}
-                              {renderSeatButton(rowSeats[1], selectedSeats, handleSeatToggle, "B")}
-                              
-                              {/* Aisle Number */}
-                              <Typography
-                                variant="caption"
-                                align="center"
-                                color="text.disabled"
-                                sx={{ fontSize: 10, fontWeight: "bold" }}
-                              >
-                                {rowIndex + 1}
-                              </Typography>
-
-                              {renderSeatButton(rowSeats[2], selectedSeats, handleSeatToggle, "C")}
-                              {renderSeatButton(rowSeats[3], selectedSeats, handleSeatToggle, "D")}
-                            </React.Fragment>
-                          );
-                        }
-                      )
-                    ) : (
-                      <Typography
-                        variant="caption"
-                        color="error"
-                        sx={{ gridColumn: "span 5", textAlign: "center" }}
-                      >
-                        No Seats Available
-                      </Typography>
-                    )}
-                  </Box>
-                </Paper>
-              )}
-            </Box>
-          </Grid>
-
-          {/* --- RIGHT PANEL: Passenger Details --- */}
-          <Grid item xs={12} md={7} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.02) }}>
-            <Box p={4} height="100%">
-              <Typography
-                variant="h6"
-                fontWeight="700"
-                color="text.primary"
-                gutterBottom
-                display="flex"
-                alignItems="center"
-                gap={1}
-                mb={3}
-              >
-                <PersonIcon color="primary" /> Passenger Details
-              </Typography>
-
-              {selectedSeats.length === 0 ? (
-                <Box
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
-                  justifyContent="center"
-                  height={300}
-                  border="2px dashed"
-                  borderColor="divider"
-                  borderRadius={3}
-                  bgcolor="#fff"
-                >
-                  <Typography variant="body1" color="text.secondary" fontWeight="500">
-                    Select seats to add passengers
-                  </Typography>
-                </Box>
-              ) : (
-                <Stack spacing={3}>
-                  {selectedSeats.map((seatId, index) => (
-                    <Paper
-                      key={seatId}
-                      elevation={0}
-                      sx={{
-                        p: 3,
-                        borderRadius: 3,
-                        border: "1px solid",
-                        borderColor: "divider",
-                      }}
-                    >
-                      <Box display="flex" alignItems="center" gap={1} mb={2}>
-                        <Chip
-                          label={`SEAT ${seatId}`}
-                          color="primary"
-                          size="small"
-                          sx={{ fontWeight: "bold", borderRadius: 1 }}
-                        />
-                      </Box>
-
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={4}>
-                          <Typography variant="caption" fontWeight="bold" color="text.secondary" display="block" mb={0.5}>
-                            TYPE
-                          </Typography>
-                          <ToggleButtonGroup
-                            value={passengers[seatId]?.type || "adult"}
-                            exclusive
-                            onChange={(_, val) => val && handlePassengerChange(seatId, "type", val)}
-                            size="small"
-                            fullWidth
-                            sx={{ height: 40 }}
-                          >
-                            <ToggleButton value="adult"><FaceIcon fontSize="small" sx={{ mr: 1 }} /> Adult</ToggleButton>
-                            <ToggleButton value="child"><ChildIcon fontSize="small" sx={{ mr: 1 }} /> Child</ToggleButton>
-                          </ToggleButtonGroup>
-                        </Grid>
-                        <Grid item xs={12} sm={8}>
-                          <Typography variant="caption" fontWeight="bold" color="text.secondary" display="block" mb={0.5}>
-                            FULL NAME
-                          </Typography>
-                          <TextField
-                            fullWidth
-                            size="small"
-                            placeholder="e.g. John Doe"
-                            value={passengers[seatId]?.fullName || ""}
-                            onChange={(e) => handlePassengerChange(seatId, "fullName", e.target.value)}
-                          />
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Typography variant="caption" fontWeight="bold" color="text.secondary" display="block" mb={0.5}>
-                            AGE
-                          </Typography>
-                          <TextField
-                            fullWidth
-                            size="small"
-                            placeholder="Age"
-                            type="number"
-                            value={passengers[seatId]?.age || ""}
-                            onChange={(e) => handlePassengerChange(seatId, "age", e.target.value)}
-                          />
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Typography variant="caption" fontWeight="bold" color="text.secondary" display="block" mb={0.5}>
-                            GENDER
-                          </Typography>
-                          <TextField
-                            select
-                            fullWidth
-                            size="small"
-                            value={passengers[seatId]?.gender || "male"}
-                            onChange={(e) => handlePassengerChange(seatId, "gender", e.target.value)}
-                          >
-                            <MenuItem value="male">Male</MenuItem>
-                            <MenuItem value="female">Female</MenuItem>
-                            <MenuItem value="other">Other</MenuItem>
-                          </TextField>
-                        </Grid>
-                        
-                        {index === 0 && (
-                          <Grid item xs={12}>
-                            <Divider sx={{ my: 1 }} />
-                            <Typography variant="caption" fontWeight="bold" color="text.secondary" display="block" mb={0.5}>
-                              PRIMARY CONTACT (Mobile)
-                            </Typography>
-                            <TextField
-                              fullWidth
-                              size="small"
-                              placeholder="10-digit mobile number"
-                              value={primaryMobile}
-                              onChange={(e) => setPrimaryMobile(e.target.value)}
-                              InputProps={{
-                                startAdornment: (
-                                  <InputAdornment position="start">
-                                    <PhoneIcon fontSize="small" color="action" />
-                                  </InputAdornment>
-                                ),
-                              }}
-                            />
-                          </Grid>
-                        )}
+      <Grid container spacing={4}>
+        {/* LEFT COLUMN: Main Form */}
+        <Grid item xs={12} md={8}>
+          <Stack spacing={4}>
+            
+            {/* STEP 0: SELECTION */}
+            {activeStep === 0 && (
+              <Box>
+                <Typography variant="h6" fontWeight={700} gutterBottom>Select Vehicle</Typography>
+                <Grid container spacing={2} mb={4}>
+                    {tour.vehicles?.filter(v => v.isActive !== false).map((v) => (
+                      <Grid item xs={12} sm={6} key={v._id}>
+                        <VehicleSelectCard
+                          selected={selectedVehicleId === v._id}
+                          onClick={() => setSelectedVehicleId(v._id)}
+                          elevation={selectedVehicleId === v._id ? 4 : 0}
+                        >
+                            <Avatar sx={{ bgcolor: selectedVehicleId === v._id ? 'primary.main' : 'grey.200', color: selectedVehicleId === v._id ? 'white' : 'grey.600' }}>
+                                <DirectionsBus />
+                            </Avatar>
+                            <Box>
+                                <Typography variant="subtitle1" fontWeight={700}>{v.name}</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    {v.seaterType} • <strong>{formatCurrency(v.pricePerSeat)}</strong>
+                                </Typography>
+                            </Box>
+                        </VehicleSelectCard>
                       </Grid>
-                    </Paper>
-                  ))}
+                    ))}
+                </Grid>
+
+                <Typography variant="h6" fontWeight={700} gutterBottom>Travel Dates</Typography>
+                <Paper sx={{ p: 3, mb: 4, borderRadius: 4 }} elevation={0} variant="outlined">
+                    {isCustomizable ? (
+                        <Grid container spacing={2}>
+                            <Grid item xs={6}><TextField fullWidth type="date" label="Start" InputLabelProps={{ shrink: true }} value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Grid>
+                            <Grid item xs={6}><TextField fullWidth type="date" label="End" InputLabelProps={{ shrink: true }} value={endDate} onChange={(e) => setEndDate(e.target.value)} /></Grid>
+                        </Grid>
+                    ) : (
+                        <Stack direction="row" alignItems="center" spacing={2}>
+                            <CalendarMonth color="action"/>
+                            <Typography variant="body1" fontWeight={600}>{formatDateDisplay(startDate)} <ArrowForward sx={{fontSize:14, mx:1}}/> {formatDateDisplay(endDate)}</Typography>
+                        </Stack>
+                    )}
+                </Paper>
+
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Typography variant="h6" fontWeight={700}>Select Seats</Typography>
+                    <Stack direction="row" spacing={1}>
+                        <Chip label="Available" size="small" variant="outlined" />
+                        <Chip label="Selected" size="small" color="primary" />
+                        <Chip label="Booked" size="small" disabled />
+                    </Stack>
                 </Stack>
-              )}
-
-              {/* Payment Footer */}
-              {selectedSeats.length > 0 && (
-                <Box mt={4} pt={2} borderTop="1px dashed" borderColor="divider">
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="body1" color="text.secondary">Total Amount</Typography>
-                    <Typography variant="h5" fontWeight="bold" color="primary.main">
-                      {formatCurrency(calculateTotal())}
-                    </Typography>
-                  </Box>
-                  
-                  {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    size="large"
-                    onClick={handleSubmit}
-                    sx={{
-                      py: 1.5,
-                      borderRadius: 2,
-                      fontWeight: "bold",
-                      fontSize: "1rem",
-                      boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
-                    }}
-                    endIcon={<ArrowForwardIos fontSize="small" />}
-                  >
-                    Pay Now {formatCurrency(calculateTotal() * 0.2)} (Advance)
-                  </Button>
+                
+                <Box bgcolor="grey.100" p={4} borderRadius={4}>
+                    {seatLoading ? <CircularProgress /> : renderBusLayout()}
                 </Box>
-              )}
-            </Box>
-          </Grid>
+              </Box>
+            )}
+
+            {/* STEP 1: DETAILS */}
+            {activeStep === 1 && (
+                <Box>
+                    <Typography variant="h6" fontWeight={700} gutterBottom>Contact Info</Typography>
+                    <Paper sx={{ p: 3, mb: 4, borderRadius: 4 }} elevation={0} variant="outlined">
+                        <TextField fullWidth label="Mobile Number" placeholder="10-digit" value={primaryMobile} onChange={(e) => setPrimaryMobile(e.target.value.replace(/\D/g,''))} InputProps={{ startAdornment: <InputAdornment position="start"><Phone/></InputAdornment> }} inputProps={{ maxLength: 10 }} />
+                    </Paper>
+
+                    <Typography variant="h6" fontWeight={700} gutterBottom>Passengers</Typography>
+                    {selectedSeats.map((seat, idx) => (
+                        <PassengerCard key={seat} elevation={0}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+                                <Chip label={`Seat ${seat}`} color="primary" icon={<EventSeat sx={{ fontSize: 16 }}/>} />
+                                <ToggleButtonGroup size="small" exclusive value={passengers[seat]?.type || 'adult'} onChange={(_, v) => v && handlePassengerChange(seat, "type", v)}>
+                                    <ToggleButton value="adult">Adult</ToggleButton>
+                                    <ToggleButton value="child">Child</ToggleButton>
+                                </ToggleButtonGroup>
+                            </Stack>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} sm={6}><TextField fullWidth size="small" label="Name" value={passengers[seat]?.fullName || ''} onChange={(e) => handlePassengerChange(seat, "fullName", e.target.value)} /></Grid>
+                                <Grid item xs={6} sm={3}><TextField select fullWidth size="small" label="Gender" value={passengers[seat]?.gender || 'male'} onChange={(e) => handlePassengerChange(seat, "gender", e.target.value)}><MenuItem value="male">Male</MenuItem><MenuItem value="female">Female</MenuItem></TextField></Grid>
+                                <Grid item xs={6} sm={3}><TextField fullWidth size="small" label="Age" type="number" value={passengers[seat]?.age || ''} onChange={(e) => handlePassengerChange(seat, "age", e.target.value)} /></Grid>
+                            </Grid>
+                        </PassengerCard>
+                    ))}
+                </Box>
+            )}
+
+            {/* STEP 2: REVIEW */}
+            {activeStep === 2 && (
+                <Box>
+                    <Typography variant="h6" fontWeight={700} gutterBottom>Review Booking</Typography>
+                    <Paper variant="outlined" sx={{ borderRadius: 4, overflow: 'hidden' }}>
+                        <List disablePadding>
+                            <ListItem sx={{ py: 2 }}><ListItemIcon><DirectionsBus color="primary"/></ListItemIcon><ListItemText primary="Vehicle" secondary={selectedVehicle?.name} /></ListItem>
+                            <Divider component="li" />
+                            <ListItem sx={{ py: 2 }}><ListItemIcon><CalendarMonth color="primary"/></ListItemIcon><ListItemText primary="Dates" secondary={`${formatDateDisplay(startDate)} — ${formatDateDisplay(endDate)}`} /></ListItem>
+                            <Divider component="li" />
+                            <ListItem sx={{ py: 2 }}><ListItemIcon><Phone color="primary"/></ListItemIcon><ListItemText primary="Contact" secondary={`+91 ${primaryMobile}`} /></ListItem>
+                        </List>
+                        <Box bgcolor={alpha(theme.palette.primary.main, 0.04)} p={3}>
+                            <Typography variant="subtitle2" fontWeight={700} gutterBottom color="primary">PASSENGERS</Typography>
+                            <Grid container spacing={2}>
+                                {selectedSeats.map(seat => (
+                                    <Grid item xs={12} sm={6} key={seat}>
+                                        <Stack direction="row" alignItems="center" spacing={1.5} bgcolor="white" p={1.5} borderRadius={2} border={`1px solid ${theme.palette.divider}`}>
+                                            <Avatar sx={{ width: 32, height: 32, fontSize: 12, bgcolor: 'primary.light' }}>{seat.replace(/\D/g,'')}</Avatar>
+                                            <Box><Typography variant="subtitle2" fontWeight={600}>{passengers[seat].fullName}</Typography><Typography variant="caption" color="text.secondary">{passengers[seat].age} yrs • {passengers[seat].gender}</Typography></Box>
+                                        </Stack>
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        </Box>
+                    </Paper>
+                    <Alert severity="info" sx={{ mt: 3, borderRadius: 2 }} icon={<Info />}>Pay <strong>{formatCurrency(advanceAmount)}</strong> (20%) now. Balance {formatCurrency(balanceAmount)} later.</Alert>
+                </Box>
+            )}
+
+            {error && <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>}
+
+            <Stack direction="row" justifyContent="space-between" pt={2}>
+                <Button variant="text" onClick={handleBack} disabled={activeStep === 0} sx={{ px: 3, color: 'text.secondary' }}>Back</Button>
+                <Button variant="contained" onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext} endIcon={<ArrowForward />} size="large" sx={{ borderRadius: 10, px: 5, py: 1.5, boxShadow: theme.shadows[4] }}>{activeStep === steps.length - 1 ? `Pay ${formatCurrency(advanceAmount)}` : 'Continue'}</Button>
+            </Stack>
+
+          </Stack>
         </Grid>
-      </Paper>
-    </Container>
-  );
-};
 
-// --- Sub-components ---
+        {/* RIGHT: SUMMARY */}
+        <Grid item xs={12} md={4}>
+            <StickySummary elevation={0}>
+                <Typography variant="h6" fontWeight={800} gutterBottom>Fare Summary</Typography>
+                <Stack spacing={2} my={3}>
+                    <Stack direction="row" justifyContent="space-between"><Typography color="text.secondary">Seat Price</Typography><Typography fontWeight={600}>{formatCurrency(seatPrice)}</Typography></Stack>
+                    <Stack direction="row" justifyContent="space-between"><Typography color="text.secondary">Seats</Typography><Typography fontWeight={600}>x {selectedSeats.length}</Typography></Stack>
+                    {selectedSeats.map(seat => passengers[seat]?.type === 'child' && (
+                        <Stack key={seat} direction="row" justifyContent="space-between"><Typography variant="caption" color="success.main">Child Disc. (Seat {seat})</Typography><Typography variant="caption" color="success.main">-{formatCurrency(seatPrice / 2)}</Typography></Stack>
+                    ))}
+                    <Divider sx={{ borderStyle: 'dashed' }} />
+                    <Stack direction="row" justifyContent="space-between" alignItems="center"><Typography variant="h6" fontWeight={700}>Total</Typography><Typography variant="h5" fontWeight={800} color="primary.main">{formatCurrency(totalAmount)}</Typography></Stack>
+                </Stack>
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 3 }}>
+                    <Stack direction="row" justifyContent="space-between" mb={1}><Typography variant="body2">Advance (20%)</Typography><Typography variant="body1" fontWeight={700} color="primary">{formatCurrency(advanceAmount)}</Typography></Stack>
+                    <Stack direction="row" justifyContent="space-between"><Typography variant="body2" color="text.secondary">On Boarding</Typography><Typography variant="body2" fontWeight={700}>{formatCurrency(balanceAmount)}</Typography></Stack>
+                </Paper>
+            </StickySummary>
+        </Grid>
 
-const LegendItem = ({ color, border, label }) => (
-  <Box display="flex" alignItems="center" gap={0.5}>
-    <Box
-      width={14}
-      height={14}
-      borderRadius={0.5}
-      bgcolor={border ? "transparent" : color}
-      border={border ? 1 : 0}
-      borderColor={color}
-    />
-    <Typography variant="caption" fontWeight="500" color="text.secondary">
-      {label}
-    </Typography>
-  </Box>
-);
-
-const renderSeatButton = (seat, selectedSeats, handleToggle, colLetter) => {
-  if (!seat) return <Box />;
-  const isBooked = seat.status === "booked";
-  const seatId = seat.code; 
-  const isSelected = selectedSeats.includes(seatId);
-
-  return (
-    <Button
-      variant={isSelected ? "contained" : "outlined"}
-      color={isSelected ? "primary" : "inherit"}
-      disabled={isBooked}
-      onClick={() => handleToggle(seatId)}
-      sx={{
-        minWidth: 0,
-        height: 44, // Taller to fit stacked text
-        width: "100%",
-        p: 0,
-        borderRadius: 1.5,
-        borderWidth: isSelected ? 0 : 1,
-        borderColor: isBooked ? "transparent" : "divider",
-        bgcolor: isBooked
-          ? "action.disabledBackground"
-          : isSelected
-          ? "primary.main"
-          : "#fff",
-        color: isBooked
-          ? "text.disabled"
-          : isSelected
-          ? "#fff"
-          : "text.primary",
-        "&:hover": {
-          bgcolor: isSelected ? "primary.dark" : "grey.100",
-          borderWidth: isSelected ? 0 : 1,
-        },
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        lineHeight: 1,
-        boxShadow: isSelected ? "0 4px 6px rgba(0,0,0,0.2)" : "none",
-      }}
-    >
-      {isSelected ? (
-        <CheckCircleIcon sx={{ fontSize: 20 }} />
-      ) : (
-        <>
-          <Typography
-            component="span"
-            sx={{
-              fontSize: "0.9rem",
-              fontWeight: 800,
-              lineHeight: 1,
-            }}
-          >
-            {seatId}
-          </Typography>
-          {/* This renders the Column Letter just below the number */}
-          <Typography
-            component="span"
-            sx={{
-              fontSize: "0.65rem",
-              fontWeight: 600,
-              opacity: 0.6,
-              lineHeight: 1,
-              mt: 0.2,
-            }}
-          >
-            {colLetter}
-          </Typography>
-        </>
-      )}
-    </Button>
+      </Grid>
+    </StyledContainer>
   );
 };
 

@@ -96,8 +96,8 @@ export const tourByOwner = createAsyncThunk(
   }
 );
 
-export const tourUpdate = createAsyncThunk(
-  "tour/tourUpdate",
+export const updateTour = createAsyncThunk(
+  "tour/updateTour",
   async ({ id, data }, { rejectWithValue }) => {
     try {
       const response = await axios.patch(
@@ -251,7 +251,7 @@ const tourSlice = createSlice({
         state.loading = false;
         state.editData = [action.payload];
       })
-      .addCase(tourUpdate.fulfilled, (state, action) => {
+      .addCase(updateTour.fulfilled, (state, action) => {
         state.loading = false;
         const index = state.data.findIndex(
           (tour) => tour._id === action.payload._id
