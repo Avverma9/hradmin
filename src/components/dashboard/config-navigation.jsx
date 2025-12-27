@@ -229,6 +229,7 @@ const getNavConfig = async () => {
         { title: "Tour List", path: "/tour-list", icon: icons.tour },
 
         { title: "Tour Requests", path: "/tour-requests", icon: icons.travel },
+        { title: "Tour Bookings", path: "/admin-tour/bookings", icon: icons.bookings },
       ],
     },
   ];

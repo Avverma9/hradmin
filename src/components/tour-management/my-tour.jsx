@@ -9,7 +9,7 @@ import {
   updateTourImage,
 } from "../redux/reducers/tour/tour";
 
-// MUI
+// MUI Imports
 import {
   alpha,
   Avatar,
@@ -42,6 +42,7 @@ import { styled } from "@mui/material/styles";
 import {
   Add,
   AirlineSeatReclineExtra,
+  AirlineSeatReclineNormal,
   Close,
   CurrencyRupee,
   Delete,
@@ -56,6 +57,7 @@ import {
   DirectionsBus,
   CheckCircle,
   Cancel,
+  Circle as SteeringIcon,
 } from "@mui/icons-material";
 
 /* ================= STYLED COMPONENTS ================= */
@@ -84,7 +86,8 @@ const ImageOverlay = styled(Box)(({ theme }) => ({
     left: 0,
     right: 0,
     bottom: 0,
-    background: "linear-gradient(135deg, rgba(0,0,0,0.1) 0%, transparent 100%)",
+    background:
+      "linear-gradient(135deg, rgba(0,0,0,0.1) 0%, transparent 100%)",
   },
 }));
 
@@ -106,6 +109,67 @@ const InfoChip = styled(Chip)(({ theme }) => ({
   "& .MuiChip-icon": {
     marginLeft: "6px",
   },
+}));
+
+// --- Bus Layout Specific Styles ---
+const BusChassis = styled(Box)(({ theme }) => ({
+  border: `3px solid ${theme.palette.grey[300]}`,
+  borderRadius: "30px 30px 10px 10px",
+  padding: theme.spacing(3),
+  backgroundColor: "white",
+  position: "relative",
+  maxWidth: 380,
+  margin: "0 auto",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
+}));
+
+const DriverCabin = styled(Box)(({ theme }) => ({
+  borderBottom: `2px dashed ${theme.palette.grey[200]}`,
+  paddingBottom: theme.spacing(2),
+  marginBottom: theme.spacing(2),
+  display: "flex",
+  justifyContent: "flex-end",
+  color: theme.palette.grey[400],
+}));
+
+const SeatRow = styled(Box)(({ theme }) => ({
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: theme.spacing(5), // Aisle Gap
+  marginBottom: theme.spacing(1.5),
+}));
+
+const SeatGroup = styled(Box)(({ theme }) => ({
+  display: "flex",
+  gap: theme.spacing(1),
+}));
+
+const SeatButton = styled(Box)(({ theme, status }) => ({
+  width: 40,
+  height: 40,
+  borderRadius: 8,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  border: "1px solid",
+  fontSize: "0.65rem",
+  fontWeight: 700,
+  transition: "all 0.2s",
+  cursor: "default",
+
+  ...(status === "available" && {
+    borderColor: theme.palette.success.light,
+    color: theme.palette.success.main,
+    backgroundColor: alpha(theme.palette.success.main, 0.05),
+  }),
+
+  ...(status === "booked" && {
+    borderColor: theme.palette.error.light,
+    backgroundColor: alpha(theme.palette.error.main, 0.1),
+    color: theme.palette.error.main,
+  }),
 }));
 
 /* ================= IMAGE DIALOG ================= */
@@ -143,9 +207,7 @@ function ImageDialog({ open, onClose, images, tourId }) {
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{
-        sx: { borderRadius: 4 },
-      }}
+      PaperProps={{ sx: { borderRadius: 4 } }}
     >
       <DialogTitle>
         <Stack
@@ -249,26 +311,122 @@ function ImageDialog({ open, onClose, images, tourId }) {
   );
 }
 
-/* ================= SEAT MAP DIALOG ================= */
+/* ================= SEAT MAP DIALOG (Updated) ================= */
 
 function SeatDialog({ open, onClose, tour }) {
   const dispatch = useDispatch();
   const { seatMapByKey, loading } = useSelector((s) => s.tour);
 
-  const activeVehicle =
-    tour?.vehicles?.find((v) => v.isActive !== false) || tour?.vehicles?.[0];
+  // 1. Determine active vehicle
+  const activeVehicle = useMemo(
+    () =>
+      tour?.vehicles?.find((v) => v.isActive !== false) || tour?.vehicles?.[0],
+    [tour]
+  );
+
   const [vehicleId, setVehicleId] = useState(activeVehicle?._id || "");
 
+  // 2. Fetch Seat Map Data on Open/Change
   useEffect(() => {
     if (open && tour?._id && vehicleId) {
       dispatch(fetchSeatMap({ tourId: tour._id, vehicleId }));
     }
   }, [open, tour?._id, vehicleId, dispatch]);
 
+  // 3. Get Data for Rendering
   const seatKey = `${tour?._id}:${vehicleId}`;
-  const seatMap = seatMapByKey[seatKey] || [];
-  const bookedCount = seatMap.filter((s) => s.status === "booked").length;
-  const availableCount = seatMap.filter((s) => s.status === "available").length;
+  
+  // Current Vehicle Object
+  const currentVehicle = tour?.vehicles?.find((v) => v._id === vehicleId);
+  // Static Layout (Array of strings "1A", "1B"...)
+  const vehicleLayout = currentVehicle?.seatLayout || [];
+  // Dynamic Booked Seats (Array of strings from API)
+  const bookedSeatsList = seatMapByKey[seatKey]?.bookedSeats || currentVehicle?.bookedSeats || [];
+
+  const totalSeats = vehicleLayout.length;
+  const bookedCount = bookedSeatsList.length;
+  const availableCount = totalSeats - bookedCount;
+
+  // 4. Render Layout Function
+  const renderBusLayout = () => {
+    if (!currentVehicle) return null;
+
+    // Default to 2x2 if config missing
+    const { rows, left, right } = currentVehicle.seatConfig || {
+      rows: 10,
+      left: 2,
+      right: 2,
+    };
+
+    const numRows = parseInt(rows);
+    const numLeft = parseInt(left);
+    const numRight = parseInt(right);
+    const seatsPerRow = numLeft + numRight;
+
+    return (
+      <BusChassis>
+        <DriverCabin>
+          <Stack alignItems="center">
+            <SteeringIcon sx={{ fontSize: 32, transform: "rotate(-45deg)" }} />
+            <Typography variant="caption" sx={{ fontSize: 9 }}>
+              DRIVER
+            </Typography>
+          </Stack>
+        </DriverCabin>
+
+        {Array.from({ length: numRows }).map((_, rowIndex) => {
+          // Slice layout array based on row index
+          const startIndex = rowIndex * seatsPerRow;
+          const rowSeats = vehicleLayout.slice(
+            startIndex,
+            startIndex + seatsPerRow
+          );
+
+          // Split row into Left/Right groups
+          const leftSideSeats = rowSeats.slice(0, numLeft);
+          const rightSideSeats = rowSeats.slice(numLeft, seatsPerRow);
+
+          if (rowSeats.length === 0) return null;
+
+          return (
+            <SeatRow key={rowIndex}>
+              {/* Left Group */}
+              <SeatGroup>
+                {leftSideSeats.map((seatCode) => {
+                  const isBooked = bookedSeatsList.includes(seatCode);
+                  return (
+                    <SeatButton
+                      key={seatCode}
+                      status={isBooked ? "booked" : "available"}
+                    >
+                      <AirlineSeatReclineNormal fontSize="small" />
+                      <span>{seatCode}</span>
+                    </SeatButton>
+                  );
+                })}
+              </SeatGroup>
+
+              {/* Right Group */}
+              <SeatGroup>
+                {rightSideSeats.map((seatCode) => {
+                  const isBooked = bookedSeatsList.includes(seatCode);
+                  return (
+                    <SeatButton
+                      key={seatCode}
+                      status={isBooked ? "booked" : "available"}
+                    >
+                      <AirlineSeatReclineNormal fontSize="small" />
+                      <span>{seatCode}</span>
+                    </SeatButton>
+                  );
+                })}
+              </SeatGroup>
+            </SeatRow>
+          );
+        })}
+      </BusChassis>
+    );
+  };
 
   return (
     <Dialog
@@ -278,7 +436,7 @@ function SeatDialog({ open, onClose, tour }) {
       fullWidth
       PaperProps={{ sx: { borderRadius: 4 } }}
     >
-      <DialogTitle>
+      <DialogTitle sx={{ pb: 1 }}>
         <Stack
           direction="row"
           justifyContent="space-between"
@@ -295,8 +453,9 @@ function SeatDialog({ open, onClose, tour }) {
           </IconButton>
         </Stack>
       </DialogTitle>
+
       <DialogContent>
-        <Stack spacing={3}>
+        <Stack spacing={3} mt={1}>
           {/* Vehicle Selector */}
           <TextField
             select
@@ -310,77 +469,78 @@ function SeatDialog({ open, onClose, tour }) {
             {(tour?.vehicles || []).map((v) => (
               <MenuItem key={v._id} value={v._id}>
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <DirectionsBus fontSize="small" />
-                  <Typography>
-                    {v.name} - {v.totalSeats} Seats
+                  <DirectionsBus fontSize="small" color="action" />
+                  <Typography variant="body2" fontWeight={500}>
+                    {v.name} ({v.totalSeats} Seats)
                   </Typography>
                 </Stack>
               </MenuItem>
             ))}
           </TextField>
 
-          {/* Stats */}
+          {/* Stats Bar */}
           <Paper
             elevation={0}
             sx={{
               p: 2,
-              bgcolor: alpha("#1976d2", 0.05),
-              borderRadius: 2,
+              bgcolor: alpha("#1976d2", 0.04),
+              border: `1px solid ${alpha("#1976d2", 0.1)}`,
+              borderRadius: 3,
             }}
           >
-            <Stack direction="row" spacing={4} justifyContent="center">
+            <Stack
+              direction="row"
+              divider={<Divider orientation="vertical" flexItem />}
+              spacing={2}
+              justifyContent="space-evenly"
+            >
               <Box textAlign="center">
-                <Typography variant="h4" fontWeight={700} color="success.main">
+                <Typography variant="h5" fontWeight={800} color="success.main">
                   {availableCount}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Available
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  fontWeight={600}
+                >
+                  AVAILABLE
                 </Typography>
               </Box>
-              <Divider orientation="vertical" flexItem />
               <Box textAlign="center">
-                <Typography variant="h4" fontWeight={700} color="error.main">
+                <Typography variant="h5" fontWeight={800} color="error.main">
                   {bookedCount}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Booked
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  fontWeight={600}
+                >
+                  BOOKED
                 </Typography>
               </Box>
             </Stack>
           </Paper>
 
-          {/* Seat Map */}
+          {/* Seat Layout */}
           {loading ? (
-            <Box display="flex" justifyContent="center" py={4}>
+            <Box display="flex" justifyContent="center" py={6}>
               <CircularProgress />
             </Box>
           ) : (
-            <Grid container spacing={1}>
-              {seatMap.map((s) => (
-                <Grid item xs={3} key={s.code}>
-                  <Button
-                    fullWidth
-                    variant={s.status === "booked" ? "contained" : "outlined"}
-                    disabled={s.status === "booked"}
-                    color={s.status === "booked" ? "error" : "primary"}
-                    sx={{
-                      borderRadius: 2,
-                      minHeight: 48,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {s.code}
-                  </Button>
-                </Grid>
-              ))}
-            </Grid>
+            <Box
+              bgcolor="grey.50"
+              p={2}
+              borderRadius={4}
+              border={`1px solid ${alpha("#000", 0.05)}`}
+            >
+              {renderBusLayout()}
+            </Box>
           )}
         </Stack>
       </DialogContent>
     </Dialog>
   );
 }
-
 
 /* ================= TOUR CARD ================= */
 
@@ -643,7 +803,6 @@ function TourCard({ tour }) {
   );
 }
 
-
 /* ================= MAIN PAGE ================= */
 
 export default function MyTours() {
@@ -666,29 +825,21 @@ export default function MyTours() {
     load();
   }, [dispatch]);
 
-  // ✅ FIXED: Proper data extraction with multiple fallbacks
+  // Robust Data Extraction
   const tourData = useMemo(() => {
-    console.log("🔍 Tour State:", tourState);
-
-    // Handle different response formats
     if (Array.isArray(tourState?.data)) {
-      console.log("✅ Data is array:", tourState.data);
       return tourState.data;
     }
     if (tourState?.data?.success && Array.isArray(tourState?.data?.data)) {
-      console.log("✅ Data from nested:", tourState.data.data);
       return tourState.data.data;
     }
     if (tourState?.data?.data && Array.isArray(tourState?.data?.data)) {
-      console.log("✅ Data from data.data:", tourState.data.data);
       return tourState.data.data;
     }
-
-    console.log("⚠️ No valid data found, returning empty array");
     return [];
   }, [tourState]);
 
-  // ✅ FIXED: Only show loading on initial load
+  // Loading State
   if (tourState?.loading && !tourData.length) {
     return (
       <Box
@@ -757,7 +908,7 @@ export default function MyTours() {
           </Button>
         </Stack>
 
-        {/* Stats - Only show if data exists */}
+        {/* Stats */}
         {tourData.length > 0 && (
           <Grid container spacing={2} mb={4}>
             <Grid item xs={6} sm={3}>
@@ -864,7 +1015,9 @@ export default function MyTours() {
                 borderRadius: 4,
               }}
             >
-              <Add sx={{ fontSize: 120, color: "primary.main", opacity: 0.3 }} />
+              <Add
+                sx={{ fontSize: 120, color: "primary.main", opacity: 0.3 }}
+              />
             </Box>
             <Typography variant="h5" fontWeight={700} mb={1}>
               No Tours Yet

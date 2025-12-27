@@ -115,6 +115,9 @@ const TourBookingPage = lazy(
   () => import("src/components/pages/tour/tour-booking-page")
 );
 
+const AdminTourBookingPage = lazy(
+  () => import("src/components/settings/tour/tour-bookings")
+);
 const TravelBookingTMS = lazy(
   () => import("src/components/pages/travel/travel-bookings")
 );
@@ -210,6 +213,8 @@ export default function Router() {
     { path: "/admin-travel/bookings", element: <TravelBookingsAdmin /> },
     { path: "/add-travel-location", element: <ListTravelPage /> },
     { path: "/my-tour", element: <MyTourPage /> },
+    { path: "/admin-tour/bookings", element: <AdminTourBookingPage /> },
+
 
     // Coupons
     { path: "/apply-coupon", element: <CouponPage /> },

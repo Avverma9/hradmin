@@ -207,9 +207,22 @@ export const getBookings = createAsyncThunk(
   }
 );
 
+export const getAllBookings = createAsyncThunk(
+  "tour/getAllBookings",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${localUrl}/tour-booking/get-bookings`);
+      return res.data?.data || [];
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
 const initialState = {
   data: [],
   bookings: [],
+  allBookings: [],
   editData: null,
   loading: false,
   error: null,
@@ -226,6 +239,11 @@ const tourSlice = createSlice({
       .addCase(getBookings.fulfilled, (state, action) => {
         state.bookings = action.payload;
         state.loading = false;
+      })
+     
+      .addCase(getAllBookings.fulfilled, (s, a) => {
+        s.loading = false;
+        s.allBookings = a.payload;
       })
       .addCase(addTour.fulfilled, (state, action) => {
         state.loading = false;
