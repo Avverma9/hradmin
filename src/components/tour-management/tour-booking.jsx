@@ -116,10 +116,10 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
 
   // Reset/Set dates if tour changes
   useEffect(() => {
-    if (!tour.isCustomizable) {
+    if (!tour?.isCustomizable) {
       const start = formatDateForInput(tour?.tourStartDate || tour?.from);
       setStartDate(start);
-      setEndDate(addDays(start, (tour.days || 1) - 1));
+      setEndDate(addDays(start, (tour?.days || 1) - 1));
     }
   }, [tour]);
 
@@ -234,7 +234,7 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
       from: startDate,
       to: endDate,
       tourStartDate: tour.tourStartDate || startDate,
-      isCustomizable: tour.isCustomizable,
+      isCustomizable: tour?.isCustomizable,
       travelAgencyName: tour.travelAgencyName,
       agencyEmail: tour.agencyEmail,
       agencyPhone: tour.agencyPhone,
@@ -333,12 +333,12 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
                     label="Start Date"
                     type="date"
                     value={startDate}
-                    disabled={!tour.isCustomizable}
+                    disabled={!tour?.isCustomizable}
                     onChange={(e) => setStartDate(e.target.value)}
                     InputLabelProps={{ shrink: true }}
                     inputProps={{
-                      min: tour.isCustomizable ? minDate : undefined,
-                      max: tour.isCustomizable ? maxDate : undefined,
+                      min: tour?.isCustomizable ? minDate : undefined,
+                      max: tour?.isCustomizable ? maxDate : undefined,
                     }}
                   />
                   <TextField
@@ -347,18 +347,18 @@ const TourBookingForm = ({ tour, gstData, userId, onBookingSubmit }) => {
                     label="End Date"
                     type="date"
                     value={endDate}
-                    disabled={!tour.isCustomizable}
+                    disabled={!tour?.isCustomizable}
                     onChange={(e) => setEndDate(e.target.value)}
                     InputLabelProps={{ shrink: true }}
                     inputProps={{
-                      min: tour.isCustomizable
+                      min: tour?.isCustomizable
                         ? startDate || minDate
                         : undefined,
-                      max: tour.isCustomizable ? maxDate : undefined,
+                      max: tour?.isCustomizable ? maxDate : undefined,
                     }}
                   />
                 </Box>
-                {tour.isCustomizable && (
+                {tour?.isCustomizable && (
                   <Typography
                     variant="caption"
                     color="text.secondary"

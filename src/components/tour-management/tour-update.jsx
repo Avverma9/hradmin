@@ -733,7 +733,7 @@ export default function TourUpdate() {
                       <FormControlLabel
                         control={
                           <Switch
-                            checked={!!editableData.isCustomizable}
+                            checked={!!editableData?.isCustomizable}
                             onChange={(e) =>
                               handleInputChange(
                                 "isCustomizable",
@@ -749,7 +749,7 @@ export default function TourUpdate() {
                         }
                       />
                       <Grid container spacing={2} mt={0.5}>
-                        {editableData.isCustomizable ? (
+                        {editableData?.isCustomizable ? (
                           <>
                             <Grid item xs={6}>
                               <TextField
