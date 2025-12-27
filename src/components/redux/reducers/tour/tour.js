@@ -219,6 +219,22 @@ export const getAllBookings = createAsyncThunk(
   }
 );
 
+export const updateBooking= createAsyncThunk(
+  "tour/updateBooking",
+  async ({bookingId,toBeUpdated}, { rejectWithValue }) => {
+    try {
+      const response = await axios.patch(
+        `${localUrl}/tour-booking/update-tour-booking/${bookingId}`,
+        toBeUpdated
+      );
+      return response?.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+
 const initialState = {
   data: [],
   bookings: [],
