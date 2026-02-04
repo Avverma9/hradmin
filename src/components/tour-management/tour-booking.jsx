@@ -325,7 +325,7 @@ const TourBookingForm = ({ tour, userId, onBookingSubmit }) => {
       numberOfChildren: finalPassengers.filter((p) => p.type === "child").length,
       passengers: finalPassengers, primaryMobile,
       from: startDate, to: endDate, tourStartDate: tour.tourStartDate || startDate, isCustomizable,
-      basePrice: tour.price || 0, seatPrice: seatPrice, totalAmount,
+      basePrice: tour.price || 0, seatPrice: seatPrice, totalAmount,bookingSource:"Panel",
       travelAgencyName: tour.travelAgencyName, agencyPhone: tour.agencyPhone, agencyEmail: tour.agencyEmail,
       country: tour.country, state: tour.state, city: tour.city,
     };

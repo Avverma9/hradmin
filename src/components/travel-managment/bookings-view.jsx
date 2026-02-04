@@ -29,7 +29,7 @@ const BookingDetails = ({ booking, onClose }) => {
         customerMobile,
         bookingDate,
         price,
-        bookingId,
+        bookingCode,
         seats,
         totalSeatPrice,
     } = booking;
@@ -121,7 +121,7 @@ const BookingDetails = ({ booking, onClose }) => {
                             variant="caption"
                             sx={{ color: 'rgba(255,255,255,0.85)' }}
                         >
-                            ID: {bookingId}
+                            ID: {bookingCode}
                         </Typography>
                     </Box>
                     {onClose && (
