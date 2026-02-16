@@ -30,6 +30,10 @@ export default function Reviews({ title, subheader, hotelId, ...other }) {
   useEffect(() => {
     // Fetch data when component mounts
     const fetchData = async () => {
+      if (!hotelId) {
+        setList([]);
+        return;
+      }
       setLoading(true);
       try {
         const response = await axios.get(`${localUrl}/getReviews/hotelId?hotelId=${hotelId}`);

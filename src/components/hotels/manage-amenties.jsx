@@ -30,7 +30,7 @@ import { localUrl } from '../../../utils/util';
 import { useHotelAmenities } from '../../../utils/additional/hotelAmenities';
 import { useDispatch } from 'react-redux';
 
-export default function Amenities({ open, onClose, hotelId }) {
+export default function Amenities({ open, onClose, hotelId = null }) {
   const dispatch =  useDispatch()
   const [currentAmenities, setCurrentAmenities] = useState([]);
   const [amenitiesToAdd, setAmenitiesToAdd] = useState([]);
@@ -44,7 +44,14 @@ export default function Amenities({ open, onClose, hotelId }) {
       setIsLoading(true);
       try {
         const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
-        const amenitiesData = response.data.amenities.flatMap((item) => item.amenities);
+        const hotelData = response?.data?.data ?? response?.data ?? {};
+        const amenitiesData = Array.isArray(hotelData?.amenities)
+          ? hotelData.amenities.flatMap((item) => {
+              if (Array.isArray(item)) return item;
+              if (Array.isArray(item?.amenities)) return item.amenities;
+              return [];
+            })
+          : [];
         setCurrentAmenities(amenitiesData);
       } catch (error) {
         toast.error('Failed to fetch hotel amenities.');
@@ -189,8 +196,4 @@ Amenities.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   hotelId: PropTypes.string,
-};
-
-Amenities.defaultProps = {
-  hotelId: null,
 };

@@ -40,7 +40,7 @@ const FoodCarousel = ({ limitedFood }) => {
         <>
           <Grid container spacing={2}>
             {currentFoods.map((food) => (
-              <Grid item key={food._id} xs={12} sm={6} md={3}>
+              <Grid item key={food._id || food.id || food.foodId} xs={12} sm={6} md={3}>
                 <Box
                   sx={{
                     border: '1px solid #ddd',
@@ -56,7 +56,7 @@ const FoodCarousel = ({ limitedFood }) => {
                     </Typography>
                     {food.images && (
                       <img
-                        src={food.images}
+                        src={Array.isArray(food.images) ? food.images[0] : food.images}
                         alt={`${food.name} image`}
                         style={{
                           width: '100%',

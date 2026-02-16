@@ -101,7 +101,7 @@ const carouselSettings = {
   ]
 };
 
-export default function BasicDetails({ open, onClose, hotelId }) {
+export default function BasicDetails({ open, onClose, hotelId = null }) {
   const [hotel, setHotel] = useState(null);
   const [editField, setEditField] = useState(null);
   const [editValue, setEditValue] = useState('');
@@ -113,7 +113,36 @@ export default function BasicDetails({ open, onClose, hotelId }) {
       setIsLoading(true);
       try {
         const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
-        setHotel(response.data);
+        const rawHotel = response?.data?.data ?? response?.data ?? {};
+        const basicInfo = rawHotel?.basicInfo ?? {};
+        const location = basicInfo?.location ?? {};
+        const contacts = basicInfo?.contacts ?? {};
+
+        setHotel({
+          ...rawHotel,
+          hotelId: rawHotel?.hotelId || rawHotel?._id || hotelId,
+          hotelName: rawHotel?.hotelName || basicInfo?.name || "",
+          hotelOwnerName: rawHotel?.hotelOwnerName || basicInfo?.owner || "",
+          description: rawHotel?.description || basicInfo?.description || "",
+          propertyType: rawHotel?.propertyType || basicInfo?.category || "",
+          starRating: rawHotel?.starRating ?? basicInfo?.starRating ?? "",
+          destination: rawHotel?.destination || location?.address || "",
+          city: rawHotel?.city || location?.city || "",
+          state: rawHotel?.state || location?.state || "",
+          pinCode: rawHotel?.pinCode || location?.pinCode || "",
+          mapLink: rawHotel?.mapLink || location?.googleMapLink || "",
+          contact: rawHotel?.contact || contacts?.phone || "",
+          hotelEmail: rawHotel?.hotelEmail || contacts?.email || "",
+          generalManagerContact:
+            rawHotel?.generalManagerContact || contacts?.generalManager || "",
+          salesManagerContact:
+            rawHotel?.salesManagerContact || contacts?.salesManager || "",
+          images: Array.isArray(rawHotel?.images)
+            ? rawHotel.images
+            : Array.isArray(basicInfo?.images)
+              ? basicInfo.images
+              : [],
+        });
       } catch (error) {
         toast.error('Failed to fetch hotel details.');
       } finally {
@@ -282,8 +311,4 @@ BasicDetails.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   hotelId: PropTypes.string,
-};
-
-BasicDetails.defaultProps = {
-  hotelId: null,
 };

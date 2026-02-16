@@ -43,7 +43,10 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { addFood, deleteFood, getHotelById } from "../redux/reducers/hotel";
 import { useLoader } from "../../../utils/loader";
 
-const AddFoodModal = ({ open, onClose, hotelId }) => {
+const EMPTY_FOODS = [];
+const selectHotelFoods = (state) => state.hotel.byId?.foods ?? EMPTY_FOODS;
+
+const AddFoodModal = ({ open, onClose, hotelId = null }) => {
   const [foodName, setFoodName] = useState("");
   const [foodPrice, setFoodPrice] = useState("");
   const [foodType, setFoodType] = useState("");
@@ -57,7 +60,7 @@ const AddFoodModal = ({ open, onClose, hotelId }) => {
 
   const dispatch = useDispatch();
   const { showLoader, hideLoader } = useLoader();
-  const foods = useSelector((state) => state.hotel.byId?.foods || []);
+  const foods = useSelector(selectHotelFoods);
 
   useEffect(() => {
     if (open && hotelId) {
@@ -396,10 +399,6 @@ AddFoodModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   hotelId: PropTypes.string,
-};
-
-AddFoodModal.defaultProps = {
-  hotelId: null,
 };
 
 export default AddFoodModal;

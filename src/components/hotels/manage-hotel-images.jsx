@@ -61,8 +61,15 @@ const ImageUpload = ({ open, hotelId, onClose }) => {
       setLoading(true);
       try {
         const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
-        setImages(response.data.images || []);
-        setId(response.data._id);
+        const hotelData = response?.data?.data ?? response?.data ?? {};
+        const imageList = Array.isArray(hotelData?.images)
+          ? hotelData.images
+          : Array.isArray(hotelData?.basicInfo?.images)
+            ? hotelData.basicInfo.images
+            : [];
+
+        setImages(imageList);
+        setId(hotelData._id || hotelData.hotelId || "");
       } catch (error) {
         console.error("Error fetching images:", error);
         toast.error("Failed to load images");
@@ -117,7 +124,13 @@ const ImageUpload = ({ open, hotelId, onClose }) => {
       setSelectedFiles([]);
 
       const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
-      setImages(response.data.images || []);
+      const hotelData = response?.data?.data ?? response?.data ?? {};
+      const imageList = Array.isArray(hotelData?.images)
+        ? hotelData.images
+        : Array.isArray(hotelData?.basicInfo?.images)
+          ? hotelData.basicInfo.images
+          : [];
+      setImages(imageList);
     } catch (error) {
       console.error("Error uploading images:", error);
       toast.error("Failed to upload images");

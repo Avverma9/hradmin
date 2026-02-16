@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Edit } from '@mui/icons-material';
 import { Box, IconButton } from '@mui/material';
@@ -8,16 +8,33 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 import ImageUpload from './manage-hotel-images';
 
-const HotelCarousel = ({ hotel }) => {
+const HotelCarousel = ({ hotel, hotelId }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [openImageModal, setOpenImageModal] = useState(false);
+  const hotelImages = Array.isArray(hotel?.images) ? hotel.images : [];
+  const hasImages = hotelImages.length > 0;
+  const activeImage = hasImages
+    ? hotelImages[currentIndex] || hotelImages[0]
+    : 'https://cdni.iconscout.com/illustration/premium/thumb/data-error-11521121-9404366.png?f=webp';
+
+  useEffect(() => {
+    if (!hasImages) {
+      setCurrentIndex(0);
+      return;
+    }
+    if (currentIndex >= hotelImages.length) {
+      setCurrentIndex(0);
+    }
+  }, [currentIndex, hasImages, hotelImages.length]);
 
   const handleNext = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % hotel.images.length);
+    if (!hasImages) return;
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % hotelImages.length);
   };
 
   const handlePrev = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + hotel.images.length) % hotel.images.length);
+    if (!hasImages) return;
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + hotelImages.length) % hotelImages.length);
   };
 
   const handleShowImageModal = () => {
@@ -32,6 +49,7 @@ const HotelCarousel = ({ hotel }) => {
     <Box sx={{ position: 'relative', overflow: 'hidden' }}>
       <IconButton
         onClick={handlePrev}
+        disabled={!hasImages}
         sx={{
           position: 'absolute',
           top: '50%',
@@ -47,6 +65,7 @@ const HotelCarousel = ({ hotel }) => {
 
       <IconButton
         onClick={handleNext}
+        disabled={!hasImages}
         sx={{
           position: 'absolute',
           top: '50%',
@@ -61,7 +80,7 @@ const HotelCarousel = ({ hotel }) => {
       </IconButton>
 
       <img
-        src={hotel.images[currentIndex]}
+        src={activeImage}
         alt={`Slide ${currentIndex + 1}`}
         style={{
           width: '100%',
@@ -90,16 +109,21 @@ const HotelCarousel = ({ hotel }) => {
       </IconButton>
 
       {/* Image Upload Modal */}
-      <ImageUpload open={openImageModal} onClose={handleCloseImageModal} hotelId={hotel.hotelId} />
+      <ImageUpload
+        open={openImageModal}
+        onClose={handleCloseImageModal}
+        hotelId={hotelId || hotel?.hotelId || ""}
+      />
     </Box>
   );
 };
 
 // Prop Types Validation
 HotelCarousel.propTypes = {
+  hotelId: PropTypes.string,
   hotel: PropTypes.shape({
-    images: PropTypes.arrayOf(PropTypes.string).isRequired,
-    hotelId: PropTypes.string.isRequired, // Ensure hotelId is part of hotel object
+    images: PropTypes.arrayOf(PropTypes.string),
+    hotelId: PropTypes.string,
   }).isRequired,
 };
 

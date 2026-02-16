@@ -70,10 +70,26 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
     axios
       .get(`${localUrl}/hotels/get-by-id/${hotelId}`)
       .then((response) => {
-        setRooms(response.data.rooms);
+        const hotelData = response?.data?.data ?? response?.data ?? {};
+        const roomList = Array.isArray(hotelData?.rooms) ? hotelData.rooms : [];
+
+        const normalizedRooms = roomList.map((room, index) => ({
+          ...room,
+          roomId: room?.roomId || room?.id || room?._id || `room-${index}`,
+          type: room?.type || room?.name || "Room",
+          bedTypes: room?.bedTypes || room?.bedType || "",
+          price: room?.price ?? room?.pricing?.finalPrice ?? room?.pricing?.basePrice ?? "",
+          countRooms: room?.countRooms ?? room?.inventory?.available ?? 0,
+          totalRooms: room?.totalRooms ?? room?.inventory?.total ?? 0,
+          isOffer: room?.isOffer ?? room?.features?.isOffer ?? false,
+          images: Array.isArray(room?.images) ? room.images[0] || "" : room?.images || "",
+        }));
+
+        setRooms(normalizedRooms);
       })
       .catch(() => {
         console.error("Error fetching rooms");
+        setRooms([]);
       });
   };
 
@@ -217,7 +233,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
         </Header>
         {!isAddingRoom ? (
           <>
-            {rooms.length > 0 ? (
+            {Array.isArray(rooms) && rooms.length > 0 ? (
               <Box>
                 {rooms.map((room, index) => (
                   <RoomItem key={index}>

@@ -42,7 +42,7 @@ const RoomCarousel = ({ limitedRoom }) => {
         <>
           <Grid container spacing={2}>
             {currentRooms.map((room) => (
-              <Grid item key={room._id} xs={12} sm={6} md={3}>
+              <Grid item key={room._id || room.id || room.roomId} xs={12} sm={6} md={3}>
                 <Box
                   sx={{
                     border: "1px solid #ddd",
@@ -60,7 +60,7 @@ const RoomCarousel = ({ limitedRoom }) => {
                     }}
                   >
                     <img
-                      src={room.images}
+                      src={Array.isArray(room.images) ? room.images[0] : room.images}
                       alt={`${room.type} room`}
                       style={{
                         width: "100%",

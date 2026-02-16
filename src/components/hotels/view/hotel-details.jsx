@@ -1,9 +1,9 @@
 import PropTypes from "prop-types";
 import axios from "axios";
 import { toast } from "react-toastify";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Row, Col, Button } from "react-bootstrap";
 import {
   IoReturnUpBack,
@@ -38,31 +38,158 @@ import HotelCarousel from "../hotel-images";
 import { useLoader } from "../../../../utils/loader";
 import Policies from "../policies";
 
+const unwrapHotelResponse = (response) => response?.data?.data ?? response?.data ?? {};
+
+const flattenAmenities = (amenities) => {
+  if (!Array.isArray(amenities)) return [];
+
+  const stack = [...amenities];
+  const result = [];
+
+  while (stack.length > 0) {
+    const item = stack.shift();
+
+    if (Array.isArray(item)) {
+      stack.push(...item);
+      continue;
+    }
+
+    if (typeof item === "string") {
+      const value = item.trim();
+      if (value) result.push(value);
+      continue;
+    }
+
+    if (item && Array.isArray(item.amenities)) {
+      stack.push(...item.amenities);
+    }
+  }
+
+  return Array.from(new Set(result));
+};
+
+const normalizeRooms = (rooms) => {
+  if (!Array.isArray(rooms)) return [];
+
+  return rooms.map((room, index) => {
+    const imageSource = Array.isArray(room?.images)
+      ? room.images[0]
+      : room?.images;
+
+    return {
+      _id: room?._id || room?.roomId || room?.id || `room-${index}`,
+      type: room?.type || room?.name || "Room",
+      bedTypes: room?.bedTypes || room?.bedType || "N/A",
+      images: imageSource || "",
+      price: Number(
+        room?.price ?? room?.pricing?.finalPrice ?? room?.pricing?.basePrice ?? 0,
+      ),
+      totalRooms: Number(room?.totalRooms ?? room?.inventory?.total ?? 0),
+      countRooms: Number(room?.countRooms ?? room?.inventory?.available ?? 0),
+      isOffer: Boolean(room?.isOffer ?? room?.features?.isOffer),
+    };
+  });
+};
+
+const normalizeFoods = (foods) => {
+  if (!Array.isArray(foods)) return [];
+
+  return foods.map((food, index) => {
+    const imageSource = Array.isArray(food?.images)
+      ? food.images[0]
+      : food?.images;
+
+    return {
+      _id: food?._id || food?.foodId || food?.id || `food-${index}`,
+      name: food?.name || "Unnamed",
+      foodType: food?.foodType || food?.type || "",
+      price: Number(food?.price ?? food?.pricing?.finalPrice ?? 0),
+      about: food?.about || food?.description || "",
+      images: imageSource || "",
+    };
+  });
+};
+
+const normalizePolicies = (policies) => {
+  if (Array.isArray(policies)) return policies;
+
+  if (policies && typeof policies === "object") {
+    return [
+      {
+        hotelsPolicy: Array.isArray(policies.rules) ? policies.rules.join("\n") : "",
+        checkInPolicy: policies.checkIn || "",
+        checkOutPolicy: policies.checkOut || "",
+        cancellationPolicy: policies.cancellationText || "",
+        petsAllowed: policies?.restrictions?.petsAllowed ? "Yes" : "No",
+        smokingAllowed: policies?.restrictions?.smokingAllowed ? "Yes" : "No",
+        alcoholAllowed: policies?.restrictions?.alcoholAllowed ? "Yes" : "No",
+      },
+    ];
+  }
+
+  return [];
+};
+
+const normalizeHotel = (rawHotel = {}) => {
+  const basicInfo = rawHotel?.basicInfo ?? {};
+  const location = basicInfo?.location ?? {};
+  const contacts = basicInfo?.contacts ?? {};
+
+  return {
+    ...rawHotel,
+    hotelId: rawHotel?.hotelId || rawHotel?._id || "",
+    hotelName: rawHotel?.hotelName || String(basicInfo?.name ?? "").trim(),
+    hotelOwnerName:
+      rawHotel?.hotelOwnerName || String(basicInfo?.owner ?? "").trim(),
+    description: rawHotel?.description || basicInfo?.description || "",
+    customerWelcomeNote: rawHotel?.customerWelcomeNote || "",
+    propertyType: rawHotel?.propertyType || basicInfo?.category || "",
+    starRating: rawHotel?.starRating ?? basicInfo?.starRating ?? "",
+    images: Array.isArray(rawHotel?.images)
+      ? rawHotel.images
+      : Array.isArray(basicInfo?.images)
+        ? basicInfo.images
+        : [],
+    destination: rawHotel?.destination || location?.address || "",
+    city: rawHotel?.city || location?.city || "",
+    state: rawHotel?.state || location?.state || "",
+    pinCode: rawHotel?.pinCode || location?.pinCode || "",
+    mapLink: rawHotel?.mapLink || location?.googleMapLink || "",
+    contact: rawHotel?.contact || contacts?.phone || "",
+    hotelEmail: rawHotel?.hotelEmail || contacts?.email || "",
+    generalManagerContact:
+      rawHotel?.generalManagerContact || contacts?.generalManager || "",
+    salesManagerContact: rawHotel?.salesManagerContact || contacts?.salesManager || "",
+    rooms: normalizeRooms(rawHotel?.rooms),
+    foods: normalizeFoods(rawHotel?.foods),
+    amenities: flattenAmenities(rawHotel?.amenities),
+    policies: normalizePolicies(rawHotel?.policies),
+  };
+};
+
 export default function HotelDetails({
-  product,
-  onAddFood,
-  onUpdateAmenities,
-  onAddRoom,
-  onBasicDetails,
+  onAddFood = () => {},
+  onUpdateAmenities = () => {},
+  onAddRoom = () => {},
+  onBasicDetails = () => {},
 }) {
-  const location = useLocation();
+  const { hotelId: routeHotelId = "" } = useParams();
   const navigate = useNavigate();
   const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [amenitiesToShow, setAmenitiesToShow] = useState([]);
-  const path = location.pathname;
   const { showLoader, hideLoader } = useLoader();
-  const hotelId = path.substring(path.lastIndexOf("/") + 1);
   const [isModalOpen, setModalOpen] = useState(false);
   const [hotel, setHotel] = useState(null);
   const [isAmenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
   const [isBasicDetailModalOpen, setBasicDetailsOpen] = useState(false);
   const [isRoomModalOpen, setRoomModalOpen] = useState(false);
+  const resolvedHotelId = hotel?.hotelId || routeHotelId || "";
   // ------------------------------------Foods add -------------------------------------//
   const handleAddFood = async (foodData) => {
-    onAddFood(product.hotelId, foodData); // Pass hotelId and foodData to the onAddFood function
+    onAddFood(resolvedHotelId, foodData);
     showLoader();
-    const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
-    setHotel(response.data);
+    const response = await axios.get(`${localUrl}/hotels/get-by-id/${routeHotelId}`);
+    setHotel(normalizeHotel(unwrapHotelResponse(response)));
     hideLoader();
 
     handleCloseModal();
@@ -73,17 +200,17 @@ export default function HotelDetails({
   const handleCloseModal = async () => {
     setModalOpen(false);
     showLoader();
-    const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
-    setHotel(response.data);
+    const response = await axios.get(`${localUrl}/hotels/get-by-id/${routeHotelId}`);
+    setHotel(normalizeHotel(unwrapHotelResponse(response)));
     hideLoader();
   };
 
   // ------------------------------------Amenities add-------------------------------------//
   const handleAddAmenities = async (amenitiesData) => {
-    onUpdateAmenities(product.hotelId, amenitiesData);
+    onUpdateAmenities(resolvedHotelId, amenitiesData);
     showLoader();
-    const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
-    setHotel(response.data);
+    const response = await axios.get(`${localUrl}/hotels/get-by-id/${routeHotelId}`);
+    setHotel(normalizeHotel(unwrapHotelResponse(response)));
     handleCloseAmenitiesModal();
     hideLoader();
   };
@@ -92,21 +219,23 @@ export default function HotelDetails({
   };
   const handleCloseAmenitiesModal = async () => {
     setAmenitiesModalOpen(false);
-    const response = await axios.get(`${localUrl}/hotels/get-by-id/${hotelId}`);
-    setHotel(response.data);
+    const response = await axios.get(`${localUrl}/hotels/get-by-id/${routeHotelId}`);
+    setHotel(normalizeHotel(unwrapHotelResponse(response)));
   };
   // ------------------------------------hotel fetch-------------------------------------//
   useEffect(() => {
     const fetchHotelDetails = async () => {
+      if (!routeHotelId) {
+        return;
+      }
       try {
         showLoader();
         const response = await axios.get(
-          `${localUrl}/hotels/get-by-id/${hotelId}`,
+          `${localUrl}/hotels/get-by-id/${routeHotelId}`,
         );
-        setHotel(response.data);
-        const allAmenities = response.data.amenities.flatMap(
-          (a) => a.amenities,
-        );
+        const hotelData = normalizeHotel(unwrapHotelResponse(response));
+        setHotel(hotelData);
+        const allAmenities = flattenAmenities(hotelData.amenities);
         setAmenitiesToShow(allAmenities.slice(0, 10));
       } catch (error) {
         console.error("Error fetching hotel details:", error);
@@ -116,21 +245,22 @@ export default function HotelDetails({
     };
 
     fetchHotelDetails();
-  }, [hotelId]);
+  }, [routeHotelId]);
 
-  const limitedFood = hotel?.foods;
-  const limitedRoom = hotel?.rooms;
+  const limitedFood = Array.isArray(hotel?.foods) ? hotel.foods : [];
+  const limitedRoom = Array.isArray(hotel?.rooms) ? hotel.rooms : [];
+  const allAmenities = useMemo(
+    () => flattenAmenities(hotel?.amenities),
+    [hotel?.amenities],
+  );
   // ------------------------------------amenities flat--------------------------------------//
   useEffect(() => {
-    if (hotel) {
-      const allAmenities = hotel.amenities.flatMap((a) => a.amenities);
-      if (showAllAmenities) {
-        setAmenitiesToShow(allAmenities);
-      } else {
-        setAmenitiesToShow(allAmenities.slice(0, 5));
-      }
+    if (showAllAmenities) {
+      setAmenitiesToShow(allAmenities);
+    } else {
+      setAmenitiesToShow(allAmenities.slice(0, 5));
     }
-  }, [showAllAmenities, hotel]);
+  }, [showAllAmenities, allAmenities]);
 
   // handle go back function
   const handleGoBack = () => {
@@ -140,6 +270,10 @@ export default function HotelDetails({
   // handle mail hotel
   const handleMailToHotel = () => {
     const email = hotel.hotelEmail;
+    if (!email) {
+      toast.info("Hotel email is not available.");
+      return;
+    }
     window.location.href = `mailto:${email}`;
   };
 
@@ -148,7 +282,7 @@ export default function HotelDetails({
     try {
       showLoader();
       const newAcceptanceState = !hotel.isAccepted;
-      await axios.patch(`${localUrl}/hotels/update/${hotelId}`, {
+      await axios.patch(`${localUrl}/hotels/update/${routeHotelId}`, {
         isAccepted: newAcceptanceState,
       });
       toast.success(
@@ -157,9 +291,9 @@ export default function HotelDetails({
           : "Hotel removed from live",
       );
       const response = await axios.get(
-        `${localUrl}/hotels/get-by-id/${hotelId}`,
+        `${localUrl}/hotels/get-by-id/${routeHotelId}`,
       );
-      setHotel(response.data);
+      setHotel(normalizeHotel(unwrapHotelResponse(response)));
     } catch (error) {
       const errorMessage =
         error.response?.data?.message ||
@@ -175,7 +309,7 @@ export default function HotelDetails({
       showLoader();
       const onFrontPage = !hotel.onFront;
 
-      await axios.patch(`${localUrl}/hotels/update/${hotelId}`, {
+      await axios.patch(`${localUrl}/hotels/update/${routeHotelId}`, {
         onFront: onFrontPage,
       });
       toast.success(
@@ -184,9 +318,9 @@ export default function HotelDetails({
           : "Hotel removed from the front page",
       );
       const response = await axios.get(
-        `${localUrl}/hotels/get-by-id/${hotelId}`,
+        `${localUrl}/hotels/get-by-id/${routeHotelId}`,
       );
-      setHotel(response.data);
+      setHotel(normalizeHotel(unwrapHotelResponse(response)));
     } catch (error) {
       const errorMessage =
         error.response?.data?.message ||
@@ -205,7 +339,7 @@ export default function HotelDetails({
     marginBottom: "16px",
   });
   const handleAddRoom = (roomData) => {
-    onAddRoom(product.hotelId, roomData); // Pass hotelId and foodData to the onAddFood function
+    onAddRoom(resolvedHotelId, roomData);
     handleCloseModal();
   };
   const handleOpenRoom = () => {
@@ -221,7 +355,7 @@ export default function HotelDetails({
     setBasicDetailsOpen(true);
   };
   const basicDetails = (basicData) => {
-    onBasicDetails(product.hotelId, basicData);
+    onBasicDetails(resolvedHotelId, basicData);
     handleBasicDetailsClose();
   };
   if (!hotel) {
@@ -232,11 +366,11 @@ export default function HotelDetails({
     );
   }
   // -------------------------------------------------Delete hotel--------------------------------------//
-  const handleDeleteHotel = async (hotelId) => {
+  const handleDeleteHotel = async (targetHotelId) => {
     try {
       showLoader();
       const response = await axios.delete(
-        `${localUrl}/delete/hotels/by/${hotelId}`,
+        `${localUrl}/delete/hotels/by/${targetHotelId}`,
       );
       if (response.status === 200) {
         toast.success("Selected hotel is deleted now !");
@@ -290,7 +424,7 @@ export default function HotelDetails({
             </button>
             <button
               className="custom-button"
-              onClick={() => handleDeleteHotel(hotel?.hotelId)}
+              onClick={() => handleDeleteHotel(resolvedHotelId)}
             >
               X Delete
             </button>
@@ -317,7 +451,7 @@ export default function HotelDetails({
         {hotel.hotelName}
       </h4>
 
-      <HotelCarousel hotel={hotel} />
+      <HotelCarousel hotel={hotel} hotelId={resolvedHotelId} />
 
       <hr />
 
@@ -442,7 +576,7 @@ export default function HotelDetails({
       <br />
       <FoodCarousel limitedFood={limitedFood} />
       <hr />
-      {hotel?.foods?.length > 0 && (
+      {limitedFood.length > 0 && (
         <Button
           style={{
             backgroundColor: "rgba(171, 171, 171, 0.13)",
@@ -507,7 +641,7 @@ export default function HotelDetails({
             />
           ))}
         </Box>
-        {hotel.amenities.flatMap((a) => a.amenities).length > 5 && (
+        {allAmenities.length > 5 && (
           <>
             <Divider sx={{ my: 2 }} />
             <Box sx={{ display: "flex", justifyContent: "center" }}>
@@ -525,35 +659,34 @@ export default function HotelDetails({
       <AddFoodModal
         open={isModalOpen}
         onClose={handleCloseModal}
-        hotelId={hotel.hotelId}
+        hotelId={resolvedHotelId}
         onAddFood={handleAddFood} // Pass the function to handle adding food
       />
       <Amenities
         open={isAmenitiesModalOpen}
         onClose={handleCloseAmenitiesModal}
-        hotelId={hotel.hotelId}
+        hotelId={resolvedHotelId}
         onUpdateAmenities={handleAddAmenities}
       />
       <AddRoomModal
         open={isRoomModalOpen}
         onClose={handleCloseRoom}
-        hotelId={hotel.hotelId}
+        hotelId={resolvedHotelId}
         onAddRoom={handleAddRoom}
       />
       <BasicDetails
         open={isBasicDetailModalOpen}
         onClose={handleBasicDetailsClose}
-        hotelId={hotel.hotelId}
+        hotelId={resolvedHotelId}
         onBasicDetails={basicDetails}
       />
-      <Reviews hotelId={hotel.hotelId} />
+      <Reviews hotelId={resolvedHotelId} />
     </div>
   );
 }
 HotelDetails.propTypes = {
-  product: PropTypes.object.isRequired,
-  onAddFood: PropTypes.func.isRequired,
-  onUpdateAmenities: PropTypes.func.isRequired,
-  onBasicDetails: PropTypes.func.isRequired,
-  onAddRoom: PropTypes.func.isRequired,
+  onAddFood: PropTypes.func,
+  onUpdateAmenities: PropTypes.func,
+  onBasicDetails: PropTypes.func,
+  onAddRoom: PropTypes.func,
 };
