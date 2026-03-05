@@ -196,6 +196,7 @@ export default function Router() {
     { path: "/bulk-hotel-import", element: <BulkHotel /> },
 
     { path: "/additional-fields", element: <AdditionalInputs /> },
+    { path: "/add-menu-item", element: <AdditionalInputs /> },
 
     // Travel & Tours
     { path: "/your-cars", element: <CarsPage /> },

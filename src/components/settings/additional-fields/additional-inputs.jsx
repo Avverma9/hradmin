@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
     Box,
     Button,
+    Checkbox,
     TextField,
     Typography,
     IconButton,
@@ -18,6 +19,7 @@ import {
     List,
     ListItem,
     ListItemText,
+    MenuItem,
     ListItemSecondaryAction,
     Accordion,
     AccordionSummary,
@@ -29,13 +31,17 @@ import {
     DialogContent,
     DialogContentText,
     DialogTitle,
-    Chip
+    Chip,
+    FormControlLabel,
+    LinearProgress
 } from '@mui/material';
+import { useLocation } from 'react-router-dom';
 
 // Import all necessary icons
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
@@ -55,7 +61,8 @@ import {
     addRoomTypes, deleteRoomTypes, getRoomTypes,
     addTravelAmenity, deleteTravelAmenity, getTravelAmenities,
     getTourThemes, addTourTheme, deleteTourThemes,
-    changeMenuStatus // <-- IMPORT THE NEW ACTION HERE
+    changeMenuStatus,
+    reorderMenuItems
 } from 'src/components/redux/reducers/additional-fields/additional';
 
 // --- Reusable Confirmation Dialog ---
@@ -100,9 +107,17 @@ const ManagementCard = ({
     rowsPerPage,
     onPageChange,
     onRowsPerPageChange,
+    renderList,
+    defaultFormOpen = false,
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isFormOpen, setIsFormOpen] = useState(defaultFormOpen);
+
+    useEffect(() => {
+        if (defaultFormOpen) {
+            setIsFormOpen(true);
+        }
+    }, [defaultFormOpen]);
 
     const filteredItems = Array.isArray(items)
         ? items.filter((item) =>
@@ -153,21 +168,25 @@ const ManagementCard = ({
                             ))}
                         </Stack>
                     ) : itemsToDisplay.length > 0 ? (
-                        <List dense>
-                            {itemsToDisplay.map((item) => (
-                                <ListItem
-                                    key={item._id}
-                                    sx={{ '&:hover': { bgcolor: 'action.hover' }, borderRadius: 1.5, pr: '100px' }} // Adjusted padding for actions
-                                    secondaryAction={
-                                        <Stack direction="row" spacing={1} alignItems="center">
-                                              {/* This is a generic structure; specific actions are passed via renderItem */}
-                                        </Stack>
-                                    }
-                                >
-                                    {renderItem(item, loading)}
-                                </ListItem>
-                            ))}
-                        </List>
+                        renderList ? (
+                            renderList({ items: itemsToDisplay, loading })
+                        ) : (
+                            <List dense>
+                                {itemsToDisplay.map((item) => (
+                                    <ListItem
+                                        key={item._id}
+                                        sx={{ '&:hover': { bgcolor: 'action.hover' }, borderRadius: 1.5, pr: '100px' }} // Adjusted padding for actions
+                                        secondaryAction={
+                                            <Stack direction="row" spacing={1} alignItems="center">
+                                                {/* This is a generic structure; specific actions are passed via renderItem */}
+                                            </Stack>
+                                        }
+                                    >
+                                        {renderItem(item, loading)}
+                                    </ListItem>
+                                ))}
+                            </List>
+                        )
                     ) : (
                         <Stack justifyContent="center" alignItems="center" sx={{ height: '100%', color: 'text.secondary' }}>
                             <PlaylistAddCheckIcon sx={{ fontSize: 48, mb: 1 }} />
@@ -246,38 +265,113 @@ const RoleSection = () => {
     );
 };
 
-const MenuItemSection = () => {
+const MenuItemSection = ({ defaultFormOpen = false }) => {
     const dispatch = useDispatch();
     const menuItems = useSelector((state) => state.additional.menuItems);
+    const roleItems = useSelector((state) => state.additional.role);
     const [loading, setLoading] = useState(true);
-    const [formData, setFormData] = useState({ title: '', path: '', role: '' });
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [syncingOrder, setSyncingOrder] = useState(false);
+    const [draggedMenuItemId, setDraggedMenuItemId] = useState(null);
+    const [orderedMenuItems, setOrderedMenuItems] = useState([]);
+    const [formData, setFormData] = useState({
+        parentLink: '',
+        childLink: '',
+        route: '',
+        isParentOnly: false,
+        role: ['Admin', 'Developer'],
+        icon: 'MdDashboard',
+        status: 'active',
+        order: '',
+    });
     const [confirmState, setConfirmState] = useState({ open: false, item: null });
+    const getMenuItemId = (item) => item?._id || item?.id || item?.path;
 
+    const sortMenuItems = (items = []) => (
+        [...items].sort((a, b) => {
+            const orderA = Number.isFinite(Number(a?.order)) ? Number(a.order) : Number.MAX_SAFE_INTEGER;
+            const orderB = Number.isFinite(Number(b?.order)) ? Number(b.order) : Number.MAX_SAFE_INTEGER;
+            if (orderA !== orderB) return orderA - orderB;
+            const parentA = String(a?.parentLink || '');
+            const parentB = String(b?.parentLink || '');
+            if (parentA !== parentB) return parentA.localeCompare(parentB);
+            const pathA = String(a?.path || a?.childLink || '');
+            const pathB = String(b?.path || b?.childLink || '');
+            return pathA.localeCompare(pathB);
+        })
+    );
 
-    useEffect(() => { dispatch(getMenuItems()).finally(() => setLoading(false)); }, [dispatch]);
+    const buildOrderedMenuItems = (items = []) =>
+        sortMenuItems(items).map((item, index) => ({
+            ...item,
+            order: index + 1,
+        }));
+
+    const roleOptions = Array.from(
+        new Set([
+            'Admin',
+            'Developer',
+            'PMS',
+            'TMS',
+            'CA',
+            'Rider',
+            ...(Array.isArray(roleItems) ? roleItems.map((item) => item?.role).filter(Boolean) : []),
+        ])
+    );
+
+    useEffect(() => {
+        dispatch(getRole());
+        dispatch(getMenuItems()).finally(() => setLoading(false));
+    }, [dispatch]);
+
+    useEffect(() => {
+        setOrderedMenuItems(buildOrderedMenuItems(Array.isArray(menuItems) ? menuItems : []));
+    }, [menuItems]);
     
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleChange = (e) => {
+        const { name, value, checked } = e.target;
+
+        if (name === 'role') {
+            setFormData((prev) => ({
+                ...prev,
+                role: typeof value === 'string' ? value.split(',') : value,
+            }));
+            return;
+        }
+
+        if (name === 'isParentOnly') {
+            setFormData((prev) => ({ ...prev, isParentOnly: Boolean(checked) }));
+            return;
+        }
+
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
     
     const handleAdd = async (e, onSuccess) => {
         e.preventDefault();
-        const { title, path, role } = formData;
-        if (!title.trim() || !path.trim() || !role.trim()) return;
+        const { parentLink, childLink, route, role, isParentOnly } = formData;
+        if (
+            !parentLink.trim() ||
+            (!isParentOnly && !childLink.trim() && !route.trim()) ||
+            !Array.isArray(role) ||
+            role.length === 0
+        ) return;
         setLoading(true);
         await dispatch(addMenu(formData));
-        setFormData({ title: '', path: '', role: '' });
+        setFormData({
+            parentLink: '',
+            childLink: '',
+            route: '',
+            isParentOnly: false,
+            role: ['Admin', 'Developer'],
+            icon: 'MdDashboard',
+            status: 'active',
+            order: '',
+        });
         await dispatch(getMenuItems()).finally(() => setLoading(false));
         onSuccess();
     };
 
     const handleDelete = async (id) => { setLoading(true); await dispatch(deleteMenu(id)); await dispatch(getMenuItems()).finally(() => setLoading(false)); };
-    
-    const handleChangePage = (event, newPage) => setPage(newPage);
-    const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
-    };
 
     const handleStatusChangeClick = (item) => {
         setConfirmState({ open: true, item });
@@ -290,10 +384,42 @@ const MenuItemSection = () => {
     const handleConfirmStatusChange = async () => {
         if (!confirmState.item) return;
         setLoading(true);
-        // Assuming you have this action in your redux slice
-        await dispatch(changeMenuStatus(confirmState.item._id));
+        const nextStatus = confirmState.item.isActive === false ? 'active' : 'inactive';
+        await dispatch(changeMenuStatus({ id: confirmState.item._id, status: nextStatus }));
         await dispatch(getMenuItems()).finally(() => setLoading(false));
         handleConfirmClose();
+    };
+
+    const handleDropToReorder = async (dropTargetId) => {
+        if (!draggedMenuItemId || !dropTargetId || draggedMenuItemId === dropTargetId) {
+            setDraggedMenuItemId(null);
+            return;
+        }
+
+        const fromIndex = orderedMenuItems.findIndex((item) => getMenuItemId(item) === draggedMenuItemId);
+        const toIndex = orderedMenuItems.findIndex((item) => getMenuItemId(item) === dropTargetId);
+
+        if (fromIndex < 0 || toIndex < 0) {
+            setDraggedMenuItemId(null);
+            return;
+        }
+
+        const nextItems = [...orderedMenuItems];
+        const [movedItem] = nextItems.splice(fromIndex, 1);
+        nextItems.splice(toIndex, 0, movedItem);
+
+        const reindexedItems = nextItems.map((item, index) => ({
+            ...item,
+            order: index + 1,
+        }));
+
+        setOrderedMenuItems(reindexedItems);
+        setDraggedMenuItemId(null);
+        setSyncingOrder(true);
+
+        await dispatch(reorderMenuItems(reindexedItems));
+        await dispatch(getMenuItems());
+        setSyncingOrder(false);
     };
 
 
@@ -304,54 +430,168 @@ const MenuItemSection = () => {
                 onClose={handleConfirmClose}
                 onConfirm={handleConfirmStatusChange}
                 title="Change Status"
-                description={`Are you sure you want to ${confirmState.item && (confirmState.item.isActive === false ? 'enable' : 'disable')} this menu item?`}
+                description={`Are you sure you want to ${confirmState.item && (confirmState.item.isActive === false ? 'activate' : 'deactivate')} this menu item?`}
             />
             <ManagementCard
                 title="Menu Items"
                 icon={<MenuBookIcon color="primary"/>}
-                items={menuItems}
-                loading={loading}
+                items={orderedMenuItems}
+                loading={loading || syncingOrder}
                 onAdd={handleAdd}
                 onDelete={handleDelete}
-                searchKey="title"
-                paginationEnabled
-                page={page}
-                rowsPerPage={rowsPerPage}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
+                searchKey="parentLink"
+                defaultFormOpen={defaultFormOpen}
                 renderForm={({ loading: formLoading, onSuccess }) => (
                     <form onSubmit={(e) => handleAdd(e, onSuccess)}>
                         <Stack spacing={1.5}>
-                            <TextField label="Title" name="title" size="small" variant="filled" value={formData.title} onChange={handleChange} disabled={formLoading} />
-                            <TextField label="Path" name="path" size="small" variant="filled" value={formData.path} onChange={handleChange} disabled={formLoading} />
-                            <TextField label="Role" name="role" size="small" variant="filled" value={formData.role} onChange={handleChange} disabled={formLoading} />
+                            <Typography variant="caption" color="text.secondary">
+                                Drag rows from handle to reorder sidebar items. Order updates instantly.
+                            </Typography>
+                            <TextField label="Parent Link" name="parentLink" size="small" variant="filled" value={formData.parentLink} onChange={handleChange} disabled={formLoading} />
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        name="isParentOnly"
+                                        checked={Boolean(formData.isParentOnly)}
+                                        onChange={handleChange}
+                                        disabled={formLoading}
+                                    />
+                                }
+                                label="Parent Only (child route optional)"
+                            />
+                            <TextField
+                                label="Child Link"
+                                name="childLink"
+                                placeholder="/dashboard/bookings"
+                                size="small"
+                                variant="filled"
+                                value={formData.childLink}
+                                onChange={handleChange}
+                                disabled={formLoading}
+                            />
+                            <TextField
+                                label="Route (optional, can be used instead of Child Link)"
+                                name="route"
+                                placeholder="/dashboard"
+                                size="small"
+                                variant="filled"
+                                value={formData.route}
+                                onChange={handleChange}
+                                disabled={formLoading}
+                            />
+                            <TextField
+                                label="Icon Key"
+                                name="icon"
+                                size="small"
+                                variant="filled"
+                                value={formData.icon}
+                                onChange={handleChange}
+                                disabled={formLoading}
+                            />
+                            <TextField
+                                select
+                                label="Status"
+                                name="status"
+                                size="small"
+                                variant="filled"
+                                value={formData.status}
+                                onChange={handleChange}
+                                disabled={formLoading}
+                            >
+                                <MenuItem value="active">active</MenuItem>
+                                <MenuItem value="inactive">inactive</MenuItem>
+                            </TextField>
+                            <TextField
+                                label="Order (optional)"
+                                name="order"
+                                size="small"
+                                variant="filled"
+                                type="number"
+                                value={formData.order}
+                                onChange={handleChange}
+                                disabled={formLoading}
+                            />
+                            <TextField
+                                select
+                                label="Roles"
+                                name="role"
+                                size="small"
+                                variant="filled"
+                                value={formData.role}
+                                onChange={handleChange}
+                                disabled={formLoading}
+                                SelectProps={{
+                                    multiple: true,
+                                    renderValue: (selected) => (Array.isArray(selected) ? selected.join(', ') : selected),
+                                }}
+                            >
+                                {roleOptions.map((roleName) => (
+                                    <MenuItem key={roleName} value={roleName}>
+                                        <Checkbox checked={Array.isArray(formData.role) && formData.role.includes(roleName)} />
+                                        <ListItemText primary={roleName} />
+                                    </MenuItem>
+                                ))}
+                            </TextField>
                             <Button type="submit" variant="contained" endIcon={<AddIcon />} disabled={formLoading}>Add Menu Item</Button>
                         </Stack>
                     </form>
                 )}
-                 renderItem={(item, itemLoading) => {
-                    // If isActive is not present, default it to true
-                    const isActive = item.isActive !== undefined ? item.isActive : true;
-                    return (
-                        <>
-                            <ListItemText primary={item.title} secondary={`${item.path} — Role: ${item.role}`} />
-                            <ListItemSecondaryAction>
-                                <Stack direction="row" alignItems="center" spacing={1}>
-                                    <Chip label={isActive ? 'Active' : 'Inactive'} color={isActive ? 'success' : 'default'} size="small" />
-                                    <Switch
-                                        edge="end"
-                                        onChange={() => handleStatusChangeClick(item)}
-                                        checked={isActive}
-                                        disabled={itemLoading}
-                                    />
-                                    <IconButton edge="end" aria-label="delete" size="small" color="error" onClick={() => handleDelete(item._id)} disabled={itemLoading}>
-                                        <DeleteIcon fontSize="small" />
-                                    </IconButton>
-                                </Stack>
-                            </ListItemSecondaryAction>
-                        </>
-                    );
-                }}
+                renderItem={() => null}
+                renderList={({ items, loading: itemLoading }) => (
+                    <>
+                        {syncingOrder && <LinearProgress sx={{ mb: 1 }} />}
+                        <List dense>
+                            {items.map((item) => {
+                                const itemId = getMenuItemId(item);
+                                const isActive = item.isActive !== undefined ? item.isActive : true;
+                                const isDragging = draggedMenuItemId === itemId;
+
+                                return (
+                                    <ListItem
+                                        key={itemId}
+                                        draggable={!itemLoading}
+                                        onDragStart={() => setDraggedMenuItemId(itemId)}
+                                        onDragEnd={() => setDraggedMenuItemId(null)}
+                                        onDragOver={(event) => event.preventDefault()}
+                                        onDrop={(event) => {
+                                            event.preventDefault();
+                                            handleDropToReorder(itemId);
+                                        }}
+                                        sx={{
+                                            '&:hover': { bgcolor: 'action.hover' },
+                                            borderRadius: 1.5,
+                                            pr: '100px',
+                                            opacity: isDragging ? 0.65 : 1,
+                                            cursor: itemLoading ? 'progress' : 'grab',
+                                            border: isDragging ? '1px dashed' : '1px solid transparent',
+                                            borderColor: isDragging ? 'primary.main' : 'transparent',
+                                        }}
+                                    >
+                                        <DragIndicatorIcon fontSize="small" sx={{ mr: 1.5, color: 'text.disabled' }} />
+                                        <ListItemText
+                                            primary={`${item.parentLink} (Order: ${item.order || '-'})`}
+                                            secondary={`${item.path || (item.isParentOnly ? '# (Parent Only)' : item.childLink)} — Role: ${item.role}`}
+                                        />
+                                        <ListItemSecondaryAction>
+                                            <Stack direction="row" alignItems="center" spacing={1}>
+                                                <Chip label={isActive ? 'Active' : 'Inactive'} color={isActive ? 'success' : 'default'} size="small" />
+                                                <Switch
+                                                    edge="end"
+                                                    onChange={() => handleStatusChangeClick(item)}
+                                                    checked={isActive}
+                                                    disabled={itemLoading}
+                                                />
+                                                <IconButton edge="end" aria-label="delete" size="small" color="error" onClick={() => handleDelete(item._id)} disabled={itemLoading}>
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Stack>
+                                        </ListItemSecondaryAction>
+                                    </ListItem>
+                                );
+                            })}
+                        </List>
+                    </>
+                )}
             />
         </>
     );
@@ -466,6 +706,30 @@ const TravelAmenitiesSection = () => {
 
 // --- Main Page Component ---
 const AdditionalInputs = () => {
+    const location = useLocation();
+    const isAddMenuItemRoute = location.pathname === '/add-menu-item';
+
+    if (isAddMenuItemRoute) {
+        return (
+            <Box sx={{ p: 3, bgcolor: 'background.default', minHeight: '100vh' }}>
+                <Stack spacing={1} sx={{ mb: 3 }}>
+                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+                        Menu Management
+                    </Typography>
+                    <Typography color="text.secondary">
+                        Add, update status, delete, and drag to reorder sidebar menu items.
+                    </Typography>
+                </Stack>
+
+                <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                        <MenuItemSection defaultFormOpen />
+                    </Grid>
+                </Grid>
+            </Box>
+        );
+    }
+
     return (
         <Box sx={{ p: 3, bgcolor: 'background.default', minHeight: '100vh' }}>
             <Stack spacing={1} sx={{ mb: 3 }}>
@@ -479,7 +743,6 @@ const AdditionalInputs = () => {
 
             <Grid container spacing={3}>
                 <Grid item xs={12} md={6} lg={4}><RoleSection /></Grid>
-                <Grid item xs={12} md={12} lg={8}><MenuItemSection /></Grid>
                 <Grid item xs={12} md={6} lg={4}><RoomTypesSection /></Grid>
                 <Grid item xs={12} md={6} lg={4}><BedTypesSection /></Grid>
                 <Grid item xs={12} md={6} lg={4}><AmenitySection /></Grid>

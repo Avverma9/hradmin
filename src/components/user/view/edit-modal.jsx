@@ -177,11 +177,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
     try {
       const payload = {
         userId: user._id,
-        matchedMenuItems: itemsToAdd.map((item) => ({
-          title: item.title,
-          path: item.path,
-          role: item.role,
-        })),
+        matchedMenuItems: itemsToAdd,
       };
       await dispatch(addMenu(payload)).unwrap();
       setInitialMenuItems([...selectedMenuItems]);

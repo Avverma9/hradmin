@@ -3,6 +3,21 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { localUrl, notify, token } from '../../../../utils/util';
 
+const extractArrayPayload = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.data)) return payload.data;
+    if (Array.isArray(payload?.hotels)) return payload.hotels;
+    return [];
+};
+
+const extractObjectPayload = (payload) => {
+    if (!payload || typeof payload !== 'object') return payload;
+    if (payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data)) {
+        return payload.data;
+    }
+    return payload;
+};
+
 export const getAllHotels = createAsyncThunk('hotel/getAllHotels', async (_, { rejectWithValue }) => {
     try {
         const response = await axios.get(`${localUrl}/get/all/hotels`, {
@@ -10,8 +25,7 @@ export const getAllHotels = createAsyncThunk('hotel/getAllHotels', async (_, { r
                 Authorization: token,
             },
         });
-        //   notify(response.status);
-        return response?.data?.data;
+        return extractArrayPayload(response?.data);
     } catch (error) {
         const errorMessage = error.response?.data?.message || error.message;
         toast.error(`Error: ${errorMessage}`);
@@ -26,7 +40,7 @@ export const getHotelById = createAsyncThunk('hotel/getHotelById', async (hotelI
                 Authorization: token,
             },
         });
-        return response.data;
+        return extractObjectPayload(response.data);
     } catch (error) {
         const errorMessage = error.response?.data?.message || error.message;
         toast.error(`Error: ${errorMessage}`);
@@ -41,8 +55,7 @@ export const getHotelByQuery = createAsyncThunk('hotel/getHotelByQuery', async (
                 Authorization: token,
             },
         });
-        //   notify(response.status);
-        return response.data;
+        return extractArrayPayload(response.data);
     } catch (error) {
         const errorMessage = error.message;
         toast.error(`Error: ${errorMessage}`);
@@ -56,8 +69,7 @@ export const getHotelsByFilters = createAsyncThunk('hotel/getHotelsByFilters', a
                 Authorization: token,
             },
         });
-        //   notify(response.status);
-        return response.data;
+        return extractArrayPayload(response.data);
     } catch (error) {
         const errorMessage = error.message;
         toast.error(`Error: ${errorMessage}`);
@@ -73,8 +85,7 @@ export const getHotelsCity = createAsyncThunk('hotel/getHotelsCity', async (city
                 Authorization: token,
             },
         });
-        //   notify(response.status);
-        return response.data;
+        return extractArrayPayload(response.data);
     } catch (error) {
         const errorMessage = error.message;
         toast.error(`Error: ${errorMessage}`);
@@ -83,7 +94,7 @@ export const getHotelsCity = createAsyncThunk('hotel/getHotelsCity', async (city
 });
 export const addFood = createAsyncThunk('hotel/addFood', async (formData, { rejectWithValue }) => {
     try {
-        const response = axios.post(`${localUrl}/add/food-to/your-hotel`, formData, {
+        const response = await axios.post(`${localUrl}/add/food-to/your-hotel`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 Authorization: token,

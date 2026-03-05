@@ -8,7 +8,13 @@ import {
 } from "../../../../../utils/util";
 import { toast } from "react-toastify";
 
-// Helper function to handle headers
+const VALID_COUPON_TYPES = new Set(["hotel", "partner", "user"]);
+
+const normalizeCouponType = (type = "hotel") => {
+  const normalized = String(type || "hotel").toLowerCase();
+  return VALID_COUPON_TYPES.has(normalized) ? normalized : "hotel";
+};
+
 const getAuthHeaders = () => ({
   headers: {
     Authorization: token,
@@ -16,19 +22,84 @@ const getAuthHeaders = () => ({
   },
 });
 
-// Thunks
+const extractArrayPayload = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.coupons)) return payload.coupons;
+  if (Array.isArray(payload?.coupon)) return payload.coupon;
+  return [];
+};
+
+const extractObjectPayload = (payload) => {
+  if (!payload || typeof payload !== "object") return null;
+
+  if (payload.data && typeof payload.data === "object" && !Array.isArray(payload.data)) {
+    return payload.data;
+  }
+
+  if (payload.coupon && typeof payload.coupon === "object" && !Array.isArray(payload.coupon)) {
+    return payload.coupon;
+  }
+
+  return payload;
+};
+
+const fetchCouponsByType = async (type) => {
+  try {
+    const response = await axios.get(`${localUrl}/coupon/get/by-type`, {
+      params: { type: normalizeCouponType(type), status: "all" },
+      ...getAuthHeaders(),
+    });
+    return extractArrayPayload(response.data);
+  } catch {
+    const fallback = await axios.get(`${localUrl}/coupon/get/all`, getAuthHeaders());
+    const fallbackItems = extractArrayPayload(fallback.data);
+    return fallbackItems.filter(
+      (item) => normalizeCouponType(item?.type || "hotel") === normalizeCouponType(type)
+    );
+  }
+};
+
+const createCouponByType = async (postData, type) => {
+  const normalizedType = normalizeCouponType(type);
+  const quantity = Number(postData?.quantity ?? postData?.maxUsage ?? 1);
+
+  const payload = {
+    couponName: postData.couponName,
+    discountPrice: Number(postData.discountPrice),
+    validity: postData.validity,
+    type: normalizedType,
+    quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+    maxUsage: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+  };
+
+  if (postData?.assignedTo) payload.assignedTo = postData.assignedTo;
+  if (postData?.targetUserId) payload.targetUserId = postData.targetUserId;
+
+  const response = await axios.post(
+    `${localUrl}/coupon/create-a-new/coupon`,
+    payload,
+    getAuthHeaders()
+  );
+
+  const createdCoupon = extractObjectPayload(response.data);
+  if (createdCoupon?.couponCode) {
+    toast.success(`Kindly note down your coupon code: ${createdCoupon.couponCode}`);
+  }
+
+  return {
+    ...(createdCoupon || {}),
+    type: normalizeCouponType(createdCoupon?.type || normalizedType),
+  };
+};
 
 export const getAllCoupons = createAsyncThunk(
   "coupon/getAllCoupons",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
-        `${localUrl}/partner-coupon/coupon/get/all`,
-        getAuthHeaders()
-      );
-      return response.data;
+      return await fetchCouponsByType("partner");
     } catch (error) {
-      const errorMessage = error.message;
+      const errorMessage = error.response?.data?.message || error.message;
       toast.error(`Error: ${errorMessage}`);
       return rejectWithValue(errorMessage);
     }
@@ -39,13 +110,9 @@ export const getAllUserCoupons = createAsyncThunk(
   "coupon/getAllUserCoupons",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
-        `${localUrl}/user-coupon/coupon/get/all/user`,
-        getAuthHeaders()
-      );
-      return response.data;
+      return await fetchCouponsByType("user");
     } catch (error) {
-      const errorMessage = error.message;
+      const errorMessage = error.response?.data?.message || error.message;
       toast.error(`Error: ${errorMessage}`);
       return rejectWithValue(errorMessage);
     }
@@ -56,22 +123,9 @@ export const createCoupon = createAsyncThunk(
   "coupon/createCoupon",
   async (postData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${localUrl}/partner-coupon/coupon/create-a-new/coupon`,
-        {
-          couponName: postData.couponName,
-          discountPrice: postData.discountPrice,
-          validity: postData.validity,
-          quantity: postData.quantity,
-        },
-        getAuthHeaders()
-      );
-      toast.success(
-        `Kindly note down your coupon code: ${response?.data?.coupon?.couponCode}`
-      );
-      return response.data;
+      return await createCouponByType(postData, "partner");
     } catch (error) {
-      const errorMessage = error.message;
+      const errorMessage = error.response?.data?.message || error.message;
       toast.error(`Error: ${errorMessage}`);
       return rejectWithValue(errorMessage);
     }
@@ -82,23 +136,9 @@ export const createUserCoupon = createAsyncThunk(
   "coupon/createUserCoupon",
   async (postData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${localUrl}/user-coupon/coupon/create-a-new/coupon/user`,
-        {
-          couponName: postData.couponName,
-          discountPrice: postData.discountPrice,
-          assignedTo: postData.assignedTo,
-          validity: postData.validity,
-          quantity: 1,
-        },
-        getAuthHeaders()
-      );
-      toast.success(
-        `Kindly note down your coupon code: ${response?.data?.coupon?.couponCode}`
-      );
-      return response.data;
+      return await createCouponByType(postData, "user");
     } catch (error) {
-      const errorMessage = error.message;
+      const errorMessage = error.response?.data?.message || error.message;
       toast.error(`Error: ${errorMessage}`);
       return rejectWithValue(errorMessage);
     }
@@ -109,12 +149,30 @@ export const applyCoupon = createAsyncThunk(
   "coupon/applyCoupon",
   async (payload, { rejectWithValue }) => {
     try {
-      const url = `${localUrl}/partner-coupon/apply/a/coupon-to-room`;
+      const requestPayload = {
+        ...payload,
+        type: normalizeCouponType(payload?.type || "hotel"),
+      };
 
-      const response = await axios.patch(url, payload, getAuthHeaders());
+      const response = await axios.patch(
+        `${localUrl}/apply/a/coupon-to-room`,
+        requestPayload,
+        getAuthHeaders()
+      );
 
       notify(response.status);
-      showSnackbar(response.data.message);
+      if (response?.data?.message) {
+        showSnackbar(response.data.message);
+      }
+
+      const rows = extractArrayPayload(response.data);
+      if (rows.length) return rows;
+
+      const one = extractObjectPayload(response.data);
+      if (one?.discountPrice !== undefined) {
+        return [one];
+      }
+
       return response.data;
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message;
@@ -123,8 +181,6 @@ export const applyCoupon = createAsyncThunk(
     }
   }
 );
-
-// Slice
 
 const userCoupon = createSlice({
   name: "userCoupon",
@@ -136,74 +192,42 @@ const userCoupon = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // getAllCoupons
       .addCase(getAllCoupons.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(getAllCoupons.fulfilled, (state, action) => {
-        state.coupon = action.payload;
+        state.coupon = Array.isArray(action.payload) ? action.payload : [];
         state.loading = false;
       })
       .addCase(getAllCoupons.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-
-      // getAllUserCoupons
       .addCase(getAllUserCoupons.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(getAllUserCoupons.fulfilled, (state, action) => {
-        state.coupon = action.payload;
+        state.coupon = Array.isArray(action.payload) ? action.payload : [];
         state.loading = false;
       })
       .addCase(getAllUserCoupons.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-
-      // createCoupon
-      .addCase(createCoupon.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(createCoupon.fulfilled, (state, action) => {
-        state.coupon.push(action.payload);
-        state.loading = false;
-      })
-      .addCase(createCoupon.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-
-      // createUserCoupon
-      .addCase(createUserCoupon.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        if (action.payload) {
+          state.coupon = [action.payload, ...state.coupon];
+        }
       })
       .addCase(createUserCoupon.fulfilled, (state, action) => {
-        state.coupon.push(action.payload);
-        state.loading = false;
-      })
-      .addCase(createUserCoupon.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-
-      // applyCoupon
-      .addCase(applyCoupon.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        if (action.payload) {
+          state.coupon = [action.payload, ...state.coupon];
+        }
       })
       .addCase(applyCoupon.fulfilled, (state, action) => {
         state.apply = action.payload;
-        state.loading = false;
-      })
-      .addCase(applyCoupon.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
       });
   },
 });

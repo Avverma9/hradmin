@@ -12,248 +12,499 @@ import { CiBellOn, CiImageOn } from "react-icons/ci";
 import { FaDollarSign, FaRegUserCircle } from "react-icons/fa";
 import {
   MdDashboard,
-  MdHotel,
+  MdManageAccounts,
+  MdMenu,
   MdOutlineAdminPanelSettings,
   MdOutlineCarRental,
+  MdOutlineHotel,
+  MdPeople,
   MdPerson,
   MdSettings,
+  MdSpaceDashboard,
 } from "react-icons/md";
 import { RiCoupon3Line, RiMessengerLine } from "react-icons/ri";
 import { SiTicktick } from "react-icons/si";
 import { VscFeedback } from "react-icons/vsc";
-import { localUrl, token, userId } from "../../../utils/util";
+import { localUrl } from "../../../utils/util";
+import {
+  getRoleBasedFallbackSidebar,
+  normalizeRoleForSidebar,
+  SIDEBAR_LINK_SEED_DATA,
+  SIDEBAR_ROUTE_DEFINITIONS,
+} from "./sidebar-links-seed";
 
-// Reusable Icon Component for consistency
-const IconStyle = { width: "24px", height: "24px" };
+const ICON_STYLE = { width: "24px", height: "24px" };
+const ADMIN_SEED_ROLES = new Set(["Admin", "Developer", "superAdmin", "SuperAdmin"]);
+const DEPRECATED_COUPON_PATHS = new Set(["/partner-coupon", "/user-coupon"]);
 
-// Define icons
-const icons = {
-  dashboard: <MdDashboard style={IconStyle} />,
-  messenger: <RiMessengerLine style={IconStyle} />,
-  partners: <MdPerson style={IconStyle} />,
-  bookings: <LocalActivityIcon style={IconStyle} />,
-  addBooking: <AddTaskIcon style={IconStyle} />,
-  hotels: <MdHotel style={IconStyle} />,
-  travel: <AirplaneTicketIcon style={IconStyle} />,
-  settings: <MdSettings style={IconStyle} />,
-  complaints: <BsInfoSquare style={IconStyle} />,
-  banner: <CiImageOn style={IconStyle} />,
-  review: <VscFeedback style={IconStyle} />,
-  notification: <CiBellOn style={IconStyle} />,
-  coupon: <RiCoupon3Line style={IconStyle} />,
-  admin: <MdOutlineAdminPanelSettings style={IconStyle} />,
-  available: <SiTicktick style={IconStyle} />,
-  user: <FaRegUserCircle style={IconStyle} />,
-  car: <MdOutlineCarRental style={IconStyle} />,
-  addCar: <CarCrashIcon style={IconStyle} />,
-  tour: <TourIcon style={IconStyle} />,
-  addTour: <AirportShuttleRoundedIcon style={IconStyle} />,
-  ownerList: <FormatListNumberedIcon style={IconStyle} />,
-  owner: <GroupAddIcon style={IconStyle} />,
-  setMonthlyPrice: <FaDollarSign style={IconStyle} />,
+const ROUTE_TITLE_BY_PATH = new Map(
+  SIDEBAR_ROUTE_DEFINITIONS.map((item) => [item.path, item.title])
+);
+
+let navConfigPromise = null;
+let navConfigCache = null;
+
+const iconComponents = {
+  AddTaskIcon,
+  AirplaneTicketIcon,
+  AirportShuttleRoundedIcon,
+  BsInfoSquare,
+  CarCrashIcon,
+  CiBellOn,
+  CiImageOn,
+  FaDollarSign,
+  FaRegUserCircle,
+  FormatListNumberedIcon,
+  GroupAddIcon,
+  LocalActivityIcon,
+  MdDashboard,
+  MdManageAccounts,
+  MdOutlineAdminPanelSettings,
+  MdOutlineCarRental,
+  MdOutlineHotel,
+  MdPeople,
+  MdPerson,
+  MdSettings,
+  MdSpaceDashboard,
+  RiCoupon3Line,
+  RiMessengerLine,
+  SiTicktick,
+  TourIcon,
+  VscFeedback,
 };
 
-// Function to get menu items
-const fetchMenuItems = async () => {
-  try {
-    if (userId) {
-      const response = await axios.get(
-        `${localUrl}/login/dashboard/get/all/user/${userId}`,
+const iconAliases = {
+  addBooking: "AddTaskIcon",
+  admin: "MdOutlineAdminPanelSettings",
+  addCar: "CarCrashIcon",
+  addTour: "AirportShuttleRoundedIcon",
+  available: "SiTicktick",
+  banner: "CiImageOn",
+  bookings: "LocalActivityIcon",
+  car: "MdOutlineCarRental",
+  complaints: "BsInfoSquare",
+  coupon: "RiCoupon3Line",
+  dashboard: "MdDashboard",
+  hotels: "MdOutlineHotel",
+  manage: "MdManageAccounts",
+  messenger: "RiMessengerLine",
+  notification: "CiBellOn",
+  owner: "GroupAddIcon",
+  ownerList: "FormatListNumberedIcon",
+  partners: "MdPerson",
+  review: "VscFeedback",
+  setMonthlyPrice: "FaDollarSign",
+  settings: "MdSettings",
+  tour: "TourIcon",
+  travel: "AirplaneTicketIcon",
+  user: "FaRegUserCircle",
+};
+
+const buildAuthHeaders = () => {
+  const authToken = sessionStorage.getItem("rs_token");
+  return authToken ? { Authorization: authToken } : {};
+};
+
+const resolveIconComponent = (iconKey = "") => {
+  const sanitizedKey = String(iconKey || "").trim();
+  const resolvedKey = iconAliases[sanitizedKey] || sanitizedKey;
+  return iconComponents[resolvedKey] || null;
+};
+
+const renderIcon = (iconKey) => {
+  const IconComponent = resolveIconComponent(iconKey);
+  if (!IconComponent) return <MdMenu style={ICON_STYLE} />;
+  return <IconComponent style={ICON_STYLE} />;
+};
+
+const extractArrayPayload = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.sidebarLinks)) return payload.sidebarLinks;
+  return [];
+};
+
+const extractGroupedPayload = (payload) => {
+  const grouped = payload?.data ?? payload?.sidebarLinks;
+  if (grouped && typeof grouped === "object" && !Array.isArray(grouped)) {
+    return grouped;
+  }
+  return null;
+};
+
+const normalizeBooleanFlag = (value) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "1" || normalized === "yes";
+  }
+  return false;
+};
+
+const normalizeSidebarPath = (rawPath = "") => {
+  const path = String(rawPath || "").trim();
+  if (!path || path === "#") return "";
+  return path.startsWith("/") ? path : `/${path}`;
+};
+
+const formatPathToTitle = (path = "") => {
+  const cleanPath = String(path || "")
+    .split("?")[0]
+    .replace(/^\/+|\/+$/g, "");
+
+  if (!cleanPath) return "Home";
+
+  const lastSegment = cleanPath.split("/").filter(Boolean).pop() || "Home";
+
+  return lastSegment
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const normalizeSidebarLinkRecord = (rawItem, fallbackParent = "") => {
+  if (!rawItem || typeof rawItem !== "object") return null;
+
+  const rawPath = rawItem.childLink || rawItem.route || rawItem.path;
+  const path = normalizeSidebarPath(rawPath);
+  const parentLink = rawItem.parentLink || rawItem.group || fallbackParent || "Menu";
+  const isParentOnly =
+    normalizeBooleanFlag(rawItem.isParentOnly) || String(rawPath || "").trim() === "#";
+
+  if (!parentLink) return null;
+  if (!path && !isParentOnly) return null;
+
+  const parsedOrder = Number(rawItem.order);
+  const status = String(rawItem.status || "active").toLowerCase();
+  const routeTitle =
+    rawItem.title ||
+    rawItem.childTitle ||
+    (path ? ROUTE_TITLE_BY_PATH.get(path) || formatPathToTitle(path) : parentLink);
+
+  return {
+    id: rawItem._id || rawItem.id || `${parentLink}-${path || "parent-only"}`,
+    parentLink: String(parentLink),
+    title: String(routeTitle),
+    path: String(path || ""),
+    childLink: path || (isParentOnly ? "#" : ""),
+    isParentOnly,
+    iconKey: rawItem.icon || "MdDashboard",
+    order: Number.isFinite(parsedOrder) ? parsedOrder : Number.MAX_SAFE_INTEGER,
+    status,
+  };
+};
+
+const normalizeSidebarLinks = (items = []) =>
+  items
+    .map((item) => normalizeSidebarLinkRecord(item))
+    .filter((item) => item && item.status === "active");
+
+const flattenGroupedSidebarLinks = (groupedPayload = {}) => {
+  if (!groupedPayload || typeof groupedPayload !== "object") return [];
+
+  const flattenedLinks = [];
+  Object.entries(groupedPayload).forEach(([parentLink, children]) => {
+    if (!Array.isArray(children)) return;
+
+    children.forEach((child) => {
+      const normalized = normalizeSidebarLinkRecord(
         {
-          headers: {
-            Authorization: token,
-          },
-        }
-      );
-      sessionStorage.setItem(
-        "auth_items",
-        JSON.stringify(response.data.menuItems)
+          ...child,
+          parentLink: child?.parentLink || parentLink,
+        },
+        parentLink
       );
 
-      const items = response.data.menuItems;
-      if (!Array.isArray(items)) return [];
-      return items
-        .filter((item) => item && typeof item.title === "string")
-        .map((item) => item.title.toLowerCase());
+      if (normalized && normalized.status === "active") {
+        flattenedLinks.push(normalized);
+      }
+    });
+  });
+
+  return flattenedLinks;
+};
+
+const dedupeAndSortSidebarLinks = (links = []) => {
+  const mapByKey = new Map();
+
+  links.forEach((item) => {
+    if (!item?.parentLink) return;
+    if (item.path && DEPRECATED_COUPON_PATHS.has(item.path)) return;
+    if (item.path && !item.path.startsWith("/")) return;
+
+    const key = item.path
+      ? `${item.parentLink}::${item.path}`
+      : `${item.parentLink}::parent-only`;
+    const existing = mapByKey.get(key);
+    if (!existing || item.order < existing.order) {
+      mapByKey.set(key, item);
     }
-  } catch (error) {
-    console.error(
-      "Error fetching menu items:",
-      error?.response?.data || error.message
-    );
+  });
+
+  return Array.from(mapByKey.values()).sort(
+    (a, b) =>
+      a.order - b.order ||
+      a.parentLink.localeCompare(b.parentLink) ||
+      String(a.path || "").localeCompare(String(b.path || ""))
+  );
+};
+
+const mapSidebarLinksToNavConfig = (links = []) => {
+  const grouped = new Map();
+
+  dedupeAndSortSidebarLinks(links).forEach((item) => {
+    const existingGroup = grouped.get(item.parentLink) || {
+      title: item.parentLink,
+      iconKey: item.iconKey,
+      order: item.order,
+      parentPath: "",
+      hasParentOnly: false,
+      childPaths: new Set(),
+      children: [],
+    };
+
+    existingGroup.order = Math.min(existingGroup.order, item.order);
+    if (item.iconKey && !existingGroup.iconKey) {
+      existingGroup.iconKey = item.iconKey;
+    }
+
+    if (item.isParentOnly || !item.path) {
+      existingGroup.hasParentOnly = true;
+      if (!existingGroup.parentPath && item.path) {
+        existingGroup.parentPath = item.path;
+      }
+    } else if (!existingGroup.childPaths.has(item.path)) {
+      existingGroup.childPaths.add(item.path);
+      existingGroup.children.push({
+        title: item.title,
+        path: item.path,
+        icon: renderIcon(item.iconKey),
+        order: item.order,
+      });
+    }
+
+    grouped.set(item.parentLink, existingGroup);
+  });
+
+  return Array.from(grouped.values())
+    .sort((a, b) => a.order - b.order || a.title.localeCompare(b.title))
+    .map((group) => {
+      const sortedChildren = group.children.sort(
+        (a, b) => a.order - b.order || a.title.localeCompare(b.title)
+      );
+
+      if (
+        sortedChildren.length === 1 &&
+        !group.hasParentOnly &&
+        !group.parentPath
+      ) {
+        const [single] = sortedChildren;
+        return {
+          title: group.title,
+          path: single.path,
+          icon: single.icon,
+        };
+      }
+
+      return {
+        title: group.title,
+        ...(group.parentPath ? { path: group.parentPath } : {}),
+        icon: renderIcon(group.iconKey),
+        children: sortedChildren.map((child) => ({
+          title: child.title,
+          path: child.path,
+          icon: child.icon,
+        })),
+      };
+    })
+    .filter((group) => group.path || (Array.isArray(group.children) && group.children.length));
+};
+
+const buildFallbackNavConfig = (role) => {
+  const fallbackLinks = getRoleBasedFallbackSidebar(role).map((item) => ({
+    parentLink: item.parentLink,
+    title: item.title,
+    path: item.path,
+    iconKey: item.icon,
+    order: item.order,
+    status: "active",
+  }));
+
+  return mapSidebarLinksToNavConfig(fallbackLinks);
+};
+
+const parseSessionSidebarLinks = (rawValue) => {
+  if (!rawValue) return [];
+
+  try {
+    const parsed = JSON.parse(rawValue);
+    if (Array.isArray(parsed)) {
+      return normalizeSidebarLinks(parsed);
+    }
+
+    if (parsed && typeof parsed === "object") {
+      return flattenGroupedSidebarLinks(parsed);
+    }
+  } catch {
     return [];
+  }
+
+  return [];
+};
+
+const loadSessionSidebarFallback = () => {
+  const sessionSidebarLinks = parseSessionSidebarLinks(
+    sessionStorage.getItem("sidebar_links")
+  );
+  if (sessionSidebarLinks.length) return sessionSidebarLinks;
+
+  const adminSidebarInSession = parseSessionSidebarLinks(
+    sessionStorage.getItem("adminSidebar")
+  );
+  if (adminSidebarInSession.length) return adminSidebarInSession;
+
+  const adminSidebarInLocal = parseSessionSidebarLinks(
+    localStorage.getItem("adminSidebar")
+  );
+  return adminSidebarInLocal;
+};
+
+const fetchFlatSidebarLinks = async (role, headers) => {
+  const params = { status: "active" };
+  if (role) params.role = role;
+
+  const response = await axios.get(`${localUrl}/additional/sidebar-links`, {
+    params,
+    headers,
+  });
+
+  return normalizeSidebarLinks(extractArrayPayload(response.data));
+};
+
+const fetchRoleBasedSidebarLinks = async (role, headers) => {
+  const params = {};
+  if (role) params.role = role;
+
+  try {
+    const response = await axios.get(`${localUrl}/additional/sidebar-links/grouped`, {
+      params,
+      headers,
+    });
+
+    const groupedPayload = extractGroupedPayload(response.data);
+    if (groupedPayload) {
+      return flattenGroupedSidebarLinks(groupedPayload);
+    }
+
+    return normalizeSidebarLinks(extractArrayPayload(response.data));
+  } catch {
+    return fetchFlatSidebarLinks(role, headers);
   }
 };
 
-// Function to get nav config
-const getNavConfig = async () => {
-  const availableMenuItems = await fetchMenuItems();
-  const baseConfig = [
-    {
-      title: "dashboard",
-      path: "/dashboard",
-      icon: icons.dashboard,
-    },
-    {
-      title: "partners",
-      path: "/user",
-      icon: icons.partners,
-    },
-    {
-      title: "Messenger",
-      path: "/messenger",
-      icon: icons.messenger,
-    },
-    {
-      title: "PMS Bookings",
-      icon: icons.bookings,
-      path: "/your-bookings",
-    },
-    {
-      title: "Create Booking",
-      icon: icons.addBooking,
-      path: "/booking-creation",
-    },
+const fetchUserEffectiveSidebarLinks = async (userId, headers) => {
+  if (!userId) return [];
 
-    { title: "Panel Booking", path: "/panel-booking", icon: icons.bookings },
-
+  const response = await axios.get(
+    `${localUrl}/additional/sidebar-links/for-user/${userId}`,
     {
-      title: "travel",
-      icon: icons.travel,
-      children: [
-        { title: "Add Car", path: "/add-a-car", icon: icons.addCar },
-        { title: "Cars", path: "/your-cars", icon: icons.car },
-        {
-          title: "My Ride",
-          path: "/your-car-details/owner-car",
-          icon: icons.addCar,
-        },
-        { title: "Add Owner", path: "/add-an-car-owner", icon: icons.owner },
-        { title: "Car Owner", path: "/cars-owner", icon: icons.ownerList },
-        {
-          title: "My Bookings",
-          path: "/travel-bookings",
-          icon: icons.bookings,
-        },
-      ],
-    },
-    {
-      title: "tour",
-      icon: icons.tour,
-      children: [
-        { title: "Add Tour", path: "/add-tour-data", icon: icons.addTour },
-        { title: "My Tour", path: "/my-tour", icon: icons.tour },
-        { title: "My Tour Booking", path: "/tour-bookings", icon: icons.bookings },
-      ],
-    },
-    {
-      title: "Hotels",
-      icon: icons.hotels,
-      children: [
-        {
-          title: "PMS Complaints",
-          path: "/your-complaints",
-          icon: icons.complaints,
-        },
-        { title: "Your Hotel", icon: icons.hotels, path: "/your-hotels" },
-        {
-          title: "PMS Monthly Price",
-          icon: icons.setMonthlyPrice,
-          path: "/hotels/monthly-price-pms",
-        },
-        { title: "PMS Coupons", path: "/apply-pms-coupon", icon: icons.coupon },
-      ],
-    },
-    {
-      title: "Advanced features",
-      icon: icons.admin,
-      children: [
-        { title: "Complaints", path: "/complaints", icon: icons.complaints },
-        { title: "Bookings", icon: icons.bookings, path: "/all-bookings" },
-        {
-          title: "Travel Bookings",
-          path: "/admin-travel/bookings",
-          icon: icons.bookings,
-        },
-        {
-          title: "Availability",
-          path: "/hotels/availability",
-          icon: icons.available,
-        },
-        {
-          title: "Set Month",
-          path: "/hotels/monthly-price",
-          icon: icons.setMonthlyPrice,
-        },
-        {
-          title: "Apply Coupons (Single Use)",
-          path: "/apply-coupon",
-          icon: icons.coupon,
-        },
-        {
-          title: "Partner Coupon",
-          path: "/partner-coupon",
-          icon: icons.coupon,
-        },
-        { title: "User Coupon", path: "/user-coupon", icon: icons.coupon },
-        { title: "Hotels", icon: icons.hotels, path: "/hotels" },
-        { title: "Reviews", path: "/all-reviews", icon: icons.review },
-        { title: "Manage users", path: "/all-users", icon: icons.user },
-        {
-          title: "Add travel location",
-          path: "/add-travel-location",
-          icon: icons.travel,
-        },
-        { title: "Change banner", path: "/change-banner", icon: icons.banner },
-        {
-          title: "Push notification",
-          path: "/send-notification-to-all",
-          icon: icons.notification,
-        },
-        { title: "GST", path: "/gst-page", icon: icons.settings },
-        {
-          title: "Additional Fields",
-          path: "/additional-fields",
-          icon: icons.settings,
-        },
-        {
-          title: "Bulk Operation",
-          path: "/bulk-data-processing",
-          icon: icons.settings,
-        },
-        {
-          title: "Bulk Hotel",
-          path: "/bulk-hotel-import",
-          icon: icons.settings,
-        },
-        { title: "Tour List", path: "/tour-list", icon: icons.tour },
-
-        { title: "Tour Requests", path: "/tour-requests", icon: icons.travel },
-        { title: "Tour Bookings", path: "/admin-tour/bookings", icon: icons.bookings },
-      ],
-    },
-  ];
-
-  return baseConfig.filter((item) => {
-    const isParentVisible = availableMenuItems.includes(
-      item.title.toLowerCase()
-    );
-    if (isParentVisible) return true;
-
-    if (item.children) {
-      const matchingChildren = item.children.filter((child) =>
-        availableMenuItems.includes(child.title.toLowerCase())
-      );
-      if (matchingChildren.length > 0) {
-        item.children = matchingChildren;
-        return true;
-      }
+      params: { grouped: "true" },
+      headers,
     }
-    return false;
-  });
+  );
+
+  const groupedPayload = extractGroupedPayload(response.data);
+  if (groupedPayload) {
+    return flattenGroupedSidebarLinks(groupedPayload);
+  }
+
+  return normalizeSidebarLinks(extractArrayPayload(response.data));
 };
 
-// Export the function to fetch the nav config
-export const fetchNavConfig = async () => {
-  return await getNavConfig();
+const seedSidebarLinksIfMissing = async (role, headers) => {
+  if (!headers.Authorization) return false;
+  if (!ADMIN_SEED_ROLES.has(role)) return false;
+
+  try {
+    const response = await axios.get(`${localUrl}/additional/sidebar-links`, {
+      headers,
+    });
+
+    const existingLinks = normalizeSidebarLinks(extractArrayPayload(response.data));
+    const existingPaths = new Set(existingLinks.map((item) => item.path));
+
+    const missingSeedPayload = SIDEBAR_LINK_SEED_DATA.filter(
+      (item) => !existingPaths.has(item.childLink)
+    );
+
+    if (!missingSeedPayload.length) return false;
+
+    await axios.post(
+      `${localUrl}/additional/sidebar-links/bulk`,
+      missingSeedPayload,
+      { headers }
+    );
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const getNavConfig = async () => {
+  const userRole = sessionStorage.getItem("user_role");
+  const normalizedRole = normalizeRoleForSidebar(userRole);
+  const userId = sessionStorage.getItem("user_id");
+  const headers = buildAuthHeaders();
+
+  try {
+    await seedSidebarLinksIfMissing(userRole, headers);
+
+    let sidebarLinks = await fetchRoleBasedSidebarLinks(normalizedRole, headers);
+
+    if (!sidebarLinks.length && userId) {
+      sidebarLinks = await fetchUserEffectiveSidebarLinks(userId, headers);
+    }
+
+    if (!sidebarLinks.length) {
+      sidebarLinks = loadSessionSidebarFallback();
+    }
+
+    if (sidebarLinks.length) {
+      const mappedConfig = mapSidebarLinksToNavConfig(sidebarLinks);
+      if (mappedConfig.length) {
+        sessionStorage.setItem("sidebar_links", JSON.stringify(sidebarLinks));
+        return mappedConfig;
+      }
+    }
+  } catch (error) {
+    console.error(
+      "Failed to fetch dynamic sidebar links:",
+      error?.response?.data || error.message
+    );
+  }
+
+  return buildFallbackNavConfig(normalizedRole);
+};
+
+export const fetchNavConfig = async ({ forceRefresh = false } = {}) => {
+  if (forceRefresh) {
+    navConfigCache = null;
+    navConfigPromise = null;
+  }
+
+  if (navConfigCache) return navConfigCache;
+
+  if (!navConfigPromise) {
+    navConfigPromise = getNavConfig()
+      .then((config) => {
+        navConfigCache = config;
+        return config;
+      })
+      .finally(() => {
+        navConfigPromise = null;
+      });
+  }
+
+  return navConfigPromise;
 };

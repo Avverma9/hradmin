@@ -170,9 +170,17 @@ export const addMenu = createAsyncThunk(
   "partner/addMenu",
   async ({ userId, matchedMenuItems }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${localUrl}/api/users/${userId}/menu-items`,
-        { menuItems: matchedMenuItems },
+      const linkIds = (Array.isArray(matchedMenuItems) ? matchedMenuItems : [])
+        .map((item) => item?._id || item?.id)
+        .filter(Boolean);
+
+      if (!linkIds.length) {
+        return { message: "No valid sidebar links selected.", data: null };
+      }
+
+      const response = await axios.patch(
+        `${localUrl}/additional/sidebar-permissions/${userId}/allow`,
+        { linkIds },
         {
           headers: {
             Authorization: token,
@@ -193,9 +201,14 @@ export const deleteMenu = createAsyncThunk(
   "partner/deleteMenu",
   async (payload, { rejectWithValue }) => {
     try {
+      const linkIds = [payload?.menuId].filter(Boolean);
+      if (!linkIds.length) {
+        return { message: "No valid sidebar link selected.", data: null };
+      }
+
       const response = await axios.patch(
-        `${localUrl}/api/users/${payload.id}/menu-items`,
-        { menuId: payload.menuId },
+        `${localUrl}/additional/sidebar-permissions/${payload.id}/block`,
+        { linkIds },
         {
           headers: {
             Authorization: token,
@@ -216,8 +229,13 @@ export const deleteAllmenus = createAsyncThunk(
   "partner/deleteMenu",
   async (userId, { rejectWithValue }) => {
     try {
-      const response = await axios.patch(
-        `${localUrl}/api/users/delete-all-menu-items/${userId}`,
+      const response = await axios.put(
+        `${localUrl}/additional/sidebar-permissions/${userId}`,
+        {
+          mode: "role_based",
+          allowedLinkIds: [],
+          blockedLinkIds: [],
+        },
         {
           headers: {
             Authorization: token,

@@ -32,10 +32,17 @@ const AppliedCouponModal = ({ open, handleClose }) => {
     const fetchCoupons = async () => {
       setLoading(true); // Start loading
       try {
-        const response = await axios.get(`${localUrl}/valid-coupons`);
-        setCoupons(response.data);
+        const response = await axios.get(`${localUrl}/coupon/get/by-type`, {
+          params: { type: 'hotel', status: 'active' },
+        });
+        setCoupons(response?.data?.data || response?.data || []);
       } catch (err) {
-        setError('Failed to fetch coupons');
+        try {
+          const fallback = await axios.get(`${localUrl}/valid-coupons`);
+          setCoupons(fallback?.data || []);
+        } catch {
+          setError('Failed to fetch coupons');
+        }
       } finally {
         setLoading(false); // End loading
       }
@@ -51,8 +58,10 @@ const AppliedCouponModal = ({ open, handleClose }) => {
     try {
       await axios.patch(`${localUrl}/remove/coupon/before-time-from-hotel`, { roomId });
       // Fetch coupons again to refresh the list
-      const response = await axios.get(`${localUrl}/valid-coupons`);
-      setCoupons(response.data);
+      const response = await axios.get(`${localUrl}/coupon/get/by-type`, {
+        params: { type: 'hotel', status: 'active' },
+      });
+      setCoupons(response?.data?.data || response?.data || []);
       toast.success('Removed coupons');
       setError(null);
     } catch (err) {

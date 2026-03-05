@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { createBooking } from "src/components/redux/reducers/booking";
 import { useLoader } from "../../../../utils/loader";
-import { applyCoupon } from "src/components/redux/reducers/userAndPartnerCoupon/coupon";
+import { applyCoupon } from "src/components/redux/reducers/coupon";
 import { hotelEmail, userName } from "../../../../utils/util";
 import { getGst } from "src/components/redux/reducers/gst";
 import {
@@ -230,12 +230,18 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
         hotelIds: [hotelId],
         roomIds: [roomItems?.roomId],
         userIds: [userId],
+        type: "hotel",
       };
       const response = await dispatch(applyCoupon(payload)).unwrap();
-      const discount = response?.[0]?.discountPrice;
-      const original = response?.[0]?.originalPrice;
+      const appliedCoupon = Array.isArray(response) ? response[0] : response;
+      const discount = Number(appliedCoupon?.discountPrice || 0);
+      const original = Number(
+        appliedCoupon?.originalPrice || calculateRoomPriceBeforeDiscount()
+      );
       setDiscountPrice(discount);
-      setDiscountPercentage(Math.round((discount / original) * 100));
+      setDiscountPercentage(
+        original > 0 ? Math.round((discount / original) * 100) : 0
+      );
       toast.success("Coupon applied successfully!");
     } catch (error) {
       toast.error("Failed to apply coupon. Please check the code.");
@@ -252,6 +258,7 @@ const BookingDetails = ({ food, room, hotel, email, owner, address, city }) => {
     hotelId,
     roomItems,
     userId,
+    calculateRoomPriceBeforeDiscount,
   ]);
 
   return (

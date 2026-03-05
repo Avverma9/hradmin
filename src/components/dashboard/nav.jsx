@@ -92,7 +92,7 @@ export default function Nav({ openNav, onCloseNav }) {
   const renderMenu = (
     <Stack component="nav" spacing={0.5} sx={{ px: 2 }}>
       {navConfig.map((item) => (
-        <NavItem key={item.title} item={item} />
+        <NavItem key={item.path || item.title} item={item} />
       ))}
     </Stack>
   );
@@ -167,12 +167,20 @@ Nav.propTypes = {
 function NavItem({ item }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const hasChildren = Array.isArray(item.children) && item.children.length > 0;
+  const isNavigable = Boolean(item.path && String(item.path).startsWith('/'));
   const active =
-    item.path === pathname ||
-    (item.children && item.children.some((child) => child.path === pathname));
+    (isNavigable && item.path === pathname) ||
+    (hasChildren && item.children.some((child) => child.path === pathname));
+
+  useEffect(() => {
+    if (hasChildren && item.children.some((child) => child.path === pathname)) {
+      setOpen(true);
+    }
+  }, [hasChildren, item.children, pathname]);
 
   const handleClick = () => {
-    if (item.children) {
+    if (hasChildren) {
       setOpen(!open);
     }
   };
@@ -180,9 +188,10 @@ function NavItem({ item }) {
   return (
     <>
       <ListItemButton
-        component={RouterLink}
-        href={item.path}
-        onClick={handleClick}
+        component={hasChildren || !isNavigable ? 'button' : RouterLink}
+        href={!hasChildren && isNavigable ? item.path : undefined}
+        onClick={hasChildren ? handleClick : undefined}
+        disabled={!hasChildren && !isNavigable}
         sx={{
           minHeight: 44,
           borderRadius: 0.75,
@@ -206,7 +215,7 @@ function NavItem({ item }) {
         <Box component="span" sx={{ flexGrow: 1 }}>
           {item.title}
         </Box>
-        {item.children && (
+        {hasChildren && (
           <Iconify
             icon={open ? 'eva:arrow-ios-downward-fill' : 'eva:arrow-ios-forward-fill'}
             width={16}
@@ -215,12 +224,12 @@ function NavItem({ item }) {
         )}
       </ListItemButton>
 
-      {item.children && (
+      {hasChildren && (
         <Collapse in={open} timeout="auto" unmountOnExit>
           <Stack component="nav" spacing={0.5} sx={{ pl: 4 }}>
             {item.children.map((child) => (
               <ListItemButton
-                key={child.title}
+                key={child.path || child.title}
                 component={RouterLink}
                 href={child.path}
                 sx={{

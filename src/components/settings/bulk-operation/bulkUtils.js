@@ -122,6 +122,7 @@ export const executeBulkAction = async ({
         couponCode,
         hotelIds: ids,
         roomIds,
+        type: "hotel",
       };
 
       showLoader();

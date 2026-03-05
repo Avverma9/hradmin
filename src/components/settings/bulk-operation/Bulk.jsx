@@ -103,7 +103,7 @@ const Bulk = () => {
   const hotelsData = action === "removeCoupon" ? applied : data;
 
   const hotelToShow =
-    selectedCity && selectedCity !== "All City" ? byFilter?.data : hotelsData;
+    selectedCity && selectedCity !== "All City" ? byFilter : hotelsData;
 
   const filteredData =
     hotelToShow?.filter((hotel) => {
@@ -169,7 +169,9 @@ const Bulk = () => {
   const fetchCoupons = useCallback(async () => {
     showLoader();
     try {
-      const response = await dispatch(getAllCoupons()).unwrap();
+      const response = await dispatch(
+        getAllCoupons({ type: "hotel", status: "all" }),
+      ).unwrap();
       setCoupons(response || []);
     } catch (error) {
       console.error("Error fetching coupons:", error);
@@ -220,6 +222,9 @@ const Bulk = () => {
       couponName,
       discountPrice: Number(discountPrice),
       validity: adjustedDate.toISOString(), // or keep as Date object if your backend accepts it
+      type: "hotel",
+      quantity: 1,
+      maxUsage: 1,
     };
 
     showLoader();

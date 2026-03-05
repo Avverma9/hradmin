@@ -115,7 +115,7 @@ export default function ProductsView() {
 
 
   const filteredData = useMemo(() => {
-    const sourceData = selectedCity !== "All City" && byFilter?.data ? byFilter.data : data;
+    const sourceData = selectedCity !== "All City" ? byFilter : data;
     if (!Array.isArray(sourceData)) return []; // Ensure sourceData is an array
     return sourceData.filter((hotel) => {
       const matchesSearchQuery =

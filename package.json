@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "seed:sidebar": "node scripts/seed-sidebar-links.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

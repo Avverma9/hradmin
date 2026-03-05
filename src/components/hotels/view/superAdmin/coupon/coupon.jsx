@@ -71,7 +71,9 @@ export default function Coupon() {
   const fetchCoupons = async () => {
     showLoader();
     try {
-      const response = await dispatch(getAllCoupons()).unwrap();
+      const response = await dispatch(
+        getAllCoupons({ type: "hotel", status: "all" }),
+      ).unwrap();
       setCoupons(response || []);
     } catch (error) {
       console.error('Error fetching coupons:', error);
@@ -96,6 +98,9 @@ export default function Coupon() {
       couponName,
       discountPrice: Number(discountPrice),
       validity: formattedValidity,
+      type: "hotel",
+      quantity: 1,
+      maxUsage: 1,
     };
 
     showLoader();
@@ -129,6 +134,7 @@ export default function Coupon() {
         couponCode,
         hotelIds: [hotelIds],
         roomIds: [roomIds],
+        type: "hotel",
       }
       await dispatch(applyCoupon(payload)).unwrap();
       window.location.reload();

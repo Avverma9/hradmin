@@ -36,13 +36,17 @@ import { useLoader } from "../../../../utils/loader";
 import RoomModal from "./room-modal";
 import CouponCodeModal from "./coupon-code";
 import CreateCouponModal from "./create-coupon";
-import AppliedCouponModal from "./applied-coupon";
 import AvailableCouponsModal from "./available-coupons";
 
-export default function Coupon() {
+export default function Coupon({
+  defaultCouponType = "hotel",
+  lockCouponType = false,
+} = {}) {
   const [couponName, setCouponName] = useState("");
   const [discountPrice, setDiscountPrice] = useState("");
+  const [quantity, setQuantity] = useState("1");
   const [validity, setValidity] = useState("");
+  const [couponType, setCouponType] = useState(defaultCouponType);
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [couponCode, setCouponCode] = useState("");
@@ -52,7 +56,6 @@ export default function Coupon() {
   const [openAvailableCouponsModal, setOpenAvailableCouponsModal] =
     useState(false);
   const [openCreateCouponModal, setOpenCreateCouponModal] = useState(false);
-  const [viewCoupons, setViewCoupons] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchTerm, setSearchTerm] = useState("");
@@ -103,7 +106,9 @@ export default function Coupon() {
   const fetchCoupons = useCallback(async () => {
     showLoader();
     try {
-      const response = await dispatch(getAllCoupons()).unwrap();
+      const response = await dispatch(
+        getAllCoupons({ type: couponType, status: "all" }),
+      ).unwrap();
       setCoupons(response || []);
     } catch (error) {
       console.error("Error fetching coupons:", error);
@@ -111,17 +116,25 @@ export default function Coupon() {
     } finally {
       hideLoader();
     }
-  }, [dispatch, showLoader, hideLoader]);
+  }, [dispatch, showLoader, hideLoader, couponType]);
 
   useEffect(() => {
-    fetchHotels();
+    if (couponType === "hotel") {
+      fetchHotels();
+    }
     fetchCoupons();
-  }, []);
+  }, [couponType, fetchHotels, fetchCoupons]);
+
+  useEffect(() => {
+    setCouponType(defaultCouponType);
+  }, [defaultCouponType]);
 
   const resetCouponForm = () => {
     setCouponName("");
     setDiscountPrice("");
+    setQuantity("1");
     setValidity("");
+    setCouponType(defaultCouponType);
   };
 
   const handleCloseCreateCouponModal = () => {
@@ -131,7 +144,7 @@ export default function Coupon() {
   const handleCreateCoupon = async (e) => {
     e.preventDefault();
 
-    if (!couponName || !discountPrice || !validity) {
+    if (!couponName || !discountPrice || !validity || !quantity) {
       toast.warn("Please fill in all coupon details.");
       return;
     }
@@ -144,6 +157,9 @@ export default function Coupon() {
     const postData = {
       couponName,
       discountPrice: Number(discountPrice),
+      quantity: Number(quantity),
+      maxUsage: Number(quantity),
+      type: couponType,
       validity: adjustedDate.toISOString(),
     };
 
@@ -173,8 +189,8 @@ export default function Coupon() {
           couponCode,
           hotelIds: [hotelId],
           roomIds: [roomId],
+          type: couponType,
         };
-        showLoader();
         await dispatch(applyCoupon(payload)).unwrap();
         window.location.reload();
       } catch (error) {
@@ -218,14 +234,6 @@ export default function Coupon() {
   const handleOpenCreateCouponModal = () => {
     resetCouponForm();
     setOpenCreateCouponModal(true);
-  };
-
-  const handleOpenViewCoupon = () => {
-    setViewCoupons(true);
-  };
-
-  const handleCloseViewCoupon = () => {
-    setViewCoupons(false);
   };
 
   const handleApplyCouponToRoom = useCallback(async () => {
@@ -371,36 +379,52 @@ export default function Coupon() {
       >
         View Available Coupons
       </Button>
+      <FormControl variant="outlined" size="small" sx={{ minWidth: 180, mb: 2 }}>
+        <InputLabel id="coupon-type-filter-label">Coupon Type</InputLabel>
+        <Select
+          labelId="coupon-type-filter-label"
+          value={couponType}
+          label="Coupon Type"
+          onChange={(event) => setCouponType(event.target.value)}
+          disabled={lockCouponType}
+        >
+          <MenuItem value="hotel">Hotel</MenuItem>
+          <MenuItem value="partner">Partner</MenuItem>
+          <MenuItem value="user">User</MenuItem>
+        </Select>
+      </FormControl>
 
-      <div style={{ display: "flex", gap: "16px", marginBottom: "16px" }}>
-        <TextField
-          label="Search Hotels by Name"
-          variant="outlined"
-          sx={{ flexGrow: 1 }}
-          margin="none"
-          onChange={handleSearch}
-          value={searchTerm}
-        />
-        <FormControl variant="outlined" sx={{ minWidth: 200 }}>
-          <InputLabel id="city-filter-label">Filter by City</InputLabel>
-          <Select
-            labelId="city-filter-label"
-            id="city-filter-select"
-            value={selectedCity}
-            onChange={handleCityChange}
-            label="Filter by City"
-            disabled={
-              !Array.isArray(allHotelsData) || allHotelsData.length === 0
-            }
-          >
-            {uniqueCities.map((city) => (
-              <MenuItem key={city} value={city}>
-                {city}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </div>
+      {couponType === "hotel" && (
+        <div style={{ display: "flex", gap: "16px", marginBottom: "16px" }}>
+          <TextField
+            label="Search Hotels by Name"
+            variant="outlined"
+            sx={{ flexGrow: 1 }}
+            margin="none"
+            onChange={handleSearch}
+            value={searchTerm}
+          />
+          <FormControl variant="outlined" sx={{ minWidth: 200 }}>
+            <InputLabel id="city-filter-label">Filter by City</InputLabel>
+            <Select
+              labelId="city-filter-label"
+              id="city-filter-select"
+              value={selectedCity}
+              onChange={handleCityChange}
+              label="Filter by City"
+              disabled={
+                !Array.isArray(allHotelsData) || allHotelsData.length === 0
+              }
+            >
+              {uniqueCities.map((city) => (
+                <MenuItem key={city} value={city}>
+                  {city}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </div>
+      )}
 
       <CreateCouponModal
         open={openCreateCouponModal}
@@ -410,124 +434,134 @@ export default function Coupon() {
         setCouponName={setCouponName}
         discountPrice={discountPrice}
         setDiscountPrice={setDiscountPrice}
+        quantity={quantity}
+        setQuantity={setQuantity}
+        couponType={couponType}
+        setCouponType={setCouponType}
+        showQuantityField
+        showTypeSelector
         validity={validity}
         setValidity={setValidity}
       />
 
-      <hr />
-      <Typography variant="h5" gutterBottom>
-        Available Hotels
-      </Typography>
-      <TableContainer component={Paper} sx={{ mb: 4 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Hotel ID</TableCell>
-              <TableCell>Image</TableCell>
-              <TableCell>Hotel Name</TableCell>
-              <TableCell>Owner Name</TableCell>
-              <TableCell>City</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {paginatedHotels.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  {selectedCity || searchTerm
-                    ? "No hotels found matching your criteria."
-                    : !Array.isArray(allHotelsData) ||
-                        allHotelsData.length === 0
-                      ? "Loading hotels..."
-                      : "No hotels found."}
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginatedHotels.map((hotel) => (
-                <TableRow key={hotel.hotelId}>
-                  <TableCell>{hotel.hotelId}</TableCell>
-                  <TableCell>
-                    <img
-                      src={
-                        hotel.images && hotel.images.length > 0
-                          ? hotel.images[0]
-                          : "/placeholder-image.png"
-                      }
-                      alt={hotel.hotelName}
-                      style={{
-                        width: "70px",
-                        height: "70px",
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                      }}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "/placeholder-image.png";
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {hotel.hotelName}
-                    {hotel.rooms?.some((room) => room.isOffer) && (
-                      <Tooltip title="Offer available" arrow>
-                        <span
-                          style={{
-                            display: "inline-block",
-                            width: "8px",
-                            height: "8px",
-                            backgroundColor: "blue",
-                            borderRadius: "50%",
-                            marginLeft: "8px",
-                            verticalAlign: "middle",
-                            cursor: "pointer",
-                          }}
-                        ></span>
-                      </Tooltip>
-                    )}
-                  </TableCell>
-
-                  <TableCell>{hotel.hotelOwnerName}</TableCell>
-                  <TableCell>{hotel.city}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      onClick={() => handleOpenModal(hotel)}
-                      disabled={!hotel}
-                    >
-                      Apply
-                    </Button>
-                  </TableCell>
+      {couponType === "hotel" && (
+        <>
+          <hr />
+          <Typography variant="h5" gutterBottom>
+            Available Hotels
+          </Typography>
+          <TableContainer component={Paper} sx={{ mb: 4 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Hotel ID</TableCell>
+                  <TableCell>Image</TableCell>
+                  <TableCell>Hotel Name</TableCell>
+                  <TableCell>Owner Name</TableCell>
+                  <TableCell>City</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={filteredAndSearchedHotels?.length || 0}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </TableContainer>
+              </TableHead>
+              <TableBody>
+                {paginatedHotels.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      {selectedCity || searchTerm
+                        ? "No hotels found matching your criteria."
+                        : !Array.isArray(allHotelsData) ||
+                            allHotelsData.length === 0
+                          ? "Loading hotels..."
+                          : "No hotels found."}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedHotels.map((hotel) => (
+                    <TableRow key={hotel.hotelId}>
+                      <TableCell>{hotel.hotelId}</TableCell>
+                      <TableCell>
+                        <img
+                          src={
+                            hotel.images && hotel.images.length > 0
+                              ? hotel.images[0]
+                              : "/placeholder-image.png"
+                          }
+                          alt={hotel.hotelName}
+                          style={{
+                            width: "70px",
+                            height: "70px",
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                          }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/placeholder-image.png";
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {hotel.hotelName}
+                        {hotel.rooms?.some((room) => room.isOffer) && (
+                          <Tooltip title="Offer available" arrow>
+                            <span
+                              style={{
+                                display: "inline-block",
+                                width: "8px",
+                                height: "8px",
+                                backgroundColor: "blue",
+                                borderRadius: "50%",
+                                marginLeft: "8px",
+                                verticalAlign: "middle",
+                                cursor: "pointer",
+                              }}
+                            ></span>
+                          </Tooltip>
+                        )}
+                      </TableCell>
 
-      <RoomModal
-        open={openModal}
-        handleClose={handleCloseModal}
-        selectedHotel={selectedHotel}
-        handleOpenCouponModal={handleOpenCouponModal}
-      />
+                      <TableCell>{hotel.hotelOwnerName}</TableCell>
+                      <TableCell>{hotel.city}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={() => handleOpenModal(hotel)}
+                          disabled={!hotel}
+                        >
+                          Apply
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={filteredAndSearchedHotels?.length || 0}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+          </TableContainer>
 
-      <CouponCodeModal
-        open={openCouponModal}
-        handleClose={handleCloseCouponModal}
-        couponCode={couponCode}
-        setCouponCode={setCouponCode}
-        handleApplyCouponToRoom={handleApplyCouponToRoom}
-      />
+          <RoomModal
+            open={openModal}
+            handleClose={handleCloseModal}
+            selectedHotel={selectedHotel}
+            handleOpenCouponModal={handleOpenCouponModal}
+          />
+
+          <CouponCodeModal
+            open={openCouponModal}
+            handleClose={handleCloseCouponModal}
+            couponCode={couponCode}
+            setCouponCode={setCouponCode}
+            handleApplyCouponToRoom={handleApplyCouponToRoom}
+          />
+        </>
+      )}
 
       <AvailableCouponsModal
         open={openAvailableCouponsModal}

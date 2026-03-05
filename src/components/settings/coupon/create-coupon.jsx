@@ -5,8 +5,12 @@ import {
   Grid,
   Button,
   Dialog,
+  Select,
+  MenuItem,
   TextField,
+  InputLabel,
   DialogTitle,
+  FormControl,
   DialogContent,
 } from "@mui/material";
 
@@ -20,18 +24,29 @@ const CreateCouponModal = ({
   setDiscountPrice,
   validity,
   setValidity,
+  couponType = "hotel",
+  setCouponType = () => {},
+  quantity = "1",
+  setQuantity = () => {},
+  showTypeSelector = false,
+  showQuantityField = false,
 }) => {
   useEffect(() => {
     if (open && !validity) {
       const now = new Date();
       const localISOTime = new Date(
-        now.getTime() - now.getTimezoneOffset() * 60000,
+        now.getTime() - now.getTimezoneOffset() * 60000
       )
         .toISOString()
-        .slice(0, 16); // 'YYYY-MM-DDTHH:mm'
+        .slice(0, 16);
       setValidity(localISOTime);
     }
-  }, [open, validity, setValidity]);
+
+    if (open && showQuantityField && !quantity) {
+      setQuantity("1");
+    }
+  }, [open, validity, setValidity, showQuantityField, quantity, setQuantity]);
+
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
       <DialogTitle sx={{ pb: 1, fontWeight: 600, fontSize: 18 }}>
@@ -65,6 +80,39 @@ const CreateCouponModal = ({
                 required
               />
             </Grid>
+
+            {showTypeSelector && (
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth size="small" required>
+                  <InputLabel id="coupon-type-label">Coupon Type</InputLabel>
+                  <Select
+                    labelId="coupon-type-label"
+                    value={couponType}
+                    label="Coupon Type"
+                    onChange={(e) => setCouponType(e.target.value)}
+                  >
+                    <MenuItem value="hotel">Hotel</MenuItem>
+                    <MenuItem value="partner">Partner</MenuItem>
+                    <MenuItem value="user">User</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
+
+            {showQuantityField && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  label="Quantity"
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  required
+                />
+              </Grid>
+            )}
+
             <Grid item xs={12}>
               <TextField
                 size="small"
@@ -115,6 +163,12 @@ CreateCouponModal.propTypes = {
   setDiscountPrice: PropTypes.func.isRequired,
   validity: PropTypes.string.isRequired,
   setValidity: PropTypes.func.isRequired,
+  couponType: PropTypes.string,
+  setCouponType: PropTypes.func,
+  quantity: PropTypes.string,
+  setQuantity: PropTypes.func,
+  showTypeSelector: PropTypes.bool,
+  showQuantityField: PropTypes.bool,
 };
 
 export default CreateCouponModal;

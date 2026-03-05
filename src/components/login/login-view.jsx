@@ -232,6 +232,14 @@ export default function LoginView() {
     sessionStorage.setItem("user_image", data.loggedUserImage);
     sessionStorage.setItem("user_name", data.loggedUserName);
     sessionStorage.setItem("rs_token", data.rsToken);
+    if (data?.sidebarLinks) {
+      sessionStorage.setItem("sidebar_links", JSON.stringify(data.sidebarLinks));
+    } else if (data?.sessionData?.sidebarLinks) {
+      sessionStorage.setItem(
+        "sidebar_links",
+        JSON.stringify(data.sessionData.sidebarLinks)
+      );
+    }
 
     // Show the popup
     setShowSuccessPopup(true);
