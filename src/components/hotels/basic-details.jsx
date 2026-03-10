@@ -56,7 +56,7 @@ import DeckIcon from '@mui/icons-material/Deck';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 // Local Imports
-import { localUrl } from '../../../utils/util';
+import { getBusinessHotelId, localUrl } from '../../../utils/util';
 
 const fieldGroups = {
   'Primary Info': [
@@ -120,7 +120,7 @@ export default function BasicDetails({ open, onClose, hotelId = null }) {
 
         setHotel({
           ...rawHotel,
-          hotelId: rawHotel?.hotelId || rawHotel?._id || hotelId,
+          hotelId: getBusinessHotelId(rawHotel, hotelId),
           hotelName: rawHotel?.hotelName || basicInfo?.name || "",
           hotelOwnerName: rawHotel?.hotelOwnerName || basicInfo?.owner || "",
           description: rawHotel?.description || basicInfo?.description || "",
@@ -156,7 +156,7 @@ export default function BasicDetails({ open, onClose, hotelId = null }) {
 
   const handleEditClick = (field, value) => {
     setEditField(field.id);
-    if (['isAccepted', 'localId'].includes(field.id)) {
+    if (field.id === 'isAccepted') {
       setEditValue(value ? 'Accepted' : 'Not Accepted');
     } else {
       setEditValue(value || '');
@@ -172,10 +172,11 @@ export default function BasicDetails({ open, onClose, hotelId = null }) {
     if (editField === null) return;
     try {
       let updatedValue = editValue;
-      if (['isAccepted', 'localId'].includes(editField)) {
+      if (editField === 'isAccepted') {
         updatedValue = editValue === 'Accepted';
       }
-      await axios.patch(`${localUrl}/hotels/update/info/${hotelId}`, { [editField]: updatedValue });
+      const targetHotelId = hotel?.hotelId || hotelId;
+      await axios.patch(`${localUrl}/hotels/update/info/${targetHotelId}`, { [editField]: updatedValue });
       const updatedHotel = { ...hotel, [editField]: updatedValue };
       setHotel(updatedHotel);
       toast.success('Update successful!');
@@ -188,12 +189,21 @@ export default function BasicDetails({ open, onClose, hotelId = null }) {
   
   const renderFieldValue = (field) => {
     const value = hotel?.[field.id];
-    if (['isAccepted', 'localId'].includes(field.id)) {
+    if (field.id === 'isAccepted') {
       return <Chip
         icon={value ? <CheckCircleIcon /> : <CancelIcon />}
         label={value ? 'Accepted' : 'Not Accepted'}
         size="small"
         color={value ? 'success' : 'error'}
+      />;
+    }
+    if (field.id === 'localId') {
+      const isAccepted = String(value || '').toLowerCase() === 'accepted';
+      return <Chip
+        icon={isAccepted ? <CheckCircleIcon /> : <CancelIcon />}
+        label={value || 'Not provided'}
+        size="small"
+        color={isAccepted ? 'success' : 'default'}
       />;
     }
     return <Typography variant="body2" color="text.primary" sx={{ wordBreak: 'break-word' }}>{value || <span style={{ color: '#999' }}>Not provided</span>}</Typography>;

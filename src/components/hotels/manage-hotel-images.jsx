@@ -28,7 +28,7 @@ import {
   InsertPhoto as InsertPhotoIcon,
 } from "@mui/icons-material";
 
-import { localUrl } from "../../../utils/util";
+import { getHotelDocumentId, localUrl } from "../../../utils/util";
 
 const ImageUpload = ({ open, hotelId, onClose }) => {
   const [images, setImages] = useState([]);
@@ -69,7 +69,7 @@ const ImageUpload = ({ open, hotelId, onClose }) => {
             : [];
 
         setImages(imageList);
-        setId(hotelData._id || hotelData.hotelId || "");
+        setId(getHotelDocumentId(hotelData));
       } catch (error) {
         console.error("Error fetching images:", error);
         toast.error("Failed to load images");

@@ -13,7 +13,6 @@ export const fetchFilteredBookings = createAsyncThunk('booking/fetchFilteredBook
         return response.data;
     } catch (error) {
         const errorMessage = error.response?.data?.message || error.message;
-        toast.error(`Error: ${errorMessage}`);
         return rejectWithValue(errorMessage);
     }
 });

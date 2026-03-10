@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 
 import {
   Box,
@@ -22,6 +23,7 @@ import {
   DialogActions,
   DialogContent,
   InputAdornment,
+  CircularProgress,
 } from '@mui/material';
 import {
   Close,
@@ -39,22 +41,25 @@ import {
 } from '@mui/icons-material';
 import { useRole } from "../../../../utils/additional/role";
 
+const initialFormData = {
+  name: "",
+  email: "",
+  mobile: "",
+  address: "",
+  city: "",
+  state: "",
+  pinCode: "",
+  password: "",
+  role: "",
+  status: true,
+  images: null,
+};
+
 const AddUserModal = ({ open, onClose, onSubmit }) => {
   const role = useRole();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    mobile: "",
-    address: "",
-    city: "",
-    state: "",
-    pinCode: "",
-    password: "",
-    role: "",
-    status: true,
-    images: null,
-  });
+  const [formData, setFormData] = useState(initialFormData);
   const [imagePreview, setImagePreview] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -88,25 +93,63 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
     setImagePreview("");
   };
 
-  const handleSubmit = () => {
+  const resetForm = () => {
+    setFormData(initialFormData);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImagePreview("");
+  };
+
+  const closeModal = () => {
+    resetForm();
+    onClose();
+  };
+
+  const handleClose = () => {
+    if (isSubmitting) {
+      return;
+    }
+    closeModal();
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    if (!formData.name || !formData.email || !formData.mobile || !formData.role || !formData.password) {
+      toast.error("Name, email, mobile, role and password are required.");
+      return;
+    }
+
     const data = new FormData();
     Object.keys(formData).forEach(key => {
       if (formData[key] !== null && formData[key] !== "") {
         data.append(key, formData[key]);
       }
     });
-    onSubmit(data);
-    onClose();
+
+    try {
+      setIsSubmitting(true);
+      await onSubmit(data);
+      toast.success("Partner created successfully.");
+      closeModal();
+    } catch (error) {
+      // Parent thunk already surfaces the API error; keep modal open for correction.
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" PaperProps={{ sx: { borderRadius: 4 } }}>
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md" PaperProps={{ sx: { borderRadius: 4 } }}>
       <DialogTitle sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" fontWeight="600">
             Create New Partner
           </Typography>
-          <IconButton onClick={onClose} size="small">
+          <IconButton onClick={handleClose} size="small" disabled={isSubmitting}>
             <Close />
           </IconButton>
         </Box>
@@ -136,7 +179,7 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
                            </IconButton>
                        )}
                    </Box>
-                   <Button variant="outlined" component="label" color="inherit">
+                   <Button variant="outlined" component="label" color="inherit" disabled={isSubmitting}>
                      Upload Photo
                      <input hidden accept="image/*" type="file" onChange={handleImageChange} />
                    </Button>
@@ -156,7 +199,7 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
                         <Grid item xs={12} sm={6} md={4}><TextField name="state" label="State" fullWidth value={formData.state} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><Public color="action" /></InputAdornment> }} /></Grid>
                         <Grid item xs={12} sm={12} md={4}><TextField name="pinCode" label="PIN Code" fullWidth value={formData.pinCode} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start"><PinDrop color="action" /></InputAdornment> }} /></Grid>
                         <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth>
+                            <FormControl fullWidth disabled={isSubmitting}>
                                 <InputLabel id="role-select-label">Role</InputLabel>
                                 <Select name="role" labelId="role-select-label" value={formData.role} onChange={handleChange} label="Role" startAdornment={<InputAdornment position="start"><Badge color="action" /></InputAdornment>}>
                                     {(role || []).map((item) => ( <MenuItem key={item._id} value={item.role}>{item.role}</MenuItem> ))}
@@ -164,7 +207,7 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
                             </FormControl>
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth>
+                            <FormControl fullWidth disabled={isSubmitting}>
                                 <InputLabel id="status-select-label">Status</InputLabel>
                                 <Select name="status" labelId="status-select-label" value={formData.status} onChange={handleChange} label="Status" startAdornment={<InputAdornment position="start"><ToggleOn color="action" /></InputAdornment>}>
                                     <MenuItem value="true">Active</MenuItem>
@@ -182,11 +225,17 @@ const AddUserModal = ({ open, onClose, onSubmit }) => {
         </Grid>
       </DialogContent>
       <DialogActions sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
-        <Button onClick={onClose} color="inherit" variant="outlined">
+        <Button onClick={handleClose} color="inherit" variant="outlined" disabled={isSubmitting}>
           Cancel
         </Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
-          Create Partner
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          color="primary"
+          disabled={isSubmitting}
+          startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : null}
+        >
+          {isSubmitting ? 'Creating...' : 'Create Partner'}
         </Button>
       </DialogActions>
     </Dialog>

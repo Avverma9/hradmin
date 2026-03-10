@@ -45,7 +45,7 @@ import {
 import { useBedTypes } from "../../../utils/additional/bedTypes";
 import { useRoomTypes } from "../../../utils/additional/roomTypes";
 
-const AddRoomModal = ({ open, onClose, hotelId }) => {
+const AddRoomModal = ({ open, onClose, hotelId, onUpdated = () => {} }) => {
   const [roomType, setRoomType] = useState("");
   const [roomPrice, setRoomPrice] = useState("");
   const [bedTypesValue, setBedTypesValue] = useState("");
@@ -56,6 +56,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentRoomId, setCurrentRoomId] = useState(null);
+  const [soldOut, setSoldOut] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const bedTypes = useBedTypes()
@@ -81,6 +82,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
           price: room?.price ?? room?.pricing?.finalPrice ?? room?.pricing?.basePrice ?? "",
           countRooms: room?.countRooms ?? room?.inventory?.available ?? 0,
           totalRooms: room?.totalRooms ?? room?.inventory?.total ?? 0,
+          soldOut: room?.soldOut ?? false,
           isOffer: room?.isOffer ?? room?.features?.isOffer ?? false,
           images: Array.isArray(room?.images) ? room.images[0] || "" : room?.images || "",
         }));
@@ -112,7 +114,8 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
     formData.append("price", roomPrice);
     formData.append("bedTypes", bedTypesValue);
     formData.append("countRooms", countRooms);
-    formData.append("totalRooms", totalRooms);
+    formData.append("totalRooms", totalRooms || countRooms);
+    formData.append("soldOut", soldOut);
 
     images.forEach((file) => {
       formData.append("images", file);
@@ -127,6 +130,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
       .then(() => {
         toast.success("Room added successfully");
         fetchRooms();
+        onUpdated();
         resetForm(); // Clear form after success
       })
       .catch(() => {
@@ -141,7 +145,6 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
   const handleCancel = () => {
     resetForm();
     onClose();
-    window.location.reload();
   };
 
   const resetForm = () => {
@@ -152,6 +155,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
     setTotalRooms("");
     setImages([]); // Clear images
     setCurrentRoomId(null);
+    setSoldOut(false);
     setIsAddingRoom(false);
   };
 
@@ -165,6 +169,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
       .then(() => {
         toast.success("Room deleted successfully");
         fetchRooms();
+        onUpdated();
       })
       .catch(() => {
         toast.error("Error deleting room");
@@ -179,7 +184,8 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
     formData.append("price", roomPrice);
     formData.append("bedTypes", bedTypesValue);
     formData.append("countRooms", countRooms);
-    formData.append("totalRooms", totalRooms);
+    formData.append("totalRooms", totalRooms || countRooms);
+    formData.append("soldOut", soldOut);
 
     images.forEach((file) => {
       formData.append("images", file);
@@ -194,6 +200,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
       .then(() => {
         toast.success("Room updated successfully");
         fetchRooms();
+        onUpdated();
         resetForm(); // Clear form after success
       })
       .catch(() => {
@@ -213,6 +220,7 @@ const AddRoomModal = ({ open, onClose, hotelId }) => {
     setTotalRooms(room.totalRooms);
     setImages([]); // Optionally clear images or handle images differently
     setCurrentRoomId(room.roomId);
+    setSoldOut(Boolean(room.soldOut));
     setIsAddingRoom(true);
   };
 
@@ -434,6 +442,7 @@ AddRoomModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   hotelId: PropTypes.string.isRequired,
+  onUpdated: PropTypes.func,
 };
 
 export default AddRoomModal;

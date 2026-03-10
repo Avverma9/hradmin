@@ -76,7 +76,9 @@ const FoodCarousel = ({ limitedFood }) => {
                       <FaRupeeSign /> {food.price}
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'green', margin: '5px 0' }}>
-                      <Tooltip title={food.about}>{food.about}</Tooltip>
+                      <Tooltip title={food.about || ""}>
+                        <span>{food.about || "No description"}</span>
+                      </Tooltip>
                     </Typography>
                   </Box>
                 </Box>
@@ -122,12 +124,13 @@ const FoodCarousel = ({ limitedFood }) => {
 FoodCarousel.propTypes = {
   limitedFood: PropTypes.arrayOf(
     PropTypes.shape({
-      _id: PropTypes.string.isRequired,
-      images: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      foodType: PropTypes.string.isRequired,
-      price: PropTypes.number.isRequired,
-      about: PropTypes.string.isRequired,
+      _id: PropTypes.string,
+      foodId: PropTypes.string,
+      images: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
+      name: PropTypes.string,
+      foodType: PropTypes.string,
+      price: PropTypes.number,
+      about: PropTypes.string,
     })
   ).isRequired,
 };

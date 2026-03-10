@@ -23,7 +23,7 @@ import {
   Divider,
   Button as MuiButton,
 } from "@mui/material";
-import { role, localUrl } from "../../../../utils/util";
+import { getBusinessHotelId, role, localUrl } from "../../../../utils/util";
 import { Edit, CheckCircleOutline } from "@mui/icons-material";
 import AddFoodModal from "../manage-foods"; // Import the AddFoodModal component
 
@@ -38,7 +38,20 @@ import HotelCarousel from "../hotel-images";
 import { useLoader } from "../../../../utils/loader";
 import Policies from "../policies";
 
-const unwrapHotelResponse = (response) => response?.data?.data ?? response?.data ?? {};
+const unwrapHotelResponse = (response) =>
+  response?.data?.data ??
+  response?.data?.hotel ??
+  response?.data?.result ??
+  response?.data ??
+  {};
+
+const toArray = (...values) => {
+  for (const value of values) {
+    if (Array.isArray(value)) return value;
+  }
+
+  return [];
+};
 
 const flattenAmenities = (amenities) => {
   if (!Array.isArray(amenities)) return [];
@@ -78,6 +91,7 @@ const normalizeRooms = (rooms) => {
 
     return {
       _id: room?._id || room?.roomId || room?.id || `room-${index}`,
+      roomId: room?.roomId || room?.id || room?._id || `room-${index}`,
       type: room?.type || room?.name || "Room",
       bedTypes: room?.bedTypes || room?.bedType || "N/A",
       images: imageSource || "",
@@ -101,6 +115,7 @@ const normalizeFoods = (foods) => {
 
     return {
       _id: food?._id || food?.foodId || food?.id || `food-${index}`,
+      foodId: food?.foodId || food?.id || food?._id || `food-${index}`,
       name: food?.name || "Unnamed",
       foodType: food?.foodType || food?.type || "",
       price: Number(food?.price ?? food?.pricing?.finalPrice ?? 0),
@@ -110,34 +125,82 @@ const normalizeFoods = (foods) => {
   });
 };
 
+const normalizePolicyValue = (value, fallback = "") => {
+  if (value === undefined || value === null) return fallback;
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item || "").trim())
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  return String(value).trim();
+};
+
+const normalizePolicyFlag = (value) => {
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["yes", "true", "allowed", "1"].includes(normalized)) return "Yes";
+  if (["no", "false", "not allowed", "0"].includes(normalized)) return "No";
+  return value ? String(value) : "No";
+};
+
+const normalizePolicyEntry = (policy = {}) => ({
+  ...policy,
+  hotelsPolicy: normalizePolicyValue(policy?.hotelsPolicy ?? policy?.hotelPolicy ?? policy?.policy ?? policy?.rules),
+  checkInPolicy: normalizePolicyValue(policy?.checkInPolicy ?? policy?.checkIn),
+  checkOutPolicy: normalizePolicyValue(policy?.checkOutPolicy ?? policy?.checkOut),
+  outsideFoodPolicy: normalizePolicyValue(policy?.outsideFoodPolicy),
+  cancellationPolicy: normalizePolicyValue(policy?.cancellationPolicy ?? policy?.cancellationText),
+  paymentMode: normalizePolicyValue(policy?.paymentMode),
+  petsAllowed: normalizePolicyFlag(policy?.petsAllowed ?? policy?.restrictions?.petsAllowed),
+  bachelorAllowed: normalizePolicyFlag(policy?.bachelorAllowed ?? policy?.restrictions?.bachelorAllowed),
+  smokingAllowed: normalizePolicyFlag(policy?.smokingAllowed ?? policy?.restrictions?.smokingAllowed),
+  alcoholAllowed: normalizePolicyFlag(policy?.alcoholAllowed ?? policy?.restrictions?.alcoholAllowed),
+  unmarriedCouplesAllowed: normalizePolicyFlag(
+    policy?.unmarriedCouplesAllowed ?? policy?.restrictions?.unmarriedCouplesAllowed,
+  ),
+  internationalGuestAllowed: normalizePolicyFlag(
+    policy?.internationalGuestAllowed ?? policy?.restrictions?.internationalGuestAllowed,
+  ),
+  refundPolicy: normalizePolicyValue(policy?.refundPolicy),
+  returnPolicy: normalizePolicyValue(policy?.returnPolicy),
+});
+
 const normalizePolicies = (policies) => {
-  if (Array.isArray(policies)) return policies;
+  if (Array.isArray(policies)) {
+    return policies
+      .map((policy) => normalizePolicyEntry(policy))
+      .filter((policy) => Object.values(policy).some((value) => String(value || "").trim() !== ""));
+  }
 
   if (policies && typeof policies === "object") {
-    return [
-      {
-        hotelsPolicy: Array.isArray(policies.rules) ? policies.rules.join("\n") : "",
-        checkInPolicy: policies.checkIn || "",
-        checkOutPolicy: policies.checkOut || "",
-        cancellationPolicy: policies.cancellationText || "",
-        petsAllowed: policies?.restrictions?.petsAllowed ? "Yes" : "No",
-        smokingAllowed: policies?.restrictions?.smokingAllowed ? "Yes" : "No",
-        alcoholAllowed: policies?.restrictions?.alcoholAllowed ? "Yes" : "No",
-      },
-    ];
+    if (Array.isArray(policies?.policies)) {
+      return normalizePolicies(policies.policies);
+    }
+
+    const normalized = normalizePolicyEntry(policies);
+    return Object.values(normalized).some((value) => String(value || "").trim() !== "")
+      ? [normalized]
+      : [];
   }
 
   return [];
 };
 
-const normalizeHotel = (rawHotel = {}) => {
+const normalizeHotel = (rawHotel = {}, fallbackHotelId = "") => {
   const basicInfo = rawHotel?.basicInfo ?? {};
   const location = basicInfo?.location ?? {};
   const contacts = basicInfo?.contacts ?? {};
+  const rooms = toArray(rawHotel?.rooms, rawHotel?.roomDetails, rawHotel?.hotelRooms);
+  const foods = toArray(rawHotel?.foods, rawHotel?.foodsDetails, rawHotel?.foodItems);
+  const amenities = rawHotel?.amenities ?? basicInfo?.amenities ?? [];
+  const policies = rawHotel?.policies ?? rawHotel?.policy ?? rawHotel?.hotelPolicies ?? [];
 
   return {
     ...rawHotel,
-    hotelId: rawHotel?.hotelId || rawHotel?._id || "",
+    hotelId: getBusinessHotelId(rawHotel, fallbackHotelId),
     hotelName: rawHotel?.hotelName || String(basicInfo?.name ?? "").trim(),
     hotelOwnerName:
       rawHotel?.hotelOwnerName || String(basicInfo?.owner ?? "").trim(),
@@ -160,10 +223,10 @@ const normalizeHotel = (rawHotel = {}) => {
     generalManagerContact:
       rawHotel?.generalManagerContact || contacts?.generalManager || "",
     salesManagerContact: rawHotel?.salesManagerContact || contacts?.salesManager || "",
-    rooms: normalizeRooms(rawHotel?.rooms),
-    foods: normalizeFoods(rawHotel?.foods),
-    amenities: flattenAmenities(rawHotel?.amenities),
-    policies: normalizePolicies(rawHotel?.policies),
+    rooms: normalizeRooms(rooms),
+    foods: normalizeFoods(foods),
+    amenities: flattenAmenities(amenities),
+    policies: normalizePolicies(policies),
   };
 };
 
@@ -184,43 +247,45 @@ export default function HotelDetails({
   const [isBasicDetailModalOpen, setBasicDetailsOpen] = useState(false);
   const [isRoomModalOpen, setRoomModalOpen] = useState(false);
   const resolvedHotelId = hotel?.hotelId || routeHotelId || "";
+
+  const refreshHotelDetails = async () => {
+    if (!routeHotelId) return null;
+
+    const response = await axios.get(`${localUrl}/hotels/get-by-id/${routeHotelId}`);
+    const normalizedHotel = normalizeHotel(unwrapHotelResponse(response), routeHotelId);
+    setHotel(normalizedHotel);
+    return normalizedHotel;
+  };
+
   // ------------------------------------Foods add -------------------------------------//
   const handleAddFood = async (foodData) => {
     onAddFood(resolvedHotelId, foodData);
-    showLoader();
-    const response = await axios.get(`${localUrl}/hotels/get-by-id/${routeHotelId}`);
-    setHotel(normalizeHotel(unwrapHotelResponse(response)));
-    hideLoader();
-
-    handleCloseModal();
+    await refreshHotelDetails();
   };
   const handleOpenModal = () => {
     setModalOpen(true);
   };
   const handleCloseModal = async () => {
     setModalOpen(false);
-    showLoader();
-    const response = await axios.get(`${localUrl}/hotels/get-by-id/${routeHotelId}`);
-    setHotel(normalizeHotel(unwrapHotelResponse(response)));
-    hideLoader();
+    try {
+      showLoader();
+      await refreshHotelDetails();
+    } finally {
+      hideLoader();
+    }
   };
 
   // ------------------------------------Amenities add-------------------------------------//
   const handleAddAmenities = async (amenitiesData) => {
     onUpdateAmenities(resolvedHotelId, amenitiesData);
-    showLoader();
-    const response = await axios.get(`${localUrl}/hotels/get-by-id/${routeHotelId}`);
-    setHotel(normalizeHotel(unwrapHotelResponse(response)));
-    handleCloseAmenitiesModal();
-    hideLoader();
+    await refreshHotelDetails();
   };
   const handleOpenAmenities = () => {
     setAmenitiesModalOpen(true);
   };
   const handleCloseAmenitiesModal = async () => {
     setAmenitiesModalOpen(false);
-    const response = await axios.get(`${localUrl}/hotels/get-by-id/${routeHotelId}`);
-    setHotel(normalizeHotel(unwrapHotelResponse(response)));
+    await refreshHotelDetails();
   };
   // ------------------------------------hotel fetch-------------------------------------//
   useEffect(() => {
@@ -230,11 +295,7 @@ export default function HotelDetails({
       }
       try {
         showLoader();
-        const response = await axios.get(
-          `${localUrl}/hotels/get-by-id/${routeHotelId}`,
-        );
-        const hotelData = normalizeHotel(unwrapHotelResponse(response));
-        setHotel(hotelData);
+        const hotelData = await refreshHotelDetails();
         const allAmenities = flattenAmenities(hotelData.amenities);
         setAmenitiesToShow(allAmenities.slice(0, 10));
       } catch (error) {
@@ -282,7 +343,7 @@ export default function HotelDetails({
     try {
       showLoader();
       const newAcceptanceState = !hotel.isAccepted;
-      await axios.patch(`${localUrl}/hotels/update/${routeHotelId}`, {
+      await axios.patch(`${localUrl}/hotels/update/${resolvedHotelId}`, {
         isAccepted: newAcceptanceState,
       });
       toast.success(
@@ -293,7 +354,7 @@ export default function HotelDetails({
       const response = await axios.get(
         `${localUrl}/hotels/get-by-id/${routeHotelId}`,
       );
-      setHotel(normalizeHotel(unwrapHotelResponse(response)));
+      setHotel(normalizeHotel(unwrapHotelResponse(response), routeHotelId));
     } catch (error) {
       const errorMessage =
         error.response?.data?.message ||
@@ -309,7 +370,7 @@ export default function HotelDetails({
       showLoader();
       const onFrontPage = !hotel.onFront;
 
-      await axios.patch(`${localUrl}/hotels/update/${routeHotelId}`, {
+      await axios.patch(`${localUrl}/hotels/update/${resolvedHotelId}`, {
         onFront: onFrontPage,
       });
       toast.success(
@@ -320,7 +381,7 @@ export default function HotelDetails({
       const response = await axios.get(
         `${localUrl}/hotels/get-by-id/${routeHotelId}`,
       );
-      setHotel(normalizeHotel(unwrapHotelResponse(response)));
+      setHotel(normalizeHotel(unwrapHotelResponse(response), routeHotelId));
     } catch (error) {
       const errorMessage =
         error.response?.data?.message ||
@@ -655,24 +716,27 @@ export default function HotelDetails({
       <br />
 
       {/* ------------------------------------policies details---------------------------------------- */}
-      <Policies hotel={hotel} />
+      <Policies hotel={hotel} onUpdated={refreshHotelDetails} />
       <AddFoodModal
         open={isModalOpen}
         onClose={handleCloseModal}
         hotelId={resolvedHotelId}
-        onAddFood={handleAddFood} // Pass the function to handle adding food
+        onAddFood={handleAddFood}
+        onUpdated={refreshHotelDetails}
       />
       <Amenities
         open={isAmenitiesModalOpen}
         onClose={handleCloseAmenitiesModal}
         hotelId={resolvedHotelId}
         onUpdateAmenities={handleAddAmenities}
+        onUpdated={refreshHotelDetails}
       />
       <AddRoomModal
         open={isRoomModalOpen}
         onClose={handleCloseRoom}
         hotelId={resolvedHotelId}
         onAddRoom={handleAddRoom}
+        onUpdated={refreshHotelDetails}
       />
       <BasicDetails
         open={isBasicDetailModalOpen}

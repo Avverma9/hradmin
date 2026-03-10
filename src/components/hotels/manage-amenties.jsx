@@ -30,7 +30,7 @@ import { localUrl } from '../../../utils/util';
 import { useHotelAmenities } from '../../../utils/additional/hotelAmenities';
 import { useDispatch } from 'react-redux';
 
-export default function Amenities({ open, onClose, hotelId = null }) {
+export default function Amenities({ open, onClose, hotelId = null, onUpdated = () => {} }) {
   const dispatch =  useDispatch()
   const [currentAmenities, setCurrentAmenities] = useState([]);
   const [amenitiesToAdd, setAmenitiesToAdd] = useState([]);
@@ -75,6 +75,7 @@ export default function Amenities({ open, onClose, hotelId = null }) {
       await axios.delete(`${localUrl}/hotels/${hotelId}/amenities/${amenityToDelete}`);
       // Optimistic UI update
       setCurrentAmenities((prev) => prev.filter((amenity) => amenity !== amenityToDelete));
+      onUpdated();
       toast.success(`"${amenityToDelete}" removed successfully.`);
     } catch (error) {
       toast.error(`Error deleting amenity: ${error.message}`);
@@ -97,6 +98,7 @@ export default function Amenities({ open, onClose, hotelId = null }) {
       // Optimistic UI update
       setCurrentAmenities((prev) => [...prev, ...newAmenityNames]);
       setAmenitiesToAdd([]); // Clear the selection
+      onUpdated();
       toast.success('Amenities added successfully.');
     } catch (error) {
       toast.error(`Error adding amenities: ${error.message}`);
@@ -196,4 +198,5 @@ Amenities.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   hotelId: PropTypes.string,
+  onUpdated: PropTypes.func,
 };

@@ -72,7 +72,7 @@ const RoomCarousel = ({ limitedRoom }) => {
                   <Box sx={{ padding: "15px" }}>
                     <Typography
                       variant="h6"
-                      component="p"
+                      component="div"
                       sx={{
                         fontWeight: "bold",
                         display: "flex",
@@ -157,13 +157,14 @@ const RoomCarousel = ({ limitedRoom }) => {
 RoomCarousel.propTypes = {
   limitedRoom: PropTypes.arrayOf(
     PropTypes.shape({
-      _id: PropTypes.string.isRequired,
-      images: PropTypes.string.isRequired,
-      type: PropTypes.string.isRequired,
-      bedTypes: PropTypes.string.isRequired,
-      price: PropTypes.number.isRequired,
-      totalRooms: PropTypes.number.isRequired,
-      countRooms: PropTypes.number.isRequired,
+      _id: PropTypes.string,
+      roomId: PropTypes.string,
+      images: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
+      type: PropTypes.string,
+      bedTypes: PropTypes.string,
+      price: PropTypes.number,
+      totalRooms: PropTypes.number,
+      countRooms: PropTypes.number,
     }),
   ).isRequired,
 };

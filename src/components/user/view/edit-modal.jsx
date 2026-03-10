@@ -71,6 +71,19 @@ const StatusIndicator = ({ active }) => (
 
 StatusIndicator.propTypes = { active: PropTypes.bool };
 
+const getDashboardUserField = (user, key, fallbacks = []) => {
+  const candidateKeys = [key, ...fallbacks];
+
+  for (const candidateKey of candidateKeys) {
+    const value = user?.[candidateKey];
+    if (value !== undefined && value !== null) {
+      return value;
+    }
+  }
+
+  return "";
+};
+
 const EditUserModal = ({ open, onClose, user, onSubmit }) => {
   const [formData, setFormData] = useState({});
   const [selectedMenuItems, setSelectedMenuItems] = useState([]);
@@ -90,17 +103,17 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
   useEffect(() => {
     if (user) {
       setFormData({
-        _id: user._id || "",
-        name: user.name || "",
-        email: user.email || "",
-        mobile: user.mobile || "",
-        address: user.address || "",
-        city: user.city || "",
-        state: user.state || "",
-        pinCode: user.pinCode || "",
-        password: user.password || "",
-        role: user.role || "",
-        status: user.status || false,
+        _id: getDashboardUserField(user, "_id"),
+        name: getDashboardUserField(user, "name"),
+        email: getDashboardUserField(user, "email"),
+        mobile: getDashboardUserField(user, "mobile"),
+        address: getDashboardUserField(user, "address"),
+        city: getDashboardUserField(user, "city", ["City"]),
+        state: getDashboardUserField(user, "state", ["State"]),
+        pinCode: getDashboardUserField(user, "pinCode", ["pincode", "pin_code", "PinCode"]),
+        password: getDashboardUserField(user, "password"),
+        role: getDashboardUserField(user, "role"),
+        status: Boolean(user.status),
       });
 
       const currentItems = Array.isArray(user.menuItems) ? user.menuItems : [];
@@ -224,7 +237,7 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
   };
 
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const updatedUserPayload = {
       ...formData,
       images: imageFile,
@@ -233,9 +246,12 @@ const EditUserModal = ({ open, onClose, user, onSubmit }) => {
       delete updatedUserPayload.password;
     }
 
-
-    onSubmit(updatedUserPayload);
-    onClose();
+    try {
+      await onSubmit(updatedUserPayload);
+      onClose();
+    } catch (error) {
+      // Parent thunk already surfaces the API error; keep modal open for correction.
+    }
   };
   
   const filteredAssignedItems = selectedMenuItems.filter(

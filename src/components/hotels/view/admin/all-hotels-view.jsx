@@ -226,7 +226,7 @@ export default function ProductsView() {
         <AddFoodModal
           open={isModalOpen}
           onClose={handleCloseModal}
-          hotelId={selectedHotel._id}
+          hotelId={selectedHotel.hotelId}
         />
       )}
     </Container>

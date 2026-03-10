@@ -37,6 +37,8 @@ export default function Rooms() {
     price: '',
     bedTypes: '',
     countRooms: '',
+    totalRooms: '',
+    soldOut: false,
     images: [],
   });
   const [newImages, setNewImages] = useState([]);
@@ -78,6 +80,8 @@ export default function Rooms() {
       price: room.price,
       bedTypes: room.bedTypes,
       countRooms: room.countRooms,
+      totalRooms: room.totalRooms ?? room.countRooms,
+      soldOut: Boolean(room.soldOut),
       images: room.images,
     });
     setNewImages([]); // Reset new images
@@ -106,6 +110,8 @@ export default function Rooms() {
     data.append('price', formData.price);
     data.append('bedTypes', formData.bedTypes);
     data.append('countRooms', formData.countRooms);
+    data.append('totalRooms', formData.totalRooms || formData.countRooms);
+    data.append('soldOut', formData.soldOut);
 
     formData.images.forEach((file) => {
       data.append('images', file);

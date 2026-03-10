@@ -3,17 +3,75 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { token, userId, localUrl, notify } from "../../../../utils/util"; // Ensure localUrl is imported
 
+const buildAuthHeaders = (extraHeaders = {}) => {
+  const normalizedToken = String(token || "").trim();
+
+  if (!normalizedToken) {
+    return extraHeaders;
+  }
+
+  return {
+    Authorization: /^Bearer\s+/i.test(normalizedToken)
+      ? normalizedToken
+      : `Bearer ${normalizedToken}`,
+    ...extraHeaders,
+  };
+};
+
+const buildPartnerFormData = (payload = {}) => {
+  const multipartData = new FormData();
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") {
+      return;
+    }
+
+    if (key === "images") {
+      if (value instanceof File) {
+        multipartData.append("images", value);
+      }
+      return;
+    }
+
+    multipartData.append(key, value);
+  });
+
+  return multipartData;
+};
+
+const getUpdatedPartnerRecord = (payload) =>
+  payload?.updatedUser ||
+  payload?.user ||
+  payload?.data ||
+  payload?.partner ||
+  (payload?._id ? payload : null);
+
+const patchPartnerList = (list, nextRecord) => {
+  if (!Array.isArray(list) || !nextRecord?._id) {
+    return list;
+  }
+
+  return list.map((item) =>
+    item?._id === nextRecord._id ? { ...item, ...nextRecord } : item
+  );
+};
+
 export const addPartner = createAsyncThunk(
   "partner/addPartner",
   async (newUser, { rejectWithValue }) => {
     try {
+      const payload =
+        newUser instanceof FormData ? newUser : buildPartnerFormData(newUser);
+
       const response = await axios.post(
         `${localUrl}/create/dashboard/user`,
-        newUser,
+        payload,
         {
-          headers: {
-            Authorization: token,
-          },
+          headers: buildAuthHeaders(
+            payload instanceof FormData
+              ? { "Content-Type": "multipart/form-data" }
+              : {}
+          ),
         },
       );
       notify(response.status);
@@ -33,9 +91,7 @@ export const getPartnerById = createAsyncThunk(
       const response = await axios.get(
         `${localUrl}/login/dashboard/get/all/user/${userId}`,
         {
-          headers: {
-            Authorization: token,
-          },
+          headers: buildAuthHeaders(),
         },
       );
 
@@ -55,9 +111,7 @@ export const getAll = createAsyncThunk(
       const response = await axios.get(
         `${localUrl}/login/dashboard/get/all/user`,
         {
-          headers: {
-            Authorization: token,
-          },
+          headers: buildAuthHeaders(),
         },
       );
 
@@ -74,14 +128,16 @@ export const updatedPartner = createAsyncThunk(
   "partner/updatePartner",
   async ({ userId, formData }, { rejectWithValue }) => {
     try {
+      const multipartData =
+        formData instanceof FormData ? formData : buildPartnerFormData(formData);
+
       const response = await axios.patch(
         `${localUrl}/update/dashboard/updated/partner/${userId}`,
-        formData,
+        multipartData,
         {
-          headers: {
-            Authorization: token,
+          headers: buildAuthHeaders({
             "Content-Type": "multipart/form-data",
-          },
+          }),
         },
       );
       notify(response.status);
@@ -104,9 +160,7 @@ export const updateStatus = createAsyncThunk(
           status: newStatus,
         },
         {
-          headers: {
-            Authorization: token,
-          },
+          headers: buildAuthHeaders(),
         },
       );
       notify(response.status);
@@ -126,9 +180,7 @@ export const deletePartner = createAsyncThunk(
       const response = await axios.delete(
         `${localUrl}/delete/dashboard/delete/partner/${userId}`,
         {
-          headers: {
-            Authorization: token,
-          },
+          headers: buildAuthHeaders(),
         },
       );
       notify(response.status);
@@ -151,9 +203,7 @@ export const updatePartnerImage = createAsyncThunk(
           formData,
         },
         {
-          headers: {
-            Authorization: token,
-          },
+          headers: buildAuthHeaders(),
         },
       );
       notify(response.status);
@@ -182,9 +232,7 @@ export const addMenu = createAsyncThunk(
         `${localUrl}/additional/sidebar-permissions/${userId}/allow`,
         { linkIds },
         {
-          headers: {
-            Authorization: token,
-          },
+          headers: buildAuthHeaders(),
         },
       );
       notify(response.status);
@@ -210,9 +258,7 @@ export const deleteMenu = createAsyncThunk(
         `${localUrl}/additional/sidebar-permissions/${payload.id}/block`,
         { linkIds },
         {
-          headers: {
-            Authorization: token,
-          },
+          headers: buildAuthHeaders(),
         },
       );
       notify(response.status);
@@ -237,9 +283,7 @@ export const deleteAllmenus = createAsyncThunk(
           blockedLinkIds: [],
         },
         {
-          headers: {
-            Authorization: token,
-          },
+          headers: buildAuthHeaders(),
         },
       );
       notify(response.status);
@@ -258,9 +302,7 @@ export const findPartnerByQuery = createAsyncThunk(
       const response = await axios.get(
         `${localUrl}/api/users-get-user/by/query?search=${query}`,
         {
-          headers: {
-            Authorization: token,
-          },
+          headers: buildAuthHeaders(),
         },
       );
       return response.data;
@@ -289,10 +331,21 @@ const partnerSlice = createSlice({
       })
       .addCase(updatedPartner.fulfilled, (state, action) => {
         state.updated = action.payload;
+        const updatedRecord = getUpdatedPartnerRecord(action.payload);
+        if (updatedRecord) {
+          state.allData = patchPartnerList(state.allData, updatedRecord);
+          state.data = patchPartnerList(state.data, updatedRecord);
+        }
         state.loading = false;
       })
       .addCase(addPartner.fulfilled, (state, action) => {
         state.newUser = action.payload;
+        const createdRecord = getUpdatedPartnerRecord(action.payload);
+        if (createdRecord?._id) {
+          state.allData = Array.isArray(state.allData)
+            ? [createdRecord, ...state.allData]
+            : [createdRecord];
+        }
         state.loading = false;
       })
       .addCase(deletePartner.fulfilled, (state, action) => {

@@ -23,6 +23,9 @@ import {
   Mail,
   Phone,
   Business,
+  LocationCity,
+  Public,
+  PinDrop,
   Badge,
   VpnKey,
   Visibility,
@@ -67,6 +70,19 @@ const StatusIndicator = ({ active }) => (
 );
 
 StatusIndicator.propTypes = { active: PropTypes.bool };
+
+const getDashboardUserField = (user, key, fallbacks = []) => {
+  const candidateKeys = [key, ...fallbacks];
+
+  for (const candidateKey of candidateKeys) {
+    const value = user?.[candidateKey];
+    if (value !== undefined && value !== null && value !== '') {
+      return value;
+    }
+  }
+
+  return 'N/A';
+};
 
 export default function ViewUserModal({ open, onClose, user }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -137,9 +153,12 @@ export default function ViewUserModal({ open, onClose, user }) {
             Basic Information
           </Typography>
           <Grid container spacing={3}>
-            <InfoItem icon={<Mail />} label="Email Address" value={user?.email} />
-            <InfoItem icon={<Phone />} label="Mobile Number" value={user?.mobile} />
-            <InfoItem icon={<Business />} label="Address" value={user?.address} />
+            <InfoItem icon={<Mail />} label="Email Address" value={getDashboardUserField(user, 'email')} />
+            <InfoItem icon={<Phone />} label="Mobile Number" value={getDashboardUserField(user, 'mobile')} />
+            <InfoItem icon={<Business />} label="Address" value={getDashboardUserField(user, 'address')} />
+            <InfoItem icon={<LocationCity />} label="City" value={getDashboardUserField(user, 'city', ['City'])} />
+            <InfoItem icon={<Public />} label="State" value={getDashboardUserField(user, 'state', ['State'])} />
+            <InfoItem icon={<PinDrop />} label="Pin Code" value={String(getDashboardUserField(user, 'pinCode', ['pincode', 'pin_code', 'PinCode']))} />
             <InfoItem icon={<VpnKey />} label="Password">
               <Stack direction="row" alignItems="center" spacing={0.5}>
                 <Typography variant="body1" fontWeight="500">
@@ -207,8 +226,11 @@ ViewUserModal.propTypes = {
     _id: PropTypes.string,
     name: PropTypes.string,
     email: PropTypes.string,
-    mobile: PropTypes.string,
+    mobile: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     address: PropTypes.string,
+    city: PropTypes.string,
+    state: PropTypes.string,
+    pinCode: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     password: PropTypes.string,
     role: PropTypes.string,
     status: PropTypes.bool,

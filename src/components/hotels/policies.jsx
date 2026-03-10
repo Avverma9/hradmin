@@ -9,10 +9,14 @@ import {
   MenuItem,
   Button,
   Box,
+  Divider,
+  Stack,
+  Chip,
+  CardHeader,
+  useTheme,
+  alpha
 } from "@mui/material";
-import {
-  HiOutlineDocumentText
-} from "react-icons/hi";
+import { HiOutlineDocumentText } from "react-icons/hi";
 import {
   FaBed,
   FaReply,
@@ -21,17 +25,107 @@ import {
   FaMoneyBillWave,
   FaPencilAlt,
 } from "react-icons/fa";
-import { MdCancel, MdCheckCircle } from "react-icons/md";
+import { MdCancel, MdCheckCircle, MdPolicy } from "react-icons/md";
 import { useDispatch } from "react-redux";
-import { updateHotelPolicy } from "../redux/reducers/hotel";
+import { createHotelPolicy, patchHotelPolicyFields } from "../redux/reducers/hotel";
 
-export default function Policies({ hotel }) {
+const EMPTY_POLICY = {
+  hotelsPolicy: "",
+  checkInPolicy: "",
+  checkOutPolicy: "",
+  outsideFoodPolicy: "",
+  cancellationPolicy: "",
+  paymentMode: "",
+  petsAllowed: "No",
+  bachelorAllowed: "No",
+  smokingAllowed: "No",
+  alcoholAllowed: "No",
+  unmarriedCouplesAllowed: "No",
+  internationalGuestAllowed: "No",
+  refundPolicy: "",
+  returnPolicy: "",
+  onDoubleSharing: "",
+  onQuadSharing: "",
+  onBulkBooking: "",
+  onTrippleSharing: "",
+  onMoreThanFour: "",
+  offDoubleSharing: "",
+  offQuadSharing: "",
+  offBulkBooking: "",
+  offTrippleSharing: "",
+  offMoreThanFour: "",
+  onDoubleSharingAp: "",
+  onQuadSharingAp: "",
+  onBulkBookingAp: "",
+  onTrippleSharingAp: "",
+  onMoreThanFourAp: "",
+  offDoubleSharingAp: "",
+  offQuadSharingAp: "",
+  offBulkBookingAp: "",
+  offTrippleSharingAp: "",
+  offMoreThanFourAp: "",
+  onDoubleSharingMAp: "",
+  onQuadSharingMAp: "",
+  onBulkBookingMAp: "",
+  onTrippleSharingMAp: "",
+  onMoreThanFourMAp: "",
+  offDoubleSharingMAp: "",
+  offQuadSharingMAp: "",
+  offBulkBookingMAp: "",
+  offTrippleSharingMAp: "",
+  offMoreThanFourMAp: "",
+};
+
+const POLICY_KEYS = Object.keys(EMPTY_POLICY);
+
+const humanizePolicyKey = (key = "") =>
+  String(key)
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/Tripple/g, "Triple")
+    .replace(/\bMAp\b/g, "MAP")
+    .replace(/\bAp\b/g, "AP");
+
+const normalizePolicyRecord = (policy = {}) => ({
+  ...EMPTY_POLICY,
+  ...policy,
+  refundPolicy: policy?.refundPolicy ?? "",
+  returnPolicy: policy?.returnPolicy ?? "",
+});
+
+const isRenderableScalar = (value) =>
+  value === null ||
+  value === undefined ||
+  typeof value === "string" ||
+  typeof value === "number" ||
+  typeof value === "boolean";
+
+const toDisplayValue = (value) => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "number") return String(value);
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (isRenderableScalar(item) ? String(item) : ""))
+      .filter(Boolean)
+      .join("\n");
+  }
+  return "";
+};
+
+export default function Policies({ hotel, onUpdated = () => {} }) {
+  const theme = useTheme();
   const dispatch = useDispatch();
-  const [editedPolicies, setEditedPolicies] = useState(hotel?.policies || []);
+  
+  const [editedPolicies, setEditedPolicies] = useState(
+    hotel?.policies?.length ? hotel.policies.map(normalizePolicyRecord) : [{ ...EMPTY_POLICY }]
+  );
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    setEditedPolicies(hotel?.policies || []);
+    setEditedPolicies(
+      hotel?.policies?.length ? hotel.policies.map(normalizePolicyRecord) : [{ ...EMPTY_POLICY }]
+    );
   }, [hotel]);
 
   const handlePolicyChange = (policyIdx, key, value) => {
@@ -41,18 +135,35 @@ export default function Policies({ hotel }) {
     setEditedPolicies(updated);
   };
 
+  const buildPolicyPayload = (policy = {}) => {
+    const payload = { hotelId: hotel?.hotelId };
+    POLICY_KEYS.forEach((key) => {
+      if (policy[key] !== undefined) {
+        payload[key] = policy[key];
+      }
+    });
+    return payload;
+  };
+
   const handleSave = () => {
-    dispatch(
-      updateHotelPolicy({
-        hotelId: hotel?.hotelId,
-        policies: editedPolicies,
-      })
-    );
-    setIsEditing(false);
+    const currentPolicy = editedPolicies?.[0] || { ...EMPTY_POLICY };
+    const payload = buildPolicyPayload(currentPolicy);
+    const action = Array.isArray(hotel?.policies) && hotel.policies.length > 0
+      ? patchHotelPolicyFields(payload)
+      : createHotelPolicy(payload);
+
+    dispatch(action)
+      .unwrap()
+      .then(() => {
+        onUpdated();
+        setIsEditing(false);
+      });
   };
 
   const handleCancel = () => {
-    setEditedPolicies(hotel?.policies || []);
+    setEditedPolicies(
+      hotel?.policies?.length ? hotel.policies.map(normalizePolicyRecord) : [{ ...EMPTY_POLICY }]
+    );
     setIsEditing(false);
   };
 
@@ -68,6 +179,7 @@ export default function Policies({ hotel }) {
   const multiLinePolicies = [
     "hotelsPolicy",
     "refundPolicy",
+    "returnPolicy",
     "checkInPolicy",
     "checkOutPolicy",
     "cancellationPolicy",
@@ -81,6 +193,7 @@ export default function Policies({ hotel }) {
     cancellationPolicy: "Cancellation Policy",
     paymentMode: "Payment Mode",
     refundPolicy: "Refund Policy",
+    returnPolicy: "Return Policy",
     onDoubleSharing: "On Season Double Sharing",
     onQuadSharing: "On Season Quad Sharing",
     onTrippleSharing: "On Season Triple Sharing",
@@ -91,6 +204,26 @@ export default function Policies({ hotel }) {
     offTrippleSharing: "Off Season Triple Sharing",
     offBulkBooking: "Off Season Bulk Booking",
     offMoreThanFour: "Off Season More Than Four",
+    onDoubleSharingAp: "On Season Double Sharing AP",
+    onQuadSharingAp: "On Season Quad Sharing AP",
+    onBulkBookingAp: "On Season Bulk Booking AP",
+    onTrippleSharingAp: "On Season Triple Sharing AP",
+    onMoreThanFourAp: "On Season More Than Four AP",
+    offDoubleSharingAp: "Off Season Double Sharing AP",
+    offQuadSharingAp: "Off Season Quad Sharing AP",
+    offBulkBookingAp: "Off Season Bulk Booking AP",
+    offTrippleSharingAp: "Off Season Triple Sharing AP",
+    offMoreThanFourAp: "Off Season More Than Four AP",
+    onDoubleSharingMAp: "On Season Double Sharing MAP",
+    onQuadSharingMAp: "On Season Quad Sharing MAP",
+    onBulkBookingMAp: "On Season Bulk Booking MAP",
+    onTrippleSharingMAp: "On Season Triple Sharing MAP",
+    onMoreThanFourMAp: "On Season More Than Four MAP",
+    offDoubleSharingMAp: "Off Season Double Sharing MAP",
+    offQuadSharingMAp: "Off Season Quad Sharing MAP",
+    offBulkBookingMAp: "Off Season Bulk Booking MAP",
+    offTrippleSharingMAp: "Off Season Triple Sharing MAP",
+    offMoreThanFourMAp: "Off Season More Than Four MAP",
     petsAllowed: "Pets Allowed",
     bachelorAllowed: "Bachelor Allowed",
     smokingAllowed: "Smoking Allowed",
@@ -99,22 +232,39 @@ export default function Policies({ hotel }) {
     internationalGuestAllowed: "International Guest Allowed",
   };
 
+  const getFieldLabel = (key) => labelMap[key] || humanizePolicyKey(key);
+
+  const basePricingPolicies = [
+    "onDoubleSharing", "onTrippleSharing", "onQuadSharing", "onMoreThanFour", "onBulkBooking",
+    "offDoubleSharing", "offTrippleSharing", "offQuadSharing", "offMoreThanFour", "offBulkBooking"
+  ];
+
+  const apPricingPolicies = [
+    "onDoubleSharingAp", "onTrippleSharingAp", "onQuadSharingAp", "onMoreThanFourAp", "onBulkBookingAp",
+    "offDoubleSharingAp", "offTrippleSharingAp", "offQuadSharingAp", "offMoreThanFourAp", "offBulkBookingAp"
+  ];
+
+  const mapPricingPolicies = [
+    "onDoubleSharingMAp", "onTrippleSharingMAp", "onQuadSharingMAp", "onMoreThanFourMAp", "onBulkBookingMAp",
+    "offDoubleSharingMAp", "offTrippleSharingMAp", "offQuadSharingMAp", "offMoreThanFourMAp", "offBulkBookingMAp"
+  ];
+
+  const allPricingPolicies = [...basePricingPolicies, ...apPricingPolicies, ...mapPricingPolicies];
+
   const getIcon = (key, value) => {
     if (yesNoPolicies.includes(key)) {
       return value === "Yes" ? (
-        <MdCheckCircle style={{ color: "#10b981" }} />
+        <MdCheckCircle style={{ color: theme.palette.success.main, fontSize: 18 }} />
       ) : (
-        <MdCancel style={{ color: "#ef4444" }} />
+        <MdCancel style={{ color: theme.palette.error.main, fontSize: 18 }} />
       );
     }
-    if (key.toLowerCase().includes("calendar") || key.includes("check"))
-      return <FaCalendarAlt />;
-    if (key.toLowerCase().includes("bed")) return <FaBed />;
-    if (key.toLowerCase().includes("food")) return <FaUtensils />;
-    if (key.toLowerCase().includes("payment")) return <FaMoneyBillWave />;
-    if (key.toLowerCase().includes("cancel") || key.toLowerCase().includes("return"))
-      return <FaReply />;
-    return <HiOutlineDocumentText />;
+    if (key.toLowerCase().includes("calendar") || key.includes("check")) return <FaCalendarAlt style={{ fontSize: 16 }} />;
+    if (key.toLowerCase().includes("bed")) return <FaBed style={{ fontSize: 16 }} />;
+    if (key.toLowerCase().includes("food")) return <FaUtensils style={{ fontSize: 16 }} />;
+    if (key.toLowerCase().includes("payment")) return <FaMoneyBillWave style={{ fontSize: 16 }} />;
+    if (key.toLowerCase().includes("cancel") || key.toLowerCase().includes("return")) return <FaReply style={{ fontSize: 16 }} />;
+    return <HiOutlineDocumentText style={{ fontSize: 18 }} />;
   };
 
   const handleBulletInput = (e, policyIdx, key) => {
@@ -122,31 +272,29 @@ export default function Policies({ hotel }) {
     if (e.key === "Enter") {
       e.preventDefault();
       const cursorPos = e.target.selectionStart;
-      const newValue =
-        value.substring(0, cursorPos) + "\n• " + value.substring(cursorPos);
+      const newValue = value.substring(0, cursorPos) + "\n• " + value.substring(cursorPos);
       handlePolicyChange(policyIdx, key, newValue);
       setTimeout(() => {
         e.target.selectionStart = e.target.selectionEnd = cursorPos + 3;
       }, 0);
-    } else {
-      handlePolicyChange(policyIdx, key, value);
     }
   };
 
-  const renderPolicyValue = (policyIdx, key, value) => {
-    if ((!isEditing && !value) || key === "_id") return null;
+  const renderPolicyValue = (policyIdx, key, value, hidePlaceholder = false) => {
+    const displayValue = toDisplayValue(value);
+    if ((!isEditing && !displayValue) || key === "_id") return null;
     
     if (isEditing) {
       if (yesNoPolicies.includes(key)) {
         return (
           <Select
             size="small"
-            value={value || "No"}
+            value={displayValue || "No"}
             onChange={(e) => handlePolicyChange(policyIdx, key, e.target.value)}
-            sx={{ minWidth: 120, bgcolor: "background.paper" }}
+            sx={{ width: '100%', bgcolor: "background.paper", typography: 'body2' }}
           >
-            <MenuItem value="Yes">Yes</MenuItem>
-            <MenuItem value="No">No</MenuItem>
+            <MenuItem value="Yes" sx={{ typography: 'body2' }}>Yes</MenuItem>
+            <MenuItem value="No" sx={{ typography: 'body2' }}>No</MenuItem>
           </Select>
         );
       }
@@ -157,10 +305,11 @@ export default function Policies({ hotel }) {
             fullWidth
             multiline
             rows={3}
-            value={value || ""}
+            value={displayValue || ""}
             onChange={(e) => handlePolicyChange(policyIdx, key, e.target.value)}
             onKeyDown={(e) => handleBulletInput(e, policyIdx, key)}
-            placeholder="• Start writing policy points here..."
+            placeholder={hidePlaceholder ? "" : "• Start writing..."}
+            InputProps={{ sx: { typography: 'body2', p: 1.5 } }}
           />
         );
       }
@@ -168,26 +317,39 @@ export default function Policies({ hotel }) {
         <TextField
           size="small"
           fullWidth
-          value={value || ""}
+          value={displayValue || ""}
           onChange={(e) => handlePolicyChange(policyIdx, key, e.target.value)}
+          placeholder={hidePlaceholder ? "" : getFieldLabel(key)}
+          InputProps={{ sx: { typography: 'body2' } }}
         />
       );
     } else {
-      if (multiLinePolicies.includes(key)) {
-        const lines = value.split('\n').filter(line => line.trim() !== '');
+      if (yesNoPolicies.includes(key)) {
         return (
-          <Box component="ul" sx={{ paddingLeft: 2, margin: 0 }}>
+          <Chip 
+            label={displayValue} 
+            size="small" 
+            variant="outlined"
+            color={displayValue === "Yes" ? "success" : "error"}
+            sx={{ height: 22, fontSize: '0.75rem', fontWeight: 600, px: 0.5, bgcolor: 'background.paper' }}
+          />
+        );
+      }
+      if (multiLinePolicies.includes(key)) {
+        const lines = displayValue.split('\n').filter(line => line.trim() !== '');
+        return (
+          <Box component="ul" sx={{ pl: 2.5, m: 0, mt: 0.5 }}>
             {lines.map((line, index) => (
               <Typography
                 component="li"
                 key={index}
                 variant="body2"
+                color="text.secondary"
                 sx={{
-                  color: "text.secondary",
                   listStyleType: 'disc',
                   listStylePosition: 'outside',
-                  ml: 1,
-                  my: 0.5,
+                  mb: 0.5,
+                  lineHeight: 1.6
                 }}
               >
                 {line.replace(/^•\s*/, '')}
@@ -197,168 +359,228 @@ export default function Policies({ hotel }) {
         );
       }
       return (
-        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-          {value}
+        <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
+          {displayValue}
         </Typography>
       );
     }
   };
 
-  const firstColumnPolicies = ["hotelsPolicy", "cancellationPolicy"];
-  const secondColumnPolicies = ["refundPolicy", "checkInPolicy", "checkOutPolicy"];
+  const renderPricingGrid = (pIdx, policy, keysArray, title) => {
+    const hasData = isEditing || keysArray.some(k => toDisplayValue(policy[k]));
+    if (!hasData) return null;
+
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 1.5 }}>
+          {title}
+        </Typography>
+        <Grid container spacing={2} columns={{ xs: 10, sm: 10, md: 10 }}>
+          {keysArray.map((key) =>
+            (isEditing || toDisplayValue(policy[key])) ? (
+              <Grid item xs={10} sm={5} md={2} key={key}>
+                <Box>
+                  <Typography variant="caption" fontWeight={600} mb={0.5} display="block" color="text.primary">
+                    {getFieldLabel(key).replace('On Season ', 'On: ').replace('Off Season ', 'Off: ')}
+                  </Typography>
+                  {renderPolicyValue(pIdx, key, policy[key], true)}
+                </Box>
+              </Grid>
+            ) : null
+          )}
+        </Grid>
+      </Box>
+    );
+  };
+
+  const firstColumnPolicies = ["hotelsPolicy", "cancellationPolicy", "outsideFoodPolicy"];
+  const secondColumnPolicies = ["refundPolicy", "returnPolicy", "checkInPolicy", "checkOutPolicy", "paymentMode"];
 
   return (
-    <Box sx={{ maxWidth: 1000, mx: "auto", mt: 4, px: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography
-          variant="h5"
-          fontWeight="bold"
-          sx={{ color: "primary.main" }}
-        >
-          Hotel Policies
-        </Typography>
-        {!isEditing && (
-          <Button
-            variant="contained"
-            startIcon={<FaPencilAlt />}
-            onClick={() => setIsEditing(true)}
-            sx={{ textTransform: 'none' }}
-          >
-            Edit Policies
-          </Button>
-        )}
-      </Box>
-      {editedPolicies?.length > 0 ? (
-        editedPolicies.map((policy, pIdx) => (
-          <Card
-            key={policy._id || pIdx}
-            sx={{
-              mb: 3,
-              borderRadius: 3,
-              boxShadow: "0 3px 12px rgba(0,0,0,0.08)",
-              transition: "all 0.2s",
-              "&:hover": {
-                boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
-              },
-            }}
-          >
-            <CardContent>
-              <Grid container spacing={4}>
-                <Grid item xs={12}>
-                  <Typography variant="h6" fontWeight="bold" mb={2}>
-                    <HiOutlineDocumentText /> General Policies
+    <Box sx={{ width: "100%", mt: 2 }}>
+      <Card variant="outlined" sx={{ borderRadius: 2 }}>
+        <CardHeader
+          title="Property Policies & Rules"
+          titleTypographyProps={{ variant: 'h6', fontWeight: 700 }}
+          action={
+            !isEditing && (
+              <Button
+                variant="contained"
+                startIcon={<FaPencilAlt size={12} />}
+                onClick={() => setIsEditing(true)}
+                size="small"
+                disableElevation
+                sx={{ borderRadius: 1.5 }}
+              >
+                Edit Policies
+              </Button>
+            )
+          }
+          sx={{ p: 2.5, pb: 2, bgcolor: alpha(theme.palette.primary.main, 0.03) }}
+        />
+        <Divider />
+        
+        <CardContent sx={{ p: { xs: 2, md: 4 }, '&:last-child': { pb: { xs: 2, md: 4 } } }}>
+          {editedPolicies?.length > 0 ? (
+            editedPolicies.map((policy, pIdx) => (
+              <Stack spacing={4} key={policy._id || pIdx}>
+                
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="700" color="primary.main" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
+                    <HiOutlineDocumentText size={20} /> General Policies
                   </Typography>
                   <Grid container spacing={4}>
                     <Grid item xs={12} md={6}>
-                      {firstColumnPolicies.map((key) =>
-                        (isEditing || policy[key]) ? (
-                          <Box sx={{ mb: 2 }} key={key}>
-                            <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                              {labelMap[key]}
-                            </Typography>
-                            {renderPolicyValue(pIdx, key, policy[key])}
-                          </Box>
-                        ) : null
-                      )}
+                      <Stack spacing={3}>
+                        {firstColumnPolicies.map((key) =>
+                          (isEditing || policy[key]) ? (
+                            <Box key={key} sx={{ width: '100%' }}>
+                              <Typography variant="body2" fontWeight={600} mb={0.5}>
+                                {getFieldLabel(key)}
+                              </Typography>
+                              {renderPolicyValue(pIdx, key, policy[key])}
+                            </Box>
+                          ) : null
+                        )}
+                      </Stack>
                     </Grid>
                     <Grid item xs={12} md={6}>
-                      {secondColumnPolicies.map((key) =>
-                        (isEditing || policy[key]) ? (
-                          <Box sx={{ mb: 2 }} key={key}>
-                            <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                              {labelMap[key]}
-                            </Typography>
-                            {renderPolicyValue(pIdx, key, policy[key])}
-                          </Box>
-                        ) : null
-                      )}
+                      <Stack spacing={3}>
+                        {secondColumnPolicies.map((key) =>
+                          (isEditing || policy[key]) ? (
+                            <Box key={key} sx={{ width: '100%' }}>
+                              <Typography variant="body2" fontWeight={600} mb={0.5}>
+                                {getFieldLabel(key)}
+                              </Typography>
+                              {renderPolicyValue(pIdx, key, policy[key])}
+                            </Box>
+                          ) : null
+                        )}
+                      </Stack>
                     </Grid>
                   </Grid>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="h6" fontWeight="bold" mb={2}>
-                    <MdCheckCircle /> Guest Rules
+                </Box>
+
+                <Divider />
+
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="700" color="primary.main" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
+                    <FaMoneyBillWave size={18} /> Sharing & Pricing Rules
+                  </Typography>
+                  <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: alpha(theme.palette.grey[100], 0.6), borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                    {renderPricingGrid(pIdx, policy, basePricingPolicies, "Base Plan Pricing")}
+                    {(isEditing || apPricingPolicies.some(k => toDisplayValue(policy[k]))) && <Divider sx={{ my: 2 }} />}
+                    {renderPricingGrid(pIdx, policy, apPricingPolicies, "AP Plan Pricing")}
+                    {(isEditing || mapPricingPolicies.some(k => toDisplayValue(policy[k]))) && <Divider sx={{ my: 2 }} />}
+                    {renderPricingGrid(pIdx, policy, mapPricingPolicies, "MAP Plan Pricing")}
+                  </Box>
+                </Box>
+
+                <Divider />
+
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="700" color="primary.main" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
+                    <MdCheckCircle size={20} /> Guest Rules & Permissions
                   </Typography>
                   <Grid container spacing={2}>
                     {yesNoPolicies.map((key) =>
-                    (isEditing || policy[key]) ? (
-                        <Grid item xs={12} sm={6} md={4} key={key}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                            <Box sx={{ fontSize: 22, color: "text.secondary" }}>
+                      (isEditing || policy[key]) ? (
+                        <Grid item xs={6} sm={4} md={3} lg={2} key={key}>
+                          <Box sx={{ p: 2, bgcolor: alpha(theme.palette.background.default, 0.8), border: '1px solid', borderColor: 'divider', borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                            <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ lineHeight: 1.2 }}>
+                              {getFieldLabel(key)}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 'auto' }}>
                               {getIcon(key, policy[key])}
-                            </Box>
-                            <Box sx={{ flex: 1 }}>
-                              <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                                {labelMap[key]}
-                              </Typography>
-                              {renderPolicyValue(pIdx, key, policy[key])}
+                              <Box sx={{ flex: 1, width: '100%' }}>
+                                {renderPolicyValue(pIdx, key, policy[key])}
+                              </Box>
                             </Box>
                           </Box>
                         </Grid>
                       ) : null
                     )}
                   </Grid>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="h6" fontWeight="bold" mb={2}>
-                    <FaUtensils /> Other Policies
-                  </Typography>
-                  <Grid container spacing={2}>
-                    {Object.entries(policy).map(([key, value]) =>
-                    (!isEditing && !value) ||
-                      key === "_id" ||
-                      multiLinePolicies.includes(key) ||
-                      yesNoPolicies.includes(key)
-                        ? null
-                        : (
+                </Box>
+
+                {Object.entries(policy).some(([key, value]) => 
+                  !["_id", "hotelId", ...firstColumnPolicies, ...secondColumnPolicies, ...allPricingPolicies, ...yesNoPolicies].includes(key) && 
+                  (isEditing || toDisplayValue(value)) && 
+                  (isRenderableScalar(value) || Array.isArray(value))
+                ) && (
+                  <>
+                    <Divider />
+                    <Box>
+                      <Typography variant="subtitle1" fontWeight="700" color="primary.main" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
+                        <MdPolicy size={20} /> Other Policies
+                      </Typography>
+                      <Grid container spacing={4}>
+                        {Object.entries(policy).map(([key, value]) =>
+                          (!isEditing && !toDisplayValue(value)) ||
+                          key === "_id" ||
+                          key === "hotelId" ||
+                          firstColumnPolicies.includes(key) ||
+                          secondColumnPolicies.includes(key) ||
+                          allPricingPolicies.includes(key) ||
+                          yesNoPolicies.includes(key) ||
+                          (!isRenderableScalar(value) && !Array.isArray(value))
+                            ? null : (
                             <Grid item xs={12} sm={6} md={4} key={key}>
-                              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                                <Box sx={{ fontSize: 22, color: "text.secondary" }}>
+                              <Stack direction="row" alignItems="flex-start" spacing={1.5}>
+                                <Box sx={{ color: "text.secondary", mt: 0.25 }}>
                                   {getIcon(key, value)}
                                 </Box>
-                                <Box sx={{ flex: 1 }}>
-                                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                                    {labelMap[key] || key}
+                                <Box sx={{ flex: 1, width: '100%' }}>
+                                  <Typography variant="body2" fontWeight={600} mb={0.5}>
+                                    {labelMap[key] || humanizePolicyKey(key)}
                                   </Typography>
                                   {renderPolicyValue(pIdx, key, value)}
                                 </Box>
-                              </Box>
+                              </Stack>
                             </Grid>
                           )
-                    )}
-                  </Grid>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        ))
-      ) : (
-        <Typography align="center" color="text.secondary">
-          No policies available.
-        </Typography>
-      )}
-      {isEditing && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3 }}>
-          <Button
-            variant="contained"
-            color="success"
-            onClick={handleSave}
-            size="large"
-            sx={{ px: 4, py: 1.2, borderRadius: 2, fontWeight: "bold", textTransform: "none" }}
-          >
-            Save Policies
-          </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={handleCancel}
-            size="large"
-            sx={{ px: 4, py: 1.2, borderRadius: 2, fontWeight: "bold", textTransform: "none" }}
-          >
-            Cancel
-          </Button>
-        </Box>
-      )}
+                        )}
+                      </Grid>
+                    </Box>
+                  </>
+                )}
+              </Stack>
+            ))
+          ) : (
+            <Stack alignItems="center" justifyContent="center" py={8} spacing={1.5}>
+              <HiOutlineDocumentText size={48} color={theme.palette.text.disabled} />
+              <Typography variant="h6" fontWeight={600} color="text.primary">
+                No Policies Configured
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                This property currently does not have any policies set up.
+              </Typography>
+            </Stack>
+          )}
+
+          {isEditing && (
+            <Box sx={{ mt: 5, pt: 2.5, borderTop: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'flex-end', gap: 1.5 }}>
+              <Button
+                variant="outlined"
+                color="inherit"
+                onClick={handleCancel}
+                sx={{ borderRadius: 1.5, px: 3 }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSave}
+                disableElevation
+                sx={{ borderRadius: 1.5, px: 4 }}
+              >
+                Save Policies
+              </Button>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
     </Box>
   );
 }

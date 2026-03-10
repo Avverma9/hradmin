@@ -46,7 +46,7 @@ import { useLoader } from "../../../utils/loader";
 const EMPTY_FOODS = [];
 const selectHotelFoods = (state) => state.hotel.byId?.foods ?? EMPTY_FOODS;
 
-const AddFoodModal = ({ open, onClose, hotelId = null }) => {
+const AddFoodModal = ({ open, onClose, hotelId = null, onUpdated = () => {} }) => {
   const [foodName, setFoodName] = useState("");
   const [foodPrice, setFoodPrice] = useState("");
   const [foodType, setFoodType] = useState("");
@@ -91,6 +91,7 @@ const AddFoodModal = ({ open, onClose, hotelId = null }) => {
     try {
       await dispatch(addFood(formData)).unwrap();
       dispatch(getHotelById(hotelId));
+      onUpdated();
       toast.success("Food item added successfully!");
 
       // --- 3. Trigger the refresh after adding ---
@@ -129,6 +130,7 @@ const AddFoodModal = ({ open, onClose, hotelId = null }) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
       try {
         await dispatch(deleteFood({ hotelId, foodId })).unwrap();
+        onUpdated();
         toast.success("Food item deleted.");
 
         // --- 3. Trigger the refresh after deleting ---
@@ -399,6 +401,7 @@ AddFoodModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   hotelId: PropTypes.string,
+  onUpdated: PropTypes.func,
 };
 
 export default AddFoodModal;

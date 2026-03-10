@@ -1,42 +1,14 @@
-# Hotel Management API Guide
+# Hotel Create/Update + Food/Room/Policy/Amenities API Payloads
 
 ## Base URL
 `http://localhost:5000`
 
-## Quick Route Map
-
-### Hotel
-- Add hotel: `POST /data/hotels-new/post/upload/data`
-- Update hotel basic info: `PATCH /hotels/update/info/:hotelId`
-- Update hotel status/front visibility: `PATCH /hotels/update/:hotelId`
-
-### Food
-- Add food: `POST /add/food-to/your-hotel`
-- Edit food: dedicated update API available nahi hai
-- Delete food: `DELETE /delete-food/:hotelId/:foodId`
-
-### Room
-- Add room: `POST /create-a-room-to-your-hotel`
-- Edit room: `PATCH /update-your/room`
-
-### Policy
-- Add policy: `POST /add-a-new/policy-to-your/hotel`
-- Edit policy fields: `PATCH /patch-a-new/policy-to-your/hotel`
-- Replace full policies array: `PATCH /update-hotels-policy-by-hotel-id/:hotelId`
-
-### Amenities
-- Add amenities: `POST /create-a-amenities/to-your-hotel`
-- Edit amenities: dedicated update API available nahi hai
-- Delete single amenity: `DELETE /hotels/:hotelId/amenities/:amenityName`
-
 ## Important Notes
 - `hotel`, `room`, and `food` create/update endpoints use `multipart/form-data`.
-- Food, room, policy, amenities, booking, aur coupon payloads me `hotelId` bhejna hai, Mongo `_id` nahi.
-- Hotel create response me dono values aa sakti hain: `_id` aur `hotelId`. Normal hotel APIs me payload/reference ke liye `hotelId` hi use karo.
 - Upload middleware `upload.any()` use karta hai, isliye image files kisi bhi file field name se bhej sakte ho.
 - `food` aur `amenities` ke liye current backend me dedicated `update` endpoint nahi hai.
 - `PATCH /patch-a-new/policy-to-your/hotel` sirf wahi fields update karta hai jinki value empty string (`""`) nahi hoti.
-- Sirf `PATCH /update-hotels-image-by-hotel-id/:hotelId` route exception hai; isme controller `findById(hotelId)` use karta hai, isliye yahan practical input Mongo `_id` jaisa behave karta hai.
+- `PATCH /update-hotels-image-by-hotel-id/:hotelId` route ka naam `hotelId` bolta hai, lekin controller `findById(hotelId)` use karta hai. Is route me practical input Mongo `_id` jaisa behave karta hai.
 - Hotel create endpoint basic hotel document banata hai. `rooms`, `foods`, `amenities`, aur `policies` alag APIs se manage hote hain.
 
 ## 1) Add Hotel
@@ -550,10 +522,6 @@ Current backend me dedicated `update amenities` API available nahi hai.
   - `DELETE /hotels/:hotelId/amenities/:amenityName`
   - Fir `POST /create-a-amenities/to-your-hotel` se updated list dubara add karo
 
-## Additional APIs
-
-Neeche booking aur coupon related APIs diye gaye hain. Agar sirf hotel create/update, food, room, policy, aur amenities manage karna hai, to sections `1` se `12` enough hain.
-
 ## 13) Create Hotel Booking
 
 - Method: `POST`
@@ -851,3 +819,6 @@ finalPrice = max(0, basePrice - coupon.discountPrice)
 - Coupon apply endpoint room document me discounted `finalPrice` persist nahi karta; backend `offerPriceLess` aur `originalPrice` store karta hai.
 - Discounted price baad me hotel/room fetch karte waqt `offerUtils.getOfferAdjustedPrice()` se derive hota hai.
 - Agar saare selected rooms par already offer laga hua ho ya `countRooms = 0` ho, to response aata hai: `No eligible rooms found for this coupon`.
+- Existing options:
+  - `DELETE /hotels/:hotelId/amenities/:amenityName`
+  - Fir `POST /create-a-amenities/to-your-hotel` se updated list dubara add karo

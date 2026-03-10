@@ -148,6 +148,54 @@ export const updateHotelPolicy = createAsyncThunk(
         }
     }
 );
+
+export const patchHotelPolicyFields = createAsyncThunk(
+    'hotel/patchHotelPolicyFields',
+    async (payload, { rejectWithValue }) => {
+        try {
+            const response = await axios.patch(
+                `${localUrl}/patch-a-new/policy-to-your/hotel`,
+                payload,
+                {
+                    headers: {
+                        Authorization: token,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+            notify(response.status);
+            return response.data;
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || error.message;
+            toast.error(`Error: ${errorMessage}`);
+            return rejectWithValue(errorMessage);
+        }
+    }
+);
+
+export const createHotelPolicy = createAsyncThunk(
+    'hotel/createHotelPolicy',
+    async (payload, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(
+                `${localUrl}/add-a-new/policy-to-your/hotel`,
+                payload,
+                {
+                    headers: {
+                        Authorization: token,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+            notify(response.status);
+            return response.data;
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || error.message;
+            toast.error(`Error: ${errorMessage}`);
+            return rejectWithValue(errorMessage);
+        }
+    }
+);
 const hotelSlice = createSlice({
     name: 'hotel',
     initialState: {
