@@ -29,7 +29,7 @@ export default function Gst() {
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(getGst({ selectedType }));
+    dispatch(getGst({ type: selectedType }));
   }, [selectedType, dispatch]);
 
   const openForm = (mode = 'create', item = null) => {
@@ -56,7 +56,7 @@ export default function Gst() {
       dispatch(deleteGst(id));
       setTimeout(() => {
         dispatch(getAllGst());
-        if (selectedType) dispatch(getGst({ selectedType }));
+        if (selectedType) dispatch(getGst({ type: selectedType }));
       }, 300);
     }
   };

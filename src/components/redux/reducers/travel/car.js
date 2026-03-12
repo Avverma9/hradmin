@@ -105,8 +105,6 @@ export const bookSeat = createAsyncThunk('car/bookSeat', async (data, { rejectWi
                 Authorization: token,
             },
         });
-        notify(response?.status);
-        
         return response.data;
     } catch (error) {
         const errorMessage = error.response?.data?.message || error.message;
@@ -152,6 +150,7 @@ const carSlice = createSlice({
         data: [],
         filterCar: [],
         seatsData: [],
+        lastBooking: null,
         loading: false,
         error: null,
     },
@@ -179,7 +178,7 @@ const carSlice = createSlice({
             }
             )
             .addCase(bookSeat.fulfilled, (state, action) => {
-                state.data.push = action.payload;
+                state.lastBooking = action.payload;
             }
             )
             .addCase(getAllCars.fulfilled, (state, action) => {

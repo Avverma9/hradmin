@@ -37,14 +37,38 @@ export const deleteGst = createAsyncThunk(
 );
 export const getGst = createAsyncThunk(
   "gst/getGst",
-  async (payload) => {
-    const response = await axios.get(
-      `${localUrl}/gst/get-single-gst?type=${payload?.type}&gstThreshold=${payload?.gstThreshold}`,
-      {
-        headers: { Authorization: token },
+  async (payload = {}, { rejectWithValue }) => {
+    try {
+      const type = payload?.type || payload?.selectedType;
+      const gstThreshold = payload?.gstThreshold;
+      const params = {};
+
+      if (type !== undefined && type !== null && String(type).trim() !== "") {
+        params.type = type;
       }
-    );
-    return response.data;
+
+      if (
+        gstThreshold !== undefined &&
+        gstThreshold !== null &&
+        String(gstThreshold).trim() !== ""
+      ) {
+        params.gstThreshold = gstThreshold;
+      }
+
+      if (Object.keys(params).length === 0) {
+        return null;
+      }
+
+      const response = await axios.get(`${localUrl}/gst/get-single-gst`, {
+        headers: { Authorization: token },
+        params,
+      });
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error: ${errorMessage}`);
+      return rejectWithValue(errorMessage);
+    }
   }
 );
 

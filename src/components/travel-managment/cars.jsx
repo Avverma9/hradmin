@@ -37,7 +37,6 @@ import {
   EventSeat,
   Work,
   Speed,
-  Person,
   LocationOn,
   Map,
   CalendarToday,
@@ -221,6 +220,17 @@ const Cars = () => {
     setOpenSeatData(false);
   };
 
+  const handleBookingSuccess = async () => {
+    try {
+      const response = await dispatch(getAllCars());
+      if (response?.payload) {
+        setData(response.payload);
+      }
+    } catch (error) {
+      console.error('Failed to refresh cars after booking:', error);
+    }
+  };
+
   const handleSearch = async () => {
     if ((!pickupP || !dropP) && (!fromDate || !toDate)) return;
     const formattedFromDate = fromDate ? format(fromDate, 'yyyy-MM-dd') : '';
@@ -307,7 +317,15 @@ const Cars = () => {
         </Grid>
       </Grid>
 
-      {selectedCar && <SeatData open={openSeatData} onClose={handleSeatDataClose} id={selectedCar._id} carData={selectedCar} />}
+      {selectedCar && (
+        <SeatData
+          open={openSeatData}
+          onClose={handleSeatDataClose}
+          onBookingSuccess={handleBookingSuccess}
+          id={selectedCar._id}
+          carData={selectedCar}
+        />
+      )}
     </Container>
   );
 };

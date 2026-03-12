@@ -2,9 +2,11 @@ import React, { useEffect, useState, useCallback } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  Alert,
   Box,
   Button,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Paper,
@@ -119,29 +121,36 @@ const SeatLegend = () => (
   </Stack>
 );
 
-export default function SeatData({ open, onClose, id, carData }) {
+export default function SeatData({ open, onClose, onBookingSuccess, id, carData }) {
   const dispatch = useDispatch();
   const seatData = useSelector((state) => state.car.seatsData);
   const gstData = useSelector((state) => state.gst.gst);
+  const userId = sessionStorage.getItem("user_id");
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [customerName, setCustomerName] = useState("");
   const [customerMobile, setCustomerMobile] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [isBooking, setIsBooking] = useState(false);
+  const [bookingResult, setBookingResult] = useState(null);
 
   const isPrivateBooking = carData && carData.sharingType === "Private";
+
+  const resetBookingForm = useCallback(() => {
+    setSelectedSeats([]);
+    setCustomerName("");
+    setCustomerMobile("");
+    setCustomerEmail("");
+  }, []);
 
   useEffect(() => {
     if (id && open && !isPrivateBooking) {
       dispatch(getSeatsData(id));
     }
     if (!open) {
-      setSelectedSeats([]);
-      setCustomerName("");
-      setCustomerMobile("");
-      setCustomerEmail("");
+      resetBookingForm();
+      setBookingResult(null);
     }
-  }, [id, open, dispatch, isPrivateBooking]);
+  }, [id, open, dispatch, isPrivateBooking, resetBookingForm]);
 
   const basePrice = isPrivateBooking
     ? carData?.price || 0
@@ -163,6 +172,10 @@ export default function SeatData({ open, onClose, id, carData }) {
   }, []);
 
   const handleBooking = async () => {
+    if (!userId) {
+      toast.error("Logged-in user id not found. Please log in again.");
+      return;
+    }
     if (!customerName || !customerMobile || !customerEmail) {
       toast.error("Please fill in all customer details.");
       return;
@@ -175,7 +188,7 @@ export default function SeatData({ open, onClose, id, carData }) {
     setIsBooking(true);
     try {
       const payload = {
-        seats: isPrivateBooking ? [] : selectedSeats.map((s) => s._id),
+        userId,
         carId: id,
         bookedBy: customerName,
         sharingType: carData?.sharingType,
@@ -184,10 +197,39 @@ export default function SeatData({ open, onClose, id, carData }) {
         customerMobile,
         customerEmail,
       };
-      await dispatch(bookSeat(payload)).unwrap();
-      window.location.reload();
+      if (!isPrivateBooking) {
+        payload.seats = selectedSeats.map((s) => s._id);
+      }
+      const response = await dispatch(bookSeat(payload)).unwrap();
+      const bookingData = response?.data || {};
+      const successMessage = response?.message || "Booking successful";
+      const popupBooking = {
+        ...bookingData,
+        bookedBy: bookingData?.bookedBy || customerName,
+        customerMobile: bookingData?.customerMobile || customerMobile,
+        customerEmail: bookingData?.customerEmail || customerEmail,
+        vehicleNumber: bookingData?.vehicleNumber || carData?.vehicleNumber,
+        pickupP: bookingData?.pickupP || carData?.pickupP,
+        dropP: bookingData?.dropP || carData?.dropP,
+      };
+
+      if (!isPrivateBooking) {
+        dispatch(getSeatsData(id));
+      }
+      resetBookingForm();
+      setBookingResult({
+        message: successMessage,
+        booking: popupBooking,
+      });
+      if (typeof onBookingSuccess === "function") {
+        onBookingSuccess({
+          message: successMessage,
+          booking: popupBooking,
+        });
+      }
     } catch (error) {
-      toast.error(error?.message || "Booking failed. Please try again.");
+      console.error("Travel booking success handler failed:", error);
+      toast.error(error?.message || "Booking completed but success popup could not be shown.");
     } finally {
       setIsBooking(false);
     }
@@ -196,6 +238,11 @@ export default function SeatData({ open, onClose, id, carData }) {
   const gstPercentage = gstData?.gstPrice || 0;
   const gstAmount = basePrice * (gstPercentage / 100);
   const totalPrice = basePrice + gstAmount;
+
+  const handleSuccessClose = () => {
+    setBookingResult(null);
+    onClose();
+  };
 
   const renderSharedBooking = () => (
     <Grid container spacing={3}>
@@ -290,30 +337,97 @@ export default function SeatData({ open, onClose, id, carData }) {
   );
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth={isPrivateBooking ? "sm" : "md"} PaperProps={{ sx: { borderRadius: 4, maxHeight: "95vh" } }}>
-      <DialogTitle sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" fontWeight="600">{isPrivateBooking ? "Book Private Car" : "Select Your Seats"}</Typography>
-          <IconButton onClick={onClose} size="small"><Close /></IconButton>
-        </Box>
-      </DialogTitle>
-      <DialogContent sx={{ p: { xs: 1.5, sm: 3 }, bgcolor: "#f1f5f9" }}>
-        {!carData ? (
-          <Box display="flex" justifyContent="center" alignItems="center" height="400px"><CircularProgress /></Box>
-        ) : isPrivateBooking ? (
-          renderPrivateBooking()
-        ) : (
-          renderSharedBooking()
-        )}
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog
+        open={open}
+        onClose={bookingResult ? undefined : onClose}
+        fullWidth
+        maxWidth={isPrivateBooking ? "sm" : "md"}
+        PaperProps={{ sx: { borderRadius: 4, maxHeight: "95vh" } }}
+      >
+        <DialogTitle sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6" fontWeight="600">{isPrivateBooking ? "Book Private Car" : "Select Your Seats"}</Typography>
+            <IconButton onClick={onClose} size="small" disabled={Boolean(bookingResult)}><Close /></IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ p: { xs: 1.5, sm: 3 }, bgcolor: "#f1f5f9" }}>
+          {!carData ? (
+            <Box display="flex" justifyContent="center" alignItems="center" height="400px"><CircularProgress /></Box>
+          ) : isPrivateBooking ? (
+            renderPrivateBooking()
+          ) : (
+            renderSharedBooking()
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(bookingResult)}
+        onClose={handleSuccessClose}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>Booking Confirmed</DialogTitle>
+        <DialogContent>
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {bookingResult?.message || "Booking successful"}
+          </Alert>
+
+          <Stack spacing={1.5}>
+            <Box display="flex" justifyContent="space-between" gap={2}>
+              <Typography variant="caption" color="text.secondary">Booking ID</Typography>
+              <Typography variant="body2" fontWeight={700}>
+                {bookingResult?.booking?.bookingId || "N/A"}
+              </Typography>
+            </Box>
+            <Box display="flex" justifyContent="space-between" gap={2}>
+              <Typography variant="caption" color="text.secondary">Status</Typography>
+              <Typography variant="body2" fontWeight={700}>
+                {bookingResult?.booking?.bookingStatus || "Pending"}
+              </Typography>
+            </Box>
+            <Box display="flex" justifyContent="space-between" gap={2}>
+              <Typography variant="caption" color="text.secondary">Vehicle No.</Typography>
+              <Typography variant="body2" fontWeight={700}>
+                {bookingResult?.booking?.vehicleNumber || carData?.vehicleNumber || "N/A"}
+              </Typography>
+            </Box>
+            <Box display="flex" justifyContent="space-between" gap={2}>
+              <Typography variant="caption" color="text.secondary">Customer</Typography>
+              <Typography variant="body2" fontWeight={700}>
+                {bookingResult?.booking?.bookedBy || customerName || "N/A"}
+              </Typography>
+            </Box>
+            <Box display="flex" justifyContent="space-between" gap={2}>
+              <Typography variant="caption" color="text.secondary">Mobile</Typography>
+              <Typography variant="body2" fontWeight={700}>
+                {bookingResult?.booking?.customerMobile || customerMobile || "N/A"}
+              </Typography>
+            </Box>
+            <Box display="flex" justifyContent="space-between" gap={2}>
+              <Typography variant="caption" color="text.secondary">Route</Typography>
+              <Typography variant="body2" fontWeight={700}>
+                {bookingResult?.booking?.pickupP || "N/A"} to {bookingResult?.booking?.dropP || "N/A"}
+              </Typography>
+            </Box>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleSuccessClose} variant="contained" fullWidth>
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
 
 SeatData.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
+  onBookingSuccess: PropTypes.func,
   id: PropTypes.string,
   carData: PropTypes.object,
 };
-

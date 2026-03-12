@@ -78,6 +78,65 @@ const COMPLAINT_STATUS = {
   CLOSED: "Closed",
 };
 
+const isComplaintResolved = (complaint) =>
+  complaint?.status === COMPLAINT_STATUS.RESOLVED;
+
+const extractComplaintFromResponse = (responseBody) => {
+  if (!responseBody || typeof responseBody !== "object") {
+    return {};
+  }
+
+  if (
+    responseBody.data &&
+    typeof responseBody.data === "object" &&
+    !Array.isArray(responseBody.data)
+  ) {
+    return responseBody.data;
+  }
+
+  if (
+    responseBody.complaint &&
+    typeof responseBody.complaint === "object" &&
+    !Array.isArray(responseBody.complaint)
+  ) {
+    return responseBody.complaint;
+  }
+
+  return responseBody;
+};
+
+const mergeComplaintAfterUpdate = (
+  currentComplaint,
+  responseBody,
+  fallbackUpdate
+) => {
+  const normalized = extractComplaintFromResponse(responseBody);
+  const baseComplaint = currentComplaint || {};
+  let updatedBy = Array.isArray(baseComplaint.updatedBy)
+    ? baseComplaint.updatedBy
+    : [];
+
+  if (Array.isArray(normalized.updatedBy)) {
+    updatedBy = normalized.updatedBy;
+  } else if (normalized.updatedBy && typeof normalized.updatedBy === "object") {
+    updatedBy = [...updatedBy, normalized.updatedBy];
+  } else if (fallbackUpdate) {
+    updatedBy = [...updatedBy, fallbackUpdate];
+  }
+
+  return {
+    ...baseComplaint,
+    ...normalized,
+    status: normalized.status || fallbackUpdate?.status || baseComplaint.status,
+    updatedAt:
+      normalized.updatedAt ||
+      fallbackUpdate?.updatedAt ||
+      baseComplaint.updatedAt,
+    updatedBy,
+    chats: Array.isArray(normalized.chats) ? normalized.chats : baseComplaint.chats,
+  };
+};
+
 // Enhanced Styled Components with beautiful animations and gradients
 const StatusChip = styled(Chip)(({ theme, status }) => ({
   backgroundColor:
@@ -849,6 +908,22 @@ const Complaint = () => {
     async (id, status, feedBack, message = null) => {
       try {
         setSendingMessage(true);
+        const fallbackUpdate = {
+          name,
+          email,
+          feedBack,
+          status,
+          updatedAt: new Date().toISOString(),
+        };
+        const existingComplaint =
+          complaints.find((complaint) => complaint._id === id) ||
+          chatComplaint ||
+          selectedComplaint;
+
+        if (isComplaintResolved(existingComplaint)) {
+          toast.info("Resolved complaint status cannot be changed.");
+          return existingComplaint;
+        }
 
         const payload = {
           status,
@@ -885,14 +960,31 @@ const Complaint = () => {
           throw new Error(errorText || "Failed to update complaint");
         }
 
-        const updatedComplaint = await response.json();
+        const updatedComplaintResponse = await response.json();
+        const mergedComplaint = mergeComplaintAfterUpdate(
+          existingComplaint,
+          updatedComplaintResponse,
+          fallbackUpdate
+        );
 
         setComplaints((prev) =>
-          prev.map((c) => (c._id === id ? updatedComplaint : c))
+          prev.map((c) =>
+            c._id === id
+              ? mergeComplaintAfterUpdate(c, updatedComplaintResponse, fallbackUpdate)
+              : c
+          )
         );
 
         if (chatComplaint && chatComplaint._id === id) {
-          setChatComplaint(updatedComplaint);
+          setChatComplaint((prev) =>
+            mergeComplaintAfterUpdate(prev, updatedComplaintResponse, fallbackUpdate)
+          );
+        }
+
+        if (selectedComplaint && selectedComplaint._id === id) {
+          setSelectedComplaint((prev) =>
+            mergeComplaintAfterUpdate(prev, updatedComplaintResponse, fallbackUpdate)
+          );
         }
 
         if (payload.messages) {
@@ -902,7 +994,11 @@ const Complaint = () => {
           toast.success("Status updated successfully! 🎉");
         }
 
-        return updatedComplaint;
+        setTimeout(() => {
+          refreshChatData(mergedComplaint?.complaintId || null);
+        }, 400);
+
+        return mergedComplaint;
       } catch (err) {
         console.error("Error updating complaint:", err);
         toast.error(
@@ -916,14 +1012,21 @@ const Complaint = () => {
         setFeedbackOpen(false);
       }
     },
-    [name, email, chatComplaint]
+    [name, email, complaints, chatComplaint, selectedComplaint, refreshChatData]
   );
 
   const handleStatusChange = useCallback((id, status) => {
+    const complaint = complaints.find((item) => item._id === id);
+
+    if (isComplaintResolved(complaint)) {
+      toast.info("Resolved complaint status cannot be changed.");
+      return;
+    }
+
     setCurrentComplaintId(id);
     setNewStatus(status);
     setFeedbackOpen(true);
-  }, []);
+  }, [complaints]);
 
   const handleFeedbackSubmit = useCallback(
     (feedBack) => {
@@ -1559,6 +1662,7 @@ const Complaint = () => {
                       <FormControl size="small" sx={{ minWidth: 120 }}>
                         <Select
                           value={c.status}
+                          disabled={isComplaintResolved(c)}
                           onChange={(e) =>
                             handleStatusChange(c._id, e.target.value)
                           }
