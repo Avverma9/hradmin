@@ -48,6 +48,8 @@ import { toast } from "react-toastify";
 import { useHotelAmenities } from "../../../utils/additional/hotelAmenities";
 import { useTourTheme } from "../../../utils/additional/tourTheme";
 import { useLoader } from "../../../utils/loader";
+import { appendTourFormData, buildTourPayload } from "../../../utils/tour-payload";
+import { userId } from "../../../utils/util";
 import { addTour } from "../redux/reducers/tour/tour";
 
 /* =========================================================
@@ -264,6 +266,7 @@ export default function TourForm() {
 
   const [formData, setFormData] = useState({
     travelAgencyName: "",
+    agencyId: userId || "",
     agencyPhone: "",
     agencyEmail: "",
     country: "",
@@ -278,6 +281,7 @@ export default function TourForm() {
     to: "",
     isCustomizable: false,
     tourStartDate: "",
+    isAccepted: false,
     starRating: "",
     amenities: [],
     inclusion: "",
@@ -416,51 +420,12 @@ export default function TourForm() {
     if (!formData.travelAgencyName)
       return toast.error("Agency Name is required");
 
-    const fd = new FormData();
-    Object.keys(formData).forEach((key) => {
-      if (
-        typeof formData[key] !== "object" &&
-        key !== "images" &&
-        key !== "inclusion" &&
-        key !== "exclusion" &&
-        formData[key]
-      ) {
-        fd.append(key, formData[key]);
-      }
+    const payload = buildTourPayload(formData, {
+      policies,
+      agencyIdFallback: userId || "",
+      defaultAccepted: false,
     });
-
-    const incArray = formData.inclusion
-      .split("\n")
-      .map((i) => i.trim())
-      .filter((i) => i !== "");
-    const excArray = formData.exclusion
-      .split("\n")
-      .map((i) => i.trim())
-      .filter((i) => i !== "");
-
-    fd.append("inclusion", JSON.stringify(incArray));
-    fd.append("exclusion", JSON.stringify(excArray));
-    fd.append("amenities", JSON.stringify(formData.amenities));
-    fd.append("dayWise", JSON.stringify(formData.dayWise));
-
-    const termsMap = {};
-    policies.forEach((p) => {
-      if (p.key.trim()) termsMap[p.key.trim()] = p.value;
-    });
-    fd.append("termsAndConditions", JSON.stringify(termsMap));
-
-    const vehiclesPayload = formData.vehicles.map((v) => ({
-      ...v,
-      totalSeats: parseInt(v.totalSeats || 0),
-      pricePerSeat: parseFloat(v.pricePerSeat || 0),
-      seatConfig: {
-        rows: parseInt(v.seatConfig.rows || 0),
-        left: parseInt(v.seatConfig.left || 0),
-        right: parseInt(v.seatConfig.right || 0),
-        aisle: v.seatConfig.aisle,
-      },
-    }));
-    fd.append("vehicles", JSON.stringify(vehiclesPayload));
+    const fd = appendTourFormData(new FormData(), payload);
 
     formData.images.forEach((file) => {
       if (file) fd.append("images", file);
@@ -1370,6 +1335,25 @@ export default function TourForm() {
         </Box>
 
         <GlassCard sx={{ mb: 4, p: 2 }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ mb: 2, gap: 2 }}
+          >
+            <Button
+              variant="outlined"
+              disabled={activeStep === 0}
+              onClick={handleBack}
+              startIcon={<ArrowBack />}
+              sx={{ borderRadius: 8 }}
+            >
+              Previous Step
+            </Button>
+            <Typography variant="body2" color="text.secondary">
+              Step {activeStep + 1} of {steps.length}
+            </Typography>
+          </Stack>
           <Stepper
             activeStep={activeStep}
             alternativeLabel={!isMobile}

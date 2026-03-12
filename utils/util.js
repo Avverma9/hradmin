@@ -16,6 +16,36 @@ export const userId = sessionStorage.getItem('user_id');
 export const userName = sessionStorage.getItem('user_name');
 export const token = sessionStorage.getItem('rs_token');
 
+export const getBusinessHotelId = (hotel = {}, fallbackHotelId = '') => {
+    const candidates = [
+        hotel?.businessHotelId,
+        hotel?.hotelId,
+        hotel?.businessId,
+        hotel?._id,
+        hotel?.id,
+        fallbackHotelId,
+    ];
+
+    const resolved = candidates.find((value) => value !== undefined && value !== null && String(value).trim() !== '');
+
+    return resolved ? String(resolved) : '';
+};
+
+export const getHotelDocumentId = (hotel = {}, fallbackHotelId = '') => {
+    const candidates = [
+        hotel?._id,
+        hotel?.id,
+        hotel?.documentId,
+        hotel?.hotelDocumentId,
+        hotel?.hotelId,
+        fallbackHotelId,
+    ];
+
+    const resolved = candidates.find((value) => value !== undefined && value !== null && String(value).trim() !== '');
+
+    return resolved ? String(resolved) : '';
+};
+
 export const notify = (statusCode, data) => {
     const toastId = toast.loading('Processing...');
 

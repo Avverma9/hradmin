@@ -90,21 +90,28 @@ export default function ShopProductCard({
       <Card sx={{
         display: 'flex',
         flexDirection: 'column',
+        minHeight: 410,
+        overflow: 'hidden',
         borderRadius: 2,
+        border: '1px solid',
+        borderColor: 'divider',
+        boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
         transition: 'box-shadow 0.3s ease-in-out, transform 0.2s ease-in-out',
         '&:hover': {
           transform: 'translateY(-4px)',
-          boxShadow: (theme) => theme.shadows[8],
+          boxShadow: '0 18px 36px rgba(15, 23, 42, 0.12)',
         },
       }}>
         <Box sx={{ position: 'relative' }}>
-          <CardActionArea onClick={handleViewDetails}>
+          <CardActionArea onClick={handleViewDetails} sx={{ display: 'block' }}>
+            <Box sx={{ height: 220, overflow: 'hidden' }}>
             <CardMedia
               component="img"
-              height="180"
               image={product?.images?.[0] || '/assets/placeholder.jpg'}
               alt={product?.hotelName}
+              sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
+            </Box>
           </CardActionArea>
           {product?.price && (
             <Label
@@ -117,7 +124,7 @@ export default function ShopProductCard({
           )}
         </Box>
 
-        <CardContent sx={{ flexGrow: 1 }}>
+        <CardContent sx={{ p: 2, pb: 1.5 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1}>
             <Chip
               label={product?.isAccepted ? "Live" : "Needs Approval"}
@@ -139,16 +146,30 @@ export default function ShopProductCard({
           <Stack spacing={1} color="text.secondary">
             <Stack direction="row" alignItems="center" spacing={1}>
               <PersonIcon fontSize="small" />
-              <Typography variant="body2">{product?.hotelOwnerName}</Typography>
+              <Typography variant="body2" noWrap>
+                {product?.hotelOwnerName}
+              </Typography>
             </Stack>
             <Stack direction="row" alignItems="center" spacing={1}>
               <LocationOnIcon fontSize="small" />
-              <Typography variant="body2">{product?.city}</Typography>
+              <Typography variant="body2" noWrap>
+                {product?.city}
+              </Typography>
             </Stack>
           </Stack>
         </CardContent>
 
-        <CardActions sx={{ justifyContent: 'space-between', p: 1 }}>
+        <CardActions
+          sx={{
+            justifyContent: 'space-between',
+            px: 2,
+            py: 1.25,
+            mt: 'auto',
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'grey.50',
+          }}
+        >
           <Button size="small" variant="text" onClick={handleViewDetails}>
             View Details
           </Button>

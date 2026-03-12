@@ -2,6 +2,14 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Grid, Container, Typography, Skeleton } from "@mui/material";
+import NotificationsActiveOutlinedIcon from "@mui/icons-material/NotificationsActiveOutlined";
+import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
+import ForumOutlinedIcon from "@mui/icons-material/ForumOutlined";
+import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
+import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
+import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
+import FlightTakeoffOutlinedIcon from "@mui/icons-material/FlightTakeoffOutlined";
+import ReviewsOutlinedIcon from "@mui/icons-material/ReviewsOutlined";
 import { role, localUrl } from "../../../../utils/util";
 import AppWidgetSummary from "../app-widget-summary";
 import { useLoader } from "../../../../utils/loader";
@@ -113,42 +121,42 @@ export default function AppView() {
     {
       title: "Notifications",
       color: "success",
-      icon: "https://static.vecteezy.com/system/resources/previews/009/394/760/non_2x/bell-icon-transparent-notification-free-png.png",
+      icon: <NotificationsActiveOutlinedIcon sx={{ width: 56, height: 56 }} />,
     },
     {
       title: "Partners",
       color: "info",
-      icon: "https://www.iconpacks.net/icons/2/free-handshake-icon-3312-thumb.png",
+      icon: <HandshakeOutlinedIcon sx={{ width: 56, height: 56 }} />,
     },
     {
       title: "Messenger",
       color: "warning",
-      icon: "https://www.pngall.com/wp-content/uploads/5/Facebook-Messenger-Logo-PNG-HD-Image.png",
+      icon: <ForumOutlinedIcon sx={{ width: 56, height: 56 }} />,
     },
     {
       title: "Coupons",
       color: "error",
-      icon: "https://png.pngtree.com/png-vector/20220803/ourmid/pngtree-gift-voucher-coupon-design-png-image_6097745.png",
+      icon: <LocalOfferOutlinedIcon sx={{ width: 56, height: 56 }} />,
     },
     {
       title: "Availability",
       color: "error",
-      icon: "https://www.freeiconspng.com/thumbs/check-tick-icon/tick-icon-30.png",
+      icon: <CheckCircleOutlineOutlinedIcon sx={{ width: 56, height: 56 }} />,
     },
     {
       title: "Monthly Price",
       color: "success",
-      icon: "https://atlas-content-cdn.pixelsquid.com/stock-images/calendar-Q9V6xnA-600.jpg",
+      icon: <CalendarMonthOutlinedIcon sx={{ width: 56, height: 56 }} />,
     },
     {
       title: "Travel locations",
       color: "info",
-      icon: "https://www.freeiconspng.com/thumbs/travel-icon-png/plane-travel-flight-tourism-travel-icon-png-10.png",
+      icon: <FlightTakeoffOutlinedIcon sx={{ width: 56, height: 56 }} />,
     },
     {
       title: "Reviews",
       color: "warning",
-      icon: "https://png.pngtree.com/png-vector/20230427/ourmid/pngtree-review-us-survey-star-scale-feedback-vector-png-image_6737386.png",
+      icon: <ReviewsOutlinedIcon sx={{ width: 56, height: 56 }} />,
     },
   ];
 
@@ -213,7 +221,13 @@ export default function AppView() {
                   title={widget.title}
                   total={widget.count || 0}
                   color={widget.color}
-                  icon={<img alt={`${widget.title} icon`} src={widget.icon} />}
+                  icon={
+                    typeof widget.icon === "string" ? (
+                      <img alt={`${widget.title} icon`} src={widget.icon} />
+                    ) : (
+                      widget.icon
+                    )
+                  }
                   onClick={() => handleWidgetClick(widget.title)}
                 />
               </Grid>

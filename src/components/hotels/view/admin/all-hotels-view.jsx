@@ -204,6 +204,7 @@ export default function ProductsView() {
             md={4}
             lg={3}
             key={product._id}
+            sx={{ display: 'flex' }}
           >
             <ProductCard
               product={product}

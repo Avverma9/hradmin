@@ -28,6 +28,7 @@ import { localUrl } from "../../../utils/util";
 
 const LoginSuccessPopup = ({ onComplete }) => {
   const [stage, setStage] = useState("setup"); // 'setup' -> 'success'
+  const [webglAvailable, setWebglAvailable] = useState(true);
   const canvasRef = useRef(null);
   const animationFrameId = useRef(null);
   const threeObjects = useRef({});
@@ -54,6 +55,13 @@ const LoginSuccessPopup = ({ onComplete }) => {
       margin-bottom: 25px; height: 100px; display: flex;
       justify-content: center; align-items: center; position: relative;
     }
+    .setup-fallback {
+      width: 84px; height: 84px; border-radius: 50%;
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      color: #1976d2; display: flex; align-items: center; justify-content: center;
+      font-size: 36px; font-weight: 700;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
     #three-canvas-react {
       width: 150px; height: 150px; display: none; margin-top: -25px;
     }
@@ -70,6 +78,10 @@ const LoginSuccessPopup = ({ onComplete }) => {
     @keyframes stroke { 100% { stroke-dashoffset: 0; } }
     @keyframes scale-up { 0% { transform: scale(0); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
     @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 40px #28a745; } }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.06); opacity: 0.85; }
+    }
     #popup-title {
       margin: 10px 0 5px; font-size: 24px; font-weight: 600; color: #333;
     }
@@ -80,40 +92,63 @@ const LoginSuccessPopup = ({ onComplete }) => {
 
   // --- Three.js Logic ---
   useEffect(() => {
+    let renderer;
+    let geometry;
+    let material;
+
     const initThreeJS = () => {
       if (!canvasRef.current) return;
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-      camera.position.z = 2.5;
-      const renderer = new THREE.WebGLRenderer({
-        canvas: canvasRef.current,
-        alpha: true,
-        antialias: true,
-      });
-      renderer.setSize(150, 150);
-      renderer.setPixelRatio(window.devicePixelRatio);
+      try {
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+        camera.position.z = 2.5;
+        renderer = new THREE.WebGLRenderer({
+          canvas: canvasRef.current,
+          alpha: true,
+          antialias: true,
+        });
+        renderer.setSize(150, 150);
+        renderer.setPixelRatio(window.devicePixelRatio);
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-      scene.add(ambientLight);
-      const pointLight = new THREE.PointLight(0x87ceeb, 1, 100);
-      pointLight.position.set(0, 5, 5);
-      scene.add(pointLight);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0x87ceeb, 1, 100);
+        pointLight.position.set(0, 5, 5);
+        scene.add(pointLight);
 
-      const geometry = new THREE.IcosahedronGeometry(1, 0);
-      const material = new THREE.MeshStandardMaterial({
-        color: 0x87ceeb,
-        transparent: true,
-        opacity: 0.9,
-        emissive: 0x33a1c9,
-        emissiveIntensity: 0.5,
-        metalness: 0.2,
-        roughness: 0.1,
-      });
-      const crystal = new THREE.Mesh(geometry, material);
-      scene.add(crystal);
-      threeObjects.current = { renderer, scene, camera, crystal };
+        geometry = new THREE.IcosahedronGeometry(1, 0);
+        material = new THREE.MeshStandardMaterial({
+          color: 0x87ceeb,
+          transparent: true,
+          opacity: 0.9,
+          emissive: 0x33a1c9,
+          emissiveIntensity: 0.5,
+          metalness: 0.2,
+          roughness: 0.1,
+        });
+        const crystal = new THREE.Mesh(geometry, material);
+        scene.add(crystal);
+        threeObjects.current = { renderer, scene, camera, crystal, geometry, material };
+        setWebglAvailable(true);
+      } catch (error) {
+        console.warn("Login success animation disabled: WebGL unavailable.", error);
+        threeObjects.current = {};
+        setWebglAvailable(false);
+      }
     };
+
     initThreeJS();
+
+    return () => {
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
+      const current = threeObjects.current;
+      current.geometry?.dispose?.();
+      current.material?.dispose?.();
+      current.renderer?.dispose?.();
+      threeObjects.current = {};
+    };
   }, []);
 
   // --- Animation and State Machine ---
@@ -130,8 +165,12 @@ const LoginSuccessPopup = ({ onComplete }) => {
     };
 
     if (stage === "setup") {
-      if (canvasRef.current) canvasRef.current.style.display = "block";
-      animationFrameId.current = requestAnimationFrame(animate);
+      if (canvasRef.current && webglAvailable) {
+        canvasRef.current.style.display = "block";
+      }
+      if (webglAvailable && renderer && scene && camera) {
+        animationFrameId.current = requestAnimationFrame(animate);
+      }
       const timer = setTimeout(() => {
         setStage("success");
       }, 3000); // User requested 5 seconds
@@ -147,7 +186,7 @@ const LoginSuccessPopup = ({ onComplete }) => {
       }, 1500); // Wait for checkmark animation
       return () => clearTimeout(timer);
     }
-  }, [stage, onComplete]);
+  }, [stage, onComplete, webglAvailable]);
 
   return (
     <>
@@ -155,8 +194,11 @@ const LoginSuccessPopup = ({ onComplete }) => {
       <div className="popup-overlay">
         <div className="popup-box">
           <div className="popup-icon-container">
-            {stage === "setup" && (
+            {stage === "setup" && webglAvailable && (
               <canvas ref={canvasRef} id="three-canvas-react" />
+            )}
+            {stage === "setup" && !webglAvailable && (
+              <div className="setup-fallback">RS</div>
             )}
             {stage === "success" && (
               <div className="success-checkmark">

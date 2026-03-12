@@ -52,6 +52,7 @@ import { toast } from "react-toastify";
 import { useHotelAmenities } from "../../../utils/additional/hotelAmenities";
 import { useTourTheme } from "../../../utils/additional/tourTheme";
 import { useLoader } from "../../../utils/loader";
+import { buildTourPayload } from "../../../utils/tour-payload";
 import { role } from "../../../utils/util";
 import {
   deleteTourImage,
@@ -306,6 +307,11 @@ export default function TourUpdate() {
         // Normalize Data
         const processedData = {
           ...data,
+          agencyId: data.agencyId || "",
+          isAccepted: Boolean(data.isAccepted),
+          tourStartDate:
+            data.tourStartDate ||
+            (!data.isCustomizable ? data.from || data.to || "" : ""),
           images: data.images || [],
           amenities: data.amenities || [],
           inclusion: data.inclusion || [],
@@ -442,38 +448,11 @@ export default function TourUpdate() {
     if (!tourData) return;
     showLoader();
     try {
-      const dataToSend = { ...tourData };
-
-      // Clean up technical fields
-      delete dataToSend._id;
-      delete dataToSend.__v;
-      delete dataToSend.createdAt;
-      delete dataToSend.updatedAt;
-
-      // 1. Vehicles Formatting
-      dataToSend.vehicles = dataToSend.vehicles.map((v) => ({
-        ...v,
-        totalSeats: parseInt(v.totalSeats) || 0,
-        pricePerSeat: parseFloat(v.pricePerSeat) || 0,
-        seatConfig: {
-          rows: parseInt(v.seatConfig.rows) || 0,
-          left: parseInt(v.seatConfig.left) || 0,
-          right: parseInt(v.seatConfig.right) || 0,
-          aisle: !!v.seatConfig.aisle,
-        },
-      }));
-
-      // 2. Policies: Array -> Map
-      const termsMap = {};
-      policies.forEach((p) => {
-        if (p.key.trim()) termsMap[p.key.trim()] = p.value;
+      const dataToSend = buildTourPayload(tourData, {
+        policies,
+        agencyIdFallback: tourData?.agencyId || "",
+        defaultAccepted: false,
       });
-      dataToSend.termsAndConditions = termsMap;
-
-      // 3. Status Check (if needed)
-      if (role === "Admin") {
-        /* Logic handled in separate buttons */
-      }
 
       await dispatch(updateTour({ id, data: dataToSend })).unwrap();
       toast.success("Tour updated successfully!");
@@ -1398,6 +1377,25 @@ export default function TourUpdate() {
         </Stack>
 
         <GlassCard sx={{ mb: 4, p: 2 }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ mb: 2, gap: 2 }}
+          >
+            <Button
+              variant="outlined"
+              disabled={activeStep === 0}
+              onClick={handleBack}
+              startIcon={<ArrowBack />}
+              sx={{ borderRadius: 8 }}
+            >
+              Previous Step
+            </Button>
+            <Typography variant="body2" color="text.secondary">
+              Step {activeStep + 1} of {steps.length}
+            </Typography>
+          </Stack>
           <Stepper
             activeStep={activeStep}
             alternativeLabel={!isMobile}
