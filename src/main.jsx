@@ -1,33 +1,17 @@
-import React, { Suspense } from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async';
-import { Provider } from 'react-redux';
-import { LinearProgress } from '@mui/material';
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { Provider } from 'react-redux'
+import { BrowserRouter } from 'react-router-dom'
+import store from '../redux/store'
+import './index.css'
+import App from './App.jsx'
 
-import store from './components/redux/store';
-import App from './App';
-
-// ----------------------------------------------------------------------
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-
-root.render(
-  <Provider store={store}>
-    <HelmetProvider>
-      <BrowserRouter future={{
-    v7_startTransition: true,
-  }}>
-        <Suspense
-          fallback={
-            <div>
-              <LinearProgress />
-            </div>
-          }
-        >
-          <App />
-        </Suspense>
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <Provider store={store}>
+      <BrowserRouter>
+        <App />
       </BrowserRouter>
-    </HelmetProvider>
-  </Provider>
-);
+    </Provider>
+  </StrictMode>,
+)
