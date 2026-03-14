@@ -24,8 +24,6 @@ import {
   setSelectedYear,
 } from '../../../redux/slices/dashboard'
 import Breadcrumb from '../../components/breadcrumb'
-import Header from '../../components/header'
-import Sidebar from '../../components/sidebar'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const ROLE_KEYS = ['PMS', 'TMS', 'CA', 'Rider', 'Admin', 'Developer', 'SuperAdmin']
@@ -169,78 +167,69 @@ function Dashboard() {
   const bookingPieData = useMemo(() => normalizeBookingChartData(bookingData), [bookingData])
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
-      <div className="flex min-h-screen">
-        <div className="shrink-0">
-          <Sidebar />
+    <div className="bg-slate-50/50 p-6 md:p-8">
+      <Breadcrumb />
+
+      {/* --- Header & Filters --- */}
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Dashboard Overview
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Track your analytics and performance metrics for the year.
+          </p>
         </div>
-        
-        <div className="flex-1 flex flex-col h-screen overflow-hidden">
-          <Header />
-          
-          <main className="flex-1 overflow-y-auto p-6 md:p-8 [&::-webkit-scrollbar]:hidden">
-            <Breadcrumb />
+        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm">
+          <select
+            value={selectedYear}
+            onChange={(event) => dispatch(setSelectedYear(Number(event.target.value)))}
+            className="cursor-pointer rounded-lg bg-transparent px-4 py-2 text-sm font-semibold text-slate-700 outline-none transition hover:bg-slate-50"
+          >
+            {[2023, 2024, 2025, 2026].map((year) => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => dispatch(fetchDashboardData(selectedYear))}
+            className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+          >
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
+      </div>
 
-            {/* --- Header & Filters --- */}
-            <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                  Dashboard Overview
-                </h1>
-                <p className="mt-1 text-sm text-slate-500">
-                  Track your analytics and performance metrics for the year.
-                </p>
-              </div>
-              <div className="flex items-center gap-3 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
-                <select
-                  value={selectedYear}
-                  onChange={(event) => dispatch(setSelectedYear(Number(event.target.value)))}
-                  className="rounded-lg bg-transparent px-4 py-2 text-sm font-semibold text-slate-700 outline-none cursor-pointer hover:bg-slate-50 transition"
-                >
-                  {[2023, 2024, 2025, 2026].map((year) => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => dispatch(fetchDashboardData(selectedYear))}
-                  className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 shadow-sm"
-                >
-                  {loading ? 'Refreshing...' : 'Refresh'}
-                </button>
-              </div>
+      {error && (
+        <div className="mb-8 flex items-center justify-between rounded-xl border border-red-200 bg-red-50/50 px-5 py-4 text-sm text-red-600">
+          <span className="flex items-center gap-2">
+            <Activity size={18} /> {error}
+          </span>
+          <button type="button" onClick={() => dispatch(clearDashboardError())} className="font-semibold hover:text-red-800">
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* --- Summary KPI Cards --- */}
+      <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { title: 'Total Bookings', value: bookingCount, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+          { title: 'Total Hotels', value: hotelCount, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { title: 'Total Users', value: userCount, color: 'text-amber-600', bg: 'bg-amber-50' },
+          { title: 'Active Modules', value: totalLinks, color: 'text-rose-600', bg: 'bg-rose-50' },
+        ].map((stat, i) => (
+          <div key={i} className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] transition-transform hover:-translate-y-1">
+            <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${stat.bg} ${stat.color}`}>
+              <Activity size={24} strokeWidth={2.5} />
             </div>
-
-            {error && (
-              <div className="mb-8 flex items-center justify-between rounded-xl border border-red-200 bg-red-50/50 px-5 py-4 text-sm text-red-600">
-                <span className="flex items-center gap-2">
-                  <Activity size={18} /> {error}
-                </span>
-                <button type="button" onClick={() => dispatch(clearDashboardError())} className="font-semibold hover:text-red-800">
-                  Dismiss
-                </button>
-              </div>
-            )}
-
-            {/* --- Summary KPI Cards --- */}
-            <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { title: 'Total Bookings', value: bookingCount, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                { title: 'Total Hotels', value: hotelCount, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                { title: 'Total Users', value: userCount, color: 'text-amber-600', bg: 'bg-amber-50' },
-                { title: 'Active Modules', value: totalLinks, color: 'text-rose-600', bg: 'bg-rose-50' },
-              ].map((stat, i) => (
-                <div key={i} className="rounded-2xl bg-white p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] transition-transform hover:-translate-y-1">
-                  <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${stat.bg} ${stat.color}`}>
-                    <Activity size={24} strokeWidth={2.5} />
-                  </div>
-                  <p className="text-sm font-medium text-slate-500">{stat.title}</p>
-                  <h2 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
-                    {loading ? <span className="text-lg text-slate-400">Loading...</span> : stat.value}
-                  </h2>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm font-medium text-slate-500">{stat.title}</p>
+            <h2 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
+              {loading ? <span className="text-lg text-slate-400">Loading...</span> : stat.value}
+            </h2>
+          </div>
+        ))}
+      </div>
 
             {/* --- Modern Charts Section --- */}
             <div className="grid gap-6 xl:grid-cols-2">
@@ -361,9 +350,6 @@ function Dashboard() {
                 )}
               </section>
 
-            </div>
-          </main>
-        </div>
       </div>
     </div>
   )

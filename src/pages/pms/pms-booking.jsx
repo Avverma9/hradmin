@@ -38,8 +38,6 @@ import {
   verifyBookingCancellationOtp,
 } from '../../../redux/slices/pms/bookings'
 import Breadcrumb from '../../components/breadcrumb'
-import Header from '../../components/header'
-import Sidebar from '../../components/sidebar'
 
 const statusOptions = [
   'Pending',
@@ -464,6 +462,7 @@ function BookingEditModal({
   const effectivePrice = isPriceManuallyEdited ? price : String(autoCalculatedPrice)
   const isStatusReadOnly = isLocked || isCancelledRestricted
   const isCancellationReadOnly = isLocked || isCancelledRestricted
+  const isCancelling = bookingStatus === 'Cancelled' && !isCancelledRestricted
 
   if (!booking) return null
 
@@ -476,12 +475,12 @@ function BookingEditModal({
       return
     }
 
-    if (bookingStatus === 'Cancelled' && !cancellationReason.trim()) {
+    if (isCancelling && !cancellationReason.trim()) {
       window.alert('Cancellation reason is required when cancelling a booking.')
       return
     }
 
-    if (bookingStatus === 'Cancelled' && !String(cancellationOtp).trim()) {
+    if (isCancelling && !String(cancellationOtp).trim()) {
       window.alert('OTP is required to cancel this booking.')
       return
     }
@@ -505,7 +504,7 @@ function BookingEditModal({
     if (checkInDate) payload.checkInDate = checkInDate
     if (requiresCheckInTime) payload.checkInTime = checkInTime
     if (requiresCheckOutTime) payload.checkOutTime = checkOutTime
-    if (bookingStatus === 'Cancelled') {
+    if (isCancelling) {
       onSubmit(booking.bookingId, {
         otp: cancellationOtp.trim(),
         cancellationReason: cancellationReason.trim(),
@@ -629,7 +628,7 @@ function BookingEditModal({
                   <input type="text" value={pm} readOnly disabled placeholder="Cash, Card..." className={inputClass} />
                 </div>
 
-                {bookingStatus === 'Cancelled' && (
+                {isCancelling && (
                   <div className="md:col-span-2 lg:col-span-3 animate-in fade-in zoom-in-95 duration-200">
                     <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)]">
                       <div>
@@ -934,49 +933,43 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50/40 font-sans text-slate-900 selection:bg-indigo-100">
-      <Sidebar className="shrink-0 hidden md:flex" />
-
-      <div className="flex h-screen w-full flex-1 flex-col overflow-hidden">
-        <Header className="bg-white/80 backdrop-blur-md border-b border-slate-200" />
-
-        <main className="flex-1 overflow-x-hidden overflow-y-auto [&::-webkit-scrollbar]:hidden">
-          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            
-            {/* Header Area */}
-            <div className="mb-8">
-              <Breadcrumb />
-              <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">{title}</h1>
-                  {subtitle ? <p className="mt-1.5 text-sm text-slate-500">{subtitle}</p> : (
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                      <Building2 size={16} className="text-slate-400" />
-                      {showPartnerIdentity ? (
-                        <>
-                          <span className="font-semibold text-slate-800">{partner?.name || user?.name || 'Current Partner'}</span>
-                          <span className="text-slate-300">•</span>
-                          <span>{partner?.email || user?.email || 'N/A'}</span>
-                        </>
-                      ) : <span className="font-medium text-slate-600">All bookings across network</span>}
-                    </div>
-                  )}
-                </div>
-                <button onClick={handleApplyFilters} className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                  <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Sync Data
-                </button>
-              </div>
-
-              {error && (
-                <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 p-4 flex items-center justify-between shadow-sm">
-                  <div className="flex items-center gap-3 text-rose-700 text-sm font-medium">
-                    <CircleAlert size={18} />
-                    <p>{error}</p>
-                  </div>
-                  <button onClick={() => dispatch(clearPmsError())} className="text-rose-600 hover:text-rose-800 text-sm font-bold">Dismiss</button>
+    <div className="bg-slate-50/40 font-sans text-slate-900 selection:bg-indigo-100">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        
+        {/* Header Area */}
+        <div className="mb-8">
+          <Breadcrumb />
+          <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">{title}</h1>
+              {subtitle ? <p className="mt-1.5 text-sm text-slate-500">{subtitle}</p> : (
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                  <Building2 size={16} className="text-slate-400" />
+                  {showPartnerIdentity ? (
+                    <>
+                      <span className="font-semibold text-slate-800">{partner?.name || user?.name || 'Current Partner'}</span>
+                      <span className="text-slate-300">•</span>
+                      <span>{partner?.email || user?.email || 'N/A'}</span>
+                    </>
+                  ) : <span className="font-medium text-slate-600">All bookings across network</span>}
                 </div>
               )}
             </div>
+            <button onClick={handleApplyFilters} className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Sync Data
+            </button>
+          </div>
+
+          {error && (
+            <div className="mt-6 flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm">
+              <div className="flex items-center gap-3 text-sm font-medium text-rose-700">
+                <CircleAlert size={18} />
+                <p>{error}</p>
+              </div>
+              <button onClick={() => dispatch(clearPmsError())} className="text-sm font-bold text-rose-600 hover:text-rose-800">Dismiss</button>
+            </div>
+          )}
+        </div>
 
             {/* Custom Tab Navigation */}
             <div className="mb-6 border-b border-slate-200">
@@ -1251,8 +1244,6 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
                 </div>
               </div>
             )}
-          </div>
-        </main>
       </div>
 
       {modalMode === 'view' && <BookingViewModal booking={resolvedBooking} shouldHideGuestContact={shouldHideGuestContact} showCreatedBy={showCreatedBy} loading={detailLoading} onClose={closeBookingModal} />}

@@ -17,9 +17,7 @@ import {
   X,
 } from 'lucide-react'
 import Breadcrumb from '../../components/breadcrumb'
-import Header from '../../components/header'
 import PartnerForm from '../../components/partner-form'
-import Sidebar from '../../components/sidebar'
 import {
   addPartner,
   addContacts,
@@ -615,48 +613,39 @@ function Partner() {
       : partners.find((partner) => partner._id === activePartnerId) || null
 
   return (
-    <div className="min-h-screen bg-slate-50/60">
-      <div className="flex min-h-screen">
-        <div className="shrink-0">
-          <Sidebar />
+    <div className="bg-slate-50/60 p-6 md:p-8">
+      <Breadcrumb />
+
+      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Partner Directory
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Manage partner accounts, permissions, and onboarding details from one workspace.
+          </p>
         </div>
 
-        <div className="flex h-screen flex-1 flex-col overflow-hidden">
-          <Header />
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={() => dispatch(getAllPartners())}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            {loading ? 'Refreshing...' : 'Refresh Data'}
+          </button>
 
-          <main className="flex-1 overflow-y-auto p-6 md:p-8 [&::-webkit-scrollbar]:hidden">
-            <Breadcrumb />
-
-            <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                  Partner Directory
-                </h1>
-                <p className="mt-1 text-sm text-slate-500">
-                  Manage partner accounts, permissions, and onboarding details from one workspace.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => dispatch(getAllPartners())}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-                >
-                  <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-                  {loading ? 'Refreshing...' : 'Refresh Data'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={openCreateDialog}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
-                >
-                  <Plus size={16} />
-                  Add Partner
-                </button>
-              </div>
-            </div>
+          <button
+            type="button"
+            onClick={openCreateDialog}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+          >
+            <Plus size={16} />
+            Add Partner
+          </button>
+        </div>
+      </div>
 
             {error && (
               <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 md:flex-row md:items-center md:justify-between">
@@ -671,7 +660,7 @@ function Partner() {
               </div>
             )}
 
-            <section className="mb-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="mb-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
               {[
                 {
                   label: 'Total Partners',
@@ -715,9 +704,9 @@ function Partner() {
                   </div>
                 )
               })}
-            </section>
+      </section>
 
-            <section className="rounded-3xl border border-slate-200 bg-white shadow-[0_12px_40px_rgba(15,23,42,0.05)]">
+      <section className="rounded-3xl border border-slate-200 bg-white shadow-[0_12px_40px_rgba(15,23,42,0.05)]">
               <div className="border-b border-slate-200 px-5 py-5 md:px-6">
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                   <div>
@@ -999,10 +988,7 @@ function Partner() {
                   </button>
                 </div>
               </div>
-            </section>
-          </main>
-        </div>
-      </div>
+      </section>
 
       {dialogType === 'create' && (
         <PartnerForm

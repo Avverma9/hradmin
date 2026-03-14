@@ -13,8 +13,6 @@ import {
   Trash2,
 } from 'lucide-react'
 import Breadcrumb from '../../components/breadcrumb'
-import Header from '../../components/header'
-import Sidebar from '../../components/sidebar'
 import {
   addAmenity,
   addBedTypes,
@@ -127,7 +125,7 @@ const getItemLabel = (item) =>
 
 function DatasetCard({
   title,
-  icon: Icon,
+  icon,
   placeholder,
   inputPlaceholder,
   singularLabel,
@@ -137,6 +135,8 @@ function DatasetCard({
   onSubmit,
   onDelete,
 }) {
+  const Icon = icon
+
   return (
     <section className="flex h-full flex-col rounded-xl border border-slate-200 bg-slate-50/60">
       {/* header */}
@@ -291,17 +291,8 @@ function AdditionalData() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="flex min-h-screen">
-        <div className="shrink-0">
-          <Sidebar />
-        </div>
-
-        <div className="flex h-screen flex-1 flex-col overflow-hidden">
-          <Header />
-
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 [&::-webkit-scrollbar]:hidden">
-            <Breadcrumb />
+    <div className="bg-slate-50 p-4 md:p-6">
+      <Breadcrumb />
 
             {/* Top summary bar */}
             <section className="mb-4 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
@@ -340,26 +331,23 @@ function AdditionalData() {
               </div>
             )}
 
-            {/* 3x2 grid like screenshot */}
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {DATASET_CONFIG.map((cfg) => (
-                <DatasetCard
-                  key={cfg.key}
-                  title={cfg.title}
-                  icon={cfg.icon}
-                  placeholder={cfg.placeholder}
-                  inputPlaceholder={cfg.inputPlaceholder}
-                  singularLabel={cfg.singularLabel}
-                  collection={collections[cfg.key] || { items: [], loading: false, error: null }}
-                  value={formValues[cfg.key]}
-                  onChange={(v) => handleValueChange(cfg.key, v)}
-                  onSubmit={handleCreate(cfg)}
-                  onDelete={handleDelete(cfg)}
-                />
-              ))}
-            </div>
-          </main>
-        </div>
+      {/* 3x2 grid like screenshot */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {DATASET_CONFIG.map((cfg) => (
+          <DatasetCard
+            key={cfg.key}
+            title={cfg.title}
+            icon={cfg.icon}
+            placeholder={cfg.placeholder}
+            inputPlaceholder={cfg.inputPlaceholder}
+            singularLabel={cfg.singularLabel}
+            collection={collections[cfg.key] || { items: [], loading: false, error: null }}
+            value={formValues[cfg.key]}
+            onChange={(v) => handleValueChange(cfg.key, v)}
+            onSubmit={handleCreate(cfg)}
+            onDelete={handleDelete(cfg)}
+          />
+        ))}
       </div>
     </div>
   )

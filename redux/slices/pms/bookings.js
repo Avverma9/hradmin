@@ -96,6 +96,21 @@ const buildSummaryFromBookings = (bookings = []) => {
   }
 }
 
+
+export const createBooking = createAsyncThunk(
+    'pms/createBooking',
+    async ({ userId, hotelId, bookingData }, { rejectWithValue }) => {
+        try {
+            const response = await api.post(`/booking/${userId}/${hotelId}`, bookingData);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(
+                error.response?.data?.message || 'Failed to create booking.',
+            );
+        }
+    }
+);
+
 export const fetchPartnerHotelBookings = createAsyncThunk(
   'pms/fetchPartnerHotelBookings',
   async ({ partnerId, filters = {} }, { rejectWithValue }) => {
@@ -372,6 +387,20 @@ const pmsSlice = createSlice({
         state.verifyingCancellationOtp = false
         state.error = action.payload || 'Failed to verify cancellation OTP.'
       })
+        .addCase(createBooking.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+            state.booking = null;
+        })
+        .addCase(createBooking.fulfilled, (state, action) => {
+            state.loading = false;
+            state.booking = action.payload;
+        })
+        .addCase(createBooking.rejected, (state, action) => {
+            state.loading = false;
+            state.booking = null;
+            state.error = action.payload;
+        }); 
   },
 })
 

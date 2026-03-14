@@ -17,8 +17,6 @@ import {
   ChevronDown
 } from 'lucide-react'
 import Breadcrumb from '../../components/breadcrumb'
-import Header from '../../components/header'
-import Sidebar from '../../components/sidebar'
 import { refreshSidebarLinks, selectAuth } from '../../../redux/slices/authSlice'
 import {
   changeSidebarLinkStatus,
@@ -323,18 +321,10 @@ function ManageLinks() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-gray-200">
-      <div className="flex h-screen overflow-hidden">
-      
-      <Sidebar className="hidden shrink-0 border-r border-gray-200 md:flex" />
-
-      <div className="flex w-full flex-1 flex-col overflow-hidden">
-        <Header className="bg-white border-b border-gray-200" />
-
-        <main className="flex-1 overflow-x-hidden overflow-y-auto [&::-webkit-scrollbar]:hidden">
-          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <div className="sticky top-0 z-20 -mx-4 bg-white/95 px-4 pb-4 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-              <Breadcrumb />
+    <div className="bg-white px-4 py-8 font-sans text-gray-900 selection:bg-gray-200 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="sticky top-0 z-20 -mx-4 bg-white/95 px-4 pb-4 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+          <Breadcrumb />
 
               <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -369,11 +359,11 @@ function ManageLinks() {
               </div>
             </div>
 
-            {(error || successMessage) && (
-              <div className={`mt-6 rounded-md p-4 text-sm font-medium border ${error ? 'border-red-200 bg-red-50 text-red-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
-                {error || successMessage}
-              </div>
-            )}
+        {(error || successMessage) && (
+          <div className={`mt-6 rounded-md border p-4 text-sm font-medium ${error ? 'border-red-200 bg-red-50 text-red-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
+            {error || successMessage}
+          </div>
+        )}
 
             {/* TAB 1: MASTER DIRECTORY */}
             {activeTab === 'master' && (
@@ -603,10 +593,6 @@ function ManageLinks() {
               </div>
             )}
             
-          </div>
-        </main>
-      </div>
-      
       </div>
 
       <SidebarLinkModal open={modalState.open} mode={modalState.mode} formState={linkForm} saving={savingLink} onChange={handleFormChange} onRoleToggle={handleRoleToggle} onClose={closeModal} onSubmit={handleLinkSubmit} />

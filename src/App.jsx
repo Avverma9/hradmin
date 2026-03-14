@@ -3,17 +3,23 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { SERVER_STATUS_EVENT, startHealthPolling } from './api'
 import AccessDenied from './components/access-denied'
+import AppShell from './components/app-shell'
 import Auth from './components/auth'
 import GlobalLoader from './components/global-loader'
 import ServerError from './components/server-error'
 import AdditionalData from './pages/admin/additional-data'
+import GSTManagement from './pages/admin/gst-management'
 import AdminHotelBookings from './pages/admin/hotel-bookings'
+import BookHotel from './pages/booking-creation/book-hotel'
 import ManageLinks from './pages/admin/manage-links'
 import Dashboard from './pages/dashboard/dashboard'
 import Messenger from './pages/messenger/messenger'
 import Partner from './pages/partner/partner'
+import BookingCreationHotels from './pages/booking-creation/hotel'
 import PanelBooking from './pages/pms/panel-booking'
 import PmsBooking from './pages/pms/pms-booking'
+import FindUser from './pages/booking-creation/findUser'
+import CreateUser from './pages/booking-creation/create-user'
 import { refreshSidebarLinks, selectAuth } from '../redux/slices/authSlice'
 
 const getAllowedRoutes = (sidebarLinks) =>
@@ -23,10 +29,22 @@ const getAllowedRoutes = (sidebarLinks) =>
       .filter(Boolean),
   )
 
-const STATIC_ALLOWED_ROUTES = ['/hotel-bookings', '/panel-booking']
+const STATIC_ALLOWED_ROUTES = ['/hotel-bookings', '/panel-booking', '/gst-management', '/gst-page']
 
 const matchesAllowedRoute = (pathname, allowedRoutes) =>
   allowedRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))
+
+function ProtectedLayout({ isAuthenticated, isAccessAllowed, isAccessDeniedRoute }) {
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />
+  }
+
+  if (!isAccessAllowed && !isAccessDeniedRoute) {
+    return <Navigate to="/access-denied" replace />
+  }
+
+  return <AppShell />
+}
 
 function App() {
   const dispatch = useDispatch()
@@ -42,6 +60,7 @@ function App() {
     () => matchesAllowedRoute(location.pathname, allowedRoutes),
     [allowedRoutes, location.pathname],
   )
+  const isAccessDeniedRoute = location.pathname === '/access-denied'
 
   useEffect(() => {
     const stopHealthPolling = startHealthPolling(setHasServerError)
@@ -89,99 +108,31 @@ function App() {
           element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Auth />}
         />
         <Route
-          path="/access-denied"
-          element={isAuthenticated ? <AccessDenied /> : <Navigate to="/" replace />}
-        />
-        <Route
-          path="/dashboard"
           element={
-            isAuthenticated ? (
-              isCurrentRouteAllowed ? <Dashboard /> : <Navigate to="/access-denied" replace />
-            ) : (
-              <Navigate to="/" replace />
-            )
+            <ProtectedLayout
+              isAuthenticated={isAuthenticated}
+              isAccessAllowed={isCurrentRouteAllowed}
+              isAccessDeniedRoute={isAccessDeniedRoute}
+            />
           }
-        />
-        <Route
-          path="/user"
-          element={
-            isAuthenticated ? (
-              isCurrentRouteAllowed ? <Partner /> : <Navigate to="/access-denied" replace />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/add-menu-item"
-          element={
-            isAuthenticated ? (
-              isCurrentRouteAllowed ? <ManageLinks /> : <Navigate to="/access-denied" replace />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/additional-fields"
-          element={
-            isAuthenticated ? (
-              isCurrentRouteAllowed ? <AdditionalData /> : <Navigate to="/access-denied" replace />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/hotel-admin-bookings"
-          element={
-            isAuthenticated ? (
-              isCurrentRouteAllowed ? <AdminHotelBookings /> : <Navigate to="/access-denied" replace />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/messenger"
-          element={
-            isAuthenticated ? (
-              isCurrentRouteAllowed ? <Messenger /> : <Navigate to="/access-denied" replace />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/your-bookings"
-          element={
-            isAuthenticated ? (
-              isCurrentRouteAllowed ? <PmsBooking /> : <Navigate to="/access-denied" replace />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/panel-booking"
-          element={
-            isAuthenticated ? (
-              isCurrentRouteAllowed ? <PanelBooking /> : <Navigate to="/access-denied" replace />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="*"
-          element={
-            isAuthenticated ? (
-              isCurrentRouteAllowed ? <Dashboard /> : <Navigate to="/access-denied" replace />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
+        >
+          <Route path="/access-denied" element={<AccessDenied />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/user" element={<Partner />} />
+          <Route path="/add-menu-item" element={<ManageLinks />} />
+          <Route path="/additional-fields" element={<AdditionalData />} />
+          <Route path="/gst-management" element={<GSTManagement />} />
+          <Route path="/gst-page" element={<GSTManagement />} />
+          <Route path="/hotel-admin-bookings" element={<AdminHotelBookings />} />
+          <Route path="/messenger" element={<Messenger />} />
+          <Route path="/your-bookings" element={<PmsBooking />} />
+          <Route path="/panel-booking" element={<PanelBooking />} />
+          <Route path="/booking-creation" element={<FindUser />} />
+          <Route path="/booking-creation/hotels" element={<BookingCreationHotels />} />
+          <Route path="/booking-creation/create-user" element={<CreateUser />} />
+          <Route path="/booking-creation/book-hotel" element={<BookHotel />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Route>
       </Routes>
     </>
   )
