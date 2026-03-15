@@ -57,8 +57,13 @@ const emitServerStatus = (hasServerError) => {
 
 const api = axios.create({
   baseURL,
-  timeout: 10000,
+  timeout: 15000,
 })
+
+// Consecutive failure counter — server offline sirf tab dikhega jab
+// lagaataar 2+ failures aayein, ek momentary error se nahi
+let _consecutiveServerErrors = 0
+const FAILURES_BEFORE_OFFLINE = 2
 
 const shouldTrackRequest = (config) => config?.url !== '/health' && !config?.skipGlobalLoader
 
@@ -86,6 +91,8 @@ api.interceptors.response.use(
       store.dispatch(requestFinished())
     }
 
+    // Successful response — server clearly online hai
+    _consecutiveServerErrors = 0
     emitServerStatus(false)
     return response
   },
@@ -94,14 +101,22 @@ api.interceptors.response.use(
       store.dispatch(requestFinished())
     }
 
-    const hasServerError =
+    const isServerDown =
       !error.response ||
       error.code === 'ERR_NETWORK' ||
       error.code === 'ECONNABORTED' ||
       error.response?.status >= 500
 
-    if (hasServerError) {
-      emitServerStatus(true)
+    if (isServerDown) {
+      _consecutiveServerErrors += 1
+      // Sirf tab offline dikhao jab LAGAATAAR failures aayein
+      if (_consecutiveServerErrors >= FAILURES_BEFORE_OFFLINE) {
+        emitServerStatus(true)
+      }
+    } else {
+      // 4xx errors (auth, validation) — server chalu hai, reset karo
+      _consecutiveServerErrors = 0
+      emitServerStatus(false)
     }
 
     return Promise.reject(error)
@@ -109,24 +124,48 @@ api.interceptors.response.use(
 )
 
 export const startHealthPolling = (onStatusChange) => {
+  let _healthFailures = 0
+  let _recoveryTimer = null
+  const HEALTH_FAILURES_BEFORE_OFFLINE = 2
+  const RECOVERY_CONFIRM_DELAY = 3000  // 3s baad confirm karo ki server wapas aaya
+
   const checkHealth = async () => {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-      onStatusChange(true)
+      _healthFailures += 1
+      if (_healthFailures >= HEALTH_FAILURES_BEFORE_OFFLINE) {
+        onStatusChange(true)
+      }
       return
     }
 
     try {
-      await api.get('/health')
-      onStatusChange(false)
+      await api.get('/health', { skipGlobalLoader: true, timeout: 8000 })
+
+      _healthFailures = 0
+
+      // Recovery: thoda wait karo confirm karne ke liye, jhat se online na karo
+      if (_recoveryTimer) clearTimeout(_recoveryTimer)
+      _recoveryTimer = setTimeout(() => {
+        onStatusChange(false)
+      }, RECOVERY_CONFIRM_DELAY)
     } catch {
-      onStatusChange(true)
+      _healthFailures += 1
+      if (_recoveryTimer) clearTimeout(_recoveryTimer)
+
+      // Sirf lagaataar failures pe offline dikhao
+      if (_healthFailures >= HEALTH_FAILURES_BEFORE_OFFLINE) {
+        onStatusChange(true)
+      }
     }
   }
 
-  checkHealth()
+  // Startup pe delay karo — server boot ho raha ho sakta hai
+  const startTimer = setTimeout(checkHealth, 2000)
   const intervalId = window.setInterval(checkHealth, HEALTH_POLL_INTERVAL)
 
   return () => {
+    clearTimeout(startTimer)
+    clearTimeout(_recoveryTimer)
     window.clearInterval(intervalId)
   }
 }

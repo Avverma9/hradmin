@@ -257,8 +257,36 @@ const InfoRow = ({ label, value, className = '' }) => (
   </div>
 )
 
+const getDisplayNameFromPerson = (person, fallbackName = 'System Auto') => {
+  if (!person) return fallbackName
+  if (typeof person === 'string') return person.trim() || fallbackName
+  if (typeof person === 'number') return String(person)
+  if (Array.isArray(person)) {
+    for (const item of person) {
+      const label = getDisplayNameFromPerson(item, '')
+      if (label) return label
+    }
+    return fallbackName
+  }
+  if (typeof person === 'object') {
+    // Only check human-readable name fields — never fall back to role/id/etc.
+    const candidate =
+      (typeof person.name === 'string' && person.name.trim()) ||
+      (typeof person.user === 'string' && person.user.trim()) ||
+      (typeof person.fullName === 'string' && person.fullName.trim()) ||
+      (typeof person.username === 'string' && person.username.trim()) ||
+      (typeof person.displayName === 'string' && person.displayName.trim()) ||
+      (typeof person.label === 'string' && person.label.trim()) ||
+      (person.firstName && person.lastName ? `${person.firstName} ${person.lastName}`.trim() : null) ||
+      (typeof person.email === 'string' && person.email.trim())
+    if (candidate) return candidate
+    return fallbackName
+  }
+  return fallbackName
+}
+
 // Enterprise Grade Vertical Timeline
-const StatusTimeline = ({ history, currentUpdatedAt }) => {
+const StatusTimeline = ({ history, currentUpdatedAt, currentUserName }) => {
   if (!history || history.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 py-10">
@@ -312,7 +340,7 @@ const StatusTimeline = ({ history, currentUpdatedAt }) => {
                 
                 <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-200/60">
                   <UserCog size={14} className="text-slate-400" />
-                  {entry.changedBy?.name || 'System Auto'}
+                  {getDisplayNameFromPerson(entry.changedBy, currentUserName || 'System Auto')}
                 </div>
               </div>
               
@@ -330,7 +358,7 @@ const StatusTimeline = ({ history, currentUpdatedAt }) => {
   )
 }
 
-function BookingViewModal({ booking, loading, shouldHideGuestContact, showCreatedBy = false, onClose }) {
+function BookingViewModal({ booking, loading, shouldHideGuestContact, showCreatedBy = false, currentUserName = 'System Auto', onClose }) {
   if (!booking) return null
 
   const hotelContactNo = booking?.hotelDetails?.hotelContactNo || booking?.hotelDetails?.contactNo || booking?.hotelDetails?.mobile || 'Not available'
@@ -457,7 +485,7 @@ function BookingViewModal({ booking, loading, shouldHideGuestContact, showCreate
                   <Clock size={18} className="text-slate-400" />
                   <h3 className="text-sm font-bold uppercase tracking-widest text-slate-900">Lifecycle & Timeline</h3>
                 </div>
-                <StatusTimeline history={booking.statusHistory} currentUpdatedAt={booking.updatedAt} />
+                <StatusTimeline history={booking.statusHistory} currentUpdatedAt={booking.updatedAt} currentUserName={currentUserName} />
               </div>
 
             </div>
@@ -1024,7 +1052,21 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
         }),
       ).unwrap()
     } else {
-      await dispatch(updateBookingData({ bookingId, updateData: payload })).unwrap()
+      const resolvedUserName = user?.name || user?.fullName || user?.user || user?.username || user?.email || 'System'
+      const enrichedPayload = {
+        ...payload,
+        ...(payload.bookingStatus && {
+          changedBy: {
+            userId: user?.id || user?._id || '',
+            name:   resolvedUserName,
+            email:  user?.email || '',
+            role:   user?.role  || '',
+          },
+          note: payload.note || '',
+        }),
+      }
+      console.debug('[PMS] updateBooking enrichedPayload:', enrichedPayload)
+      await dispatch(updateBookingData({ bookingId, updateData: enrichedPayload })).unwrap()
     }
     await loadBookings(appliedFilters)
     closeBookingModal()
@@ -1384,7 +1426,7 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
             )}
       </div>
 
-      {modalMode === 'view' && <BookingViewModal booking={resolvedBooking} shouldHideGuestContact={shouldHideGuestContact} showCreatedBy={showCreatedBy} loading={detailLoading} onClose={closeBookingModal} />}
+      {modalMode === 'view' && <BookingViewModal booking={resolvedBooking} shouldHideGuestContact={shouldHideGuestContact} showCreatedBy={showCreatedBy} currentUserName={user?.name || user?.fullName || user?.user || 'System Auto'} loading={detailLoading} onClose={closeBookingModal} />}
       {modalMode === 'edit' && <BookingEditModal key={resolvedBooking?.bookingId || 'booking-edit'} booking={resolvedBooking} allowAdvancedEdit={allowAdvancedEditForPrivileged} isLocked={isBookingLocked} isCancelledRestricted={isCancelledBookingRestricted} userRole={normalizedUserRole} capabilities={resolvedCapabilities} loading={updatingBooking || verifyingCancellationOtp || detailLoading} otpSending={sendingCancellationOtp} onClose={closeBookingModal} onSubmit={handleUpdateBooking} onSendCancellationOtp={handleSendCancellationOtp} />}
     </div>
   )

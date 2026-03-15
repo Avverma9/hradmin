@@ -53,8 +53,18 @@ function App() {
   useEffect(() => {
     const stopHealthPolling = startHealthPolling(setHasServerError)
 
+    let _offlineDebounceTimer = null
     const handleServerStatus = (event) => {
-      setHasServerError(event.detail?.hasServerError ?? false)
+      const offline = event.detail?.hasServerError ?? false
+      if (!offline) {
+        // Online hone pe turant recover karo
+        if (_offlineDebounceTimer) clearTimeout(_offlineDebounceTimer)
+        setHasServerError(false)
+      } else {
+        // Offline page: 1.5s debounce — momentary blip ignore karo
+        if (_offlineDebounceTimer) clearTimeout(_offlineDebounceTimer)
+        _offlineDebounceTimer = setTimeout(() => setHasServerError(true), 1500)
+      }
     }
 
     const handleOffline = () => {
