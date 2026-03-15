@@ -119,11 +119,11 @@ function App() {
           <Route path="/access-denied" element={<AccessDenied />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/user" element={<Partner />} />
-          <Route path="/add-menu-item" element={<ManageLinks />} />
+          <Route path="/manage-menu" element={<ManageLinks />} />
           <Route path="/additional-fields" element={<AdditionalData />} />
           <Route path="/gst-management" element={<GSTManagement />} />
           <Route path="/gst-page" element={<GSTManagement />} />
-          <Route path="/hotel-admin-bookings" element={<AdminHotelBookings />} />
+          <Route path="/hotel-bookings" element={<AdminHotelBookings />} />
           <Route path="/messenger" element={<Messenger />} />
           <Route path="/your-bookings" element={<PmsBooking />} />
           <Route path="/panel-booking" element={<PanelBooking />} />

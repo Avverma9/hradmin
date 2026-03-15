@@ -51,6 +51,19 @@ const statusOptions = [
 const sourceOptions = ['app', 'site', 'panel']
 const privilegedRoles = new Set(['admin', 'developer'])
 const checkedOutEditableRoles = new Set(['admin', 'ca', 'developer'])
+const financeRoles = new Set(['ca', 'accounts', 'finance'])
+const operationsRoles = new Set([
+  'partner',
+  'manager',
+  'hotel-manager',
+  'hotel_manager',
+  'hoteladmin',
+  'hotel-admin',
+  'frontdesk',
+  'front-desk',
+  'reservation',
+  'reservations',
+])
 const statusLabelMap = {
   pending: 'Pending',
   confirmed: 'Confirmed',
@@ -88,6 +101,15 @@ const StatusBadge = ({ status = '' }) => {
 }
 
 const formatCountMap = (data = {}) => Object.entries(data)
+
+const normalizeSourceLabel = (source = '') => {
+  const normalized = String(source).trim().toLowerCase()
+  if (!normalized) return 'Unknown'
+  if (normalized === 'panel') return 'Panel'
+  if (normalized === 'site') return 'Site'
+  if (normalized === 'app') return 'App'
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1)
+}
 
 const formatDate = (value) => {
   if (!value) return 'N/A'
@@ -153,13 +175,70 @@ const calculateBookingTotal = ({
   return Math.round(subtotal + (subtotal * gst) / 100)
 }
 
-const getEditableStatusOptions = (currentStatus, isPrivilegedUser) => {
-  if (isPrivilegedUser) return statusOptions
-
+const getRoleCapabilities = (role = '', currentStatus = '') => {
+  const normalizedRole = String(role || '').trim().toLowerCase()
   const normalizedStatus = String(currentStatus || '').trim().toLowerCase()
-  if (normalizedStatus === 'confirmed') return ['Confirmed', 'Checked-in']
-  if (normalizedStatus === 'checked-in') return ['Checked-in', 'Checked-out']
-  if (normalizedStatus === 'checked-out') return ['Checked-out']
+  const isPrivileged = privilegedRoles.has(normalizedRole)
+  const isFinance = financeRoles.has(normalizedRole)
+  const isOperations = operationsRoles.has(normalizedRole)
+  const isClosedBooking = normalizedStatus === 'checked-out'
+  const isCancelledBooking = normalizedStatus === 'cancelled'
+  const isTerminalBooking =
+    normalizedStatus === 'checked-out' ||
+    normalizedStatus === 'cancelled' ||
+    normalizedStatus === 'failed' ||
+    normalizedStatus === 'no-show'
+
+  const capabilities = {
+    isPrivileged,
+    isFinance,
+    isOperations,
+    canEditCancelled: isPrivileged,
+    canEditCheckedOut: checkedOutEditableRoles.has(normalizedRole),
+    canEditFinancials: isPrivileged || isFinance,
+    canEditAdvanced: isPrivileged,
+    canEditGuestAndHotelDetails: isPrivileged,
+    canEditDates: false,
+    canEditStatus: false,
+    canSendCancellationOtp: false,
+  }
+
+  if (isPrivileged) {
+    capabilities.canEditStatus = true
+    capabilities.canEditDates = !isClosedBooking && !isCancelledBooking
+    capabilities.canSendCancellationOtp = !isCancelledBooking && normalizedStatus !== 'checked-out'
+    return capabilities
+  }
+
+  if (isFinance) {
+    capabilities.canEditFinancials = true
+    return capabilities
+  }
+
+  if (isOperations) {
+    capabilities.canEditStatus = !isTerminalBooking
+    capabilities.canEditDates = normalizedStatus === 'pending' || normalizedStatus === 'confirmed'
+    return capabilities
+  }
+
+  return capabilities
+}
+
+const getEditableStatusOptions = (currentStatus, role = '') => {
+  const normalizedStatus = String(currentStatus || '').trim().toLowerCase()
+  const capabilities = getRoleCapabilities(role, currentStatus)
+
+  if (capabilities.isPrivileged) {
+    return statusOptions
+  }
+
+  if (capabilities.isOperations) {
+    if (normalizedStatus === 'pending') return ['Pending', 'Confirmed']
+    if (normalizedStatus === 'confirmed') return ['Confirmed', 'Checked-in', 'No-Show']
+    if (normalizedStatus === 'checked-in') return ['Checked-in', 'Checked-out']
+    return [getStatusLabel(currentStatus || 'Pending')]
+  }
+
   return [getStatusLabel(currentStatus || 'Pending')]
 }
 
@@ -397,7 +476,8 @@ function BookingEditModal({
   loading,
   isLocked,
   isCancelledRestricted = false,
-  isPrivilegedUser,
+  userRole = '',
+  capabilities,
   allowAdvancedEdit = false,
   otpSending = false,
   onClose,
@@ -439,10 +519,11 @@ function BookingEditModal({
     destination: booking?.destination || '',
   }))
 
-  const isAdvancedEditEnabled = allowAdvancedEdit && isPrivilegedUser
+  const roleCapabilities = capabilities || getRoleCapabilities(userRole, booking?.bookingStatus)
+  const isAdvancedEditEnabled = allowAdvancedEdit && roleCapabilities.canEditAdvanced
 
   const currentStatus = getStatusLabel(booking?.bookingStatus)
-  const editableStatusOptions = getEditableStatusOptions(booking?.bookingStatus, isPrivilegedUser)
+  const editableStatusOptions = getEditableStatusOptions(booking?.bookingStatus, userRole)
   const normalizedCurrentStatus = String(booking?.bookingStatus || '').trim().toLowerCase()
   const normalizedNextStatus = String(bookingStatus || '').trim().toLowerCase()
   const requiresCheckInTime =
@@ -460,15 +541,27 @@ function BookingEditModal({
   })
   
   const effectivePrice = isPriceManuallyEdited ? price : String(autoCalculatedPrice)
-  const isStatusReadOnly = isLocked || isCancelledRestricted
-  const isCancellationReadOnly = isLocked || isCancelledRestricted
-  const isCancelling = bookingStatus === 'Cancelled' && !isCancelledRestricted
+  const isStatusReadOnly = isLocked || isCancelledRestricted || !roleCapabilities.canEditStatus
+  const isCancellationReadOnly =
+    isLocked || isCancelledRestricted || !roleCapabilities.canEditCancelled
+  const isDatesReadOnly = isLocked || !roleCapabilities.canEditDates
+  const isFinancialReadOnly = isLocked || !roleCapabilities.canEditFinancials
+  const isCancelling = bookingStatus === 'Cancelled' && !isCancellationReadOnly
+  const canSubmitAnyChanges =
+    roleCapabilities.canEditStatus ||
+    roleCapabilities.canEditDates ||
+    roleCapabilities.canEditFinancials ||
+    isAdvancedEditEnabled
 
   if (!booking) return null
 
   const handleSubmit = (event) => {
     event.preventDefault()
     if (!booking?.bookingId || isLocked) return
+    if (!canSubmitAnyChanges) {
+      window.alert('You do not have permission to update this booking.')
+      return
+    }
 
     if (checkOutDate && checkInDate && new Date(checkOutDate) <= new Date(checkInDate)) {
       window.alert('Check-out date must be after check-in date.')
@@ -495,15 +588,14 @@ function BookingEditModal({
       return
     }
 
-    const payload = {
-      bookingStatus,
-      checkOutDate,
-      price: Number(effectivePrice) || 0,
-    }
+    const payload = {}
 
-    if (checkInDate) payload.checkInDate = checkInDate
-    if (requiresCheckInTime) payload.checkInTime = checkInTime
-    if (requiresCheckOutTime) payload.checkOutTime = checkOutTime
+    if (roleCapabilities.canEditStatus) payload.bookingStatus = bookingStatus
+    if (roleCapabilities.canEditDates && checkOutDate) payload.checkOutDate = checkOutDate
+    if (roleCapabilities.canEditDates && checkInDate) payload.checkInDate = checkInDate
+    if (roleCapabilities.canEditFinancials) payload.price = Number(effectivePrice) || 0
+    if (roleCapabilities.canEditStatus && requiresCheckInTime) payload.checkInTime = checkInTime
+    if (roleCapabilities.canEditStatus && requiresCheckOutTime) payload.checkOutTime = checkOutTime
     if (isCancelling) {
       onSubmit(booking.bookingId, {
         otp: cancellationOtp.trim(),
@@ -587,14 +679,16 @@ function BookingEditModal({
           <div className="space-y-6">
             
             {/* Locked Alert */}
-            {(isLocked || isCancelledRestricted) && (
+            {(isLocked || isCancelledRestricted || !canSubmitAnyChanges) && (
               <div className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 shadow-sm">
                 <CircleAlert size={16} className="shrink-0 mt-0.5" />
                 <p>
                   <strong>Restricted:</strong>{' '}
                   {isLocked
                     ? 'This booking is locked because it is checked-out.'
-                    : 'This booking is already cancelled. Only Admin or Developer can change the status or cancellation reason.'}
+                    : isCancelledRestricted
+                      ? 'This booking is already cancelled. Only Admin or Developer can change the status or cancellation reason.'
+                      : 'Your role has limited access on this booking. Only allowed operational or financial fields can be updated.'}
                 </p>
               </div>
             )}
@@ -679,7 +773,7 @@ function BookingEditModal({
                     <label className={labelClass}>Check-In</label>
                     <span className="text-[10px] text-slate-400 font-medium">{formatDate(booking?.checkInDate)}</span>
                   </div>
-                  <input type="date" value={checkInDate} onChange={(e) => setCheckInDate(e.target.value)} disabled={isLocked} className={inputClass} />
+                  <input type="date" value={checkInDate} onChange={(e) => setCheckInDate(e.target.value)} disabled={isDatesReadOnly} className={inputClass} />
                 </div>
 
                 <div>
@@ -687,7 +781,7 @@ function BookingEditModal({
                     <label className={labelClass}>Check-Out</label>
                     <span className="text-[10px] text-slate-400 font-medium">{formatDate(booking?.checkOutDate)}</span>
                   </div>
-                  <input type="date" value={checkOutDate} onChange={(e) => setCheckOutDate(e.target.value)} disabled={isLocked} className={inputClass} />
+                  <input type="date" value={checkOutDate} onChange={(e) => setCheckOutDate(e.target.value)} disabled={isDatesReadOnly} className={inputClass} />
                 </div>
 
                 {requiresCheckInTime && (
@@ -700,7 +794,7 @@ function BookingEditModal({
                       type="time"
                       value={checkInTime}
                       onChange={(e) => setCheckInTime(e.target.value)}
-                      disabled={isLocked}
+                      disabled={isLocked || !roleCapabilities.canEditStatus}
                       className={`${inputClass} border-emerald-300 focus:border-emerald-500 focus:ring-emerald-500`}
                     />
                   </div>
@@ -716,19 +810,19 @@ function BookingEditModal({
                       type="time"
                       value={checkOutTime}
                       onChange={(e) => setCheckOutTime(e.target.value)}
-                      disabled={isLocked}
+                      disabled={isLocked || !roleCapabilities.canEditStatus}
                       className={`${inputClass} border-indigo-300 focus:border-indigo-500 focus:ring-indigo-500`}
                     />
                   </div>
                 )}
 
-                {isPrivilegedUser && (
+                {roleCapabilities.canEditFinancials && (
                   <div>
                     <div className="flex justify-between mb-1">
                       <label className={labelClass}>Total Price (₹)</label>
                       <span className="text-[10px] text-slate-400 font-medium">Curr: {formatCurrency(booking?.price)}</span>
                     </div>
-                    <input type="number" value={effectivePrice} onChange={(e) => { setIsPriceManuallyEdited(true); setPrice(e.target.value); }} disabled={isLocked} className={inputClass} />
+                    <input type="number" value={effectivePrice} onChange={(e) => { setIsPriceManuallyEdited(true); setPrice(e.target.value); }} disabled={isFinancialReadOnly} className={inputClass} />
                   </div>
                 )}
               </div>
@@ -758,7 +852,7 @@ function BookingEditModal({
                       <div className="flex justify-between mb-1"><label className="text-[10px] font-semibold text-slate-500 uppercase">Name</label></div>
                       <input value={guestDetails.fullName} onChange={(e) => setGuestDetails((prev) => ({ ...prev, fullName: e.target.value }))} disabled={isLocked} className={inputClass} />
                     </div>
-                    {isPrivilegedUser && (
+                    {roleCapabilities.canEditGuestAndHotelDetails && (
                       <>
                         <div>
                           <div className="flex justify-between mb-1"><label className="text-[10px] font-semibold text-slate-500 uppercase">Mobile</label></div>
@@ -830,7 +924,7 @@ function BookingEditModal({
           <button type="button" onClick={onClose} className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors focus:outline-none">
             Cancel
           </button>
-          <button type="submit" form="booking-edit-form" disabled={loading || isLocked} className="rounded-md bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60 transition-colors">
+          <button type="submit" form="booking-edit-form" disabled={loading || isLocked || !canSubmitAnyChanges} className="rounded-md bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60 transition-colors">
             {loading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
@@ -866,17 +960,25 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
   const hasLoadedInitialDataRef = useRef(false)
   const normalizedUserRole = String(user?.role || '').toLowerCase()
   const isPrivilegedUser = privilegedRoles.has(normalizedUserRole)
-  const canEditCheckedOutBooking = checkedOutEditableRoles.has(normalizedUserRole)
   const shouldHideGuestContact = hideGuestContactForNonPrivileged && !isPrivilegedUser
   const resolvedBooking = selectedBooking || activeBookingRow
   const normalizedResolvedStatus = String(resolvedBooking?.bookingStatus || '').toLowerCase()
+  const resolvedCapabilities = getRoleCapabilities(normalizedUserRole, normalizedResolvedStatus)
   const isCancelledBookingRestricted = normalizedResolvedStatus === 'cancelled' && !isPrivilegedUser
   const isCheckedOutBookingLocked =
-    normalizedResolvedStatus === 'checked-out' && !canEditCheckedOutBooking
+    normalizedResolvedStatus === 'checked-out' && !resolvedCapabilities.canEditCheckedOut
   const isBookingLocked = isCheckedOutBookingLocked
 
   const getBookingIdentifier = (booking) => String(booking?.bookingId || '').trim()
   const appliedFilters = useMemo(() => ({ ...filters, ...fixedFilters }), [filters, fixedFilters])
+  const normalizedSourceCounts = useMemo(() => {
+    const entries = Object.entries(summary?.sourceCounts || {})
+    return entries.reduce((acc, [source, count]) => {
+      const label = normalizeSourceLabel(source)
+      acc[label] = (acc[label] || 0) + (Number(count) || 0)
+      return acc
+    }, {})
+  }, [summary?.sourceCounts])
 
   const loadBookings = async (nextFilters = appliedFilters) => {
     if (fetchMode === 'query') await dispatch(fetchBookingsByQuery({ filters: nextFilters, fixedFilters }))
@@ -930,6 +1032,16 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
 
   const handleSendCancellationOtp = async (bookingId) => {
     await dispatch(sendBookingCancellationOtp(bookingId)).unwrap()
+  }
+
+  const canEditBookingRecord = (booking) => {
+    const capabilities = getRoleCapabilities(normalizedUserRole, booking?.bookingStatus)
+    return (
+      capabilities.canEditStatus ||
+      capabilities.canEditDates ||
+      capabilities.canEditFinancials ||
+      capabilities.canEditAdvanced
+    )
   }
 
   return (
@@ -991,7 +1103,7 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {/* Clean KPI Grid */}
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-8">
-                  {[{ label: 'Total Properties', value: summary?.totalHotels ?? 0, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50' }, { label: 'Total Volume', value: summary?.totalBookings ?? 0, icon: CalendarDays, color: 'text-emerald-600', bg: 'bg-emerald-50' }, { label: 'Active Sources', value: Object.keys(summary?.sourceCounts || {}).length, icon: Search, color: 'text-amber-600', bg: 'bg-amber-50' }, { label: 'Status Types', value: Object.keys(summary?.statusCounts || {}).length, icon: Users, color: 'text-rose-600', bg: 'bg-rose-50' }].map((stat) => (
+                  {[{ label: 'Total Properties', value: summary?.totalHotels ?? 0, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50' }, { label: 'Total Volume', value: summary?.totalBookings ?? 0, icon: CalendarDays, color: 'text-emerald-600', bg: 'bg-emerald-50' }, { label: 'Active Sources', value: Object.keys(normalizedSourceCounts).length, icon: Search, color: 'text-amber-600', bg: 'bg-amber-50' }, { label: 'Status Types', value: Object.keys(summary?.statusCounts || {}).length, icon: Users, color: 'text-rose-600', bg: 'bg-rose-50' }].map((stat) => (
                     <div key={stat.label} className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm transition-all hover:shadow-md">
                       <div className="flex items-center gap-4">
                         <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.bg} ${stat.color} ring-1 ring-inset ring-current/10`}>
@@ -1010,22 +1122,46 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
                   {/* Mapped Properties */}
                   <div className="lg:col-span-2">
                     <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2"><Hotel size={18} className="text-indigo-500"/> Mapped Portfolio</h2>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      {hotels.length === 0 && <div className="col-span-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50 py-12 text-center text-sm font-medium text-slate-500">No properties mapped to this account.</div>}
-                      {hotels.map((h) => (
-                        <div key={h._id || h.hotelId} className="group flex flex-col justify-between rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm transition-all hover:border-slate-300 hover:shadow-md">
-                          <div>
-                            <div className="flex items-start justify-between gap-2 mb-3">
-                              <h3 className="font-bold text-slate-900 leading-tight">{h.hotelName || 'Unnamed Property'}</h3>
-                              <span className="shrink-0 rounded-lg bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-600 ring-1 ring-inset ring-slate-200">ID: {h.hotelId}</span>
-                            </div>
-                            <div className="space-y-2.5 text-sm font-medium text-slate-500">
-                              <div className="flex items-center gap-2.5"><MapPin size={16} className="text-slate-400"/> <span className="truncate">{[h.city, h.state].filter(Boolean).join(', ') || 'N/A'}</span></div>
-                              <div className="flex items-center gap-2.5"><Mail size={16} className="text-slate-400"/> <span className="truncate">{h.hotelEmail || 'No email data'}</span></div>
-                            </div>
-                          </div>
+                    <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm">
+                      {hotels.length === 0 ? (
+                        <div className="border border-dashed border-slate-200 bg-slate-50 py-12 text-center text-sm font-medium text-slate-500">
+                          No properties mapped to this account.
                         </div>
-                      ))}
+                      ) : (
+                        <div className="divide-y divide-slate-100">
+                          <div className="hidden grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_minmax(0,1.8fr)_auto] gap-4 bg-slate-50 px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-slate-500 sm:grid">
+                            <span>Property</span>
+                            <span>Location</span>
+                            <span>Email</span>
+                            <span>Hotel ID</span>
+                          </div>
+                          {hotels.map((h) => (
+                            <div
+                              key={h._id || h.hotelId}
+                              className="grid gap-3 px-5 py-4 transition-colors hover:bg-slate-50 sm:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_minmax(0,1.8fr)_auto] sm:items-center sm:gap-4"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-slate-900">
+                                  {h.hotelName || 'Unnamed Property'}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-slate-500 min-w-0">
+                                <MapPin size={15} className="shrink-0 text-slate-400" />
+                                <span className="truncate">{[h.city, h.state].filter(Boolean).join(', ') || 'N/A'}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-slate-500 min-w-0">
+                                <Mail size={15} className="shrink-0 text-slate-400" />
+                                <span className="truncate">{h.hotelEmail || 'No email data'}</span>
+                              </div>
+                              <div className="sm:text-right">
+                                <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 ring-1 ring-inset ring-slate-200">
+                                  ID: {h.hotelId || 'N/A'}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1048,8 +1184,8 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
                       <div>
                         <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4 border-b border-slate-100 pb-2">Source Channels</h3>
                         <div className="space-y-3.5">
-                          {formatCountMap(summary?.sourceCounts).length === 0 && <p className="text-sm text-slate-500">No metrics found.</p>}
-                          {formatCountMap(summary?.sourceCounts).map(([k, v]) => (
+                          {formatCountMap(normalizedSourceCounts).length === 0 && <p className="text-sm text-slate-500">No metrics found.</p>}
+                          {formatCountMap(normalizedSourceCounts).map(([k, v]) => (
                             <div key={k} className="flex items-center justify-between">
                               <span className="text-sm font-bold text-slate-700 capitalize flex items-center gap-2">
                                 <div className="h-1.5 w-1.5 rounded-full bg-slate-300"></div>{k}
@@ -1229,12 +1365,14 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
                           <td className="px-6 py-4 whitespace-nowrap text-right">
                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button onClick={() => handleViewBooking(b)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all"><Eye size={16} /></button>
-                              <button onClick={() => handleEditBooking(b)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-indigo-50 hover:text-indigo-600 transition-all"><PencilLine size={16} /></button>
+                              {canEditBookingRecord(b) && (
+                                <button onClick={() => handleEditBooking(b)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-indigo-50 hover:text-indigo-600 transition-all"><PencilLine size={16} /></button>
+                              )}
                             </div>
                             {/* Fallback for touch devices where hover isn't reliable */}
                             <div className="flex sm:hidden items-center justify-end gap-2">
                               <button onClick={() => handleViewBooking(b)} className="p-1.5 text-indigo-500"><Eye size={18} /></button>
-                              <button onClick={() => handleEditBooking(b)} className="p-1.5 text-slate-500"><PencilLine size={18} /></button>
+                              {canEditBookingRecord(b) && <button onClick={() => handleEditBooking(b)} className="p-1.5 text-slate-500"><PencilLine size={18} /></button>}
                             </div>
                           </td>
                         </tr>
@@ -1247,7 +1385,7 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
       </div>
 
       {modalMode === 'view' && <BookingViewModal booking={resolvedBooking} shouldHideGuestContact={shouldHideGuestContact} showCreatedBy={showCreatedBy} loading={detailLoading} onClose={closeBookingModal} />}
-      {modalMode === 'edit' && <BookingEditModal key={resolvedBooking?.bookingId || 'booking-edit'} booking={resolvedBooking} allowAdvancedEdit={allowAdvancedEditForPrivileged} isLocked={isBookingLocked} isCancelledRestricted={isCancelledBookingRestricted} isPrivilegedUser={isPrivilegedUser} loading={updatingBooking || verifyingCancellationOtp || detailLoading} otpSending={sendingCancellationOtp} onClose={closeBookingModal} onSubmit={handleUpdateBooking} onSendCancellationOtp={handleSendCancellationOtp} />}
+      {modalMode === 'edit' && <BookingEditModal key={resolvedBooking?.bookingId || 'booking-edit'} booking={resolvedBooking} allowAdvancedEdit={allowAdvancedEditForPrivileged} isLocked={isBookingLocked} isCancelledRestricted={isCancelledBookingRestricted} userRole={normalizedUserRole} capabilities={resolvedCapabilities} loading={updatingBooking || verifyingCancellationOtp || detailLoading} otpSending={sendingCancellationOtp} onClose={closeBookingModal} onSubmit={handleUpdateBooking} onSendCancellationOtp={handleSendCancellationOtp} />}
     </div>
   )
 }
