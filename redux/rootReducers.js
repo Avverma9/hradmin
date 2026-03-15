@@ -1,5 +1,6 @@
 import { combineReducers } from '@reduxjs/toolkit'
 import adminAdditionalReducer from './slices/admin/additional'
+import adminCouponReducer from './slices/admin/coupon'
 import adminGstReducer from './slices/admin/gst'
 import adminSidebarReducer from './slices/admin/sidebar'
 import authReducer from './slices/authSlice'
@@ -10,9 +11,11 @@ import partnerReducer from './slices/partner'
 import pmsReducer from './slices/pms/bookings'
 import userReducer from './slices/user'
 import hotelReducer from './slices/admin/hotel'
+import carReducer from './slices/tms/travel/car'
 
 const rootReducer = combineReducers({
   adminAdditional: adminAdditionalReducer,
+  adminCoupon: adminCouponReducer,
   adminGst: adminGstReducer,
   adminSidebar: adminSidebarReducer,
   auth: authReducer,
@@ -23,6 +26,7 @@ const rootReducer = combineReducers({
   pms: pmsReducer,
   user: userReducer,
   hotel: hotelReducer,
+  car: carReducer,
 
 })
 

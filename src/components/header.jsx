@@ -3,15 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Bell, ChevronRight, LogOut, Search, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { logoutUser, selectAuth } from '../../redux/slices/authSlice'
-
-const formatLabel = (value = '') =>
-  value
-    .split('/')
-    .filter(Boolean)
-    .pop()
-    ?.split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ') || 'Dashboard'
+import { getSidebarLinkLabel, getSidebarLinkPath } from '../utils/sidebar-links'
 
 function Header({ className = '' }) {
   const dispatch = useDispatch()
@@ -28,11 +20,13 @@ function Header({ className = '' }) {
   const allRoutes = useMemo(
     () =>
       Object.entries(sidebarLinks ?? {}).flatMap(([section, links]) =>
-        links.map((item) => ({
-          id: item.id,
+        links
+          .filter((item) => !item.isParentOnly)
+          .map((item) => ({
+          id: item.id || item._id,
           section,
-          route: item.route || item.childLink || '/dashboard',
-          label: formatLabel(item.route || item.childLink || '/dashboard'),
+          route: getSidebarLinkPath(item) || '/dashboard',
+          label: getSidebarLinkLabel(item),
         })),
       ),
     [sidebarLinks],

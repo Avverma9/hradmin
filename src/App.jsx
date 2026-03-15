@@ -6,30 +6,18 @@ import AccessDenied from './components/access-denied'
 import AppShell from './components/app-shell'
 import Auth from './components/auth'
 import GlobalLoader from './components/global-loader'
+import RouteInProgress from './components/route-in-progress'
 import ServerError from './components/server-error'
-import AdditionalData from './pages/admin/additional-data'
-import GSTManagement from './pages/admin/gst-management'
-import AdminHotelBookings from './pages/admin/hotel-bookings'
-import BookHotel from './pages/booking-creation/book-hotel'
-import ManageLinks from './pages/admin/manage-links'
-import Dashboard from './pages/dashboard/dashboard'
-import Messenger from './pages/messenger/messenger'
-import Partner from './pages/partner/partner'
-import BookingCreationHotels from './pages/booking-creation/hotel'
-import PanelBooking from './pages/pms/panel-booking'
-import PmsBooking from './pages/pms/pms-booking'
-import FindUser from './pages/booking-creation/findUser'
-import CreateUser from './pages/booking-creation/create-user'
 import { refreshSidebarLinks, selectAuth } from '../redux/slices/authSlice'
+import { APP_ROUTES, APP_ROUTE_PATHS } from './routes/app-routes'
+import { getSidebarLinkPath } from './utils/sidebar-links'
 
 const getAllowedRoutes = (sidebarLinks) =>
   Object.values(sidebarLinks ?? {}).flatMap((groupLinks) =>
     groupLinks
-      .map((link) => link.route || link.childLink)
+      .map((link) => getSidebarLinkPath(link))
       .filter(Boolean),
   )
-
-const STATIC_ALLOWED_ROUTES = ['/hotel-bookings', '/panel-booking', '/gst-management', '/gst-page']
 
 const matchesAllowedRoute = (pathname, allowedRoutes) =>
   allowedRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))
@@ -53,7 +41,7 @@ function App() {
   const [hasServerError, setHasServerError] = useState(false)
 
   const allowedRoutes = useMemo(
-    () => [...new Set([...getAllowedRoutes(sidebarLinks), ...STATIC_ALLOWED_ROUTES])],
+    () => [...new Set([...getAllowedRoutes(sidebarLinks), ...APP_ROUTE_PATHS])],
     [sidebarLinks],
   )
   const isCurrentRouteAllowed = useMemo(
@@ -117,21 +105,10 @@ function App() {
           }
         >
           <Route path="/access-denied" element={<AccessDenied />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/user" element={<Partner />} />
-          <Route path="/manage-menu" element={<ManageLinks />} />
-          <Route path="/additional-fields" element={<AdditionalData />} />
-          <Route path="/gst-management" element={<GSTManagement />} />
-          <Route path="/gst-page" element={<GSTManagement />} />
-          <Route path="/hotel-bookings" element={<AdminHotelBookings />} />
-          <Route path="/messenger" element={<Messenger />} />
-          <Route path="/your-bookings" element={<PmsBooking />} />
-          <Route path="/panel-booking" element={<PanelBooking />} />
-          <Route path="/booking-creation" element={<FindUser />} />
-          <Route path="/booking-creation/hotels" element={<BookingCreationHotels />} />
-          <Route path="/booking-creation/create-user" element={<CreateUser />} />
-          <Route path="/booking-creation/book-hotel" element={<BookHotel />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {APP_ROUTES.map(({ path, Component }) => (
+            <Route key={path} path={path} element={<Component />} />
+          ))}
+          <Route path="*" element={<RouteInProgress />} />
         </Route>
       </Routes>
     </>

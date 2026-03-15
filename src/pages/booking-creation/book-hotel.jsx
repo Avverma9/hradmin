@@ -17,6 +17,11 @@ import {
 import { useNavigate } from 'react-router-dom'
 import Breadcrumb from '../../components/breadcrumb'
 import { getHotelById } from '../../../redux/slices/admin/hotel'
+import {
+  applyCoupon,
+  clearAppliedCouponState,
+  selectAdminCoupon,
+} from '../../../redux/slices/admin/coupon'
 import { getGST } from '../../../redux/slices/admin/gst'
 import { getSelectedGuest, getSelectedHotel } from './storage'
 import { createBooking } from '../../../redux/slices/pms/bookings'
@@ -206,12 +211,19 @@ function BookHotel() {
   })
   const [numRooms, setNumRooms] = useState(1)
   const [couponCode, setCouponCode] = useState('')
+  const [couponType, setCouponType] = useState('user')
   const [selectedRoomId, setSelectedRoomId] = useState('')
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
   const [bookingResponse, setBookingResponse] = useState(null)
 
   const { user } = useSelector((state) => state.auth)
   const { loading: pmsLoading, error: pmsError } = useSelector((state) => state.pms)
+  const {
+    applying: couponApplying,
+    applyError: couponApplyError,
+    applyMessage: couponApplyMessage,
+    appliedCoupon,
+  } = useSelector(selectAdminCoupon)
 
   const handleBooking = () => {
     if (!storedGuest || !hotelData) return;
@@ -243,8 +255,8 @@ function BookHotel() {
         user: user.name,
         email: user.email,
       },
-      couponCode,
-      discountPrice: 0, // No discount logic yet
+      couponCode: appliedCoupon ? couponCode : '',
+      discountPrice: appliedCoupon?.discountPrice || 0,
       bookingSource: 'Panel',
       hotelName: basicInfo?.name,
       hotelEmail: contacts?.email,
@@ -266,6 +278,22 @@ function BookHotel() {
         }
     });
   };
+
+  const handleApplyCoupon = async () => {
+    const trimmedCouponCode = String(couponCode || '').trim()
+    if (!trimmedCouponCode || !selectedRoom) return
+
+    await dispatch(
+      applyCoupon({
+        couponType,
+        couponCode: trimmedCouponCode,
+        hotelId: hotelData.hotelId || hotelData._id,
+        hotelIds: [hotelData.hotelId || hotelData._id].filter(Boolean),
+        roomId: selectedRoom.id,
+        userId: storedGuest.userId,
+      }),
+    )
+  }
 
 
   // ── Fetch hotel on mount ──────────────────────────────────────────────────
@@ -326,10 +354,12 @@ function BookHotel() {
   // ── Pricing calculation ───────────────────────────────────────────────────
   const nightCount   = getNightCount(checkInDate, checkOutDate)
   const subtotal     = (selectedRoom?.price || 0) * Number(numRooms || 1) * (nightCount || 1)
+  const appliedDiscount = Number(appliedCoupon?.discountPrice || 0)
+  const discountedSubtotal = Math.max(0, subtotal - appliedDiscount)
   const matchedGST   = String(selectedGST?.type || '').toLowerCase() === 'hotel' ? selectedGST : null
   const gstPercent   = Number(matchedGST?.gstPrice || 0)
-  const gstAmount    = Math.round((subtotal * gstPercent) / 100)
-  const grandTotal   = subtotal + gstAmount
+  const gstAmount    = Math.round((discountedSubtotal * gstPercent) / 100)
+  const grandTotal   = discountedSubtotal + gstAmount
 
 
   const guestLabel = storedGuest?.isExistingUser
@@ -339,9 +369,13 @@ function BookHotel() {
 
   // Fetch GST when subtotal changes
   useEffect(() => {
-    if (subtotal <= 0) return
-    dispatch(getGST({ type: 'Hotel', gstThreshold: subtotal }))
-  }, [dispatch, subtotal])
+    if (discountedSubtotal <= 0) return
+    dispatch(getGST({ type: 'Hotel', gstThreshold: discountedSubtotal }))
+  }, [dispatch, discountedSubtotal])
+
+  useEffect(() => {
+    dispatch(clearAppliedCouponState())
+  }, [dispatch, couponType, selectedRoom?.id, hotelData?.hotelId, hotelData?._id, storedGuest?.userId])
 
 
   // ── Guard: missing guest or hotel ─────────────────────────────────────────
@@ -784,15 +818,52 @@ function BookHotel() {
 
                 <label className="block">
                   <span className="mb-1.5 block text-sm font-medium text-slate-700">Apply Coupon</span>
-                  <div className="relative">
-                    <CirclePercent size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
-                      placeholder="Enter coupon code"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white"
-                    />
+                  <div className="space-y-3">
+                    <select
+                      value={couponType}
+                      onChange={(e) => setCouponType(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white"
+                    >
+                      <option value="user">User Coupon</option>
+                      <option value="partner">Partner Coupon</option>
+                    </select>
+                    <div className="relative">
+                      <CirclePercent size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => {
+                          setCouponCode(e.target.value)
+                          dispatch(clearAppliedCouponState())
+                        }}
+                        placeholder="Enter coupon code"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      disabled={couponApplying || !couponCode.trim() || !selectedRoom}
+                      className="w-full rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-60"
+                    >
+                      {couponApplying ? 'Applying Coupon...' : 'Apply Coupon'}
+                    </button>
+                    {(couponApplyError || couponApplyMessage) && (
+                      <div
+                        className={`rounded-xl border px-3 py-2 text-xs font-medium ${
+                          couponApplyError
+                            ? 'border-rose-200 bg-rose-50 text-rose-700'
+                            : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                        }`}
+                      >
+                        {couponApplyError || couponApplyMessage}
+                      </div>
+                    )}
+                    {appliedCoupon && (
+                      <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-xs text-emerald-700">
+                        Discount applied: {formatCurrency(appliedCoupon.discountPrice)} · Final base price {formatCurrency(appliedCoupon.finalPrice)}
+                      </div>
+                    )}
                   </div>
                 </label>
 
@@ -827,7 +898,9 @@ function BookHotel() {
                   { label: 'Base Room Price', value: formatCurrency(selectedRoom?.basePrice || 0) },
                   { label: 'Rooms × Nights', value: `${numRooms} × ${nightCount || 1}` },
                   { label: 'Subtotal', value: formatCurrency(subtotal) },
-                  { label: 'Coupon', value: couponCode || 'Not applied' },
+                  { label: 'Coupon', value: appliedCoupon ? couponCode : 'Not applied' },
+                  { label: 'Discount', value: formatCurrency(appliedDiscount) },
+                  { label: 'Subtotal After Discount', value: formatCurrency(discountedSubtotal) },
                   { label: `GST (${gstPercent}%)`, value: formatCurrency(gstAmount) },
                 ].map((row) => (
                   <div key={row.label} className="flex items-center justify-between">

@@ -3,15 +3,7 @@ import { useSelector } from 'react-redux'
 import { ChevronRight, Home } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { selectAuth } from '../../redux/slices/authSlice'
-
-const formatLabel = (value = '') =>
-  value
-    .split('/')
-    .filter(Boolean)
-    .pop()
-    ?.split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ') || 'Dashboard'
+import { deriveLabelFromPath, getSidebarLinkLabel, getSidebarLinkPath } from '../utils/sidebar-links'
 
 function Breadcrumb() {
   const location = useLocation()
@@ -25,10 +17,10 @@ function Breadcrumb() {
 
     Object.values(sidebarLinks ?? {}).forEach((links) => {
       links.forEach((item) => {
-        const route = item.route || item.childLink
+        const route = getSidebarLinkPath(item)
 
         if (route) {
-          map[route] = formatLabel(route)
+          map[route] = getSidebarLinkLabel(item)
         }
       })
     })
@@ -47,7 +39,7 @@ function Breadcrumb() {
       const path = `/${segments.slice(0, index + 1).join('/')}`
 
       return {
-        label: routeLabelMap[path] || formatLabel(segment),
+        label: routeLabelMap[path] || deriveLabelFromPath(segment),
         path,
       }
     })

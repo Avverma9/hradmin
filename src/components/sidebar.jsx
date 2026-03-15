@@ -21,10 +21,36 @@ import {
   UserRound,
   UsersRound,
 } from 'lucide-react'
+import * as LucideIcons from 'lucide-react'
 import { logoutUser, selectAuth } from '../../redux/slices/authSlice'
+import { getSidebarLinkLabel, getSidebarLinkPath } from '../utils/sidebar-links'
+
+const ICON_ALIAS_MAP = {
+  MdDashboard: 'LayoutDashboard',
+  MdPeople: 'Users',
+  MdPerson: 'UserRound',
+  MdSettings: 'Settings',
+  MdMessage: 'MessageSquare',
+  MdHotel: 'Hotel',
+  MdNotifications: 'Bell',
+  MdDirectionsCar: 'Car',
+  MdImage: 'Image',
+  MdMenu: 'MenuSquare',
+  FaRegUserCircle: 'UserRound',
+  FaUsers: 'Users',
+  FaHotel: 'Hotel',
+  FaBell: 'Bell',
+  FaCog: 'Settings',
+  FaClipboardList: 'ClipboardList',
+}
 
 const getIconComponent = (iconName = '') => {
-  const normalizedIconName = iconName.toLowerCase()
+  const aliasedIconName = ICON_ALIAS_MAP[iconName] || iconName
+
+  if (LucideIcons[aliasedIconName]) return LucideIcons[aliasedIconName]
+  if (LucideIcons[iconName]) return LucideIcons[iconName]
+
+  const normalizedIconName = aliasedIconName.toLowerCase()
   if (normalizedIconName.includes('dashboard')) return LayoutDashboard
   if (normalizedIconName.includes('person') || normalizedIconName.includes('user')) return UserRound
   if (normalizedIconName.includes('messenger')) return MessageSquare
@@ -45,14 +71,6 @@ const getIconComponent = (iconName = '') => {
 
 const sortLinks = (links = []) =>
   [...links].sort((firstItem, secondItem) => (firstItem.order ?? 0) - (secondItem.order ?? 0))
-
-const getLabelFromRoute = (route = '') => {
-  const cleanRoute = route.split('/').filter(Boolean).pop() || 'dashboard'
-  return cleanRoute
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-}
 
 const SIDEBAR_SCROLL_KEY = 'hrsadmin:sidebar-scroll-top'
 
@@ -207,12 +225,42 @@ function Sidebar({ className = '' }) {
                 <div className="overflow-hidden space-y-1.5">
                   {sortLinks(links).map((item) => {
                     const Icon = getIconComponent(item.icon)
+                    const path = getSidebarLinkPath(item)
+                    const label = getSidebarLinkLabel(item)
+
+                    if (item.isParentOnly) {
+                      return (
+                        <div
+                          key={item.id || item._id || `${sectionTitle}-${label}`}
+                          title={label}
+                          className={`group relative flex items-center rounded-xl ${
+                            isCollapsed ? 'justify-center h-12 w-12 mx-auto' : 'gap-3.5 px-3.5 py-2.5'
+                          } text-slate-500`}
+                        >
+                          <Icon
+                            size={20}
+                            strokeWidth={2}
+                            className={`shrink-0 text-slate-400 ${isCollapsed ? 'group-hover:scale-110' : ''}`}
+                          />
+                          {!isCollapsed && (
+                            <div className="min-w-0">
+                              <span className="truncate text-[14px] font-medium">
+                                {label}
+                              </span>
+                              <p className="mt-0.5 text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                                Group Only
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    }
 
                     return (
                       <NavLink
-                        key={item.id}
-                        to={item.route || item.childLink || '/dashboard'}
-                        title={getLabelFromRoute(item.route || item.childLink)}
+                        key={item.id || item._id || path}
+                        to={path || '/dashboard'}
+                        title={label}
                         className={({ isActive }) =>
                           `group relative flex items-center rounded-xl transition-all duration-200 ${
                             isCollapsed ? 'justify-center h-12 w-12 mx-auto' : 'gap-3.5 px-3.5 py-2.5'
@@ -240,7 +288,7 @@ function Sidebar({ className = '' }) {
                             
                             {!isCollapsed && (
                               <span className="truncate text-[14px] transition-transform duration-200 group-hover:translate-x-0.5">
-                                {getLabelFromRoute(item.route || item.childLink)}
+                                {label}
                               </span>
                             )}
                           </>

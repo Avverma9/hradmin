@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
+  Check,
   Eye,
   Link2,
   PencilLine,
@@ -16,8 +17,10 @@ import {
   Filter,
   ChevronDown
 } from 'lucide-react'
+import * as LucideIcons from 'lucide-react'
 import Breadcrumb from '../../components/breadcrumb'
 import { refreshSidebarLinks, selectAuth } from '../../../redux/slices/authSlice'
+import { getSidebarLinkLabel, getSidebarLinkPath } from '../../utils/sidebar-links'
 import {
   changeSidebarLinkStatus,
   clearSidebarAdminFeedback,
@@ -38,6 +41,7 @@ const ROLE_OPTIONS = ['Admin', 'Developer', 'PMS', 'TMS', 'CA', 'Rider', 'SuperA
 
 const getInitialFormState = (link) => ({
   parentLink: link?.parentLink || '',
+  label: link?.label || '',
   route: link?.route || link?.childLink || '',
   childLink: link?.childLink || link?.route || '',
   icon: link?.icon || '',
@@ -72,8 +76,73 @@ const StatusDot = ({ status = '' }) => {
   )
 }
 
-function SidebarLinkModal({ open, mode, formState, saving, onChange, onRoleToggle, onClose, onSubmit }) {
+const LUCIDE_ICON_OPTIONS = Object.keys(LucideIcons)
+  .filter((iconName) =>
+    /^[A-Z]/.test(iconName) &&
+    ![
+      'Icon',
+      'createLucideIcon',
+      'icons',
+      'LucideIcon',
+      'IconNode',
+    ].includes(iconName),
+  )
+  .sort((first, second) => first.localeCompare(second))
+
+const DASHBOARD_ICON_QUICK_OPTIONS = [
+  'LayoutDashboard',
+  'Building2',
+  'Users',
+  'UserRound',
+  'Hotel',
+  'CalendarDays',
+  'ClipboardList',
+  'MessageSquare',
+  'Bell',
+  'Settings',
+  'ShieldCheck',
+  'BadgeDollarSign',
+  'Ticket',
+  'Car',
+  'Map',
+  'Search',
+  'RefreshCw',
+  'BedDouble',
+  'Plane',
+  'Compass',
+  'Image',
+  'MenuSquare',
+  'BriefcaseBusiness',
+  'MapPinned',
+]
+
+function SidebarLinkModal({
+  open,
+  mode,
+  createKind = 'link',
+  formState,
+  saving,
+  parentOptions = [],
+  onChange,
+  onRoleToggle,
+  onClose,
+  onSubmit,
+}) {
   if (!open) return null
+
+  const [iconSearch, setIconSearch] = useState('')
+  const [showIconPicker, setShowIconPicker] = useState(false)
+  const isCreateMode = mode === 'create'
+  const isParentCreate = isCreateMode && createKind === 'parent'
+  const isChildCreate = isCreateMode && createKind === 'child'
+  const isParentOnlyLocked = isParentCreate || isChildCreate
+  const dialogTitle = isParentCreate
+    ? 'Create Parent Group'
+    : isChildCreate
+      ? 'Add Child Link'
+      : mode === 'create'
+        ? 'Create Sidebar Link'
+        : 'Edit Sidebar Link'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 p-4 backdrop-blur-sm transition-opacity">
@@ -81,9 +150,15 @@ function SidebarLinkModal({ open, mode, formState, saving, onChange, onRoleToggl
         <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/50 px-5 py-4 sm:px-6">
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              {mode === 'create' ? 'Create Sidebar Link' : 'Edit Sidebar Link'}
+              {dialogTitle}
             </h2>
-            <p className="mt-0.5 text-sm text-gray-500">Configure grouping, route details, and roles.</p>
+            <p className="mt-0.5 text-sm text-gray-500">
+              {isParentCreate
+                ? 'Create a top-level parent group for organizing child links.'
+                : isChildCreate
+                  ? 'Select an existing parent and add a child route under it.'
+                  : 'Configure grouping, route details, and roles.'}
+            </p>
           </div>
           <button onClick={onClose} className="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700">
             <X size={20} />
@@ -91,15 +166,60 @@ function SidebarLinkModal({ open, mode, formState, saving, onChange, onRoleToggl
         </div>
 
         <form onSubmit={onSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6">
+          {(() => {
+            const SelectedIcon = LucideIcons[formState.icon] || Link2
+            const filteredIcons = LUCIDE_ICON_OPTIONS
+              .filter((iconName) => iconName.toLowerCase().includes(iconSearch.trim().toLowerCase()))
+              .slice(0, 240)
+
+            return (
+              <>
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-gray-700">Parent Group</label>
-              <input required type="text" name="parentLink" value={formState.parentLink} onChange={onChange} placeholder="e.g. User Management" className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900" />
+              {isChildCreate ? (
+                <select
+                  required
+                  name="parentLink"
+                  value={formState.parentLink}
+                  onChange={onChange}
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                >
+                  <option value="">Select parent group</option>
+                  {parentOptions.map((parent) => (
+                    <option key={parent} value={parent}>
+                      {parent}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input required type="text" name="parentLink" value={formState.parentLink} onChange={onChange} placeholder="e.g. User Management" className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900" />
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-gray-700">Link Label</label>
+              <input required type="text" name="label" value={formState.label} onChange={onChange} placeholder="e.g. Dashboard" className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900" />
             </div>
 
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-gray-700">Icon Component</label>
-              <input required type="text" name="icon" value={formState.icon} onChange={onChange} placeholder="e.g. Users" className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900" />
+              <button
+                type="button"
+                onClick={() => setShowIconPicker((currentValue) => !currentValue)}
+                className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition hover:border-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-md bg-gray-100 text-gray-700">
+                    <SelectedIcon size={18} />
+                  </span>
+                  <span className="text-left">
+                    <span className="block font-semibold">{formState.icon || 'Select icon'}</span>
+                    <span className="block text-xs text-gray-500">Lucide React icon picker</span>
+                  </span>
+                </span>
+                <ChevronDown size={16} className={`text-gray-400 transition-transform ${showIconPicker ? 'rotate-180' : ''}`} />
+              </button>
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
@@ -120,14 +240,111 @@ function SidebarLinkModal({ open, mode, formState, saving, onChange, onRoleToggl
               </select>
             </div>
 
-            <label className="flex items-start gap-3 rounded-md border border-gray-200 bg-gray-50 p-4 sm:col-span-2 cursor-pointer hover:bg-gray-100">
-              <input type="checkbox" name="isParentOnly" checked={formState.isParentOnly} onChange={onChange} className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900 cursor-pointer" />
+            <label className={`flex items-start gap-3 rounded-md border border-gray-200 bg-gray-50 p-4 sm:col-span-2 ${isParentOnlyLocked ? 'cursor-default' : 'cursor-pointer hover:bg-gray-100'}`}>
+              <input type="checkbox" name="isParentOnly" checked={formState.isParentOnly} onChange={onChange} disabled={isParentOnlyLocked} className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900 cursor-pointer disabled:cursor-not-allowed" />
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-gray-900">Parent-only Grouping</span>
-                <span className="text-sm text-gray-500">Acts only as a dropdown header, no page route.</span>
+                <span className="text-sm text-gray-500">
+                  {isParentCreate
+                    ? 'Enabled for parent creation. This item will act only as a group header.'
+                    : isChildCreate
+                      ? 'Disabled for child creation. Child links always need a route.'
+                      : 'Acts only as a dropdown header, no page route.'}
+                </span>
               </div>
             </label>
           </div>
+
+          {showIconPicker && (
+            <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <div className="mb-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Dashboard Quick Icons</p>
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                  {DASHBOARD_ICON_QUICK_OPTIONS.map((iconName) => {
+                    const IconComponent = LucideIcons[iconName]
+                    const isSelected = formState.icon === iconName
+
+                    return (
+                      <button
+                        key={iconName}
+                        type="button"
+                        onClick={() => {
+                          onChange({ target: { name: 'icon', value: iconName, type: 'text' } })
+                          setShowIconPicker(false)
+                        }}
+                        className={`flex items-center gap-3 rounded-lg border px-3 py-2 text-left transition ${
+                          isSelected
+                            ? 'border-gray-900 bg-white text-gray-900 shadow-sm'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-100'
+                        }`}
+                      >
+                        <span className={`flex h-9 w-9 items-center justify-center rounded-md ${isSelected ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'}`}>
+                          <IconComponent size={18} />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-xs font-semibold">{iconName}</span>
+                        {isSelected && <Check size={14} className="shrink-0" />}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Lucide Icons</p>
+                  <p className="text-xs text-gray-500">Showing 200+ searchable icon options with preview.</p>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-600 border border-gray-200">
+                  {Math.min(filteredIcons.length, 240)} results
+                </span>
+              </div>
+
+              <div className="relative mb-4">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={iconSearch}
+                  onChange={(event) => setIconSearch(event.target.value)}
+                  placeholder="Search icons like LayoutDashboard, Hotel, Bell..."
+                  className="w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-4 text-sm text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                />
+              </div>
+
+              <div className="grid max-h-80 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
+                {filteredIcons.map((iconName) => {
+                  const IconComponent = LucideIcons[iconName]
+                  const isSelected = formState.icon === iconName
+
+                  return (
+                    <button
+                      key={iconName}
+                      type="button"
+                      onClick={() => {
+                        onChange({ target: { name: 'icon', value: iconName, type: 'text' } })
+                        setShowIconPicker(false)
+                      }}
+                      className={`flex items-center gap-3 rounded-lg border px-3 py-2 text-left transition ${
+                        isSelected
+                          ? 'border-gray-900 bg-white text-gray-900 shadow-sm'
+                          : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-100'
+                      }`}
+                    >
+                      <span className={`flex h-9 w-9 items-center justify-center rounded-md ${isSelected ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'}`}>
+                        <IconComponent size={18} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-xs font-semibold">{iconName}</span>
+                      </span>
+                      {isSelected && <Check size={14} className="shrink-0" />}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+              </>
+            )
+          })()}
 
           <div className="mt-6 border-t border-gray-100 pt-6">
             <label className="text-sm font-semibold text-gray-700">Applicable Roles</label>
@@ -184,7 +401,7 @@ function ManageLinks() {
   const [searchValue, setSearchValue] = useState('')
   const [masterRoleFilter, setMasterRoleFilter] = useState('All')
   const [masterStatusFilter, setMasterStatusFilter] = useState('All')
-  const [modalState, setModalState] = useState({ open: false, mode: 'create', linkId: null })
+  const [modalState, setModalState] = useState({ open: false, mode: 'create', createKind: 'link', linkId: null })
   const [linkForm, setLinkForm] = useState(getInitialFormState())
   const [selectedUserId, setSelectedUserId] = useState('')
   const [permissionForm, setPermissionForm] = useState(normalizePermissionState())
@@ -206,7 +423,7 @@ function ManageLinks() {
     const query = searchValue.trim().toLowerCase()
     return links
       .filter((link) => {
-        const matchesSearch = !query || [link.parentLink, link.route, link.childLink, link.icon, ...(link.role || [])].join(' ').toLowerCase().includes(query)
+        const matchesSearch = !query || [link.parentLink, link.label, link.route, link.childLink, link.icon, ...(link.role || [])].join(' ').toLowerCase().includes(query)
         const matchesRole = masterRoleFilter === 'All' || (link.role || []).includes(masterRoleFilter)
         const matchesStatus = masterStatusFilter === 'All' || link.status === masterStatusFilter
         return matchesSearch && matchesRole && matchesStatus
@@ -217,6 +434,12 @@ function ManageLinks() {
   const groupedPermissionLinks = useMemo(
     () => (Object.keys(groupedLinks || {}).length ? groupedLinks : getGroupedLinksFromFlatList(links)),
     [groupedLinks, links],
+  )
+  const parentGroupOptions = useMemo(
+    () =>
+      [...new Set(links.map((link) => link.parentLink).filter(Boolean))]
+        .sort((first, second) => first.localeCompare(second)),
+    [links],
   )
   const selectedUser = useMemo(() => users.find((user) => (user._id || user.id) === selectedUserId) || null, [selectedUserId, users])
 
@@ -233,9 +456,22 @@ function ManageLinks() {
     await dispatch(getUserSidebarPreview(userId))
   }
 
-  const openCreateModal = () => { setModalState({ open: true, mode: 'create', linkId: null }); setLinkForm(getInitialFormState()) }
-  const openEditModal = (link) => { setModalState({ open: true, mode: 'edit', linkId: link._id || link.id }); setLinkForm(getInitialFormState(link)) }
-  const closeModal = () => { setModalState({ open: false, mode: 'create', linkId: null }); setLinkForm(getInitialFormState()) }
+  const openCreateParentModal = () => {
+    setModalState({ open: true, mode: 'create', createKind: 'parent', linkId: null })
+    setLinkForm({ ...getInitialFormState(), isParentOnly: true })
+  }
+  const openCreateChildModal = () => {
+    setModalState({ open: true, mode: 'create', createKind: 'child', linkId: null })
+    setLinkForm({ ...getInitialFormState(), isParentOnly: false })
+  }
+  const openEditModal = (link) => {
+    setModalState({ open: true, mode: 'edit', createKind: 'link', linkId: link._id || link.id })
+    setLinkForm(getInitialFormState(link))
+  }
+  const closeModal = () => {
+    setModalState({ open: false, mode: 'create', createKind: 'link', linkId: null })
+    setLinkForm(getInitialFormState())
+  }
 
   const handleFormChange = (event) => {
     const { name, value, type, checked } = event.target
@@ -255,13 +491,23 @@ function ManageLinks() {
   }
 
   const buildLinkPayload = () => {
+    const isParentCreate = modalState.mode === 'create' && modalState.createKind === 'parent'
+    const isChildCreate = modalState.mode === 'create' && modalState.createKind === 'child'
     const routeValue = linkForm.isParentOnly ? '' : linkForm.route.trim()
     if (!linkForm.parentLink.trim()) throw new Error('Parent group is required.')
+    if (!linkForm.label.trim()) throw new Error('Link label is required.')
     if (linkForm.role.length === 0) throw new Error('At least one role is required.')
     if (!linkForm.isParentOnly && !routeValue) throw new Error('Route path is required for non-parent-only links.')
+    if (isChildCreate && !parentGroupOptions.includes(linkForm.parentLink.trim())) {
+      throw new Error('Please select a valid existing parent group.')
+    }
+    if (isParentCreate && parentGroupOptions.includes(linkForm.parentLink.trim())) {
+      throw new Error('This parent group already exists. Use Add Child for existing parents.')
+    }
 
     return {
       parentLink: linkForm.parentLink.trim(),
+      label: linkForm.label.trim(),
       childLink: routeValue,
       route: routeValue,
       icon: linkForm.icon.trim(),
@@ -292,7 +538,7 @@ function ManageLinks() {
   }
 
   const handleDeleteLink = async (link) => {
-    if (!window.confirm(`Delete ${link.route || link.childLink || link.parentLink}? This action cannot be undone.`)) return
+    if (!window.confirm(`Delete ${getSidebarLinkLabel(link)}? This action cannot be undone.`)) return
     await dispatch(deleteSidebarLink(link._id || link.id))
     dispatch(getSidebarLinks())
     dispatch(getGroupedSidebarLinks())
@@ -331,9 +577,14 @@ function ManageLinks() {
                   <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Navigation</h1>
                   <p className="mt-2 text-sm text-gray-500">Manage master sidebar routes and user-specific rules.</p>
                 </div>
-                <button onClick={openCreateModal} className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
-                  <Plus size={16} /> New Item
-                </button>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                  <button onClick={openCreateParentModal} className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
+                    <Plus size={16} /> Create Parent
+                  </button>
+                  <button onClick={openCreateChildModal} className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800 disabled:opacity-60" disabled={parentGroupOptions.length === 0}>
+                    <Plus size={16} /> Add Child
+                  </button>
+                </div>
               </div>
 
               {/* Custom Tab Navigation */}
@@ -432,7 +683,8 @@ function ManageLinks() {
                         <tr key={link._id || link.id} className="hover:bg-gray-50/50 transition-colors group">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <p className="text-sm font-semibold text-gray-900">{link.parentLink}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">{link.isParentOnly ? 'Parent Header' : link.route || link.childLink}</p>
+                            <p className="mt-0.5 text-xs font-medium text-gray-600">{getSidebarLinkLabel(link)}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{link.isParentOnly ? 'Parent Header' : getSidebarLinkPath(link)}</p>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex flex-wrap gap-1.5 max-w-[200px]">
@@ -518,7 +770,7 @@ function ManageLinks() {
                                 {links.map((l) => (
                                   <label key={l._id || l.id} className="flex items-center gap-2.5 text-sm p-1.5 hover:bg-gray-200 rounded-md cursor-pointer transition-colors">
                                     <input type="checkbox" checked={permissionForm.allowedLinkIds.includes(l._id || l.id)} onChange={() => togglePermissionId('allowedLinkIds', l._id || l.id)} className="h-4 w-4 shrink-0 rounded border-gray-300 text-gray-900 focus:ring-gray-900 cursor-pointer" />
-                                    <span className="truncate font-medium text-gray-700">{l.route || l.parentLink}</span>
+                                    <span className="truncate font-medium text-gray-700">{getSidebarLinkLabel(l)}</span>
                                   </label>
                                 ))}
                               </div>
@@ -534,7 +786,7 @@ function ManageLinks() {
                                 {links.map((l) => (
                                   <label key={l._id || l.id} className="flex items-center gap-2.5 text-sm p-1.5 hover:bg-gray-200 rounded-md cursor-pointer transition-colors">
                                     <input type="checkbox" checked={permissionForm.blockedLinkIds.includes(l._id || l.id)} onChange={() => togglePermissionId('blockedLinkIds', l._id || l.id)} className="h-4 w-4 shrink-0 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer" />
-                                    <span className="truncate font-medium text-gray-700">{l.route || l.parentLink}</span>
+                                    <span className="truncate font-medium text-gray-700">{getSidebarLinkLabel(l)}</span>
                                   </label>
                                 ))}
                               </div>
@@ -577,7 +829,7 @@ function ManageLinks() {
                               <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                                 {groupLinks.map((link, idx) => (
                                   <div key={link.id || link._id} className={`px-4 py-3 text-sm flex justify-between items-center ${idx !== groupLinks.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                                    <span className="font-semibold text-gray-700">{link.route || link.childLink || 'Header'}</span>
+                                    <span className="font-semibold text-gray-700">{getSidebarLinkLabel(link)}</span>
                                     <span className="text-gray-400 text-xs font-mono bg-gray-50 px-2 py-0.5 rounded border border-gray-200">{link.icon}</span>
                                   </div>
                                 ))}
@@ -595,7 +847,7 @@ function ManageLinks() {
             
       </div>
 
-      <SidebarLinkModal open={modalState.open} mode={modalState.mode} formState={linkForm} saving={savingLink} onChange={handleFormChange} onRoleToggle={handleRoleToggle} onClose={closeModal} onSubmit={handleLinkSubmit} />
+      <SidebarLinkModal open={modalState.open} mode={modalState.mode} createKind={modalState.createKind} formState={linkForm} saving={savingLink} parentOptions={parentGroupOptions} onChange={handleFormChange} onRoleToggle={handleRoleToggle} onClose={closeModal} onSubmit={handleLinkSubmit} />
     </div>
   )
 }
