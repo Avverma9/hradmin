@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import Breadcrumb from '../../components/breadcrumb'
 import { selectAuth } from '../../../redux/slices/authSlice'
 import {
   appendIncomingMessage,
@@ -204,18 +203,7 @@ function Messenger() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-slate-50/60 p-4 md:p-6">
-      <Breadcrumb />
-
-      <div className="mb-4 shrink-0">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Messenger Workspace
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Manage contacts, recent chats, and real-time conversations from one inbox.
-        </p>
-      </div>
-
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-slate-50/60 p-4 md:p-6">
       {error && (
         <div className="mb-6 flex items-center justify-between rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
           <span>{error}</span>

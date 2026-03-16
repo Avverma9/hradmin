@@ -232,72 +232,6 @@ function BookingCreationHotels() {
 
       <div className="mx-auto max-w-7xl space-y-6">
 
-        {/* ── Header ──────────────────────────────────────────────────────── */}
-        <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.06)]">
-          <div className="bg-[linear-gradient(135deg,#eff6ff_0%,#ffffff_55%,#eef2ff_100%)] px-6 py-6">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-indigo-500">
-                  Booking Creation
-                </p>
-                <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900">
-                  Choose a hotel for your guest
-                </h1>
-                <p className="mt-2 text-sm text-slate-500">
-                  Search hotels, filter by city, price, and star rating.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => dispatch(getAllHotels())}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-              >
-                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-                {loading ? 'Refreshing...' : 'Refresh Hotels'}
-              </button>
-            </div>
-          </div>
-
-          {/* Guest pill */}
-          <div className="border-t border-slate-200 px-6 py-5">
-            {selectedGuest ? (
-              <div className="flex flex-col gap-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 md:flex-row md:items-center md:justify-between">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-indigo-600 shadow-sm">
-                    <UserRound size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-500">Guest</p>
-                    <h2 className="mt-1 text-lg font-semibold text-slate-900">{guestDisplayName}</h2>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {selectedGuest.mobile || 'No mobile'}
-                      {selectedGuest.email ? ` · ${selectedGuest.email}` : ''}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigate('/booking-creation')}
-                  className="inline-flex items-center justify-center rounded-xl border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50"
-                >
-                  Change Guest
-                </button>
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
-                Guest details nahi mile.{' '}
-                <button
-                  type="button"
-                  onClick={() => navigate('/booking-creation')}
-                  className="font-semibold text-amber-900 underline"
-                >
-                  Go to Find User
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
-
         {/* ── Search + Filter Bar ──────────────────────────────────────────── */}
         <section className="sticky top-4 z-30 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
           <div className="flex flex-col gap-3">
@@ -345,32 +279,37 @@ function BookingCreationHotels() {
             </div>
 
             {/* Row 2: Expandable filter panel */}
-            {showFilters && (
-              <div className="grid gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3 md:grid-cols-2">
+            <div
+              className="overflow-hidden transition-all duration-300 ease-in-out"
+              style={{ maxHeight: showFilters ? '120px' : '0px', opacity: showFilters ? 1 : 0 }}
+            >
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2">
 
                 {/* Price range slider */}
-                <div>
-                  <p className="mb-2 text-xs font-bold text-slate-700">Price Range</p>
+                <div className="flex items-center gap-3 min-w-[260px] flex-1">
+                  <p className="text-xs font-bold text-slate-600 shrink-0">Price Range</p>
                   {maxPriceFilter !== null && (
-                    <PriceSlider
-                      min={priceRange.min}
-                      max={priceRange.max}
-                      value={maxPriceFilter}
-                      onChange={setMaxPriceFilter}
-                    />
+                    <div className="flex-1">
+                      <PriceSlider
+                        min={priceRange.min}
+                        max={priceRange.max}
+                        value={maxPriceFilter}
+                        onChange={setMaxPriceFilter}
+                      />
+                    </div>
                   )}
                 </div>
 
                 {/* Star rating filter */}
-                <div>
-                  <p className="mb-3 text-sm font-bold text-slate-700">Minimum Star Rating</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-bold text-slate-600 shrink-0">Stars</p>
                   <div className="flex flex-wrap gap-1">
                     {[0, 1, 2, 3, 4, 5].map((star) => (
                       <button
                         key={star}
                         type="button"
                         onClick={() => setStarFilter(star)}
-                        className={`inline-flex items-center gap-1 rounded-xl border px-2 py-1.5 text-xs font-semibold transition ${
+                        className={`inline-flex items-center gap-0.5 rounded-lg border px-2 py-1 text-xs font-semibold transition ${
                           starFilter === star
                             ? 'border-amber-400 bg-amber-50 text-amber-700'
                             : 'border-slate-200 bg-white text-slate-600 hover:border-amber-200 hover:bg-amber-50/50'
@@ -381,7 +320,7 @@ function BookingCreationHotels() {
                         ) : (
                           <>
                             {star}
-                            <Star size={12} className="fill-amber-400 text-amber-400" />
+                            <Star size={11} className="fill-amber-400 text-amber-400" />
                             +
                           </>
                         )}
@@ -392,38 +331,65 @@ function BookingCreationHotels() {
 
                 {/* Reset */}
                 {hasActiveFilters && (
-                  <div className="md:col-span-2 flex justify-end">
+                  <div className="flex justify-end ml-auto">
                     <button
                       type="button"
                       onClick={() => {
                         setStarFilter(0)
                         setMaxPriceFilter(priceRange.max)
                       }}
-                      className="text-sm font-semibold text-rose-500 hover:text-rose-700"
+                      className="text-xs font-semibold text-rose-500 hover:text-rose-700"
                     >
                       Reset Filters
                     </button>
                   </div>
                 )}
               </div>
-            )}
+            </div>
 
-            {/* Stats row */}
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
-              <span className="rounded-full bg-slate-100 px-3 py-1.5">Total: {normalizedHotels.length}</span>
-              <span className="rounded-full bg-slate-100 px-3 py-1.5">Showing: {filteredHotels.length}</span>
-              <span className="rounded-full bg-slate-100 px-3 py-1.5">
-                City: {selectedCity === 'All' ? 'All Cities' : selectedCity}
-              </span>
-              {maxPriceFilter !== null && maxPriceFilter < priceRange.max && (
-                <span className="rounded-full bg-indigo-50 px-3 py-1.5 text-indigo-600">
-                  Price ≤ {formatCurrency(maxPriceFilter)}
+            {/* Stats row + Guest pill */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+                <span className="rounded-full bg-slate-100 px-3 py-1.5">Total: {normalizedHotels.length}</span>
+                <span className="rounded-full bg-slate-100 px-3 py-1.5">Showing: {filteredHotels.length}</span>
+                <span className="rounded-full bg-slate-100 px-3 py-1.5">
+                  City: {selectedCity === 'All' ? 'All Cities' : selectedCity}
                 </span>
-              )}
-              {starFilter > 0 && (
-                <span className="rounded-full bg-amber-50 px-3 py-1.5 text-amber-700">
-                  {starFilter}★ +
-                </span>
+                {maxPriceFilter !== null && maxPriceFilter < priceRange.max && (
+                  <span className="rounded-full bg-indigo-50 px-3 py-1.5 text-indigo-600">
+                    Price ≤ {formatCurrency(maxPriceFilter)}
+                  </span>
+                )}
+                {starFilter > 0 && (
+                  <span className="rounded-full bg-amber-50 px-3 py-1.5 text-amber-700">
+                    {starFilter}★ +
+                  </span>
+                )}
+              </div>
+
+              {/* Compact guest pill */}
+              {selectedGuest ? (
+                <div className="flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50/70 pl-1.5 pr-3 py-1">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white">
+                    <UserRound size={12} />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-800 max-w-[140px] truncate">{guestDisplayName}</span>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/booking-creation')}
+                    className="ml-1 text-[10px] font-bold text-indigo-500 hover:text-indigo-700 transition"
+                  >
+                    Change
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => navigate('/booking-creation')}
+                  className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition"
+                >
+                  + Select Guest
+                </button>
               )}
             </div>
           </div>
@@ -457,12 +423,12 @@ function BookingCreationHotels() {
             return (
               <article
                 key={hotel.id || hotel.hotelId}
-                className={`group flex flex-col overflow-hidden rounded-[28px] border bg-white shadow-[0_16px_40px_rgba(15,23,42,0.04)] transition hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(15,23,42,0.08)] ${
+                className={`group flex flex-col overflow-hidden rounded-2xl border bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(15,23,42,0.10)] ${
                   isSelected ? 'border-indigo-400 ring-2 ring-indigo-100' : 'border-slate-200'
                 }`}
               >
-                {/* Hotel image */}
-                <div className="relative h-44 shrink-0 bg-[linear-gradient(135deg,#dbeafe_0%,#eef2ff_45%,#f8fafc_100%)]">
+                {/* Image with overlay */}
+                <div className="relative h-36 shrink-0 bg-[linear-gradient(135deg,#dbeafe_0%,#eef2ff_45%,#f8fafc_100%)]">
                   {hotel.image ? (
                     <img
                       src={hotel.image}
@@ -471,75 +437,63 @@ function BookingCreationHotels() {
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center text-indigo-400">
-                      <Building2 size={34} />
+                      <Building2 size={28} />
                     </div>
                   )}
 
-                  {/* Offer badge */}
-                  {hotel.isOffer && (
-                    <div className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2.5 py-1 text-[10px] font-bold text-white shadow">
-                      <Tag size={9} />
-                      {hotel.offerName || 'Special Offer'}
-                    </div>
-                  )}
+                  {/* Dark gradient for text readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-                  {/* Star rating badge */}
+                  {/* Top badges */}
+                  <div className="absolute left-2.5 top-2.5 flex items-center gap-1.5">
+                    {hotel.isOffer && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[9px] font-bold text-white shadow">
+                        <Tag size={8} />
+                        {hotel.offerName || 'Offer'}
+                      </span>
+                    )}
+                    {hotel.category && (
+                      <span className="rounded-full bg-white/20 px-2 py-0.5 text-[9px] font-bold text-white backdrop-blur-sm">
+                        {hotel.category}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Star badge top-right */}
                   {hotel.starRating > 0 && (
-                    <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full border border-white/30 bg-black/40 px-2.5 py-1 backdrop-blur-sm">
-                      <Star size={11} className="fill-amber-400 text-amber-400" />
-                      <span className="text-[11px] font-bold text-white">{hotel.starRating}</span>
+                    <div className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded-full bg-black/40 px-2 py-0.5 backdrop-blur-sm">
+                      <Star size={10} className="fill-amber-400 text-amber-400" />
+                      <span className="text-[10px] font-bold text-white">{hotel.starRating}</span>
                     </div>
                   )}
+
+                  {/* Bottom overlay: name + location + stars */}
+                  <div className="absolute bottom-0 left-0 right-0 px-3 py-2">
+                    <p className="text-[9px] font-semibold uppercase tracking-widest text-white/60">{hotel.hotelId}</p>
+                    <h3 className="truncate text-sm font-bold leading-tight text-white">{hotel.hotelName}</h3>
+                    <div className="mt-0.5 flex items-center gap-2">
+                      <div className="flex items-center gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star key={i} size={9} className={i < hotel.starRating ? 'fill-amber-400 text-amber-400' : 'text-white/30'} />
+                        ))}
+                      </div>
+                      {hotel.city && (
+                        <span className="flex items-center gap-1 text-[10px] text-white/80">
+                          <MapPin size={9} />
+                          {[hotel.city, hotel.state].filter(Boolean).join(', ')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Card body */}
-                <div className="flex flex-1 flex-col gap-4 p-5">
-
-                  {/* Title + category */}
-                  <div>
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                          {hotel.hotelId}
-                        </p>
-                        <h3 className="mt-1 text-base font-bold text-slate-900 leading-snug">
-                          {hotel.hotelName}
-                        </h3>
-                      </div>
-                      {hotel.category && (
-                        <span className="shrink-0 rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 text-[10px] font-bold text-indigo-600">
-                          {hotel.category}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Stars + Rating row */}
-                    <div className="mt-2 flex items-center gap-3">
-                      <StarDisplay count={hotel.starRating} />
-                      {hotel.rating > 0 && (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500">
-                          <Star size={11} className="fill-amber-400 text-amber-400" />
-                          {hotel.rating.toFixed(1)}
-                          <span className="font-normal text-slate-400">
-                            ({hotel.reviewCount} reviews)
-                          </span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Location */}
-                  <div className="flex items-center gap-1.5 text-sm text-slate-500">
-                    <MapPin size={13} className="shrink-0 text-slate-400" />
-                    <span className="truncate">
-                      {[hotel.city, hotel.state].filter(Boolean).join(', ') || 'Location N/A'}
-                    </span>
-                  </div>
+                <div className="flex flex-1 flex-col gap-2 p-3">
 
                   {/* Amenities */}
                   {Array.isArray(hotel.amenities) && hotel.amenities.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {hotel.amenities.slice(0, 4).map((amenity, index) => {
+                    <div className="flex flex-wrap gap-1">
+                      {hotel.amenities.slice(0, 3).map((amenity, index) => {
                         const label =
                           typeof amenity === 'string' || typeof amenity === 'number'
                             ? String(amenity)
@@ -550,64 +504,48 @@ function BookingCreationHotels() {
                         return (
                           <span
                             key={`${hotel.id || hotel.hotelId}-amenity-${index}`}
-                            className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600"
+                            className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600"
                           >
                             {label}
                           </span>
                         )
                       })}
-                      {hotel.amenities.length > 4 && (
-                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-500">
-                          +{hotel.amenities.length - 4} more
+                      {hotel.amenities.length > 3 && (
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400">
+                          +{hotel.amenities.length - 3} more
                         </span>
                       )}
                     </div>
                   )}
 
-                  {/* Pricing block */}
-                  <div className="mt-auto rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3">
-                    {hotel.startingPrice > 0 ? (
-                      <div className="flex items-end justify-between gap-2">
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                            Starting From
+                  {/* Pricing + CTA row */}
+                  <div className="mt-auto flex items-center justify-between gap-2">
+                    <div>
+                      {hotel.startingPrice > 0 ? (
+                        <>
+                          <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">From</p>
+                          <p className="text-sm font-extrabold text-slate-900">{formatCurrency(hotel.startingPrice)}</p>
+                          <p className="text-[9px] text-slate-400">
+                            /night{hotel.gstApplicable ? ' + GST' : ''}
                           </p>
-                          <p className="mt-1 text-xl font-extrabold text-slate-900">
-                            {formatCurrency(hotel.startingPrice)}
-                          </p>
-                          {hotel.startingPriceWithGST > hotel.startingPrice && (
-                            <p className="text-[10px] text-slate-400">
-                              {formatCurrency(hotel.startingPriceWithGST)} with GST
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] font-semibold text-slate-400">per night</p>
-                          {hotel.gstApplicable && (
-                            <p className="mt-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-600">
-                              + GST
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm font-semibold text-slate-400">Price on request</p>
-                    )}
+                        </>
+                      ) : (
+                        <p className="text-xs font-semibold text-slate-400">Price on request</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={!selectedGuest}
+                      onClick={() => handleHotelSelection(hotel)}
+                      className={`shrink-0 rounded-xl px-4 py-2 text-xs font-bold transition ${
+                        isSelected
+                          ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                          : 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60'
+                      }`}
+                    >
+                      {isSelected ? '✓ Selected' : 'Book'}
+                    </button>
                   </div>
-
-                  {/* CTA */}
-                  <button
-                    type="button"
-                    disabled={!selectedGuest}
-                    onClick={() => handleHotelSelection(hotel)}
-                    className={`inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-bold transition ${
-                      isSelected
-                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                        : 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60'
-                    }`}
-                  >
-                    {isSelected ? '✓ Hotel Selected' : 'Book This Hotel'}
-                  </button>
                 </div>
               </article>
             )
