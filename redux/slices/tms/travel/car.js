@@ -102,12 +102,19 @@ export const getSeatsData = createAsyncThunk(
     }
   }
 );
+// router.post("/create-travel/booking", bookCar);
+// router.patch("/change-booking-status/:id",changeBookingStatus)
+// router.get('/get-travels-bookings', getTravelBookings)
+// router.patch('/update-travel/booking',updateBooking)
+// router.get("/get-bookings-by/owner/:ownerId",getBookingsOfOwner)
+// router.post("/get-bookings-by/bookedBy",getBookingBookedBy);
+// router.get("/get-bookings-by/user/:userId", getCarBookingByUserId);
 
 export const bookCar = createAsyncThunk(
   "car/bookCar",
   async (bookingData, { rejectWithValue }) => {
     try {
-      const response = await api.post("/travel/book-a-car", bookingData);
+      const response = await api.post("/travel/create-travel/booking", bookingData);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to book car.");

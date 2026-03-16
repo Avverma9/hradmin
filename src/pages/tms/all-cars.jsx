@@ -229,10 +229,10 @@ const CarDetailDrawer = ({ car, onClose }) => {
             </div>
             {/* Price breakdown */}
             <div className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-5 text-left space-y-3">
-              {bookingResult.totalSeatPrice !== undefined && (
+              {bookingResult.basePrice !== undefined && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-slate-500">Seat(s) Price</span>
-                  <span className="font-bold text-slate-900">₹{bookingResult.totalSeatPrice}</span>
+                  <span className="font-medium text-slate-500">Base Price</span>
+                  <span className="font-bold text-slate-900">₹{bookingResult.basePrice}</span>
                 </div>
               )}
               {bookingResult.gstRate !== undefined && (
@@ -243,11 +243,11 @@ const CarDetailDrawer = ({ car, onClose }) => {
               )}
               <div className="border-t border-slate-200 pt-3 flex items-center justify-between">
                 <span className="text-sm font-bold text-slate-700">Total Payable</span>
-                <span className="text-xl font-extrabold text-indigo-600">₹{bookingResult.finalPrice ?? bookingResult.totalSeatPrice}</span>
+                <span className="text-xl font-extrabold text-indigo-600">₹{bookingResult.price}</span>
               </div>
             </div>
-            {bookingResult._id && (
-              <p className="text-[10px] font-mono text-slate-400">Booking ID: {bookingResult._id}</p>
+            {bookingResult.bookingId && (
+              <p className="text-[10px] font-mono text-slate-400">Booking ID: {bookingResult.bookingId}</p>
             )}
             <button onClick={onClose} className="w-full rounded-xl bg-slate-900 py-2.5 text-sm font-bold text-white hover:bg-slate-800 transition-colors">
               Done
