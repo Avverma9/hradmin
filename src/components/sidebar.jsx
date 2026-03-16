@@ -72,7 +72,8 @@ const getIconComponent = (iconName = '') => {
 const sortLinks = (links = []) =>
   [...links].sort((firstItem, secondItem) => (firstItem.order ?? 0) - (secondItem.order ?? 0))
 
-const SIDEBAR_SCROLL_KEY = 'hrsadmin:sidebar-scroll-top'
+const SIDEBAR_SCROLL_KEY    = 'hrsadmin:sidebar-scroll-top'
+const SIDEBAR_SECTIONS_KEY  = 'hrsadmin:sidebar-sections'
 
 function Sidebar({ className = '' }) {
   const dispatch = useDispatch()
@@ -80,7 +81,14 @@ function Sidebar({ className = '' }) {
   const location = useLocation()
   const { user, role, sidebarLinks } = useSelector(selectAuth)
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const [expandedSections, setExpandedSections] = useState({})
+  const [expandedSections, setExpandedSections] = useState(() => {
+    try {
+      const saved = window.sessionStorage.getItem(SIDEBAR_SECTIONS_KEY)
+      return saved ? JSON.parse(saved) : {}
+    } catch {
+      return {}
+    }
+  })
   const navScrollRef = useRef(null)
   
   const sections = useMemo(() => Object.entries(sidebarLinks ?? {}), [sidebarLinks])
@@ -91,10 +99,13 @@ function Sidebar({ className = '' }) {
   }
   
   const toggleSection = (sectionTitle) => {
-    setExpandedSections((previousSections) => ({
-      ...previousSections,
-      [sectionTitle]: previousSections[sectionTitle] === false,
-    }))
+    setExpandedSections((prev) => {
+      const updated = { ...prev, [sectionTitle]: prev[sectionTitle] !== false ? false : true }
+      try {
+        window.sessionStorage.setItem(SIDEBAR_SECTIONS_KEY, JSON.stringify(updated))
+      } catch { /* storage unavailable */ }
+      return updated
+    })
   }
 
   // Restore scroll position
@@ -120,7 +131,8 @@ function Sidebar({ className = '' }) {
     return () => navElement.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Scroll active item into view
+  // Scroll active item into view — only on route change or sidebar collapse toggle,
+  // NOT on section expand/collapse (that caused the jump-to-bottom bug)
   useEffect(() => {
     const navElement = navScrollRef.current
     if (!navElement) return
@@ -132,7 +144,8 @@ function Sidebar({ className = '' }) {
       activeItem.scrollIntoView({ block: 'nearest', inline: 'nearest' })
       window.sessionStorage.setItem(SIDEBAR_SCROLL_KEY, String(navElement.scrollTop))
     })
-  }, [location.pathname, isCollapsed, expandedSections])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, isCollapsed])
 
   return (
     <div className={`relative shrink-0 ${isCollapsed ? 'w-[84px]' : 'w-72'} ${className}`}>
