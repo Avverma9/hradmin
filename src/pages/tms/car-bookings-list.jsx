@@ -9,15 +9,18 @@ import {
   ChevronDown,
   X,
   Eye,
+  Pencil,
   AlertTriangle,
   Loader2,
   CheckCircle2,
   Clock,
   XCircle,
+  Save,
 } from 'lucide-react'
 import {
   getBookingsOfOwner,
   changeBookingStatus,
+  updateBooking,
   clearCarError,
   clearCarSuccess,
 } from '../../../redux/slices/tms/travel/car'
@@ -82,6 +85,198 @@ const ALLOWED_NEXT_STATUSES = {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
+function BookingEditModal({ booking, onClose, onSubmit, saving }) {
+  const [form, setForm] = useState({
+    passengerName:    booking.passengerName    || '',
+    customerMobile:   booking.customerMobile   || '',
+    customerEmail:    booking.customerEmail    || '',
+    pickupP:          booking.pickupP          || '',
+    dropP:            booking.dropP            || '',
+    pickupD:          booking.pickupD ? booking.pickupD.slice(0, 16) : '',
+    dropD:            booking.dropD   ? booking.dropD.slice(0, 16)   : '',
+    paymentMethod:    booking.paymentMethod    || '',
+    paymentId:        booking.paymentId        || '',
+    isPaid:           booking.isPaid           ?? false,
+    cancellationReason: booking.cancellationReason || '',
+  })
+
+  const set = (key, val) => setForm((prev) => ({ ...prev, [key]: val }))
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    onSubmit(booking._id, form)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+      <div className="flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
+
+        {/* Header */}
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/60 px-6 py-4">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Edit Booking</h2>
+            <p className="mt-0.5 font-mono text-[11px] text-slate-500">{booking.bookingId || booking._id || 'N/A'}</p>
+          </div>
+          <button onClick={onClose} className="rounded-xl p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-900 transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+
+          {/* Passenger Info */}
+          <div className="rounded-xl border border-slate-200 p-4 space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100 pb-2">Passenger Info</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-500">Passenger Name</label>
+                <input
+                  type="text"
+                  value={form.passengerName}
+                  onChange={(e) => set('passengerName', e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-300 focus:bg-white"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-500">Mobile</label>
+                <input
+                  type="text"
+                  value={form.customerMobile}
+                  onChange={(e) => set('customerMobile', e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-300 focus:bg-white"
+                />
+              </div>
+              <div className="flex flex-col gap-1 sm:col-span-2">
+                <label className="text-xs font-semibold text-slate-500">Email</label>
+                <input
+                  type="email"
+                  value={form.customerEmail}
+                  onChange={(e) => set('customerEmail', e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-300 focus:bg-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Journey Info */}
+          <div className="rounded-xl border border-slate-200 p-4 space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100 pb-2">Journey</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-500">Pickup Point</label>
+                <input
+                  type="text"
+                  value={form.pickupP}
+                  onChange={(e) => set('pickupP', e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-300 focus:bg-white"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-500">Drop Point</label>
+                <input
+                  type="text"
+                  value={form.dropP}
+                  onChange={(e) => set('dropP', e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-300 focus:bg-white"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-500">Pickup Date & Time</label>
+                <input
+                  type="datetime-local"
+                  value={form.pickupD}
+                  onChange={(e) => set('pickupD', e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-300 focus:bg-white"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-500">Drop Date & Time</label>
+                <input
+                  type="datetime-local"
+                  value={form.dropD}
+                  onChange={(e) => set('dropD', e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-300 focus:bg-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Info */}
+          <div className="rounded-xl border border-slate-200 p-4 space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100 pb-2">Payment</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-500">Payment Method</label>
+                <select
+                  value={form.paymentMethod}
+                  onChange={(e) => set('paymentMethod', e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-300 focus:bg-white"
+                >
+                  <option value="">-- Select --</option>
+                  <option value="Online">Online</option>
+                  <option value="Cash">Cash</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Card">Card</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-500">Payment ID</label>
+                <input
+                  type="text"
+                  value={form.paymentId}
+                  onChange={(e) => set('paymentId', e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-300 focus:bg-white"
+                />
+              </div>
+              <div className="flex items-center gap-2 sm:col-span-2">
+                <input
+                  id="isPaid"
+                  type="checkbox"
+                  checked={form.isPaid}
+                  onChange={(e) => set('isPaid', e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <label htmlFor="isPaid" className="text-sm font-medium text-slate-700">Mark as Paid</label>
+              </div>
+            </div>
+          </div>
+
+          {/* Cancellation Reason */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-500">Cancellation Reason (if any)</label>
+            <textarea
+              rows={2}
+              value={form.cancellationReason}
+              onChange={(e) => set('cancellationReason', e.target.value)}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none resize-none focus:border-indigo-300 focus:bg-white"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+            >
+              {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 function StatusBadge({ status }) {
   const cfg = getStatusConfig(status)
   const Icon = cfg.icon
@@ -93,7 +288,7 @@ function StatusBadge({ status }) {
   )
 }
 
-function BookingDetailModal({ booking, onClose, onStatusChange, updating }) {
+function BookingDetailModal({ booking, onClose, onStatusChange, onEdit, updating }) {
   if (!booking) return null
   const normalized = String(booking.status || booking.bookingStatus || 'pending').toLowerCase()
   const nextOptions = ALLOWED_NEXT_STATUSES[normalized] || []
@@ -106,11 +301,19 @@ function BookingDetailModal({ booking, onClose, onStatusChange, updating }) {
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/60 px-6 py-4">
           <div>
             <h2 className="text-base font-bold text-slate-900">Booking Details</h2>
-            <p className="mt-0.5 font-mono text-[11px] text-slate-500">{booking._id || booking.bookingId || 'N/A'}</p>
+            <p className="mt-0.5 font-mono text-[11px] text-slate-500">{booking.bookingId || booking._id || 'N/A'}</p>
           </div>
-          <button onClick={onClose} className="rounded-xl p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-900 transition-colors">
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onEdit(booking)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-100 transition-colors"
+            >
+              <Pencil size={13} /> Edit
+            </button>
+            <button onClick={onClose} className="rounded-xl p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-900 transition-colors">
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Body */}
@@ -195,7 +398,9 @@ export default function CarBookingsList({ ownerId: propOwnerId }) {
   const [search, setSearch]             = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [selectedBooking, setSelectedBooking] = useState(null)
+  const [editingBooking, setEditingBooking]   = useState(null)
   const [updating, setUpdating]         = useState(false)
+  const [saving, setSaving]             = useState(false)
 
   // Owner ID: prop se aaya ho, ya logged-in user ka id
   const resolvedOwnerId = propOwnerId || user?.id || user?._id || ''
@@ -253,6 +458,19 @@ export default function CarBookingsList({ ownerId: propOwnerId }) {
       setSelectedBooking((prev) => prev ? { ...prev, status: newStatus, bookingStatus: newStatus } : prev)
     } finally {
       setUpdating(false)
+    }
+  }
+
+  const handleEditSubmit = async (bookingId, bookingData) => {
+    if (!bookingId) return
+    setSaving(true)
+    try {
+      await dispatch(updateBooking({ bookingId, bookingData })).unwrap()
+      load()
+      setEditingBooking(null)
+      setSelectedBooking(null)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -405,12 +623,22 @@ export default function CarBookingsList({ ownerId: propOwnerId }) {
                           <StatusBadge status={status} />
                         </td>
                         <td className="px-5 py-4 whitespace-nowrap text-right">
-                          <button
-                            onClick={() => setSelectedBooking(b)}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-indigo-50 hover:text-indigo-600 ml-auto"
-                          >
-                            <Eye size={15} />
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => setEditingBooking(b)}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-amber-50 hover:text-amber-600"
+                              title="Edit booking"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              onClick={() => setSelectedBooking(b)}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-indigo-50 hover:text-indigo-600"
+                              title="View details"
+                            >
+                              <Eye size={15} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )
@@ -428,7 +656,18 @@ export default function CarBookingsList({ ownerId: propOwnerId }) {
           booking={selectedBooking}
           onClose={() => setSelectedBooking(null)}
           onStatusChange={handleStatusChange}
+          onEdit={(b) => { setSelectedBooking(null); setEditingBooking(b) }}
           updating={updating}
+        />
+      )}
+
+      {/* ── Edit Modal ── */}
+      {editingBooking && (
+        <BookingEditModal
+          booking={editingBooking}
+          onClose={() => setEditingBooking(null)}
+          onSubmit={handleEditSubmit}
+          saving={saving}
         />
       )}
     </div>
