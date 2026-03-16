@@ -18,8 +18,7 @@ import {
   MapPin,
   ChevronDown
 } from 'lucide-react';
-// Ensure this import path matches your project structure
-import { getCarByOwnerId } from '../../../redux/slices/tms/travel/car';
+import { getCarByOwnerId, deleteCarById } from '../../../redux/slices/tms/travel/car';
 import Breadcrumb from '../../components/breadcrumb';
 
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?q=80&w=2070&auto=format&fit=crop";
@@ -53,7 +52,7 @@ const StatusBadge = ({ runningStatus, isAvailable }) => {
 };
 
 // Compact Car Card
-const CarCard = ({ car }) => {
+const CarCard = ({ car, onDelete }) => {
   const imageUrl = car?.images?.[0] || FALLBACK_IMAGE;
 
   return (
@@ -145,7 +144,10 @@ const CarCard = ({ car }) => {
             <Link to={`/your-cars/${car._id}/edit`} className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-indigo-600 focus:outline-none">
               <PencilLine size={14} />
             </Link>
-            <button className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 focus:outline-none">
+            <button
+              onClick={() => onDelete(car._id)}
+              className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 focus:outline-none"
+            >
               <Trash2 size={14} />
             </button>
           </div>
@@ -170,6 +172,11 @@ export default function YourCars() {
   const [typeFilter, setTypeFilter] = useState('');
   const [sharingFilter, setSharingFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+
+  const handleDelete = (carId) => {
+    if (!window.confirm('Are you sure you want to delete this vehicle? This cannot be undone.')) return;
+    dispatch(deleteCarById(carId));
+  };
 
   useEffect(() => {
     const ownerId = user?._id || user?.id;
@@ -333,7 +340,7 @@ export default function YourCars() {
         {!loading && !error && filteredCars.length > 0 && (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredCars.map((car) => (
-              <CarCard key={car._id} car={car} />
+              <CarCard key={car._id} car={car} onDelete={handleDelete} />
             ))}
           </div>
         )}

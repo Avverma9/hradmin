@@ -17,6 +17,7 @@ import ViewCar from '../pages/tms/ViewCar'
 import YourCars from '../pages/tms/your-car'
 import CarsOwner from '../pages/tms/cars-owner'
 import CarBookingsList from '../pages/tms/car-bookings-list'
+import AllCars from '../pages/tms/all-cars'
 
 const EditCarPage = () => <Car isEditMode />
 
@@ -40,8 +41,9 @@ export const APP_ROUTES = [
   { path: '/your-cars', Component: YourCars },
   { path: '/your-cars/:id', Component: ViewCar },
   { path: '/your-cars/:id/edit', Component: EditCarPage },
-  {path: '/cars-owner', Component: CarsOwner },
-  {path:"/travel-bookings", Component: CarBookingsList}
+  { path: '/cars-owner', Component: CarsOwner },
+  { path: '/travel-bookings', Component: CarBookingsList },
+  { path: '/car-booking', Component: AllCars },
 ]
 
 export const APP_ROUTE_PATHS = [...new Set([...APP_ROUTES.map((route) => route.path), '/your-cars'])]

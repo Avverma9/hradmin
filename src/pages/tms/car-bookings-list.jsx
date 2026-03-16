@@ -6,8 +6,6 @@ import {
   Car,
   CalendarDays,
   MapPin,
-  Phone,
-  User,
   ChevronDown,
   X,
   Eye,
@@ -16,11 +14,9 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
-  CircleAlert,
 } from 'lucide-react'
 import {
   getBookingsOfOwner,
-  getAllOwners,
   changeBookingStatus,
   clearCarError,
   clearCarSuccess,
@@ -91,7 +87,7 @@ function StatusBadge({ status }) {
   const Icon = cfg.icon
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${cfg.bg} ${cfg.text} ${cfg.ring}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
+      <Icon size={11} />
       {status || 'Pending'}
     </span>
   )
@@ -233,6 +229,13 @@ export default function CarBookingsList({ ownerId: propOwnerId }) {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedOwnerId])
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearCarError())
+      dispatch(clearCarSuccess())
+    }
+  }, [dispatch])
 
   useEffect(() => {
     if (success) {

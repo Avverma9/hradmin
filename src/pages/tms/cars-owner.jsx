@@ -18,7 +18,9 @@ import {
   UserCircle,
   FileText,
   CalendarDays,
-  Hash
+  Hash,
+  UploadCloud,
+  CheckCircle2,
 } from "lucide-react";
 import {
   getAllOwners,
@@ -126,108 +128,179 @@ const OwnerViewModal = ({ owner, onClose }) => {
 };
 
 // 2. Edit Modal
-const OwnerEditModal = ({ owner, onClose, onSave }) => {
+const OwnerEditModal = ({ owner, onClose, onSave, saving, saveError }) => {
   const [formData, setFormData] = useState({
     name: owner?.name || '',
     email: owner?.email || '',
-    mobile: owner?.mobile || '',
+    mobile: String(owner?.mobile || ''),
     role: owner?.role || 'TMS',
     dl: owner?.dl || '',
     city: owner?.city || '',
     state: owner?.state || '',
     address: owner?.address || '',
-    pinCode: owner?.pinCode || '',
+    pinCode: String(owner?.pinCode || ''),
   });
+  const [newDlImages, setNewDlImages] = useState([]);
+  const existingDlImages = owner?.dlImage || [];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleDlFileChange = (e) => {
+    if (e.target.files) setNewDlImages(prev => [...prev, ...Array.from(e.target.files)]);
+  };
+
+  const removeDlFile = (idx) => setNewDlImages(prev => prev.filter((_, i) => i !== idx));
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave({ ...owner, ...formData });
+    onSave({ ...owner, ...formData }, newDlImages);
   };
 
   const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-sm outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 placeholder:text-slate-400 placeholder:font-normal";
   const labelClass = "mb-1.5 block text-[13px] font-bold text-slate-700";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm transition-opacity">
-      <div className="flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
-        
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+      <div className="flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 max-h-[90vh]">
+
+        {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4">
           <div>
             <h2 className="text-lg font-bold text-slate-900">Edit Owner Profile</h2>
             <p className="mt-0.5 text-xs font-medium text-slate-500 font-mono">ID: {owner._id}</p>
           </div>
-          <button onClick={onClose} className="rounded-xl p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-900 transition-colors focus:outline-none">
+          <button type="button" onClick={onClose} disabled={saving} className="rounded-xl p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-900 transition-colors focus:outline-none">
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-          
+        {/* Error banner */}
+        {saveError && (
+          <div className="shrink-0 flex items-center gap-2.5 border-b border-rose-100 bg-rose-50 px-6 py-3 text-sm font-bold text-rose-700">
+            <AlertTriangle size={15} />{saveError}
+          </div>
+        )}
+
+        <form id="owner-edit-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+
+          {/* Personal Details */}
           <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5">
-             <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900 mb-4 flex items-center gap-2"><UserCircle size={16} className="text-indigo-500"/> Personal Details</h3>
-             <div className="grid gap-4 sm:grid-cols-2">
-               <div>
-                 <label className={labelClass}>Full Name <span className="text-rose-500">*</span></label>
-                 <input required type="text" name="name" value={formData.name} onChange={handleChange} className={inputClass} />
-               </div>
-               <div>
-                 <label className={labelClass}>Email Address</label>
-                 <input type="email" name="email" value={formData.email} onChange={handleChange} className={inputClass} />
-               </div>
-               <div>
-                 <label className={labelClass}>Mobile Number <span className="text-rose-500">*</span></label>
-                 <input required type="number" name="mobile" value={formData.mobile} onChange={handleChange} className={inputClass} />
-               </div>
-               <div>
-                 <label className={labelClass}>System Role</label>
-                 <input type="text" name="role" value={formData.role} onChange={handleChange} className={inputClass} />
-               </div>
-             </div>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900 mb-4 flex items-center gap-2">
+              <UserCircle size={16} className="text-indigo-500" /> Personal Details
+            </h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className={labelClass}>Full Name <span className="text-rose-500">*</span></label>
+                <input required type="text" name="name" value={formData.name} onChange={handleChange} placeholder="e.g. Ramesh Kumar" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Email Address</label>
+                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="ramesh@example.com" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Mobile Number <span className="text-rose-500">*</span></label>
+                <input required type="tel" name="mobile" value={formData.mobile} onChange={handleChange} placeholder="9876543210" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>System Role</label>
+                <input type="text" name="role" value={formData.role} onChange={handleChange} placeholder="TMS" className={inputClass} />
+              </div>
+            </div>
           </div>
 
+          {/* Address Details */}
           <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5">
-             <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900 mb-4 flex items-center gap-2"><MapPin size={16} className="text-amber-500"/> Address Details</h3>
-             <div className="grid gap-4 sm:grid-cols-2">
-               <div className="sm:col-span-2">
-                 <label className={labelClass}>Full Address</label>
-                 <input type="text" name="address" value={formData.address} onChange={handleChange} className={inputClass} />
-               </div>
-               <div>
-                 <label className={labelClass}>City</label>
-                 <input type="text" name="city" value={formData.city} onChange={handleChange} className={inputClass} />
-               </div>
-               <div>
-                 <label className={labelClass}>State</label>
-                 <input type="text" name="state" value={formData.state} onChange={handleChange} className={inputClass} />
-               </div>
-               <div>
-                 <label className={labelClass}>Pin Code</label>
-                 <input type="number" name="pinCode" value={formData.pinCode} onChange={handleChange} className={inputClass} />
-               </div>
-             </div>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900 mb-4 flex items-center gap-2">
+              <MapPin size={16} className="text-amber-500" /> Address Details
+            </h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <label className={labelClass}>Full Address</label>
+                <input type="text" name="address" value={formData.address} onChange={handleChange} placeholder="12 Main Street, Sector 5" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>City</label>
+                <input type="text" name="city" value={formData.city} onChange={handleChange} placeholder="Delhi" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>State</label>
+                <input type="text" name="state" value={formData.state} onChange={handleChange} placeholder="Delhi" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Pin Code</label>
+                <input type="text" name="pinCode" value={formData.pinCode} onChange={handleChange} placeholder="110001" className={inputClass} />
+              </div>
+            </div>
           </div>
 
+          {/* Compliance */}
           <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5">
-             <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900 mb-4 flex items-center gap-2"><ShieldCheck size={16} className="text-emerald-500"/> Compliance</h3>
-             <div>
-               <label className={labelClass}>Driving Licence No.</label>
-               <input type="text" name="dl" value={formData.dl} onChange={handleChange} className={inputClass} />
-             </div>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900 mb-4 flex items-center gap-2">
+              <ShieldCheck size={16} className="text-emerald-500" /> Compliance
+            </h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <label className={labelClass}>Driving Licence No.</label>
+                <input type="text" name="dl" value={formData.dl} onChange={handleChange} placeholder="DL0420220012345" className={inputClass} />
+              </div>
+
+              {/* Existing DL Images */}
+              {existingDlImages.length > 0 && (
+                <div className="sm:col-span-2">
+                  <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Existing DL Scans</p>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {existingDlImages.map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noreferrer"
+                        className="block aspect-video overflow-hidden rounded-xl border border-slate-200 hover:ring-2 hover:ring-indigo-400 transition-all">
+                        <img src={url} alt={`DL ${i + 1}`} className="h-full w-full object-cover" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload new DL images */}
+              <div className="sm:col-span-2">
+                <label className={labelClass}>Upload New DL Scan(s)</label>
+                <div className="flex justify-center rounded-xl border-2 border-dashed border-slate-300 bg-white px-6 py-5 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <UploadCloud className="h-6 w-6 text-slate-400" />
+                    <label htmlFor="edit-dl-images" className="relative cursor-pointer rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-bold text-indigo-600 hover:bg-slate-200 transition-colors">
+                      <span>Choose files</span>
+                      <input id="edit-dl-images" type="file" multiple className="sr-only"
+                        onChange={handleDlFileChange} accept="image/*,.pdf" />
+                    </label>
+                    <span className="text-xs text-slate-400">PNG, JPG, PDF</span>
+                  </div>
+                </div>
+                {newDlImages.length > 0 && (
+                  <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {newDlImages.map((file, i) => (
+                      <li key={i} className="relative flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                        <span className="truncate flex-1">{file.name}</span>
+                        <button type="button" onClick={() => removeDlFile(i)} className="shrink-0 text-slate-400 hover:text-rose-500"><X size={13} /></button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
           </div>
 
         </form>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
-          <button type="button" onClick={onClose} className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-700 bg-white ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors focus:outline-none">
+        {/* Footer */}
+        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+          <button type="button" onClick={onClose} disabled={saving}
+            className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-700 bg-white ring-1 ring-inset ring-slate-300 hover:bg-slate-50 disabled:opacity-50 transition-colors focus:outline-none">
             Cancel
           </button>
-          <button type="submit" onClick={handleSubmit} className="rounded-xl bg-slate-900 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
-            Save Changes
+          <button type="submit" form="owner-edit-form" disabled={saving}
+            className="flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-slate-800 disabled:opacity-60 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
+            {saving ? <><Loader2 size={15} className="animate-spin" />Saving…</> : <><CheckCircle2 size={15} />Save Changes</>}
           </button>
         </div>
       </div>
@@ -248,6 +321,8 @@ export default function CarsOwner() {
   // Modals State
   const [modalMode, setModalMode] = useState(null); // 'view' | 'edit' | null
   const [selectedOwner, setSelectedOwner] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     dispatch(getAllOwners());
@@ -261,15 +336,28 @@ export default function CarsOwner() {
     dispatch(deleteOwnerById(ownerId));
   };
 
-  const handleEditSave = async (updatedData) => {
+  const handleEditSave = async (updatedData, dlImages = []) => {
+    setSaving(true);
+    setSaveError('');
     try {
-      await dispatch(updateOwner({ ownerId: updatedData._id, ownerData: updatedData })).unwrap();
+      const fd = new FormData();
+      const skip = ['_id', '__v', 'createdAt', 'updatedAt', 'dlImage', 'images'];
+      Object.keys(updatedData).forEach((key) => {
+        if (!skip.includes(key) && updatedData[key] !== undefined && updatedData[key] !== null && updatedData[key] !== '') {
+          fd.append(key, updatedData[key]);
+        }
+      });
+      dlImages.forEach((file) => fd.append('dlImage', file));
+
+      await dispatch(updateOwner({ ownerId: updatedData._id, ownerData: fd })).unwrap();
       await dispatch(getAllOwners()).unwrap();
       setModalMode(null);
       setSelectedOwner(null);
+      setSaveError('');
     } catch (err) {
-      console.error("Failed to update owner:", err);
-      // optionally show UI toast/error
+      setSaveError(typeof err === 'string' ? err : err?.message || 'Failed to update owner. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -495,7 +583,13 @@ export default function CarsOwner() {
       )}
       
       {modalMode === 'edit' && selectedOwner && (
-        <OwnerEditModal owner={selectedOwner} onClose={() => { setModalMode(null); setSelectedOwner(null); }} onSave={handleEditSave} />
+        <OwnerEditModal
+          owner={selectedOwner}
+          onClose={() => { if (!saving) { setModalMode(null); setSelectedOwner(null); setSaveError(''); } }}
+          onSave={handleEditSave}
+          saving={saving}
+          saveError={saveError}
+        />
       )}
 
     </div>
