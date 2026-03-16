@@ -661,8 +661,7 @@ export default function AllCarBookings() {
 
                     {/* Actions */}
                     <td className="px-5 py-4 whitespace-nowrap text-right">
-                      {/* lg+: appear on hover */}
-                      <div className="hidden lg:flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => openModal(b, 'view')}
                           className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
@@ -673,23 +672,6 @@ export default function AllCarBookings() {
                           <button
                             onClick={() => openModal(b, 'edit')}
                             className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
-                          >
-                            <PencilLine size={15} />
-                          </button>
-                        )}
-                      </div>
-                      {/* md–lg: always visible */}
-                      <div className="flex lg:hidden items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => openModal(b, 'view')}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
-                        >
-                          <Eye size={15} />
-                        </button>
-                        {canEdit(b) && (
-                          <button
-                            onClick={() => openModal(b, 'edit')}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                           >
                             <PencilLine size={15} />
                           </button>

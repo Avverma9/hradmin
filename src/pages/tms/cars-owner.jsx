@@ -21,6 +21,8 @@ import {
   Hash,
   UploadCloud,
   CheckCircle2,
+  Copy,
+  Check,
 } from "lucide-react";
 import {
   getAllOwners,
@@ -37,6 +39,23 @@ const getAvatarColor = (name = "A") => {
   const charCode = name.charCodeAt(0) || 0;
   return colors[charCode % colors.length];
 };
+
+function CopyButton({ value }) {
+  const [copied, setCopied] = React.useState(false);
+  const handleCopy = () => {
+    if (!value) return;
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  if (!value) return null;
+  return (
+    <button type="button" onClick={handleCopy} className="shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" title="Copy">
+      {copied ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+    </button>
+  );
+}
 
 const formatDate = (value) => {
   if (!value) return 'N/A';
@@ -91,7 +110,7 @@ const OwnerViewModal = ({ owner, onClose }) => {
               <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4 border-b border-slate-100 pb-2">Contact Information</h4>
               <div className="space-y-4">
                 <div className="flex items-center justify-between"><span className="text-sm font-medium text-slate-500 flex items-center gap-2"><Phone size={16} className="text-slate-400"/> Mobile</span><span className="text-sm font-bold text-slate-900">{owner.mobile || 'N/A'}</span></div>
-                <div className="flex items-center justify-between"><span className="text-sm font-medium text-slate-500 flex items-center gap-2"><Mail size={16} className="text-slate-400"/> Email</span><span className="text-sm font-bold text-slate-900 truncate max-w-[150px]">{owner.email || 'N/A'}</span></div>
+                <div className="flex items-center justify-between gap-2"><span className="text-sm font-medium text-slate-500 flex items-center gap-2 shrink-0"><Mail size={16} className="text-slate-400"/> Email</span><div className="flex items-center gap-1 min-w-0"><span className="text-sm font-bold text-slate-900 truncate max-w-[140px]">{owner.email || 'N/A'}</span><CopyButton value={owner.email} /></div></div>
               </div>
             </div>
 
@@ -555,16 +574,10 @@ export default function CarsOwner() {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-end gap-2">
                             <button onClick={() => { setSelectedOwner(owner); setModalMode('view'); }} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all"><Eye size={16} /></button>
                             <button onClick={() => { setSelectedOwner(owner); setModalMode('edit'); }} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-indigo-50 hover:text-indigo-600 transition-all"><PencilLine size={16} /></button>
                             <button onClick={() => handleDelete(owner._id)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-rose-50 hover:text-rose-600 transition-all"><Trash2 size={16} /></button>
-                          </div>
-                          {/* Fallback for touch devices */}
-                          <div className="flex sm:hidden items-center justify-end gap-2">
-                            <button onClick={() => { setSelectedOwner(owner); setModalMode('view'); }} className="p-1 text-slate-500"><Eye size={18} /></button>
-                            <button onClick={() => { setSelectedOwner(owner); setModalMode('edit'); }} className="p-1 text-indigo-500"><PencilLine size={18} /></button>
-                            <button onClick={() => handleDelete(owner._id)} className="p-1 text-rose-500"><Trash2 size={18} /></button>
                           </div>
                         </td>
                       </tr>

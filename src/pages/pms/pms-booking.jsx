@@ -1498,18 +1498,10 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
                               <span className="inline-flex mt-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">{b.normalizedSource || b.bookingSource}</span>
                             </td>
                             <td className="px-5 py-4 whitespace-nowrap text-right">
-                              {/* lg+: show on hover */}
-                              <div className="hidden lg:flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="flex items-center justify-end gap-2">
                                 <button onClick={() => handleViewBooking(b)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all"><Eye size={16} /></button>
                                 {canEditBookingRecord(b) && (
                                   <button onClick={() => handleEditBooking(b)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-indigo-50 hover:text-indigo-600 transition-all"><PencilLine size={16} /></button>
-                                )}
-                              </div>
-                              {/* md–lg: always visible */}
-                              <div className="flex lg:hidden items-center justify-end gap-2">
-                                <button onClick={() => handleViewBooking(b)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all"><Eye size={16} /></button>
-                                {canEditBookingRecord(b) && (
-                                  <button onClick={() => handleEditBooking(b)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all"><PencilLine size={16} /></button>
                                 )}
                               </div>
                             </td>

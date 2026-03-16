@@ -201,7 +201,7 @@ function GSTRuleCard({ type, icon, accent, formValues, latestEntry, entries, loa
                       <button
                         type="button"
                         onClick={() => onDelete(getEntryId(entry))}
-                        className="rounded-md p-1.5 text-slate-400 opacity-0 transition-all hover:bg-rose-50 hover:text-rose-600 group-hover:opacity-100 focus:opacity-100"
+                        className="rounded-md p-1.5 text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600"
                         title="Delete record"
                       >
                         <Trash2 size={16} />

@@ -210,6 +210,7 @@ function BookHotel() {
     return formatDateForInput(tomorrow)
   })
   const [numRooms, setNumRooms] = useState(1)
+  const [numGuests, setNumGuests] = useState(1)
   const [couponCode, setCouponCode] = useState('')
   const [couponType, setCouponType] = useState('user')
   const [selectedRoomId, setSelectedRoomId] = useState('')
@@ -231,14 +232,27 @@ function BookHotel() {
     const bookingData = {
       checkInDate,
       checkOutDate,
-      guests: 1, // Assuming 1 guest for now
+      guests: numGuests,
       guestDetails: {
         fullName: storedGuest.userName,
         mobile: storedGuest.mobile,
         email: storedGuest.email,
       },
+      user: {
+        userId: storedGuest.userId,
+        name: storedGuest.userName,
+        mobile: storedGuest.mobile,
+        email: storedGuest.email,
+      },
+      hotelDetails: {
+        hotelId: hotelData?.hotelId || hotelData?._id,
+        hotelName: basicInfo?.name,
+        hotelEmail: contacts?.email,
+        hotelCity: location?.city,
+        hotelOwnerName: basicInfo?.owner,
+      },
       numRooms,
-      foodDetails: [], // No food selection in the UI yet
+      foodDetails: [],
       roomDetails: [
         {
           roomId: selectedRoom.id,
@@ -247,7 +261,7 @@ function BookHotel() {
           price: selectedRoom.price,
         },
       ],
-      pm: 'online', // Assuming online payment
+      pm: 'online',
       isPartialBooking: false,
       partialAmount: 0,
       bookingStatus: 'Confirmed',
@@ -257,11 +271,9 @@ function BookHotel() {
       },
       couponCode: appliedCoupon ? couponCode : '',
       discountPrice: appliedCoupon?.discountPrice || 0,
+      gstPrice: gstAmount,
+      price: grandTotal,
       bookingSource: 'Panel',
-      hotelName: basicInfo?.name,
-      hotelEmail: contacts?.email,
-      hotelCity: location?.city,
-      hotelOwnerName: basicInfo?.owner,
       destination: location?.city,
     };
 
@@ -810,7 +822,26 @@ function BookHotel() {
                     type="number"
                     min="1"
                     value={numRooms}
-                    onChange={(e) => setNumRooms(Math.max(1, Number(e.target.value) || 1))}
+                    onChange={(e) => {
+                      const rooms = Math.max(1, Number(e.target.value) || 1)
+                      setNumRooms(rooms)
+                      setNumGuests((prev) => Math.min(prev, rooms * 3))
+                    }}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-medium text-slate-700">
+                    Guests
+                    <span className="ml-2 text-xs font-normal text-slate-400">(max {numRooms * 3} · 3 per room)</span>
+                  </span>
+                  <input
+                    type="number"
+                    min="1"
+                    max={numRooms * 3}
+                    value={numGuests}
+                    onChange={(e) => setNumGuests(Math.min(numRooms * 3, Math.max(1, Number(e.target.value) || 1)))}
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white"
                   />
                 </label>

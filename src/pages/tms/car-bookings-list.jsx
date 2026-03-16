@@ -407,7 +407,7 @@ export default function CarBookingsList({ ownerId: propOwnerId }) {
                         <td className="px-5 py-4 whitespace-nowrap text-right">
                           <button
                             onClick={() => setSelectedBooking(b)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-indigo-50 hover:text-indigo-600 ml-auto"
+                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-indigo-50 hover:text-indigo-600 ml-auto"
                           >
                             <Eye size={15} />
                           </button>

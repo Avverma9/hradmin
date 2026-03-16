@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import {
   EllipsisVertical,
   Building2,
+  Copy,
+  Check,
   Eye,
   ChevronLeft,
   ChevronRight,
@@ -105,6 +107,37 @@ function DetailRow({ label, value }) {
   )
 }
 
+function CopyableDetailRow({ label, value, masked }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = () => {
+    if (!value) return
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+        {label}
+      </p>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <p className="text-sm font-medium text-slate-800 truncate">{value || 'Not available'}</p>
+        {value && (
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+            title="Copy"
+          >
+            {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function PartnerDetailsModal({ partner, loading, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
@@ -178,6 +211,8 @@ function PartnerDetailsModal({ partner, loading, onClose }) {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <CopyableDetailRow label="Email" value={partner.email} />
+                <CopyableDetailRow label="Password" value={partner.password} />
                 <DetailRow label="Mobile" value={partner.mobile} />
                 <DetailRow label="City" value={partner.city} />
                 <DetailRow label="State" value={partner.state} />
