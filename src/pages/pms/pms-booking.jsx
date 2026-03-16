@@ -1016,9 +1016,15 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
   useEffect(() => {
     if (hasLoadedInitialDataRef.current) return
     hasLoadedInitialDataRef.current = true
-    if (fetchMode === 'query') dispatch(fetchBookingsByQuery({ filters, fixedFilters }))
-    else if (user?.id) dispatch(fetchPartnerHotelBookings({ partnerId: user.id, filters: appliedFilters }))
-  }, [dispatch, fetchMode, fixedFilters, user?.id, filters, appliedFilters])
+    // Reset any stale Redux filters left over from other PMS pages (e.g. Panel Booking
+    // writes bookingSource:'Panel' into Redux; without this reset, navigating to
+    // /your-bookings would carry that filter and return 0 results).
+    dispatch(resetPmsFilters())
+    const cleanFilters = { ...fixedFilters }
+    if (fetchMode === 'query') dispatch(fetchBookingsByQuery({ filters: cleanFilters, fixedFilters }))
+    else if (user?.id) dispatch(fetchPartnerHotelBookings({ partnerId: user.id, filters: cleanFilters }))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, fetchMode, fixedFilters, user?.id])
 
   const hotelOptions = useMemo(() => hotels.map((h) => ({ value: h.hotelId, label: h.hotelName || 'Unnamed Hotel' })), [hotels])
 
@@ -1132,7 +1138,7 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
                   Dashboard Overview
                 </button>
                 <button onClick={() => setActiveTab('bookings')} className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'bookings' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'}`}>
-                  Bookings Roster 
+                  Bookings 
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ${activeTab === 'bookings' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'}`}>
                     {summary?.totalBookings ?? bookings.length}
                   </span>
@@ -1350,77 +1356,169 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
 
                 {/* Main Data Table */}
                 <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_2px_10px_-3px_rgba(0,0,0,0.02)]">
-                  <table className="min-w-full divide-y divide-slate-100">
-                    <thead className="bg-slate-50/80">
-                      <tr>
-                        {['Record ID', 'Property', showCreatedBy ? 'Created By' : 'Guest', 'Status', 'Itinerary', 'Financials', ''].map((header) => (
-                          <th key={header} className="px-6 py-4 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
-                            {header}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 bg-white">
-                      {loading && bookings.length === 0 && (
-                        <tr><td colSpan="7" className="px-6 py-16 text-center text-sm font-medium text-slate-500">Loading directory...</td></tr>
-                      )}
-                      {!loading && bookings.length === 0 && (
-                        <tr><td colSpan="7" className="px-6 py-16 text-center text-sm font-medium text-slate-500">No records found. Try adjusting your filters.</td></tr>
-                      )}
+
+                  {/* ── MOBILE / SMALL SCREEN: Card list (< md) ── */}
+                  <div className="md:hidden">
+                    {loading && bookings.length === 0 && (
+                      <div className="px-4 py-16 text-center text-sm font-medium text-slate-500">Loading directory…</div>
+                    )}
+                    {!loading && bookings.length === 0 && (
+                      <div className="px-4 py-16 text-center text-sm font-medium text-slate-500">No records found. Try adjusting your filters.</div>
+                    )}
+                    <div className="divide-y divide-slate-100">
                       {bookings.map((b) => (
-                        <tr key={b._id || b.bookingId} className="group hover:bg-slate-50/50 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <p className="text-sm font-extrabold text-slate-900">{b.bookingId}</p>
-                            <p className="text-[11px] font-semibold text-slate-400 mt-1">{formatDate(b.createdAt)}</p>
-                          </td>
-                          <td className="px-6 py-4">
-                            <p className="text-sm font-bold text-slate-800 truncate max-w-[200px]">{b.hotelDetails?.hotelName || 'Unnamed'}</p>
-                            <p className="text-[11px] font-mono font-medium text-slate-400 mt-1">ID: {b.hotelDetails?.hotelId}</p>
-                          </td>
-                          <td className="px-6 py-4">
-                            {showCreatedBy ? (
-                              <>
-                                <p className="text-sm font-bold text-slate-800 truncate max-w-[180px]">{b.createdBy?.user || b.createdBy?.name || 'Unknown'}</p>
-                                <p className="text-[11px] font-semibold text-slate-500 mt-1 truncate max-w-[180px]">{b.createdBy?.email || 'No email'}</p>
-                              </>
-                            ) : (
-                              <>
-                                <p className="text-sm font-bold text-slate-800 truncate max-w-[150px]">{b.guestDetails?.fullName || b.user?.name || 'Unknown'}</p>
-                                {!shouldHideGuestContact && <p className="text-[11px] font-semibold text-slate-500 mt-1">{b.guestDetails?.mobile}</p>}
-                              </>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <StatusBadge status={b.bookingStatus} />
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-[13px] font-medium text-slate-600">
-                            <div className="flex items-center gap-1.5">
-                              <span>{formatDate(b.checkInDate)}</span>
-                              <ArrowRight size={12} className="text-slate-300" />
-                              <span>{formatDate(b.checkOutDate)}</span>
+                        <div key={b._id || b.bookingId} className="p-4 space-y-3 hover:bg-slate-50/60 transition-colors">
+                          {/* Row 1: Booking ID + Status */}
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-sm font-extrabold text-slate-900 truncate">{b.bookingId}</p>
+                              <p className="text-[11px] font-medium text-slate-400 mt-0.5">{formatDate(b.createdAt)}</p>
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <p className="text-sm font-extrabold text-slate-900">{formatCurrency(b.price)}</p>
-                            <span className="inline-flex mt-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">{b.normalizedSource || b.bookingSource}</span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={() => handleViewBooking(b)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all"><Eye size={16} /></button>
+                            <StatusBadge status={b.bookingStatus} />
+                          </div>
+
+                          {/* Row 2: Property */}
+                          <div className="flex items-start gap-2">
+                            <Hotel size={13} className="mt-0.5 shrink-0 text-slate-400" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-slate-800 truncate">{b.hotelDetails?.hotelName || 'Unnamed Property'}</p>
+                              <p className="text-[11px] font-mono text-slate-400">ID: {b.hotelDetails?.hotelId || 'N/A'}</p>
+                            </div>
+                          </div>
+
+                          {/* Row 3: Guest / Created By */}
+                          {showCreatedBy ? (
+                            <div className="flex items-start gap-2">
+                              <UserCog size={13} className="mt-0.5 shrink-0 text-slate-400" />
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-slate-800 truncate">{b.createdBy?.user || b.createdBy?.name || 'Unknown'}</p>
+                                <p className="text-[11px] text-slate-500 truncate">{b.createdBy?.email || 'No email'}</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-start gap-2">
+                              <Users size={13} className="mt-0.5 shrink-0 text-slate-400" />
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-slate-800 truncate">{b.guestDetails?.fullName || b.user?.name || 'Unknown'}</p>
+                                {!shouldHideGuestContact && <p className="text-[11px] text-slate-500">{b.guestDetails?.mobile}</p>}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Row 4: Itinerary + Price + Actions */}
+                          <div className="flex items-center justify-between gap-2 pt-1">
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex items-center gap-1 text-xs font-medium text-slate-600">
+                                <CalendarDays size={11} className="shrink-0 text-slate-400" />
+                                <span className="truncate">{formatDate(b.checkInDate)}</span>
+                                <ArrowRight size={10} className="text-slate-300 shrink-0" />
+                                <span className="truncate">{formatDate(b.checkOutDate)}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-extrabold text-slate-900">{formatCurrency(b.price)}</span>
+                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">{b.normalizedSource || b.bookingSource}</span>
+                              </div>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-1.5">
+                              <button
+                                onClick={() => handleViewBooking(b)}
+                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+                              >
+                                <Eye size={16} />
+                              </button>
                               {canEditBookingRecord(b) && (
-                                <button onClick={() => handleEditBooking(b)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-indigo-50 hover:text-indigo-600 transition-all"><PencilLine size={16} /></button>
+                                <button
+                                  onClick={() => handleEditBooking(b)}
+                                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+                                >
+                                  <PencilLine size={16} />
+                                </button>
                               )}
                             </div>
-                            {/* Fallback for touch devices where hover isn't reliable */}
-                            <div className="flex sm:hidden items-center justify-end gap-2">
-                              <button onClick={() => handleViewBooking(b)} className="p-1.5 text-indigo-500"><Eye size={18} /></button>
-                              {canEditBookingRecord(b) && <button onClick={() => handleEditBooking(b)} className="p-1.5 text-slate-500"><PencilLine size={18} /></button>}
-                            </div>
-                          </td>
-                        </tr>
+                          </div>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
+                    </div>
+                  </div>
+
+                  {/* ── DESKTOP / TABLET: Scrollable table (md+) ── */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="min-w-full divide-y divide-slate-100">
+                      <thead className="bg-slate-50/80">
+                        <tr>
+                          {['Record ID', 'Property', showCreatedBy ? 'Created By' : 'Guest', 'Status', 'Itinerary', 'Financials', ''].map((header) => (
+                            <th key={header} className="px-5 py-3.5 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                              {header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 bg-white">
+                        {loading && bookings.length === 0 && (
+                          <tr><td colSpan="7" className="px-6 py-16 text-center text-sm font-medium text-slate-500">Loading directory…</td></tr>
+                        )}
+                        {!loading && bookings.length === 0 && (
+                          <tr><td colSpan="7" className="px-6 py-16 text-center text-sm font-medium text-slate-500">No records found. Try adjusting your filters.</td></tr>
+                        )}
+                        {bookings.map((b) => (
+                          <tr key={b._id || b.bookingId} className="group hover:bg-slate-50/50 transition-colors">
+                            <td className="px-5 py-4 whitespace-nowrap">
+                              <p className="text-sm font-extrabold text-slate-900">{b.bookingId}</p>
+                              <p className="text-[11px] font-semibold text-slate-400 mt-1">{formatDate(b.createdAt)}</p>
+                            </td>
+                            <td className="px-5 py-4 max-w-[180px]">
+                              <p className="text-sm font-bold text-slate-800 truncate">{b.hotelDetails?.hotelName || 'Unnamed'}</p>
+                              <p className="text-[11px] font-mono font-medium text-slate-400 mt-1 truncate">ID: {b.hotelDetails?.hotelId}</p>
+                            </td>
+                            <td className="px-5 py-4 max-w-[160px]">
+                              {showCreatedBy ? (
+                                <>
+                                  <p className="text-sm font-bold text-slate-800 truncate">{b.createdBy?.user || b.createdBy?.name || 'Unknown'}</p>
+                                  <p className="text-[11px] font-semibold text-slate-500 mt-1 truncate">{b.createdBy?.email || 'No email'}</p>
+                                </>
+                              ) : (
+                                <>
+                                  <p className="text-sm font-bold text-slate-800 truncate">{b.guestDetails?.fullName || b.user?.name || 'Unknown'}</p>
+                                  {!shouldHideGuestContact && <p className="text-[11px] font-semibold text-slate-500 mt-1">{b.guestDetails?.mobile}</p>}
+                                </>
+                              )}
+                            </td>
+                            <td className="px-5 py-4 whitespace-nowrap">
+                              <StatusBadge status={b.bookingStatus} />
+                            </td>
+                            <td className="px-5 py-4 whitespace-nowrap text-[13px] font-medium text-slate-600">
+                              <div className="flex items-center gap-1.5">
+                                <span>{formatDate(b.checkInDate)}</span>
+                                <ArrowRight size={12} className="text-slate-300" />
+                                <span>{formatDate(b.checkOutDate)}</span>
+                              </div>
+                            </td>
+                            <td className="px-5 py-4 whitespace-nowrap">
+                              <p className="text-sm font-extrabold text-slate-900">{formatCurrency(b.price)}</p>
+                              <span className="inline-flex mt-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">{b.normalizedSource || b.bookingSource}</span>
+                            </td>
+                            <td className="px-5 py-4 whitespace-nowrap text-right">
+                              {/* lg+: show on hover */}
+                              <div className="hidden lg:flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => handleViewBooking(b)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all"><Eye size={16} /></button>
+                                {canEditBookingRecord(b) && (
+                                  <button onClick={() => handleEditBooking(b)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-indigo-50 hover:text-indigo-600 transition-all"><PencilLine size={16} /></button>
+                                )}
+                              </div>
+                              {/* md–lg: always visible */}
+                              <div className="flex lg:hidden items-center justify-end gap-2">
+                                <button onClick={() => handleViewBooking(b)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all"><Eye size={16} /></button>
+                                {canEditBookingRecord(b) && (
+                                  <button onClick={() => handleEditBooking(b)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all"><PencilLine size={16} /></button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
                 </div>
               </div>
             )}

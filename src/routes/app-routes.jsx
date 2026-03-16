@@ -3,6 +3,7 @@ import GSTManagement from '../pages/admin/gst-management'
 import AdminHotelBookings from '../pages/admin/hotel-bookings'
 import ManageLinks from '../pages/admin/manage-links'
 import CouponsPage from '../pages/admin/coupons'
+import AllCarBookings from '../pages/admin/cabBookings'
 import BookHotel from '../pages/booking-creation/book-hotel'
 import CreateUser from '../pages/booking-creation/create-user'
 import FindUser from '../pages/booking-creation/findUser'
@@ -44,6 +45,7 @@ export const APP_ROUTES = [
   { path: '/cars-owner', Component: CarsOwner },
   { path: '/travel-bookings', Component: CarBookingsList },
   { path: '/car-booking', Component: AllCars },
+  { path: '/admin-travel-bookings', Component: AllCarBookings },
 ]
 
 export const APP_ROUTE_PATHS = [...new Set([...APP_ROUTES.map((route) => route.path), '/your-cars'])]
