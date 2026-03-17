@@ -249,6 +249,13 @@ const getEditableStatusOptions = (currentStatus, role = '') => {
     return [getStatusLabel(currentStatus || 'Pending')]
   }
 
+  // PMS role: Confirmed → Checked-in → Checked-out only
+  if (pmsRoles.has(String(role || '').trim().toLowerCase())) {
+    if (normalizedStatus === 'confirmed') return ['Confirmed', 'Checked-in']
+    if (normalizedStatus === 'checked-in') return ['Checked-in', 'Checked-out']
+    return [getStatusLabel(currentStatus || 'Pending')]
+  }
+
   return [getStatusLabel(currentStatus || 'Pending')]
 }
 
@@ -731,6 +738,28 @@ function BookingEditModal({
               </div>
             )}
 
+            {/* Role Access Summary Banner */}
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-700 shadow-sm">
+              <p className="font-bold uppercase tracking-widest text-slate-500 mb-2 text-[10px]">Your Access for this Booking</p>
+              <div className="flex flex-wrap gap-2">
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold ring-1 ring-inset ${roleCapabilities.canEditStatus ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' : 'bg-slate-100 text-slate-400 ring-slate-200/60 line-through'}`}>
+                  Status Change
+                </span>
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold ring-1 ring-inset ${roleCapabilities.canEditDates ? 'bg-cyan-50 text-cyan-700 ring-cyan-600/20' : 'bg-slate-100 text-slate-400 ring-slate-200/60 line-through'}`}>
+                  Edit Dates
+                </span>
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold ring-1 ring-inset ${roleCapabilities.canEditFinancials ? 'bg-amber-50 text-amber-700 ring-amber-600/20' : 'bg-slate-100 text-slate-400 ring-slate-200/60 line-through'}`}>
+                  Edit Financials
+                </span>
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold ring-1 ring-inset ${roleCapabilities.canSendCancellationOtp ? 'bg-rose-50 text-rose-700 ring-rose-600/20' : 'bg-slate-100 text-slate-400 ring-slate-200/60 line-through'}`}>
+                  Cancel Booking
+                </span>
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold ring-1 ring-inset ${roleCapabilities.canEditAdvanced ? 'bg-violet-50 text-violet-700 ring-violet-600/20' : 'bg-slate-100 text-slate-400 ring-slate-200/60 line-through'}`}>
+                  Advanced Edit
+                </span>
+              </div>
+            </div>
+
             {/* Primary Editing Block */}
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -1098,7 +1127,8 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
       capabilities.canEditStatus ||
       capabilities.canEditDates ||
       capabilities.canEditFinancials ||
-      capabilities.canEditAdvanced
+      capabilities.canEditAdvanced ||
+      pmsRoles.has(normalizedUserRole)
     )
   }
 
