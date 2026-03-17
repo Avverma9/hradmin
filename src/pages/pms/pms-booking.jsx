@@ -52,6 +52,7 @@ const sourceOptions = ['app', 'site', 'panel']
 const privilegedRoles = new Set(['admin', 'developer'])
 const checkedOutEditableRoles = new Set(['admin', 'ca', 'developer'])
 const financeRoles = new Set(['ca', 'accounts', 'finance'])
+const pmsRoles = new Set(['pms'])
 const operationsRoles = new Set([
   'partner',
   'manager',
@@ -181,6 +182,7 @@ const getRoleCapabilities = (role = '', currentStatus = '') => {
   const isPrivileged = privilegedRoles.has(normalizedRole)
   const isFinance = financeRoles.has(normalizedRole)
   const isOperations = operationsRoles.has(normalizedRole)
+  const isPms = pmsRoles.has(normalizedRole)
   const isClosedBooking = normalizedStatus === 'checked-out'
   const isCancelledBooking = normalizedStatus === 'cancelled'
   const isTerminalBooking =
@@ -218,6 +220,14 @@ const getRoleCapabilities = (role = '', currentStatus = '') => {
   if (isOperations) {
     capabilities.canEditStatus = !isTerminalBooking
     capabilities.canEditDates = normalizedStatus === 'pending' || normalizedStatus === 'confirmed'
+    return capabilities
+  }
+
+  // PMS role: can only change booking status — price and dates are always locked
+  if (isPms) {
+    capabilities.canEditStatus = !isTerminalBooking
+    capabilities.canEditDates = false
+    capabilities.canEditFinancials = false
     return capabilities
   }
 
