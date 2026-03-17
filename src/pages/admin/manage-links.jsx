@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   Check,
@@ -404,6 +404,9 @@ function ManageLinks() {
   const [modalState, setModalState] = useState({ open: false, mode: 'create', createKind: 'link', linkId: null })
   const [linkForm, setLinkForm] = useState(getInitialFormState())
   const [selectedUserId, setSelectedUserId] = useState('')
+  const [userSearchQuery, setUserSearchQuery] = useState('')
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
+  const userSearchRef = useRef(null)
   const [permissionForm, setPermissionForm] = useState(normalizePermissionState())
 
   useEffect(() => {
@@ -443,8 +446,7 @@ function ManageLinks() {
   )
   const selectedUser = useMemo(() => users.find((user) => (user._id || user.id) === selectedUserId) || null, [selectedUserId, users])
 
-  const handleUserChange = async (event) => {
-    const userId = event.target.value
+  const handleUserChange = async (userId) => {
     setSelectedUserId(userId)
     if (!userId) {
       dispatch(clearSidebarPermissionState())
@@ -455,6 +457,26 @@ function ManageLinks() {
     setPermissionForm(normalizePermissionState(permissionResponse))
     await dispatch(getUserSidebarPreview(userId))
   }
+
+  const filteredUserSuggestions = useMemo(() => {
+    const q = userSearchQuery.trim().toLowerCase()
+    if (!q) return users
+    return users.filter(
+      (u) =>
+        (u.name || '').toLowerCase().includes(q) ||
+        (u.email || '').toLowerCase().includes(q),
+    )
+  }, [users, userSearchQuery])
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userSearchRef.current && !userSearchRef.current.contains(e.target)) {
+        setShowUserDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const openCreateParentModal = () => {
     setModalState({ open: true, mode: 'create', createKind: 'parent', linkId: null })
@@ -725,12 +747,70 @@ function ManageLinks() {
                     </h2>
                     
                     <div className="space-y-5">
-                      <div>
+                      <div ref={userSearchRef} className="relative">
                         <label className="mb-1.5 block text-sm font-semibold text-gray-700">Target User</label>
-                        <select value={selectedUserId} onChange={handleUserChange} className="w-full rounded-md border border-gray-300 py-2.5 pl-3 pr-10 text-sm text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900">
-                          <option value="">{loadingUsers ? 'Loading users...' : '-- Choose User --'}</option>
-                          {users.map((u) => <option key={u._id || u.id} value={u._id || u.id}>{u.name} ({u.role})</option>)}
-                        </select>
+                        <div className="relative">
+                          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                          <input
+                            type="text"
+                            value={userSearchQuery}
+                            onChange={(e) => {
+                              setUserSearchQuery(e.target.value)
+                              setShowUserDropdown(true)
+                              if (!e.target.value) {
+                                setSelectedUserId('')
+                                handleUserChange('')
+                              }
+                            }}
+                            onFocus={() => setShowUserDropdown(true)}
+                            placeholder={loadingUsers ? 'Loading users...' : 'Search by name or email...'}
+                            disabled={loadingUsers}
+                            className="w-full rounded-md border border-gray-300 py-2.5 pl-9 pr-8 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:bg-gray-50 disabled:text-gray-400"
+                          />
+                          {userSearchQuery && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setUserSearchQuery('')
+                                setSelectedUserId('')
+                                handleUserChange('')
+                                setShowUserDropdown(false)
+                              }}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-700 rounded"
+                            >
+                              <X size={13} />
+                            </button>
+                          )}
+                        </div>
+                        {showUserDropdown && filteredUserSuggestions.length > 0 && (
+                          <ul className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg text-sm">
+                            {filteredUserSuggestions.map((u) => {
+                              const uid = u._id || u.id
+                              return (
+                                <li
+                                  key={uid}
+                                  onMouseDown={() => {
+                                    setSelectedUserId(uid)
+                                    setUserSearchQuery(u.name)
+                                    setShowUserDropdown(false)
+                                    handleUserChange(uid)
+                                  }}
+                                  className={`flex cursor-pointer flex-col px-3 py-2 hover:bg-gray-50 ${
+                                    selectedUserId === uid ? 'bg-gray-100 font-semibold' : ''
+                                  }`}
+                                >
+                                  <span className="font-medium text-gray-900">{u.name}</span>
+                                  <span className="text-xs text-gray-500">{u.email} &middot; {u.role}</span>
+                                </li>
+                              )
+                            })}
+                          </ul>
+                        )}
+                        {showUserDropdown && userSearchQuery && filteredUserSuggestions.length === 0 && (
+                          <div className="absolute z-30 mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-3 shadow-lg text-sm text-gray-500">
+                            No users match &ldquo;{userSearchQuery}&rdquo;
+                          </div>
+                        )}
                       </div>
 
                       {selectedUser && (
