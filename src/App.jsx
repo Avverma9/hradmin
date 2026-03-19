@@ -71,10 +71,17 @@ function App() {
   const { isAuthenticated, sidebarLinks, user } = useSelector(selectAuth)
   const [hasServerError, setHasServerError] = useState(false)
 
-  const allowedRoutes = useMemo(
-    () => [...new Set([...getAllowedRoutes(sidebarLinks), ...APP_ROUTE_PATHS])],
-    [sidebarLinks],
-  )
+  const allowedRoutes = useMemo(() => {
+    if (!user) return []
+    const rp = user.routePermissions
+    // No permissions configured or allow_all → all routes accessible
+    if (!rp || rp.mode === 'allow_all') return APP_ROUTE_PATHS
+    // custom → only the explicit whitelist
+    if (rp.mode === 'custom') return rp.allowedRoutes || []
+    // block_all → nothing accessible
+    return []
+  }, [user])
+
   const isCurrentRouteAllowed = useMemo(
     () => matchesAllowedRoute(location.pathname, allowedRoutes),
     [allowedRoutes, location.pathname],

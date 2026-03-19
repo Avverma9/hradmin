@@ -2,6 +2,7 @@ import { combineReducers } from '@reduxjs/toolkit'
 import adminAdditionalReducer from './slices/admin/additional'
 import adminCouponReducer from './slices/admin/coupon'
 import adminGstReducer from './slices/admin/gst'
+import adminRouteReducer from './slices/admin/route'
 import adminSidebarReducer from './slices/admin/sidebar'
 import authReducer from './slices/authSlice'
 import dashboardReducer from './slices/dashboard'
@@ -18,6 +19,7 @@ const rootReducer = combineReducers({
   adminAdditional: adminAdditionalReducer,
   adminCoupon: adminCouponReducer,
   adminGst: adminGstReducer,
+  adminRoute: adminRouteReducer,
   adminSidebar: adminSidebarReducer,
   auth: authReducer,
   dashboard: dashboardReducer,

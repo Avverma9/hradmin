@@ -5,6 +5,9 @@ const getList = (payload) => {
   if (Array.isArray(payload)) return payload
   if (Array.isArray(payload?.data)) return payload.data
   if (Array.isArray(payload?.users)) return payload.users
+  if (Array.isArray(payload?.partners)) return payload.partners
+  if (Array.isArray(payload?.result)) return payload.result
+  if (Array.isArray(payload?.allUsers)) return payload.allUsers
   return []
 }
 
@@ -25,8 +28,8 @@ const normalizeLink = (link) => ({
 
 const normalizeUser = (user) => ({
   ...user,
-  _id: user?._id || user?.id || '',
-  id: user?.id || user?._id || '',
+  _id: user?._id || user?.id || user?.userId || '',
+  id: user?.id || user?._id || user?.userId || '',
 })
 
 const updateLinkInList = (links, updatedLink) =>
