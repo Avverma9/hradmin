@@ -12,6 +12,7 @@ import pmsReducer from './slices/pms/bookings'
 import userReducer from './slices/user'
 import hotelReducer from './slices/admin/hotel'
 import carReducer from './slices/tms/travel/car'
+import tourReducer from './slices/tms/travel/tour/tour'
 
 const rootReducer = combineReducers({
   adminAdditional: adminAdditionalReducer,
@@ -27,6 +28,7 @@ const rootReducer = combineReducers({
   user: userReducer,
   hotel: hotelReducer,
   car: carReducer,
+  tour: tourReducer,
 
 })
 

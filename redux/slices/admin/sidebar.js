@@ -196,19 +196,53 @@ export const getDashboardUsers = createAsyncThunk(
   },
 )
 
+export const getRoutePermissions = createAsyncThunk(
+  'adminSidebar/getRoutePermissions',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/additional/route-permissions/${userId}`)
+      return getObject(response.data)
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to fetch route permissions.',
+      )
+    }
+  },
+)
+
+export const updateRoutePermissions = createAsyncThunk(
+  'adminSidebar/updateRoutePermissions',
+  async ({ userId, allowedRoutes, blockedRoutes }, { rejectWithValue }) => {
+    try {
+      const response = await api.put(`/additional/route-permissions/${userId}`, {
+        allowedRoutes,
+        blockedRoutes,
+      })
+      return getObject(response.data)
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to update route permissions.',
+      )
+    }
+  },
+)
+
 const initialState = {
   links: [],
   groupedLinks: {},
   users: [],
   permissionConfig: null,
+  routePermissions: null,
   preview: {},
   previewUser: null,
   loadingLinks: false,
   loadingUsers: false,
   loadingPermissions: false,
+  loadingRoutePermissions: false,
   loadingPreview: false,
   savingLink: false,
   savingPermissions: false,
+  savingRoutePermissions: false,
   error: null,
   successMessage: '',
 }
@@ -359,6 +393,32 @@ const adminSidebarSlice = createSlice({
       })
       .addCase(getUserSidebarPreview.rejected, (state, action) => {
         state.loadingPreview = false
+        state.error = action.payload
+      })
+      .addCase(getRoutePermissions.pending, (state) => {
+        state.loadingRoutePermissions = true
+        state.error = null
+      })
+      .addCase(getRoutePermissions.fulfilled, (state, action) => {
+        state.loadingRoutePermissions = false
+        state.routePermissions = action.payload
+      })
+      .addCase(getRoutePermissions.rejected, (state, action) => {
+        state.loadingRoutePermissions = false
+        state.routePermissions = null
+        state.error = null // not critical — user may have no config yet
+      })
+      .addCase(updateRoutePermissions.pending, (state) => {
+        state.savingRoutePermissions = true
+        state.error = null
+      })
+      .addCase(updateRoutePermissions.fulfilled, (state, action) => {
+        state.savingRoutePermissions = false
+        state.routePermissions = action.payload
+        state.successMessage = 'Route permissions updated successfully.'
+      })
+      .addCase(updateRoutePermissions.rejected, (state, action) => {
+        state.savingRoutePermissions = false
         state.error = action.payload
       })
   },

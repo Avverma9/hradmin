@@ -2,6 +2,7 @@ import AdditionalData from '../pages/admin/additional-data'
 import GSTManagement from '../pages/admin/gst-management'
 import AdminHotelBookings from '../pages/admin/hotel-bookings'
 import ManageLinks from '../pages/admin/manage-links'
+import ManageRouteAccess from '../pages/admin/manage-route-access'
 import CouponsPage from '../pages/admin/coupons'
 import AllCarBookings from '../pages/admin/cabBookings'
 import BookHotel from '../pages/booking-creation/book-hotel'
@@ -19,6 +20,7 @@ import YourCars from '../pages/tms/your-car'
 import CarsOwner from '../pages/tms/cars-owner'
 import CarBookingsList from '../pages/tms/car-bookings-list'
 import AllCars from '../pages/tms/all-cars'
+import Tour from '../pages/tms/tour'
 
 const EditCarPage = () => <Car isEditMode />
 
@@ -31,6 +33,7 @@ export const APP_ROUTES = [
   { path: '/gst-management', Component: GSTManagement },
   { path: '/gst-page', Component: GSTManagement },
   { path: '/hotel-bookings', Component: AdminHotelBookings },
+  { path: '/manage-route-access', Component: ManageRouteAccess },
   { path: '/messenger', Component: Messenger },
   { path: '/your-bookings', Component: PmsBooking },
   { path: '/panel-booking', Component: PanelBooking },
@@ -46,6 +49,7 @@ export const APP_ROUTES = [
   { path: '/travel-bookings', Component: CarBookingsList },
   { path: '/car-booking', Component: AllCars },
   { path: '/admin-travel-bookings', Component: AllCarBookings },
+  {path:"/tours-book", Component: Tour}
 ]
 
 export const APP_ROUTE_PATHS = [...new Set([...APP_ROUTES.map((route) => route.path), '/your-cars'])]

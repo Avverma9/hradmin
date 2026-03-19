@@ -19,8 +19,39 @@ const getAllowedRoutes = (sidebarLinks) =>
       .filter(Boolean),
   )
 
-const matchesAllowedRoute = (pathname, allowedRoutes) =>
-  allowedRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))
+const normalizePath = (path = '') => {
+  if (!path) return '/'
+  const cleanedPath = path.split('?')[0].split('#')[0]
+  if (cleanedPath === '/') return '/'
+  return cleanedPath.replace(/\/+$/, '') || '/'
+}
+
+const getStaticBasePath = (route = '') => {
+  const normalizedRoute = normalizePath(route)
+  if (normalizedRoute === '/') return '/'
+
+  const parts = normalizedRoute.split('/').filter(Boolean)
+  const staticParts = []
+
+  for (const part of parts) {
+    if (part.startsWith(':')) break
+    staticParts.push(part)
+  }
+
+  return staticParts.length ? `/${staticParts.join('/')}` : '/'
+}
+
+const matchesAllowedRoute = (pathname, allowedRoutes) => {
+  const normalizedPathname = normalizePath(pathname)
+
+  return allowedRoutes.some((route) => {
+    const staticBasePath = getStaticBasePath(route)
+    return (
+      normalizedPathname === staticBasePath ||
+      normalizedPathname.startsWith(`${staticBasePath}/`)
+    )
+  })
+}
 
 function ProtectedLayout({ isAuthenticated, isAccessAllowed, isAccessDeniedRoute }) {
   if (!isAuthenticated) {
