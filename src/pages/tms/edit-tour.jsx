@@ -87,6 +87,7 @@ export default function EditTour() {
       from: tourDetails.from ? tourDetails.from.slice(0, 10) : '',
       to: tourDetails.to ? tourDetails.to.slice(0, 10) : '',
       tourStartDate: tourDetails.tourStartDate ? tourDetails.tourStartDate.slice(0, 10) : '',
+      tourEndDate: tourDetails.tourEndDate ? tourDetails.tourEndDate.slice(0, 10) : '',
       isCustomizable: Boolean(tourDetails.isCustomizable),
       starRating: tourDetails.starRating ?? '',
       amenities: Array.isArray(tourDetails.amenities) ? [...tourDetails.amenities] : [],
@@ -304,16 +305,20 @@ export default function EditTour() {
                 <input name="days" type="number" min="0" value={form.days} onChange={handleChange} className={inputCls} placeholder="3" />
               </div>
               <div>
+                <Label>Booking From Date</Label>
+                <input name="from" type="date" value={form.from} onChange={handleChange} className={inputCls} />
+              </div>
+              <div>
+                <Label>Booking To Date</Label>
+                <input name="to" type="date" value={form.to} onChange={handleChange} className={inputCls} />
+              </div>
+              <div>
                 <Label>Tour Start Date</Label>
                 <input name="tourStartDate" type="date" value={form.tourStartDate} onChange={handleChange} className={inputCls} />
               </div>
               <div>
-                <Label>From Date</Label>
-                <input name="from" type="date" value={form.from} onChange={handleChange} className={inputCls} />
-              </div>
-              <div>
-                <Label>To Date</Label>
-                <input name="to" type="date" value={form.to} onChange={handleChange} className={inputCls} />
+                <Label>Tour End Date</Label>
+                <input name="tourEndDate" type="date" value={form.tourEndDate} onChange={handleChange} className={inputCls} />
               </div>
               <div className="flex items-center gap-3 pt-7">
                 <input

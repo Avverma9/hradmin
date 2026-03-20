@@ -603,7 +603,7 @@ export default function TourBooking() {
                 </div>
               </div>
 
-              {(tour.from || tour.to) && (
+              {tour?.route  && (
                 <div className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
                     <Compass size={20} />
@@ -611,9 +611,8 @@ export default function TourBooking() {
                   <div>
                     <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-1">Journey Route</p>
                     <div className="flex flex-wrap items-center gap-2 text-base font-bold text-zinc-800">
-                      <span>{tour.from || 'Origin'}</span>
-                      <ChevronRight size={16} className="text-zinc-300" />
-                      <span>{tour.to || 'Destination'}</span>
+                      <span>{tour?.route?.substring(0, 30) || 'Origin'}</span>
+                     
                     </div>
                   </div>
                 </div>

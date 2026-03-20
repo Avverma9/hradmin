@@ -108,9 +108,9 @@ export default function TourBookingTable({
                     {/* Route */}
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-1 text-[12px] font-semibold text-slate-600">
-                        <span>{b.from || '—'}</span>
-                        <ChevronRight size={11} className="shrink-0 text-slate-300" />
-                        <span>{b.to || '—'}</span>
+                        <span>{b?.route?.substring(0, 30) || '—'}</span>
+                       
+                       
                       </div>
                     </td>
 

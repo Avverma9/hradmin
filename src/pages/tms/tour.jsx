@@ -92,6 +92,23 @@ const TourCard = ({ tour }) => {
   // Fallback for price (check tour.price, then vehicle pricePerSeat)
   const displayPrice = tour.price || tour.vehicles?.[0]?.pricePerSeat || 0;
 
+  const STATUS_CONFIG = {
+    active:    { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200',  dot: 'bg-emerald-500' },
+    inactive:  { cls: 'bg-slate-50 text-slate-700 border-slate-200',    dot: 'bg-slate-500' },
+    completed: { cls: 'bg-blue-50 text-blue-700 border-blue-200',       dot: 'bg-blue-500' },
+  };
+
+  const statusBadge = (() => {
+    const status = tour.runningStatus || 'active';
+    const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.active;
+    return (
+      <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-widest ${cfg.cls}`}>
+        <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
+        {status}
+      </span>
+    );
+  })();
+
   return (
     <div
       onClick={() => navigate(`/my-tour/${tour._id}`)}
@@ -119,6 +136,7 @@ const TourCard = ({ tour }) => {
               {primaryTheme}
             </span>
           )}
+          {statusBadge}
         </div>
         {tour.starRating > 0 && (
           <div className="absolute right-3 top-3">

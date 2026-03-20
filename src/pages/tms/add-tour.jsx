@@ -53,6 +53,9 @@ export default function TourForm() {
     days: '',
     from: '',
     to: '',
+    tourStartDate: '',
+    tourEndDate: '',
+    runningStatus: 'active', // 'active', 'inactive', 'completed'
     isCustomizable: false,
     starRating: '',
     amenities: [],
@@ -332,12 +335,20 @@ export default function TourForm() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6 mb-6">
               <div>
-                <label className={labelClass}>From Date</label>
+                <label className={labelClass}>Booking From Date</label>
                 <input type="date" name="from" value={formData.from} onChange={handleInputChange} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>To Date</label>
+                <label className={labelClass}>Booking To Date</label>
                 <input type="date" name="to" value={formData.to} onChange={handleInputChange} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Tour Start Date</label>
+                <input type="date" name="tourStartDate" value={formData.tourStartDate} onChange={handleInputChange} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Tour End Date</label>
+                <input type="date" name="tourEndDate" value={formData.tourEndDate} onChange={handleInputChange} className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>Total Days</label>

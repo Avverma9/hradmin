@@ -18,6 +18,20 @@ const StatusBadge = ({ accepted }) =>
     <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 border border-amber-200">Pending</span>
   )
 
+const RunningStatusBadge = ({ status }) => {
+  const STATUS_CONFIG = {
+    active:    { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Active' },
+    inactive:  { cls: 'bg-slate-50 text-slate-700 border-slate-200',  label: 'Inactive' },
+    completed: { cls: 'bg-blue-50 text-blue-700 border-blue-200',     label: 'Completed' },
+  };
+  const cfg = STATUS_CONFIG[status || 'active'];
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold border ${cfg.cls}`}>
+      {cfg.label}
+    </span>
+  )
+}
+
 const SkeletonRow = () => (
   <tr className="animate-pulse">
     {Array.from({ length: 9 }).map((_, i) => (
@@ -106,6 +120,7 @@ export default function MyTour() {
                   <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Duration</th>
                   <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Price</th>
                   <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Rating</th>
+                  <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Running</th>
                   <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Status</th>
                   <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Actions</th>
                 </tr>
@@ -164,9 +179,8 @@ export default function MyTour() {
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-1 text-sm text-slate-700">
                           <MapPin size={12} className="shrink-0 text-slate-400" />
-                          <span className="font-semibold">{tour.from ? new Date(tour.from).toLocaleDateString('en-IN') : '—'}</span>
-                          <span className="text-slate-300 mx-1">→</span>
-                          <span className="font-semibold">{tour.to ? new Date(tour.to).toLocaleDateString('en-IN') : '—'}</span>
+                          <span className="font-semibold">{tour?.route?.substring(0,30)}</span>
+                          
                         </div>
                       </td>
 
@@ -213,6 +227,11 @@ export default function MyTour() {
                         ) : (
                           <span className="text-[11px] text-slate-400">—</span>
                         )}
+                      </td>
+
+                      {/* Running Status */}
+                      <td className="px-4 py-4">
+                        <RunningStatusBadge status={tour.runningStatus} />
                       </td>
 
                       {/* Status */}
