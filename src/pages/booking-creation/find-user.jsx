@@ -3,7 +3,7 @@ import { useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import Breadcrumb from "../../components/breadcrumb"
 import { findUserByMobile } from "../../../redux/slices/user"
-import { clearSelectedHotel, saveSelectedGuest } from "./storage"
+import { clearSelectedHotel, saveSelectedGuest } from "../../utils/booking-storage"
 
 export default function FindUser() {
   const [mobile, setMobile] = useState("")

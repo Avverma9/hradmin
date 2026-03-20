@@ -273,6 +273,7 @@ function Sidebar({ className = '' }) {
                       <NavLink
                         key={item.id || item._id || path}
                         to={path || '/dashboard'}
+                        end
                         title={label}
                         className={({ isActive }) =>
                           `group relative flex items-center rounded-xl transition-all duration-200 ${

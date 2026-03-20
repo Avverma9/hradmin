@@ -170,6 +170,20 @@ export const refreshSidebarLinks = createAsyncThunk(
   },
 )
 
+export const refreshRoutePermissions = createAsyncThunk(
+  'auth/refreshRoutePermissions',
+  async (userId, thunkAPI) => {
+    try {
+      const response = await api.get(`/additional/route-permissions/${userId}`)
+      return response.data?.data?.routePermissions || null
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || 'Failed to refresh route permissions.',
+      )
+    }
+  },
+)
+
 export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
   removeAuthData()
   return true
@@ -264,6 +278,26 @@ const authSlice = createSlice({
       .addCase(refreshSidebarLinks.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || 'Failed to refresh sidebar links'
+      })
+      .addCase(refreshRoutePermissions.fulfilled, (state, action) => {
+        if (state.user) {
+          state.user = { ...state.user, routePermissions: action.payload }
+          const updatedSessionData = {
+            ...(state.sessionData || {}),
+            user: state.user,
+            token: state.token,
+            sidebarLinks: state.sidebarLinks,
+          }
+          state.sessionData = updatedSessionData
+          saveAuthData({
+            user: state.user,
+            role: state.role,
+            token: state.token,
+            sidebarLinks: state.sidebarLinks,
+            message: state.message,
+            sessionData: updatedSessionData,
+          })
+        }
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null

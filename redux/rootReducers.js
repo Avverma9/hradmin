@@ -14,6 +14,9 @@ import userReducer from './slices/user'
 import hotelReducer from './slices/admin/hotel'
 import carReducer from './slices/tms/travel/car'
 import tourReducer from './slices/tms/travel/tour/tour'
+import complaintReducer from './slices/complaintSlice'
+import availabilityReducer from './slices/availability'
+import monthlyReducer from './slices/admin/monthly'
 
 const rootReducer = combineReducers({
   adminAdditional: adminAdditionalReducer,
@@ -31,7 +34,9 @@ const rootReducer = combineReducers({
   hotel: hotelReducer,
   car: carReducer,
   tour: tourReducer,
-
+  complaints: complaintReducer,
+  availability: availabilityReducer,
+  monthly: monthlyReducer,
 })
 
 export default rootReducer

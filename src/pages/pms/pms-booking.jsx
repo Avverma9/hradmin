@@ -38,6 +38,7 @@ import {
   verifyBookingCancellationOtp,
 } from '../../../redux/slices/pms/bookings'
 import Breadcrumb from '../../components/breadcrumb'
+import { formatDate, formatDateTime, formatCurrency, formatDateInput } from '../../utils/format'
 
 const statusOptions = [
   'Pending',
@@ -111,41 +112,6 @@ const normalizeSourceLabel = (source = '') => {
   if (normalized === 'app') return 'App'
   return normalized.charAt(0).toUpperCase() + normalized.slice(1)
 }
-
-const formatDate = (value) => {
-  if (!value) return 'N/A'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric',
-  }).format(date)
-}
-
-const formatDateTime = (value) => {
-  if (!value) return 'N/A'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: true
-  }).format(date)
-}
-
-const formatCurrency = (value) => {
-  const amount = Number(value)
-  if (Number.isNaN(amount)) return '₹0'
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency', currency: 'INR', maximumFractionDigits: 0,
-  }).format(amount)
-}
-
-const formatDateInput = (value) => {
-  if (!value) return ''
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return String(value).slice(0, 10)
-  return date.toISOString().slice(0, 10)
-}
-
 const getCurrentTimeInput = () => {
   const now = new Date()
   const hours = String(now.getHours()).padStart(2, '0')

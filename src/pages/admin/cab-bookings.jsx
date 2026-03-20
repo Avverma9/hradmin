@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   Car,
@@ -29,69 +29,11 @@ import {
   clearCarSuccess,
 } from '../../../redux/slices/tms/travel/car'
 import Breadcrumb from '../../components/breadcrumb'
+import BookingStatusBadge, { cfgFor, NEXT_STATUSES, STATUS_CFG } from '../../components/tms/booking-status'
+import { formatDate as fmt, formatDateTime as fmtDT, formatCurrency as fmtCurrency } from '../../utils/format'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const fmt = (value) => {
-  if (!value) return 'N/A'
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return String(value)
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric',
-  }).format(d)
-}
-
-const fmtDT = (value) => {
-  if (!value) return 'N/A'
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return String(value)
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: true,
-  }).format(d)
-}
-
-const fmtCurrency = (v) => {
-  const n = Number(v)
-  if (!n && n !== 0) return '₹—'
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency', currency: 'INR', maximumFractionDigits: 0,
-  }).format(n)
-}
-
-// ─── Status config ────────────────────────────────────────────────────────────
-
-const STATUS_CFG = {
-  pending:   { bg: 'bg-amber-50',   text: 'text-amber-700',   ring: 'ring-amber-500/20',   dot: 'bg-amber-500',   Icon: Clock },
-  confirmed: { bg: 'bg-emerald-50', text: 'text-emerald-700', ring: 'ring-emerald-500/20', dot: 'bg-emerald-500', Icon: CheckCircle2 },
-  cancelled: { bg: 'bg-rose-50',    text: 'text-rose-700',    ring: 'ring-rose-500/20',    dot: 'bg-rose-500',    Icon: XCircle },
-  completed: { bg: 'bg-indigo-50',  text: 'text-indigo-700',  ring: 'ring-indigo-500/20',  dot: 'bg-indigo-500',  Icon: CheckCircle2 },
-  rejected:  { bg: 'bg-slate-100',  text: 'text-slate-600',   ring: 'ring-slate-300/40',   dot: 'bg-slate-400',   Icon: XCircle },
-}
-
-const cfgFor = (raw = '') => STATUS_CFG[String(raw).toLowerCase()] ?? STATUS_CFG.pending
-
-// Allowed transitions
-const NEXT = {
-  pending:   ['Confirmed', 'Cancelled', 'Rejected'],
-  confirmed: ['Completed', 'Cancelled'],
-  completed: [],
-  cancelled: [],
-  rejected:  [],
-}
-
-function StatusBadge({ status = 'Pending' }) {
-  const cfg = cfgFor(status)
-  const { Icon } = cfg
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${cfg.bg} ${cfg.text} ${cfg.ring}`}>
-      <Icon size={11} />
-      {status}
-    </span>
-  )
-}
-
-// ─── Detail + Edit Modal ──────────────────────────────────────────────────────
+const StatusBadge = BookingStatusBadge
+const NEXT = NEXT_STATUSES
 
 function BookingModal({ booking, mode, onClose, onStatusChange, updating }) {
   const [nextStatus, setNextStatus] = useState('')

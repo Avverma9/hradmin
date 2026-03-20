@@ -4,10 +4,10 @@ import AdminHotelBookings from '../pages/admin/hotel-bookings'
 import ManageLinks from '../pages/admin/manage-links'
 import ManageRouteAccess from '../pages/admin/manage-route-access'
 import CouponsPage from '../pages/admin/coupons'
-import AllCarBookings from '../pages/admin/cabBookings'
+import AllCarBookings from '../pages/admin/cab-bookings'
 import BookHotel from '../pages/booking-creation/book-hotel'
 import CreateUser from '../pages/booking-creation/create-user'
-import FindUser from '../pages/booking-creation/findUser'
+import FindUser from '../pages/booking-creation/find-user'
 import BookingCreationHotels from '../pages/booking-creation/hotel'
 import Dashboard from '../pages/dashboard/dashboard'
 import Messenger from '../pages/messenger/messenger'
@@ -15,16 +15,25 @@ import Partner from '../pages/partner/partner'
 import PanelBooking from '../pages/pms/panel-booking'
 import PmsBooking from '../pages/pms/pms-booking'
 import Car from '../pages/tms/car'
-import ViewCar from '../pages/tms/ViewCar'
+import ViewCar from '../pages/tms/view-car'
 import YourCars from '../pages/tms/your-car'
 import CarsOwner from '../pages/tms/cars-owner'
 import CarBookingsList from '../pages/tms/car-bookings-list'
 import AllCars from '../pages/tms/all-cars'
 import Tour from '../pages/tms/tour'
+import TourBookingPage from '../pages/tms/tour-booking'
 import TourForm from '../pages/tms/add-tour'
 import MyTour from '../pages/tms/my-tour'
 import ViewTour from '../pages/tms/view-tour'
 import EditTour from '../pages/tms/edit-tour'
+import TourBookingList from '../pages/tms/tour-booking-list'
+import AllTourBookings from '../pages/admin/all-tour-bookings'
+import Complaints from '../pages/admin/complaints'
+import CreateComplaint from '../components/complaints/create-complaint'
+import ComplaintChat from '../components/complaints/complaint-chat'
+import MyComplaints from '../pages/complaints/my-complaints'
+import Availability from '../pages/admin/availability'
+import MonthlyPrice from '../pages/admin/monthlyPrice'
 
 const EditCarPage = () => <Car isEditMode />
 
@@ -54,10 +63,22 @@ export const APP_ROUTES = [
   { path: '/car-booking', Component: AllCars },
   { path: '/admin-travel-bookings', Component: AllCarBookings },
   { path: "/tours-book", Component: Tour },
+  { path: "/tour-booking/:id", Component: TourBookingPage },
   { path: "/add-tour-data", Component: TourForm },
   { path: "/my-tour", Component: MyTour },
   { path: "/my-tour/:id", Component: ViewTour },
   { path: "/my-tour/:id/edit", Component: EditTour },
+  { path: "/tour-bookings", Component: TourBookingList },
+  { path: "/admin-tour/bookings", Component: AllTourBookings },
+  { path: "/complaints", Component: Complaints },
+  { path: "/complaint/create", Component: CreateComplaint },
+  { path: "/complaint/chat/:id", Component: ComplaintChat },
+  { path: "/your-complaints", Component: MyComplaints },
+  { path: "/hotels/availability", Component: Availability },
+  { path: "/hotels/monthly-price", Component: MonthlyPrice },
+
+
+
 ]
 
 export const APP_ROUTE_PATHS = [...new Set([...APP_ROUTES.map((route) => route.path), '/your-cars'])]

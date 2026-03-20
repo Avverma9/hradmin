@@ -15,11 +15,11 @@ import {
   setSelectedMessengerReceiver,
   updateMessengerUserStatus,
 } from '../../../redux/slices/messenger'
-import ChatHeader from './modules/chat-header'
-import MessageComposer from './modules/message-composer'
-import MessageList from './modules/message-list'
-import MessengerSidebar from './modules/messenger-sidebar'
-import { createMessengerSocket, disconnectMessengerSocket } from './modules/socket'
+import ChatHeader from '../../components/messenger/chat-header'
+import MessageComposer from '../../components/messenger/message-composer'
+import MessageList from '../../components/messenger/message-list'
+import MessengerSidebar from '../../components/messenger/messenger-sidebar'
+import { createMessengerSocket, disconnectMessengerSocket } from '../../utils/socket'
 
 function Messenger() {
   const dispatch = useDispatch()

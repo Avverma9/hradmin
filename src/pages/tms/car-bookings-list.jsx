@@ -26,35 +26,8 @@ import {
 } from '../../../redux/slices/tms/travel/car'
 import { selectAuth } from '../../../redux/slices/authSlice'
 import Breadcrumb from '../../components/breadcrumb'
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const formatDate = (value) => {
-  if (!value) return 'N/A'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric',
-  }).format(date)
-}
-
-const formatDateTime = (value) => {
-  if (!value) return 'N/A'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: true,
-  }).format(date)
-}
-
-const formatCurrency = (value) => {
-  const amount = Number(value)
-  if (!amount) return '₹0'
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency', currency: 'INR', maximumFractionDigits: 0,
-  }).format(amount)
-}
+import BookingStatusBadge, { cfgFor, NEXT_STATUSES, STATUS_CFG } from '../../components/tms/booking-status'
+import { formatDate, formatDateTime, formatCurrency } from '../../utils/format'
 
 const getBookingsList = (payload) => {
   if (Array.isArray(payload)) return payload
@@ -63,25 +36,9 @@ const getBookingsList = (payload) => {
   return []
 }
 
-const STATUS_CONFIG = {
-  pending:   { bg: 'bg-amber-50',   text: 'text-amber-700',   ring: 'ring-amber-500/20',   dot: 'bg-amber-500',   icon: Clock },
-  confirmed: { bg: 'bg-emerald-50', text: 'text-emerald-700', ring: 'ring-emerald-500/20', dot: 'bg-emerald-500', icon: CheckCircle2 },
-  cancelled: { bg: 'bg-rose-50',    text: 'text-rose-700',    ring: 'ring-rose-500/20',    dot: 'bg-rose-500',    icon: XCircle },
-  completed: { bg: 'bg-indigo-50',  text: 'text-indigo-700',  ring: 'ring-indigo-500/20',  dot: 'bg-indigo-500',  icon: CheckCircle2 },
-  rejected:  { bg: 'bg-slate-100',  text: 'text-slate-600',   ring: 'ring-slate-400/20',   dot: 'bg-slate-400',   icon: XCircle },
-}
-
-const getStatusConfig = (status = '') => {
-  return STATUS_CONFIG[String(status).toLowerCase()] || STATUS_CONFIG.pending
-}
-
-const ALLOWED_NEXT_STATUSES = {
-  pending:   ['Confirmed', 'Cancelled', 'Rejected'],
-  confirmed: ['Completed', 'Cancelled'],
-  completed: [],
-  cancelled: [],
-  rejected:  [],
-}
+const getStatusConfig = cfgFor
+const ALLOWED_NEXT_STATUSES = NEXT_STATUSES
+const STATUS_CONFIG = STATUS_CFG
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -277,16 +234,7 @@ function BookingEditModal({ booking, onClose, onSubmit, saving }) {
   )
 }
 
-function StatusBadge({ status }) {
-  const cfg = getStatusConfig(status)
-  const Icon = cfg.icon
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${cfg.bg} ${cfg.text} ${cfg.ring}`}>
-      <Icon size={11} />
-      {status || 'Pending'}
-    </span>
-  )
-}
+const StatusBadge = BookingStatusBadge
 
 function BookingDetailModal({ booking, onClose, onStatusChange, onEdit, updating }) {
   if (!booking) return null

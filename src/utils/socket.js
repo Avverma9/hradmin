@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client'
-import { baseURL } from '../../../../util/util'
+import { baseURL } from '../../util/util'
 
 export const createMessengerSocket = ({ userId, onMessage, onStatusUpdate }) => {
   const socket = io(baseURL, {

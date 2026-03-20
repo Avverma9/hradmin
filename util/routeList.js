@@ -225,7 +225,14 @@ export const ROUTE_LIST = [
     isDynamic: false,
     isAdmin: false,
   },
-
+  {
+    path: '/tours/:id',
+    label: 'Browse & Book Tours',
+    description: 'Explore tour packages and book seats with GST pricing',
+    groupKey: 'tours',
+    isDynamic: true,
+    isAdmin: false,
+  },
   {
     path: '/add-tour-data',
     label: 'Add Tour Package',
@@ -250,12 +257,63 @@ export const ROUTE_LIST = [
     isDynamic: true,
     isAdmin: false,
   },
+  
   {
     path: '/my-tour/:id/edit',
     label: 'Edit Tour',
     description: 'Edit a tour package',
     groupKey: 'tours',
     isDynamic: true,
+    isAdmin: false,
+  },
+  {
+    path: '/tour-booking/:id',
+    label: 'Book Tour',
+    description: 'Multi-step tour booking: seat selection, passenger details and GST pricing',
+    groupKey: 'tours',
+    isDynamic: true,
+    isAdmin: false,
+  },
+  {
+    path: '/admin/tour-bookings',
+    label: 'All Tour Bookings',
+    description: 'Admin view of all tour bookings across all agencies',
+    groupKey: 'tours',
+    isDynamic: false,
+    isAdmin: true,
+  },
+
+  /* ── Complaints ─────────────────────────────────────────── */
+  {
+    path: '/complaints',
+    label: 'All Complaints',
+    description: 'Admin view of all hotel complaints',
+    groupKey: 'complaints',
+    isDynamic: false,
+    isAdmin: true,
+  },
+  {
+    path: '/complaint/create',
+    label: 'File a Complaint',
+    description: 'Submit a new complaint about a hotel',
+    groupKey: 'complaints',
+    isDynamic: false,
+    isAdmin: false,
+  },
+  {
+    path: '/complaint/chat/:id',
+    label: 'Complaint Chat',
+    description: 'Chat support for a specific complaint',
+    groupKey: 'complaints',
+    isDynamic: true,
+    isAdmin: false,
+  },
+  {
+    path: '/my-complaints',
+    label: 'My Complaints',
+    description: 'View and track complaints filed by the logged-in user',
+    groupKey: 'complaints',
+    isDynamic: false,
     isAdmin: false,
   },
 ]
@@ -303,6 +361,12 @@ export const ROUTE_GROUPS = [
     label: 'TMS — Tours',
     color: 'bg-emerald-100 text-emerald-700',
     borderColor: 'border-emerald-200',
+  },
+  {
+    key: 'complaints',
+    label: 'Complaints',
+    color: 'bg-rose-100 text-rose-700',
+    borderColor: 'border-rose-200',
   },
 ]
 

@@ -8,7 +8,7 @@ import Auth from './components/auth'
 import GlobalLoader from './components/global-loader'
 import RouteInProgress from './components/route-in-progress'
 import ServerError from './components/server-error'
-import { refreshSidebarLinks, selectAuth } from '../redux/slices/authSlice'
+import { refreshSidebarLinks, refreshRoutePermissions, selectAuth } from '../redux/slices/authSlice'
 import { APP_ROUTES, APP_ROUTE_PATHS } from './routes/app-routes'
 import { getSidebarLinkPath } from './utils/sidebar-links'
 
@@ -128,6 +128,7 @@ function App() {
   useEffect(() => {
     if (isAuthenticated && user?.id) {
       dispatch(refreshSidebarLinks(user.id))
+      dispatch(refreshRoutePermissions(user.id))
     }
   }, [dispatch, isAuthenticated, user?.id])
 

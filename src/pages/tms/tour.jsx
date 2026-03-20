@@ -7,7 +7,7 @@ import {
   SlidersHorizontal,
   MapPin,
   Star,
-  Map,
+  Map as MapView,
   CalendarDays,
   X,
   MapIcon,
@@ -24,10 +24,16 @@ import {
   Plus,
   User,
   Users,
+  Phone,
+  Mail,
+  ShieldCheck,
+  ListChecks,
+  Layers,
 } from "lucide-react";
 import { fetchFilteredTours, getVehicleSeats, createBooking } from "../../../redux/slices/tms/travel/tour/tour";
 import { getGST } from "../../../redux/slices/admin/gst";
 import { selectAuth } from "../../../redux/slices/authSlice";
+import { formatCurrency } from '../../utils/format';
 
 const DEFAULT_FILTERS = {
   q: "",
@@ -50,17 +56,6 @@ const THEMES = [
 ];
 
 /* =========================================================
-   HELPERS
-========================================================= */
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(Number(amount) || 0);
-};
-
-/* =========================================================
    TOUR SKELETON
 ========================================================= */
 const TourSkeleton = () => (
@@ -80,7 +75,7 @@ const TourSkeleton = () => (
 /* =========================================================
    TOUR CARD
 ========================================================= */
-const TourCard = ({ tour, onBookNow }) => {
+const TourCard = ({ tour }) => {
   const navigate = useNavigate();
   const imageUrl = tour?.images?.[0] || null;
   
@@ -99,7 +94,7 @@ const TourCard = ({ tour, onBookNow }) => {
 
   return (
     <div
-      onClick={() => navigate(`/tours/${tour._id}`)}
+      onClick={() => navigate(`/my-tour/${tour._id}`)}
       className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_10px_-3px_rgba(0,0,0,0.02)] transition-all hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg"
     >
       {/* Image Header */}
@@ -181,7 +176,7 @@ const TourCard = ({ tour, onBookNow }) => {
           </div>
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); onBookNow(tour); }}
+            onClick={(e) => { e.stopPropagation(); navigate(`/tour-booking/${tour._id}`); }}
             className="w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
           >
             Book Now
@@ -356,7 +351,7 @@ const Pagination = ({ page, totalPages, onPageChange }) => {
 const EmptyState = ({ onReset }) => (
   <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-24 text-center shadow-sm">
     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-400 mb-4">
-      <Map size={32} />
+      <MapView size={32} />
     </div>
     <h3 className="text-xl font-extrabold text-slate-900">No Tours Found</h3>
     <p className="mt-2 text-sm font-medium text-slate-500 max-w-sm">
@@ -371,46 +366,153 @@ const EmptyState = ({ onReset }) => (
 /* =========================================================
    TOUR SEAT GRID
 ========================================================= */
-const TourSeatGrid = ({ seats, selectedSeatMap, onToggleSeat, totalNeeded }) => {
+const TourSeatGrid = ({ seats, selectedSeatMap, onToggleSeat, totalNeeded, seatConfig }) => {
+  const seatByCode = React.useMemo(() => {
+    const m = new Map();
+    seats.forEach(s => { const k = String(s.seatNumber || s.code || ''); if (k) m.set(k, s); });
+    return m;
+  }, [seats]);
+
+  const { left = 1, right = 2, aisle = true, rows: cfgRows } = seatConfig || {};
+  const leftCols  = Array.from({ length: left  }, (_, i) => String.fromCharCode(65 + i));
+  const rightCols = Array.from({ length: right }, (_, i) => String.fromCharCode(65 + left + 1 + i));
+  const numRows = React.useMemo(() => {
+    if (cfgRows) return Number(cfgRows);
+    let max = 0;
+    seatByCode.forEach((_, c) => { const r = parseInt(c); if (!isNaN(r) && r > max) max = r; });
+    return max;
+  }, [cfgRows, seatByCode]);
+
   if (!seats.length) return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 py-10 text-center">
       <Users size={24} className="text-slate-300 mb-2" />
       <p className="text-xs font-semibold text-slate-400">No seats configured for this vehicle.</p>
     </div>
   );
-  return (
-    <div>
+
+  if (!seatConfig || !numRows) {
+    return (
       <div className="grid grid-cols-5 gap-1.5">
         {seats.map((seat, i) => {
-          const key = String(seat.seatNumber || seat.number || i + 1);
-          const isBooked   = seat.isBooked || seat.booked;
+          const key = String(seat.seatNumber || seat.code || i + 1);
+          const isBooked   = seat.isBooked || seat.status === 'booked';
           const isSelected = selectedSeatMap.has(key);
           const canSelect  = !isBooked && (isSelected || selectedSeatMap.size < totalNeeded);
-          let cls = 'border-emerald-200 bg-emerald-50 text-emerald-700 cursor-pointer hover:border-indigo-300';
-          if (isBooked)        cls = 'border-rose-200 bg-rose-50 text-rose-400 cursor-not-allowed opacity-60';
+          let cls = 'border-emerald-300 bg-emerald-50 text-emerald-700 cursor-pointer hover:border-indigo-400';
+          if (isBooked)        cls = 'border-rose-200 bg-rose-100 text-rose-400 cursor-not-allowed opacity-60';
           else if (isSelected) cls = 'border-indigo-500 bg-indigo-600 text-white ring-2 ring-indigo-300 cursor-pointer';
           else if (!canSelect) cls = 'border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed';
           return (
             <button key={key} type="button"
               disabled={isBooked || (!isSelected && !canSelect)}
-              onClick={() => !isBooked && canSelect && onToggleSeat(seat)}
-              className={`flex h-10 w-full flex-col items-center justify-center rounded-lg border-2 text-[10px] font-bold transition-all ${cls}`}
+              onClick={() => !isBooked && canSelect && onToggleSeat(seat, key)}
+              className={`flex h-10 w-full flex-col items-center justify-center rounded-xl border-2 text-[10px] font-bold transition-all ${cls}`}
             >
-              <span>{key}</span>
-              {isBooked   && <span className="text-[7px] leading-none">Taken</span>}
-              {isSelected && <span className="text-[7px] leading-none">✓</span>}
-              {seat.seatType && !isBooked && !isSelected && <span className="text-[7px] leading-none opacity-60">{String(seat.seatType).slice(0, 5)}</span>}
+              {isSelected ? <Check size={12} strokeWidth={3}/> : isBooked ? <X size={11} className="opacity-50"/> : <span>{key}</span>}
             </button>
           );
         })}
       </div>
-      {selectedSeatMap.size > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {Array.from(selectedSeatMap.entries()).map(([k, s]) => (
-            <span key={k} className="rounded-md border border-indigo-100 bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
-              Seat {k}{s.seatPrice ? ` · ₹${s.seatPrice}` : ''}
-            </span>
-          ))}
+    );
+  }
+
+  const renderSeat = (rowNum, col) => {
+    const code = `${rowNum}${col}`;
+    const seat = seatByCode.get(code);
+    if (!seat) return <div key={code} className="h-10 w-10 shrink-0 rounded-xl border border-dashed border-slate-100" />;
+    const isBooked   = seat.isBooked;
+    const isSelected = selectedSeatMap.has(code);
+    const canSelect  = !isBooked && (isSelected || selectedSeatMap.size < totalNeeded);
+    let cls = 'border-emerald-300 bg-white text-emerald-700 hover:border-indigo-400 hover:bg-indigo-50 cursor-pointer shadow-sm';
+    if (isBooked)        cls = 'border-rose-200 bg-rose-50 text-rose-400 cursor-not-allowed';
+    else if (isSelected) cls = 'border-indigo-500 bg-indigo-600 text-white shadow-md shadow-indigo-200 cursor-pointer ring-2 ring-indigo-300 ring-offset-1';
+    else if (!canSelect) cls = 'border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed';
+    return (
+      <button key={code} type="button"
+        disabled={isBooked || (!isSelected && !canSelect)}
+        onClick={() => !isBooked && canSelect && onToggleSeat(seat, code)}
+        title={isBooked ? `${code} — Booked` : `${code} — ${isSelected ? 'Selected' : 'Available'}`}
+        className={`relative h-10 w-10 shrink-0 rounded-xl border-2 flex items-center justify-center transition-all duration-150 ${cls}`}
+      >
+        {isBooked ? <X size={11} className="opacity-60"/>
+         : isSelected ? <Check size={13} strokeWidth={3}/>
+         : <span className="text-[9px] font-extrabold tracking-tight">{code}</span>
+        }
+      </button>
+    );
+  };
+
+  return (
+    <div className="overflow-x-auto -mx-1 px-1">
+      <div className="inline-block min-w-max">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-5 py-2.5">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Front</span>
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm">
+              <span>🚌</span> Driver
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 px-5 pt-3 pb-1">
+            <div className="w-6 shrink-0" />
+            {leftCols.map(col => <div key={col} className="w-10 shrink-0 text-center text-[10px] font-extrabold text-slate-400">{col}</div>)}
+            {aisle && <div className="w-8 shrink-0" />}
+            {rightCols.map(col => <div key={col} className="w-10 shrink-0 text-center text-[10px] font-extrabold text-slate-400">{col}</div>)}
+          </div>
+          <div className="space-y-1.5 px-5 pb-5">
+            {Array.from({ length: numRows }, (_, i) => {
+              const rowNum = i + 1;
+              return (
+                <div key={rowNum} className="flex items-center gap-1.5">
+                  <div className="w-6 shrink-0 text-right text-[9px] font-extrabold text-slate-300">{rowNum}</div>
+                  {leftCols.map(col => renderSeat(rowNum, col))}
+                  {aisle && <div className="w-8 shrink-0 flex items-center justify-center"><div className="h-10 w-px bg-slate-100 rounded-full" /></div>}
+                  {rightCols.map(col => renderSeat(rowNum, col))}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {selectedSeatMap.size > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {Array.from(selectedSeatMap.entries()).map(([k, s]) => (
+              <span key={k} className="rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[10px] font-bold text-indigo-700">
+                Seat {k}{s?.seatPrice ? ` · ₹${s.seatPrice}` : ''}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* =========================================================
+   DAY-WISE ITINERARY ITEM
+========================================================= */
+const DayWiseItem = ({ day, index }) => {
+  const [expanded, setExpanded] = useState(false);
+  const title = day.title || day.heading || day.dayTitle || `Day ${index + 1}`;
+  const desc  = day.description || day.activities || day.detail || day.dayDescription || '';
+  const places = day.places || day.visitingPlaces || '';
+  return (
+    <div className="border-b border-slate-100 last:border-0">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-slate-100/60"
+      >
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[9px] font-extrabold text-indigo-600">
+            {index + 1}
+          </span>
+          <span className="text-[12px] font-bold text-slate-800 line-clamp-1">{title}</span>
+        </div>
+        <ChevronDown size={14} className={`shrink-0 text-slate-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+      </button>
+      {expanded && (desc || places) && (
+        <div className="px-4 pb-3 pt-0.5 space-y-1">
+          {places && <p className="text-[11px] font-semibold text-indigo-700"><span className="text-slate-400 font-bold">Places: </span>{places}</p>}
+          {desc   && <p className="text-[11px] font-medium text-slate-600 leading-relaxed">{desc}</p>}
         </div>
       )}
     </div>
@@ -427,11 +529,6 @@ const BookingModal = ({ tour, onClose }) => {
   const { selectedGST, loading: gstLoading } = useSelector((s) => s.adminGst);
 
   const vehicles = useMemo(() => tour?.vehicles || [], [tour]);
-  const seats = useMemo(() => {
-    if (!vehicleSeats) return [];
-    if (Array.isArray(vehicleSeats)) return vehicleSeats;
-    return vehicleSeats?.seats || vehicleSeats?.seatConfig || vehicleSeats?.data || [];
-  }, [vehicleSeats]);
 
   const [selectedVehicle, setSelectedVehicle] = useState(() => vehicles[0] || null);
   const [adults,   setAdults]   = useState(1);
@@ -443,7 +540,47 @@ const BookingModal = ({ tour, onClose }) => {
   const [bookingResult, setBookingResult] = useState(null);
   const [bookingError, setBookingError] = useState('');
 
+  // Build seat list: prefer seatMatrix API format, fall back to seater count
+  const seats = useMemo(() => {
+    if (vehicleSeats) {
+      // Primary API format: { success, vehicle: { seatMatrix: [{code, status}], bookedSeats: [] } }
+      const vData = vehicleSeats?.vehicle;
+      if (vData?.seatMatrix && Array.isArray(vData.seatMatrix) && vData.seatMatrix.length > 0) {
+        const bookedSet = new Set((vData.bookedSeats || []).map(String));
+        return vData.seatMatrix.map((s) => ({
+          seatNumber: s.code,
+          isBooked:   bookedSet.has(s.code) || s.status === 'booked',
+          seatType:   s.type || '',
+          seatPrice:  Number(selectedVehicle?.pricePerSeat || 0),
+        }));
+      }
+      // Legacy flat formats
+      const raw = Array.isArray(vehicleSeats)
+        ? vehicleSeats
+        : (vehicleSeats?.seats || vehicleSeats?.data || null);
+      if (Array.isArray(raw) && raw.length > 0) return raw;
+    }
+    // Fallback: generate from vehicle seater count and bookedSeats array
+    const seater = Number(selectedVehicle?.seater || selectedVehicle?.totalSeats || 0);
+    if (!seater) return [];
+    const bookedSet = new Set((selectedVehicle?.bookedSeats || []).map(String));
+    return Array.from({ length: seater }, (_, i) => {
+      const seatNum = String(i + 1);
+      return { seatNumber: seatNum, isBooked: bookedSet.has(seatNum), seatPrice: Number(selectedVehicle?.pricePerSeat || 0) };
+    });
+  }, [vehicleSeats, selectedVehicle]);
+
+  const seatConfig = useMemo(() => vehicleSeats?.vehicle?.seatConfig || null, [vehicleSeats]);
+
+  // Derived display helpers
+  const toArrHelper = (v) =>
+    Array.isArray(v) ? v : typeof v === 'string' ? v.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  const themeList  = useMemo(() => toArrHelper(tour.themes),    [tour.themes]);
+  const inclusions = useMemo(() => toArrHelper(tour.inclusion), [tour.inclusion]);
+  const exclusions = useMemo(() => toArrHelper(tour.exclusion), [tour.exclusion]);
+
   const totalPassengers = adults + children;
+  // Show Seats step only when vehicle has seating capacity
   const hasSeats = seats.length > 0;
   const totalSteps = hasSeats ? 4 : 3;
   const stepLabels = hasSeats
@@ -456,11 +593,12 @@ const BookingModal = ({ tour, onClose }) => {
     dispatch(getGST({ type: 'Tour' }));
   }, [dispatch]);
 
-  // Fetch seats whenever vehicle changes
+  // Fetch seats from API whenever vehicle changes; also reset seat selection and go back to step 1
   useEffect(() => {
     if (selectedVehicle?._id && tour?._id) {
       dispatch(getVehicleSeats({ tourId: tour._id, vehicleId: selectedVehicle._id }));
       setSelectedSeatMap(new Map());
+      setStep(1);
     }
   }, [dispatch, selectedVehicle?._id, tour?._id]);
 
@@ -477,10 +615,23 @@ const BookingModal = ({ tour, onClose }) => {
   }, [adults, children, totalPassengers]);
 
   const updatePassenger = (idx, field, val) =>
-    setPassengers((prev) => { const next = [...prev]; next[idx] = { ...next[idx], [field]: val }; return next; });
+    setPassengers((prev) => {
+      const next = [...prev];
+      let updated = { ...next[idx], [field]: val };
+      // Auto-reclassify passenger type based on DOB (< 12 = child, >= 12 = adult)
+      if (field === 'dateOfBirth' && val) {
+        const dob = new Date(val);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+        if (age >= 0) updated.type = age >= 12 ? 'adult' : 'child';
+      }
+      next[idx] = updated;
+      return next;
+    });
 
-  const handleToggleSeat = (seat) => {
-    const key = String(seat.seatNumber || seat.number || seat._id || '');
+  const handleToggleSeat = (seat, key) => {
     setSelectedSeatMap((prev) => {
       const next = new Map(prev);
       next.has(key) ? next.delete(key) : next.set(key, seat);
@@ -488,12 +639,14 @@ const BookingModal = ({ tour, onClose }) => {
     });
   };
 
-  // Pricing
-  const seatTotal   = Array.from(selectedSeatMap.values()).reduce((s, seat) => s + Number(seat.seatPrice || 0), 0);
-  const basePrice   = hasSeats ? seatTotal : Number(selectedVehicle?.pricePerSeat || tour.price || 0);
-  const gstRate     = Number(selectedGST?.gstRate || selectedGST?.rate || selectedGST?.percentage || 0);
-  const taxAmount   = Math.round(basePrice * gstRate / 100);
-  const totalAmount = basePrice + taxAmount;
+  // Pricing — aligned with backend: totalAmount = tourPrice + (pricePerSeat × seats.length) + tax
+  const tourBasePrice = Number(tour.price || 0);
+  const perSeatPrice  = Number(selectedVehicle?.pricePerSeat || 0);
+  const seatPrice     = perSeatPrice * selectedSeatMap.size;
+  const subtotal      = tourBasePrice + seatPrice;
+  const gstRate       = Number(selectedGST?.gstRate || selectedGST?.rate || selectedGST?.percentage || 0);
+  const taxAmount     = Math.round(subtotal * gstRate / 100);
+  const totalAmount   = subtotal + taxAmount;
 
   const canProceed = (() => {
     if (currentLabel === 'Setup')      return !!selectedVehicle && adults >= 1;
@@ -511,13 +664,16 @@ const BookingModal = ({ tour, onClose }) => {
     setBookingError('');
     try {
       const toArr = (v) => Array.isArray(v) ? v : typeof v === 'string' ? v.split(',').map((s) => s.trim()).filter(Boolean) : [];
+      // Derive actual counts from passenger types (DOB reclassification may differ from counters)
+      const actualAdults   = passengers.filter((p) => p.type === 'adult').length;
+      const actualChildren = passengers.filter((p) => p.type === 'child').length;
       const payload = {
         userId:           user._id || user.id || user.userId || '',
         tourId:           tour._id,
         vehicleId:        selectedVehicle?._id || '',
         seats:            Array.from(selectedSeatMap.keys()),
-        numberOfAdults:   adults,
-        numberOfChildren: children,
+        numberOfAdults:   actualAdults,
+        numberOfChildren: actualChildren,
         passengers:       passengers.map((p) => ({
           type:     p.type,
           fullName: p.fullName.trim(),
@@ -539,9 +695,9 @@ const BookingModal = ({ tour, onClose }) => {
         days:              tour.days,
         from:              tour.from,
         to:                tour.to,
-        // pricing
-        basePrice,
-        seatPrice:         seatTotal,
+        // pricing — must match backend calculation exactly
+        basePrice:         tourBasePrice,
+        seatPrice,
         tax:               taxAmount,
         discount:          0,
         totalAmount,
@@ -649,10 +805,18 @@ const BookingModal = ({ tour, onClose }) => {
                   </div>
                 )}
                 <div className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left space-y-2.5">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Base / Seat Price</span>
-                    <span className="font-bold text-slate-900">{formatCurrency(bookingResult.basePrice ?? basePrice)}</span>
-                  </div>
+                  {(bookingResult.basePrice ?? tourBasePrice) > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Tour Price</span>
+                      <span className="font-bold text-slate-900">{formatCurrency(bookingResult.basePrice ?? tourBasePrice)}</span>
+                    </div>
+                  )}
+                  {(bookingResult.seatPrice ?? seatPrice) > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Seat Price</span>
+                      <span className="font-bold text-slate-900">{formatCurrency(bookingResult.seatPrice ?? seatPrice)}</span>
+                    </div>
+                  )}
                   {gstRate > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-500">GST ({gstRate}%)</span>
@@ -673,72 +837,236 @@ const BookingModal = ({ tour, onClose }) => {
             {/* ── STEP: Setup ── */}
             {!bookingResult && currentLabel === 'Setup' && (
               <div className="space-y-4 pt-2">
-                {/* Tour summary pill */}
-                <div className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-200">
+
+                {/* ═══ TOUR BANNER ═══ */}
+                <div className="overflow-hidden rounded-2xl border border-slate-100 shadow-sm">
+                  {/* Hero image */}
+                  <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-indigo-50 to-slate-100">
                     {tour.images?.[0]
                       ? <img src={tour.images[0]} alt="" className="h-full w-full object-cover" />
-                      : <div className="flex h-full items-center justify-center"><MapIcon size={20} className="text-slate-400" /></div>
+                      : <div className="flex h-full items-center justify-center"><MapIcon size={36} className="text-slate-300" /></div>
                     }
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/75 via-slate-900/10 to-transparent" />
+                    {/* Star rating */}
+                    {tour.starRating > 0 && (
+                      <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-amber-500/95 px-2.5 py-1 text-[11px] font-bold text-white shadow-md">
+                        <Star size={10} className="fill-white" /> {tour.starRating}★
+                      </div>
+                    )}
+                    {/* Theme badges */}
+                    {themeList.length > 0 && (
+                      <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+                        {themeList.slice(0, 3).map((t) => (
+                          <span key={t} className="rounded bg-indigo-600/90 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white backdrop-blur-sm">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {/* Title overlay */}
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <p className="text-base font-extrabold text-white leading-tight">{tour.travelAgencyName}</p>
+                      <p className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-slate-300">
+                        <MapPin size={10} /> {[tour.city, tour.state, tour.country].filter(Boolean).join(', ')}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-900">{tour.travelAgencyName}</p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">{[tour.city, tour.state, tour.country].filter(Boolean).join(', ')}</p>
-                    <p className="text-[11px] text-slate-500">{tour.nights ?? 0}N / {tour.days ?? 0}D</p>
-                    <p className="mt-0.5 text-sm font-extrabold text-indigo-700">{formatCurrency(tour.price || 0)}</p>
+
+                  {/* 3-col metrics bar */}
+                  <div className="grid grid-cols-3 divide-x divide-slate-100 border-t border-slate-100 bg-slate-50/80">
+                    <div className="flex flex-col items-center py-3 text-center">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Duration</p>
+                      <p className="mt-0.5 text-sm font-extrabold text-slate-900">{tour.nights ?? 0}N / {tour.days ?? 0}D</p>
+                    </div>
+                    <div className="flex flex-col items-center py-3 text-center">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Start Date</p>
+                      <p className="mt-0.5 text-sm font-extrabold text-slate-900">
+                        {tour.tourStartDate
+                          ? new Date(tour.tourStartDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })
+                          : '—'}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-center py-3 text-center">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Price</p>
+                      <p className="mt-0.5 text-sm font-extrabold text-indigo-600">{formatCurrency(tour.price || 0)}</p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Vehicle selector (only when multiple vehicles) */}
-                {vehicles.length > 1 && (
+                {/* Route: From → To */}
+                {(tour.from || tour.to) && (
+                  <div className="flex items-center gap-3 rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-3">
+                    <Compass size={14} className="shrink-0 text-indigo-500" />
+                    <div className="flex flex-wrap items-center gap-1.5 text-sm font-bold">
+                      <span className="text-indigo-700">{tour.from || '—'}</span>
+                      <ChevronRight size={13} className="text-slate-400 shrink-0" />
+                      <span className="text-indigo-700">{tour.to || '—'}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Visiting Places */}
+                {tour.visitngPlaces && (
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                    <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Visiting Places</p>
+                    <p className="text-[12px] font-semibold text-slate-700 leading-relaxed">{tour.visitngPlaces}</p>
+                  </div>
+                )}
+
+                {/* Agency Contact */}
+                {(tour.agencyPhone || tour.agencyEmail) && (
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Agency Contact</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {tour.agencyPhone && (
+                        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
+                          <Phone size={12} className="text-indigo-500 shrink-0" />
+                          <span className="text-[11px] font-semibold text-slate-700 truncate">{tour.agencyPhone}</span>
+                        </div>
+                      )}
+                      {tour.agencyEmail && (
+                        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
+                          <Mail size={12} className="text-indigo-500 shrink-0" />
+                          <span className="text-[11px] font-semibold text-slate-700 truncate">{tour.agencyEmail}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Amenities */}
+                {tour.amenities?.length > 0 && (
                   <div>
-                    <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Select Vehicle</p>
-                    <div className="space-y-2">
-                      {vehicles.map((v) => (
-                        <button key={v._id} type="button" onClick={() => setSelectedVehicle(v)}
-                          className={`w-full flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-all ${selectedVehicle?._id === v._id ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
-                          <div>
-                            <p className="text-sm font-bold text-slate-800">{v.vehicleType || 'Vehicle'}{v.vehicleNumber ? ` · ${v.vehicleNumber}` : ''}</p>
-                            <p className="text-[11px] text-slate-500">{v.sharingType} · {v.seater} seats</p>
-                          </div>
-                          <div className="shrink-0 text-right">
-                            <p className="text-sm font-extrabold text-indigo-600">{formatCurrency(v.pricePerSeat || 0)}</p>
-                            <p className="text-[10px] text-slate-400">per seat</p>
-                          </div>
-                        </button>
+                    <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Amenities</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {tour.amenities.map((a, idx) => (
+                        <span key={idx} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">
+                          <Layers size={10} className="text-indigo-400" /> {a}
+                        </span>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {vehicles.length === 0 && (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-700">
-                    No vehicles configured for this tour package.
+                {/* Inclusions & Exclusions */}
+                {(inclusions.length > 0 || exclusions.length > 0) && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {inclusions.length > 0 && (
+                      <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
+                        <p className="mb-2 text-[10px] font-extrabold uppercase tracking-widest text-emerald-700 flex items-center gap-1">
+                          <ListChecks size={11} /> Included
+                        </p>
+                        <ul className="space-y-1.5">
+                          {inclusions.map((item, idx) => (
+                            <li key={idx} className="flex items-start gap-1.5 text-[11px] font-semibold text-emerald-900 leading-snug">
+                              <Check size={10} className="mt-0.5 shrink-0 text-emerald-600" /> {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {exclusions.length > 0 && (
+                      <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-3">
+                        <p className="mb-2 text-[10px] font-extrabold uppercase tracking-widest text-rose-700 flex items-center gap-1">
+                          <X size={11} /> Excluded
+                        </p>
+                        <ul className="space-y-1.5">
+                          {exclusions.map((item, idx) => (
+                            <li key={idx} className="flex items-start gap-1.5 text-[11px] font-semibold text-rose-900 leading-snug">
+                              <X size={10} className="mt-0.5 shrink-0 text-rose-400" /> {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Passenger counts */}
-                <div>
-                  <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Passengers</p>
-                  <div className="space-y-2">
-                    <Counter label="Adults" sub="12+ years" value={adults} min={1}
-                      onDec={() => setAdults((v) => Math.max(1, v - 1))}
-                      onInc={() => setAdults((v) => v + 1)} />
-                    <Counter label="Children" sub="0–11 years" value={children} min={0}
-                      onDec={() => setChildren((v) => Math.max(0, v - 1))}
-                      onInc={() => setChildren((v) => v + 1)} />
-                  </div>
-                </div>
-
-                {/* GST note */}
-                {gstLoading
-                  ? <div className="flex items-center gap-2 text-[11px] text-slate-400"><Loader2 size={12} className="animate-spin" /> Fetching GST...</div>
-                  : selectedGST && gstRate > 0 && (
-                    <div className="flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-2 text-[11px] font-semibold text-emerald-700">
-                      <Check size={12} /> GST at {gstRate}% will be applied on the total amount.
+                {/* Day-wise Itinerary */}
+                {tour.dayWise?.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Day-wise Itinerary</p>
+                    <div className="overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
+                      {tour.dayWise.map((day, i) => (
+                        <DayWiseItem key={i} day={day} index={i} />
+                      ))}
                     </div>
-                  )
-                }
+                  </div>
+                )}
+
+                {/* Terms & Conditions */}
+                {tour.termsAndConditions && (
+                  <div className="rounded-xl border border-amber-100 bg-amber-50/50 px-4 py-3">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-700">
+                      <ShieldCheck size={11} /> Terms &amp; Conditions
+                    </p>
+                    {typeof tour.termsAndConditions === 'object' && !Array.isArray(tour.termsAndConditions)
+                      ? Object.entries(tour.termsAndConditions).map(([key, val]) => (
+                          <div key={key} className="mb-1.5">
+                            <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wide">{key}</p>
+                            <p className="text-[11px] font-medium text-amber-900 leading-relaxed">{String(val)}</p>
+                          </div>
+                        ))
+                      : <p className="text-[11px] font-medium text-amber-900 leading-relaxed">{String(tour.termsAndConditions)}</p>
+                    }
+                  </div>
+                )}
+
+                {/* ═══ CONFIGURE BOOKING ═══ */}
+                <div className="border-t-2 border-dashed border-slate-200 pt-4">
+                  <p className="mb-3 text-[11px] font-extrabold uppercase tracking-widest text-slate-500">Configure Booking</p>
+
+                  {/* Vehicle selector (only when multiple vehicles) */}
+                  {vehicles.length > 1 && (
+                    <div className="mb-4">
+                      <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Select Vehicle</p>
+                      <div className="space-y-2">
+                        {vehicles.map((v) => (
+                          <button key={v._id} type="button" onClick={() => setSelectedVehicle(v)}
+                            className={`w-full flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-all ${selectedVehicle?._id === v._id ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                            <div>
+                              <p className="text-sm font-bold text-slate-800">{v.vehicleType || 'Vehicle'}{v.vehicleNumber ? ` · ${v.vehicleNumber}` : ''}</p>
+                              <p className="text-[11px] text-slate-500">{v.sharingType} · {v.seater} seats</p>
+                            </div>
+                            <div className="shrink-0 text-right">
+                              <p className="text-sm font-extrabold text-indigo-600">{formatCurrency(v.pricePerSeat || 0)}</p>
+                              <p className="text-[10px] text-slate-400">per seat</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {vehicles.length === 0 && (
+                    <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-700">
+                      No vehicles configured for this tour package.
+                    </div>
+                  )}
+
+                  {/* Passenger counts */}
+                  <div className="mb-4">
+                    <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Passengers</p>
+                    <div className="space-y-2">
+                      <Counter label="Adults" sub="12+ years" value={adults} min={1}
+                        onDec={() => setAdults((v) => Math.max(1, v - 1))}
+                        onInc={() => setAdults((v) => v + 1)} />
+                      <Counter label="Children" sub="0–11 years" value={children} min={0}
+                        onDec={() => setChildren((v) => Math.max(0, v - 1))}
+                        onInc={() => setChildren((v) => v + 1)} />
+                    </div>
+                  </div>
+
+                  {/* GST note */}
+                  {gstLoading
+                    ? <div className="flex items-center gap-2 text-[11px] text-slate-400"><Loader2 size={12} className="animate-spin" /> Fetching GST...</div>
+                    : selectedGST && gstRate > 0 && (
+                      <div className="flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-2 text-[11px] font-semibold text-emerald-700">
+                        <Check size={12} /> GST at {gstRate}% will be applied on the total amount.
+                      </div>
+                    )
+                  }
+                </div>
               </div>
             )}
 
@@ -758,7 +1086,7 @@ const BookingModal = ({ tour, onClose }) => {
                 </div>
                 {tourLoading
                   ? <div className="flex flex-col items-center justify-center py-12"><Loader2 size={24} className="animate-spin text-indigo-500 mb-2" /><p className="text-xs text-slate-400">Loading seat layout...</p></div>
-                  : <TourSeatGrid seats={seats} selectedSeatMap={selectedSeatMap} onToggleSeat={handleToggleSeat} totalNeeded={totalPassengers} />
+                  : <TourSeatGrid seats={seats} selectedSeatMap={selectedSeatMap} onToggleSeat={handleToggleSeat} totalNeeded={totalPassengers} seatConfig={seatConfig} />
                 }
               </div>
             )}
@@ -772,7 +1100,16 @@ const BookingModal = ({ tour, onClose }) => {
                     <div className="flex items-center gap-2">
                       <User size={13} className="text-slate-400" />
                       <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
-                        Passenger {i + 1} — <span className={p.type === 'adult' ? 'text-indigo-600' : 'text-emerald-600'}>{p.type}</span>
+                        Passenger {i + 1} —{' '}
+                        <span className={p.type === 'adult' ? 'text-indigo-600' : 'text-emerald-600'}>{p.type}</span>
+                        {p.dateOfBirth && (() => {
+                          const dob = new Date(p.dateOfBirth);
+                          const today = new Date();
+                          let age = today.getFullYear() - dob.getFullYear();
+                          const m = today.getMonth() - dob.getMonth();
+                          if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                          return age >= 0 ? <span className="ml-1 text-slate-400">({age}y)</span> : null;
+                        })()}
                       </span>
                     </div>
                     <div>
@@ -809,26 +1146,39 @@ const BookingModal = ({ tour, onClose }) => {
 
                 {/* Tour snapshot */}
                 <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-2">
-                  {[
-                    ['Tour', tour.travelAgencyName],
-                    ['Destination', [tour.city, tour.state].filter(Boolean).join(', ')],
-                    ['Duration', `${tour.nights ?? 0}N / ${tour.days ?? 0}D`],
-                    ['Passengers', `${adults} Adult${adults !== 1 ? 's' : ''}${children > 0 ? ` + ${children} Child${children !== 1 ? 'ren' : ''}` : ''}`],
-                    selectedSeatMap.size > 0 ? ['Seats', Array.from(selectedSeatMap.keys()).join(', ')] : null,
-                  ].filter(Boolean).map(([label, value]) => (
-                    <div key={label} className="flex justify-between text-[12px]">
-                      <span className="text-slate-500">{label}</span>
-                      <span className="font-semibold text-slate-800 text-right max-w-[60%] truncate">{value}</span>
-                    </div>
-                  ))}
+                  {(() => {
+                    const a = passengers.filter((p) => p.type === 'adult').length;
+                    const c = passengers.filter((p) => p.type === 'child').length;
+                    const passengerLabel = `${a} Adult${a !== 1 ? 's' : ''}${c > 0 ? ` + ${c} Child${c !== 1 ? 'ren' : ''}` : ''}`;
+                    return [
+                      ['Tour', tour.travelAgencyName],
+                      ['Destination', [tour.city, tour.state].filter(Boolean).join(', ')],
+                      ['Duration', `${tour.nights ?? 0}N / ${tour.days ?? 0}D`],
+                      ['Passengers', passengerLabel],
+                      selectedSeatMap.size > 0 ? ['Seats', Array.from(selectedSeatMap.keys()).join(', ')] : null,
+                    ].filter(Boolean).map(([label, value]) => (
+                      <div key={label} className="flex justify-between text-[12px]">
+                        <span className="text-slate-500">{label}</span>
+                        <span className="font-semibold text-slate-800 text-right max-w-[60%] truncate">{value}</span>
+                      </div>
+                    ));
+                  })()}
                 </div>
 
                 {/* Price breakdown */}
                 <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-2.5">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">{hasSeats ? 'Seat Price' : 'Base Price'}</span>
-                    <span className="font-bold text-slate-900">{formatCurrency(basePrice)}</span>
-                  </div>
+                  {tourBasePrice > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Tour Price</span>
+                      <span className="font-bold text-slate-900">{formatCurrency(tourBasePrice)}</span>
+                    </div>
+                  )}
+                  {seatPrice > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Seat Price ({selectedSeatMap.size} × {formatCurrency(perSeatPrice)})</span>
+                      <span className="font-bold text-slate-900">{formatCurrency(seatPrice)}</span>
+                    </div>
+                  )}
                   {gstRate > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-500">GST — Tour ({gstRate}%)</span>
@@ -909,7 +1259,6 @@ export default function Tour() {
   const [appliedFilters, setAppliedFilters] = useState(DEFAULT_FILTERS);
   const [page, setPage] = useState(1);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [bookingTour, setBookingTour] = useState(null);
 
   const buildParams = useCallback((f = {}, pg = 1) => {
     const params = { ...f, page: pg, limit: 12 };
@@ -1060,7 +1409,7 @@ export default function Tour() {
             <>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {tours.map((tour) => (
-                  <TourCard key={tour._id} tour={tour} onBookNow={setBookingTour} />
+                  <TourCard key={tour._id} tour={tour} />
                 ))}
               </div>
 
@@ -1072,7 +1421,6 @@ export default function Tour() {
         </main>
 
       </div>
-      {bookingTour && <BookingModal tour={bookingTour} onClose={() => setBookingTour(null)} />}
     </div>
   );
 }

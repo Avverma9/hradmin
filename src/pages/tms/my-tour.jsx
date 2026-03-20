@@ -6,12 +6,10 @@ import {
   AlertCircle, Eye, Pencil, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { fetchFilteredTours } from '../../../redux/slices/tms/travel/tour/tour'
+import { selectAuth } from '../../../redux/slices/authSlice'
+import { formatCurrency } from '../../utils/format'
 
-const selectAuth  = (state) => state.auth
-const selectTour  = (state) => state.tour
-
-const formatCurrency = (amount) =>
-  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(amount) || 0)
+const selectTour = (state) => state.tour
 
 const StatusBadge = ({ accepted }) =>
   accepted ? (

@@ -31,6 +31,7 @@ import {
   updateOwner,
 } from "../../../redux/slices/tms/travel/car";
 import Breadcrumb from "../../components/breadcrumb";
+import { formatDate } from '../../utils/format';
 
 // --- Helpers ---
 const getAvatarInitials = (name = "Unknown") => name.charAt(0).toUpperCase();
@@ -56,15 +57,6 @@ function CopyButton({ value }) {
     </button>
   );
 }
-
-const formatDate = (value) => {
-  if (!value) return 'N/A';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric'
-  }).format(date);
-};
 
 // --- Modals ---
 

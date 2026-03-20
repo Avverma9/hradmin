@@ -13,16 +13,8 @@ import {
 import { useNavigate } from 'react-router-dom'
 import Breadcrumb from '../../components/breadcrumb'
 import { getAllHotels } from '../../../redux/slices/admin/hotel'
-import { getSelectedGuest, saveSelectedHotel } from './storage'
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const formatCurrency = (value) =>
-  new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(Number(value) || 0)
+import { getSelectedGuest, saveSelectedHotel } from '../../utils/booking-storage'
+import { formatCurrency } from '../../utils/format'
 
 const getHotelList = (payload) => {
   if (Array.isArray(payload))           return payload

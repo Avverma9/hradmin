@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import Breadcrumb from '../../components/breadcrumb';
 import { createUser, clearUser } from '../../../redux/slices/user';
-import { clearSelectedHotel, saveSelectedGuest } from './storage';
+import { clearSelectedHotel, saveSelectedGuest } from '../../utils/booking-storage';
 
 export default function CreateUser() {
   const location = useLocation();
