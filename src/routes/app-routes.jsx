@@ -14,6 +14,8 @@ import Messenger from '../pages/messenger/messenger'
 import Partner from '../pages/partner/partner'
 import PanelBooking from '../pages/pms/panel-booking'
 import PmsBooking from '../pages/pms/pms-booking'
+import YourHotel from '../pages/pms/your-hotel'
+import YourHotelDetails from '../pages/pms/your-hotel-details'
 import Car from '../pages/tms/car'
 import ViewCar from '../pages/tms/view-car'
 import YourCars from '../pages/tms/your-car'
@@ -34,6 +36,13 @@ import ComplaintChat from '../components/complaints/complaint-chat'
 import MyComplaints from '../pages/complaints/my-complaints'
 import Availability from '../pages/admin/availability'
 import MonthlyPrice from '../pages/admin/monthlyPrice'
+import AllHotels from '../pages/admin/hotel/all-hotel'
+import HotelDetails from '../pages/admin/hotel/hotel-details'
+import HotelEditPage from '../pages/admin/hotel/hotel-edit'
+import BulkManagement from '../pages/admin/hotel/bulk-management'
+import BulkCouponManage from '../pages/admin/hotel/bulk-coupon-manage'
+import AddLocations from '../pages/admin/locations/add-locations'
+import ListLocations from '../pages/admin/locations/list-locations'
 
 const EditCarPage = () => <Car isEditMode />
 
@@ -50,6 +59,9 @@ export const APP_ROUTES = [
   { path: '/messenger', Component: Messenger },
   { path: '/your-bookings', Component: PmsBooking },
   { path: '/panel-booking', Component: PanelBooking },
+  { path: '/your-hotels', Component: YourHotel },
+  { path: '/your-hotels/:id', Component: YourHotelDetails },
+  { path: '/your-hotels/:id/edit', Component: HotelEditPage },
   { path: '/booking-creation', Component: FindUser },
   { path: '/booking-creation/hotels', Component: BookingCreationHotels },
   { path: '/booking-creation/create-user', Component: CreateUser },
@@ -76,6 +88,14 @@ export const APP_ROUTES = [
   { path: "/your-complaints", Component: MyComplaints },
   { path: "/hotels/availability", Component: Availability },
   { path: "/hotels/monthly-price", Component: MonthlyPrice },
+  { path: "/hotels/bulk-management", Component: BulkManagement },
+  { path: "/hotels/bulk-coupon-manage", Component: BulkCouponManage },
+  { path: "/travel-locations", Component: ListLocations },
+  { path: "/travel-locations/add", Component: AddLocations },
+  { path: "/hotels/", Component: AllHotels },
+  { path: "/hotels/:id", Component: HotelDetails },
+  { path: "/hotels/:id/edit", Component: HotelEditPage },
+
 
 
 

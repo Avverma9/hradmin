@@ -236,7 +236,7 @@ function BookHotel() {
           price: selectedRoom.price,
         },
       ],
-      pm: 'online',
+      pm: 'offline',
       isPartialBooking: false,
       partialAmount: 0,
       bookingStatus: 'Confirmed',

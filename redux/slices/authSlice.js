@@ -159,6 +159,7 @@ export const refreshSidebarLinks = createAsyncThunk(
     try {
       const response = await api.get(`/additional/sidebar-links/for-user/${userId}`, {
         params: { grouped: true },
+        skipGlobalLoader: true,
       })
 
       return response.data?.data || {}
@@ -174,7 +175,9 @@ export const refreshRoutePermissions = createAsyncThunk(
   'auth/refreshRoutePermissions',
   async (userId, thunkAPI) => {
     try {
-      const response = await api.get(`/additional/route-permissions/${userId}`)
+      const response = await api.get(`/additional/route-permissions/${userId}`, {
+        skipGlobalLoader: true,
+      })
       return response.data?.data?.routePermissions || null
     } catch (error) {
       return thunkAPI.rejectWithValue(

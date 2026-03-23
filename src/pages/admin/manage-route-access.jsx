@@ -116,7 +116,7 @@ const CheckRoutePanel = ({ userId, checkResult, checking, onCheck, onClear }) =>
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-mono text-slate-400">/</span>
             <input type="text" value={inputPath}
               onChange={(e) => { setInputPath(e.target.value); if (checkResult) onClear() }}
-              placeholder="tour/123  or  hotels/view"
+              placeholder="tour/123 or hotels/123"
               className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-5 pr-3 text-sm font-mono text-slate-700 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-400/10" />
           </div>
           <button type="submit" disabled={checking || !inputPath.trim()}

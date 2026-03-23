@@ -17,6 +17,8 @@ import tourReducer from './slices/tms/travel/tour/tour'
 import complaintReducer from './slices/complaintSlice'
 import availabilityReducer from './slices/availability'
 import monthlyReducer from './slices/admin/monthly'
+import bulkReducer from './slices/admin/bulk'
+import locationsReducer from './slices/admin/locations'
 
 const rootReducer = combineReducers({
   adminAdditional: adminAdditionalReducer,
@@ -37,6 +39,8 @@ const rootReducer = combineReducers({
   complaints: complaintReducer,
   availability: availabilityReducer,
   monthly: monthlyReducer,
+  bulk: bulkReducer,
+  locations: locationsReducer,
 })
 
 export default rootReducer

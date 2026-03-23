@@ -12,7 +12,6 @@ import {
   MapPin,
   Mail,
   ChevronDown,
-  Filter,
   PencilLine,
   X,
   UserCog,
@@ -38,6 +37,7 @@ import {
   verifyBookingCancellationOtp,
 } from '../../../redux/slices/pms/bookings'
 import Breadcrumb from '../../components/breadcrumb'
+import MasterFilter from '../../components/master-filter'
 import { formatDate, formatDateTime, formatCurrency, formatDateInput } from '../../utils/format'
 
 const statusOptions = [
@@ -225,14 +225,6 @@ const getEditableStatusOptions = (currentStatus, role = '') => {
   return [getStatusLabel(currentStatus || 'Pending')]
 }
 
-const getFilterLabel = (field = {}) => {
-  if (field?.label) return field.label
-  if (field?.placeholder) {
-    return field.placeholder.replace(/^Filter by\s*/i, '').trim()
-  }
-  return field?.key || 'Filter'
-}
-
 const InfoRow = ({ label, value, className = '' }) => (
   <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between py-3 border-b border-slate-100 last:border-0 ${className}`}>
     <span className="text-[13px] font-medium text-slate-500">{label}</span>
@@ -345,7 +337,7 @@ function BookingViewModal({ booking, loading, shouldHideGuestContact, showCreate
   if (!booking) return null
 
   const hotelContactNo = booking?.hotelDetails?.hotelContactNo || booking?.hotelDetails?.contactNo || booking?.hotelDetails?.mobile || 'Not available'
-  const paymentStatus = booking?.paymentStatus || (String(booking?.pm || '').toLowerCase() === 'offline' ? 'Pending (Pay at Hotel)' : 'Completed')
+  // const paymentStatus = booking?.paymentStatus || (String(booking?.pm || '').toLowerCase() === 'offline' ? 'Pending (Pay at Hotel)' : 'Completed')
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm transition-opacity">
@@ -452,7 +444,7 @@ function BookingViewModal({ booking, loading, shouldHideGuestContact, showCreate
                     <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900">Billing & Payment</h3>
                   </div>
                   <InfoRow label="Payment Mode" value={booking.pm || 'N/A'} />
-                  <InfoRow label="Payment Status" value={paymentStatus} />
+                  {/* <InfoRow label="Payment Status" value={paymentStatus} /> */}
                   <InfoRow label="Coupon Code" value={booking.couponCode || 'Not applied'} />
                   <InfoRow label="Taxes / GST" value={formatCurrency(Number(booking.price || 0) - Number(booking.roomDetails?.[0]?.price || 0))} />
                   <div className="flex items-center justify-between pt-4 mt-1 border-t border-dashed border-slate-200">
@@ -988,8 +980,6 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
   const [activeTab, setActiveTab] = useState('overview') 
   const [modalMode, setModalMode] = useState('')
   const [activeBookingRow, setActiveBookingRow] = useState(null)
-  const [showFilters, setShowFilters] = useState(true)
-  
   const hasLoadedInitialDataRef = useRef(false)
   const normalizedUserRole = String(user?.role || '').toLowerCase()
   const isPrivilegedUser = privilegedRoles.has(normalizedUserRole)
@@ -1032,12 +1022,110 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
   }, [dispatch, fetchMode, fixedFilters, user?.id])
 
   const hotelOptions = useMemo(() => hotels.map((h) => ({ value: h.hotelId, label: h.hotelName || 'Unnamed Hotel' })), [hotels])
+  const masterFilterFields = useMemo(() => {
+    const baseFields = [
+      propertyFilterMode === 'text'
+        ? {
+            key: 'hotelId',
+            label: 'Hotel ID',
+            type: 'text',
+            placeholder: 'Filter by Hotel ID',
+          }
+        : {
+            key: 'hotelId',
+            label: 'Property',
+            type: 'select',
+            options: hotelOptions,
+            emptyOptionLabel: 'All Properties',
+          },
+      {
+        key: 'bookingStatus',
+        label: 'Booking Status',
+        type: 'select',
+        options: statusOptions,
+        emptyOptionLabel: 'Any Status',
+      },
+      {
+        key: 'bookingSource',
+        label: 'Booking Source',
+        type: 'select',
+        options: sourceOptions,
+        emptyOptionLabel: 'Any Source',
+        hidden: hideSourceFilter,
+      },
+      {
+        key: 'date',
+        label: 'Date',
+        type: 'date',
+      },
+      {
+        key: 'email',
+        label: 'User Email',
+        type: 'text',
+        placeholder: 'Filter by User Email',
+      },
+      {
+        key: 'userId',
+        label: 'User ID',
+        type: 'text',
+        placeholder: 'Filter by User ID',
+      },
+      {
+        key: 'userMobile',
+        label: 'User Mobile',
+        type: 'text',
+        placeholder: 'Filter by User Mobile',
+      },
+      {
+        key: 'bookingId',
+        label: 'Booking ID',
+        type: 'text',
+        placeholder: 'Filter by Booking ID',
+      },
+      {
+        key: 'hotelEmail',
+        label: 'Hotel Email',
+        type: 'text',
+        placeholder: 'Filter by Hotel Email',
+      },
+      {
+        key: 'hotelCity',
+        label: 'Hotel City',
+        type: 'text',
+        placeholder: 'Filter by Hotel City',
+      },
+      {
+        key: 'couponCode',
+        label: 'Coupon Code',
+        type: 'text',
+        placeholder: 'Filter by Coupon Code',
+      },
+      {
+        key: 'createdBy',
+        label: 'Created By',
+        type: 'text',
+        placeholder: 'Filter by Created By',
+      },
+    ]
+
+    const overrideFields = extraFilterFields.map((field) => ({
+      type: 'text',
+      ...field,
+    }))
+
+    const fieldMap = new Map()
+    ;[...baseFields, ...overrideFields].forEach((field) => {
+      fieldMap.set(field.key, field)
+    })
+
+    return Array.from(fieldMap.values()).filter(Boolean)
+  }, [propertyFilterMode, hotelOptions, hideSourceFilter, extraFilterFields])
 
   const handleFilterChange = (key, value) => dispatch(setPmsFilters({ [key]: value }))
   const handleApplyFilters = () => loadBookings(appliedFilters)
   const handleResetFilters = () => {
     dispatch(resetPmsFilters())
-    loadBookings({ hotelId: '', bookingStatus: '', bookingSource: '', date: '', email: '', userMobile: '', ...fixedFilters })
+    loadBookings({})
   }
 
   const closeBookingModal = () => { setModalMode(''); setActiveBookingRow(null); dispatch(clearSelectedBooking()) }
@@ -1259,106 +1347,22 @@ function PmsBooking({ title = 'PMS Bookings', fetchMode = 'partner', fixedFilter
             {activeTab === 'bookings' && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 
-                {/* Labeled Filter Toolbar */}
-                <div className="mb-6 rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm">
-                  <div className="mb-4 flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-inset ring-indigo-500/10">
-                        <Filter size={16} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">Booking Filters</p>
-                        <p className="text-xs text-slate-500">Search bookings by property, status, source, date, and admin filters.</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowFilters((value) => !value)}
-                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-                      >
-                        {showFilters ? 'Hide Filters' : 'Show Filters'}
-                        <ChevronDown size={14} className={`transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-                      </button>
-
-                      <div className="hidden sm:flex items-center gap-2">
-                      <button onClick={handleResetFilters} className="rounded-xl px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors">Reset</button>
-                      <button onClick={handleApplyFilters} className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-bold text-white hover:bg-slate-800 transition-all shadow-sm focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">Apply</button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {showFilters && (
-                    <>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                        {propertyFilterMode === 'text' ? 'Hotel ID' : 'Property'}
-                      </label>
-                      {propertyFilterMode === 'text' ? (
-                        <input
-                          type="text"
-                          value={filters.hotelId}
-                          onChange={(e) => handleFilterChange('hotelId', e.target.value)}
-                          placeholder="Filter by Hotel ID"
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
-                        />
-                      ) : (
-                        <div className="relative">
-                          <select value={filters.hotelId} onChange={(e) => handleFilterChange('hotelId', e.target.value)} className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-9 text-sm font-semibold text-slate-700 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10">
-                            <option value="">All Properties</option>
-                            {hotelOptions.map((h) => <option key={h.value} value={h.value}>{h.label}</option>)}
-                          </select>
-                          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Booking Status</label>
-                      <div className="relative">
-                        <select value={filters.bookingStatus} onChange={(e) => handleFilterChange('bookingStatus', e.target.value)} className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-9 text-sm font-semibold text-slate-700 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10">
-                          <option value="">Any Status</option>
-                          {statusOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                      </div>
-                    </div>
-
-                    {!hideSourceFilter && (
-                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Booking Source</label>
-                        <div className="relative">
-                          <select value={filters.bookingSource} onChange={(e) => handleFilterChange('bookingSource', e.target.value)} className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-9 text-sm font-semibold text-slate-700 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10">
-                            <option value="">Any Source</option>
-                            {sourceOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-                          </select>
-                          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Date</label>
-                      <input type="date" value={filters.date} onChange={(e) => handleFilterChange('date', e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10" />
-                    </div>
-
-                    {extraFilterFields.length > 0 && extraFilterFields.map((field) => (
-                      <div key={field.key} className="space-y-1.5">
-                        <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500">{getFilterLabel(field)}</label>
-                        <input type="text" value={filters[field.key] || ''} onChange={(e) => handleFilterChange(field.key, e.target.value)} placeholder={field.placeholder || `Filter by ${getFilterLabel(field)}`} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10" />
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 flex items-center gap-2 sm:hidden">
-                    <button onClick={handleResetFilters} className="flex-1 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors">Reset</button>
-                    <button onClick={handleApplyFilters} className="flex-1 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-slate-800 transition-all shadow-sm focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">Apply</button>
-                  </div>
-                    </>
-                  )}
-                </div>
+                <MasterFilter
+                  title="Booking Filters"
+                  description="Search bookings by property, status, source, date, and admin filters."
+                  fields={masterFilterFields}
+                  values={filters}
+                  loading={loading}
+                  defaultExpanded
+                  enableFieldPicker
+                  fieldPickerLabel="Select booking filter key"
+                  initialActiveFieldKeys={['hotelId', 'bookingStatus', 'date', 'bookingId']}
+                  applyLabel="Apply"
+                  resetLabel="Reset"
+                  onChange={handleFilterChange}
+                  onApply={handleApplyFilters}
+                  onReset={handleResetFilters}
+                />
 
                 {/* Main Data Table */}
                 <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_2px_10px_-3px_rgba(0,0,0,0.02)]">
