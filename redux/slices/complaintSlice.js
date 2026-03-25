@@ -1,6 +1,15 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "../../src/api";
 
+const normalizeComplaintList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.complaints)) return payload.complaints;
+  if (Array.isArray(payload?.data?.complaints)) return payload.data.complaints;
+  if (Array.isArray(payload?.items)) return payload.items;
+  return [];
+};
+
 // ─── 1. Create Complaint ──────────────────────────────────────────────────────
 export const createComplaint = createAsyncThunk(
   "complaints/createComplaint",
@@ -32,7 +41,7 @@ export const fetchComplaintsByUser = createAsyncThunk(
   "complaints/fetchComplaintsByUser",
   async (userId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/complaints/${userId}`);
+      const response = await api.get(`/api/complaints/${userId}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -166,7 +175,7 @@ const complaintSlice = createSlice({
       })
       .addCase(fetchComplaints.fulfilled, (state, action) => {
         state.loading = false;
-        state.complaints = action.payload;
+        state.complaints = normalizeComplaintList(action.payload);
       })
       .addCase(fetchComplaints.rejected, (state, action) => {
         state.loading = false;
@@ -180,7 +189,7 @@ const complaintSlice = createSlice({
       })
       .addCase(fetchComplaintsByUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.userComplaints = action.payload;
+        state.userComplaints = normalizeComplaintList(action.payload);
       })
       .addCase(fetchComplaintsByUser.rejected, (state, action) => {
         state.loading = false;
@@ -208,7 +217,7 @@ const complaintSlice = createSlice({
       })
       .addCase(filterComplaints.fulfilled, (state, action) => {
         state.loading = false;
-        state.filteredComplaints = action.payload;
+        state.filteredComplaints = normalizeComplaintList(action.payload);
       })
       .addCase(filterComplaints.rejected, (state, action) => {
         state.loading = false;

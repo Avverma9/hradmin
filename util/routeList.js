@@ -11,346 +11,108 @@
  *   isAdmin     — true when the route is admin-only by nature
  */
 
-export const ROUTE_LIST = [
-  /* ── General ───────────────────────────────────────────── */
-  {
-    path: '/dashboard',
-    label: 'Dashboard',
-    description: 'Main overview & stats',
-    groupKey: 'general',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/messenger',
-    label: 'Messenger',
-    description: 'Real-time chat between users',
-    groupKey: 'general',
-    isDynamic: false,
-    isAdmin: false,
-  },
+const createRoute = (
+  path,
+  label,
+  description,
+  groupKey,
+  isDynamic = false,
+  isAdmin = false
+) => ({
+  path,
+  label,
+  description,
+  groupKey,
+  isDynamic,
+  isAdmin,
+})
 
-  /* ── User Management ────────────────────────────────────── */
-  {
-    path: '/user',
-    label: 'All Partners / Users',
-    description: 'List of all dashboard users & partners',
-    groupKey: 'users',
-    isDynamic: false,
-    isAdmin: false,
-  },
-
-  /* ── Admin ──────────────────────────────────────────────── */
-  {
-    path: '/manage-menu',
-    label: 'Manage Sidebar Links',
-    description: 'Add / edit / remove sidebar navigation links',
-    groupKey: 'admin',
-    isDynamic: false,
-    isAdmin: true,
-  },
-  {
-    path: '/admin/coupon',
-    label: 'Coupon Management',
-    description: 'Create and manage discount coupons',
-    groupKey: 'admin',
-    isDynamic: false,
-    isAdmin: true,
-  },
-  {
-    path: '/additional-fields',
-    label: 'Additional Data Fields',
-    description: 'Configure extra metadata fields',
-    groupKey: 'admin',
-    isDynamic: false,
-    isAdmin: true,
-  },
-  {
-    path: '/gst-management',
-    label: 'GST Management',
-    description: 'Configure GST slabs and settings',
-    groupKey: 'admin',
-    isDynamic: false,
-    isAdmin: true,
-  },
-  {
-    path: '/gst-page',
-    label: 'GST Page (View)',
-    description: 'Read-only GST overview page',
-    groupKey: 'admin',
-    isDynamic: false,
-    isAdmin: true,
-  },
-  {
-    path: '/hotel-bookings',
-    label: 'Hotel Bookings (Admin)',
-    description: 'Admin view of all hotel bookings',
-    groupKey: 'admin',
-    isDynamic: false,
-    isAdmin: true,
-  },
-  {
-    path: '/hotels/',
-    label: 'All Hotels',
-    description: 'Admin view of all hotels',
-    groupKey: 'admin',
-    isDynamic: false,
-    isAdmin: true,
-  },
-  {
-    path: '/hotels/:id',
-    label: 'Hotel Details',
-    description: 'Detailed view of a specific hotel by hotelId',
-    groupKey: 'admin',
-    isDynamic: true,
-    isAdmin: true,
-  },
-  {
-    path: '/manage-route-access',
-    label: 'Manage Route Access',
-    description: 'Grant / revoke route-level access per user',
-    groupKey: 'admin',
-    isDynamic: false,
-    isAdmin: true,
-  },
-
-  /* ── PMS — Bookings ─────────────────────────────────────── */
-  {
-    path: '/your-bookings',
-    label: 'Your Bookings',
-    description: 'PMS: personal hotel booking list',
-    groupKey: 'pms',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/panel-booking',
-    label: 'Panel Booking',
-    description: 'PMS: panel-level booking management',
-    groupKey: 'pms',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/your-hotels',
-    label: 'Your Hotels',
-    description: 'PMS: hotels owned by the logged-in user',
-    groupKey: 'pms',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/your-hotels/:id',
-    label: 'Your Hotel Details',
-    description: 'PMS: detail view of a hotel owned by the logged-in user',
-    groupKey: 'pms',
-    isDynamic: true,
-    isAdmin: false,
-  },
-
-  /* ── Booking Creation ───────────────────────────────────── */
-  {
-    path: '/booking-creation',
-    label: 'Find User',
-    description: 'Step 1: search / identify a guest',
-    groupKey: 'booking',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/booking-creation/hotels',
-    label: 'Select Hotel',
-    description: 'Step 2: pick a hotel for the booking',
-    groupKey: 'booking',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/booking-creation/create-user',
-    label: 'Create New Guest',
-    description: 'Step 2b: register a new guest profile',
-    groupKey: 'booking',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/booking-creation/book-hotel',
-    label: 'Book Hotel',
-    description: 'Step 3: confirm & submit the booking',
-    groupKey: 'booking',
-    isDynamic: false,
-    isAdmin: false,
-  },
-
-  /* ── TMS — Cars ─────────────────────────────────────────── */
-  {
-    path: '/add-a-car',
-    label: 'Add a Car',
-    description: 'Register a new vehicle in TMS',
-    groupKey: 'cars',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/your-cars',
-    label: 'Your Cars',
-    description: 'List of vehicles you own/manage',
-    groupKey: 'cars',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/your-cars/:id',
-    label: 'View Car',
-    description: 'Detail view of a specific vehicle',
-    groupKey: 'cars',
-    isDynamic: true,
-    isAdmin: false,
-  },
-  {
-    path: '/your-cars/:id/edit',
-    label: 'Edit Car',
-    description: 'Edit vehicle details',
-    groupKey: 'cars',
-    isDynamic: true,
-    isAdmin: false,
-  },
-  {
-    path: '/cars-owner',
-    label: 'Cars Owner',
-    description: 'Manage vehicle ownership records',
-    groupKey: 'cars',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/travel-bookings',
-    label: 'Travel Bookings',
-    description: 'Car/travel booking list for your vehicles',
-    groupKey: 'cars',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/car-booking',
-    label: 'All Cars (Browse)',
-    description: 'Browse all available cars for booking',
-    groupKey: 'cars',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/admin-travel-bookings',
-    label: 'Admin: All Travel Bookings',
-    description: 'Admin view of all travel/car bookings',
-    groupKey: 'cars',
-    isDynamic: false,
-    isAdmin: true,
-  },
-
-  /* ── TMS — Tours ────────────────────────────────────────── */
-  {
-    path: '/tours-book',
-    label: 'Browse & Book Tours',
-    description: 'Explore tour packages and book seats with GST pricing',
-    groupKey: 'tours',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/tours/:id',
-    label: 'Browse & Book Tours',
-    description: 'Explore tour packages and book seats with GST pricing',
-    groupKey: 'tours',
-    isDynamic: true,
-    isAdmin: false,
-  },
-  {
-    path: '/add-tour-data',
-    label: 'Add Tour Package',
-    description: 'Create a new tour package listing',
-    groupKey: 'tours',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/my-tour',
-    label: 'My Tours',
-    description: 'Tour packages linked to your agency',
-    groupKey: 'tours',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/my-tour/:id',
-    label: 'View Tour',
-    description: 'Detail page for a specific tour package',
-    groupKey: 'tours',
-    isDynamic: true,
-    isAdmin: false,
-  },
-  
-  {
-    path: '/my-tour/:id/edit',
-    label: 'Edit Tour',
-    description: 'Edit a tour package',
-    groupKey: 'tours',
-    isDynamic: true,
-    isAdmin: false,
-  },
-  {
-    path: '/tour-booking/:id',
-    label: 'Book Tour',
-    description: 'Multi-step tour booking: seat selection, passenger details and GST pricing',
-    groupKey: 'tours',
-    isDynamic: true,
-    isAdmin: false,
-  },
-  {
-    path: '/admin/tour-bookings',
-    label: 'All Tour Bookings',
-    description: 'Admin view of all tour bookings across all agencies',
-    groupKey: 'tours',
-    isDynamic: false,
-    isAdmin: true,
-  },
-
-  /* ── Complaints ─────────────────────────────────────────── */
-  {
-    path: '/complaints',
-    label: 'All Complaints',
-    description: 'Admin view of all hotel complaints',
-    groupKey: 'complaints',
-    isDynamic: false,
-    isAdmin: true,
-  },
-  {
-    path: '/complaint/create',
-    label: 'File a Complaint',
-    description: 'Submit a new complaint about a hotel',
-    groupKey: 'complaints',
-    isDynamic: false,
-    isAdmin: false,
-  },
-  {
-    path: '/complaint/chat/:id',
-    label: 'Complaint Chat',
-    description: 'Chat support for a specific complaint',
-    groupKey: 'complaints',
-    isDynamic: true,
-    isAdmin: false,
-  },
-  {
-    path: '/my-complaints',
-    label: 'My Complaints',
-    description: 'View and track complaints filed by the logged-in user',
-    groupKey: 'complaints',
-    isDynamic: false,
-    isAdmin: false,
-  },
+/* ── General ───────────────────────────────────────────── */
+const GENERAL_ROUTES = [
+  createRoute('/dashboard', 'Dashboard', 'Main overview & stats', 'general'),
+  createRoute('/messenger', 'Messenger', 'Real-time chat between users', 'general'),
 ]
 
-/* ── Group Metadata ──────────────────────────────────────── */
+/* ── User Management ───────────────────────────────────── */
+const USER_ROUTES = [
+  createRoute('/user', 'All Partners / Users', 'List of all dashboard users & partners', 'users'),
+]
+
+/* ── Admin ─────────────────────────────────────────────── */
+const ADMIN_ROUTES = [
+  createRoute('/manage-menu', 'Manage Sidebar Links', 'Add / edit / remove sidebar navigation links', 'admin', false, true),
+  createRoute('/admin/coupon', 'Coupon Management', 'Create and manage discount coupons', 'admin', false, true),
+  createRoute('/additional-fields', 'Additional Data Fields', 'Configure extra metadata fields', 'admin', false, true),
+  createRoute('/gst-management', 'GST Management', 'Configure GST slabs and settings', 'admin', false, true),
+  createRoute('/gst-page', 'GST Page (View)', 'Read-only GST overview page', 'admin', false, true),
+  createRoute('/hotel-bookings', 'Hotel Bookings (Admin)', 'Admin view of all hotel bookings', 'admin', false, true),
+  createRoute('/hotels/', 'All Hotels', 'Admin view of all hotels', 'admin', false, true),
+  createRoute('/hotels/:id', 'Hotel Details', 'Detailed view of a specific hotel by hotelId', 'admin', true, true),
+  createRoute('/manage-route-access', 'Manage Route Access', 'Grant / revoke route-level access per user', 'admin', false, true),
+]
+
+/* ── PMS — Bookings ────────────────────────────────────── */
+const PMS_ROUTES = [
+  createRoute('/your-bookings', 'PMS Bookings', 'PMS: personal hotel booking list', 'pms'),
+  createRoute('/panel-booking', 'Panel Booking', 'PMS: panel-level booking management', 'pms'),
+  createRoute('/your-hotels', 'Your Hotels', 'PMS: hotels owned by the logged-in user', 'pms'),
+  createRoute('/your-hotels/:id', 'Your Hotel Details', 'PMS: detail view of a hotel owned by the logged-in user', 'pms', true),
+]
+
+/* ── Booking Creation ──────────────────────────────────── */
+const BOOKING_ROUTES = [
+  createRoute('/booking-creation', 'Find User', 'Step 1: search / identify a guest', 'booking'),
+  createRoute('/booking-creation/hotels', 'Select Hotel', 'Step 2: pick a hotel for the booking', 'booking'),
+  createRoute('/booking-creation/create-user', 'Create New Guest', 'Step 2b: register a new guest profile', 'booking'),
+  createRoute('/booking-creation/book-hotel', 'Book Hotel', 'Step 3: confirm & submit the booking', 'booking'),
+]
+
+/* ── TMS — Cars ────────────────────────────────────────── */
+const CAR_ROUTES = [
+  createRoute('/add-a-car', 'Add a Car', 'Register a new vehicle in TMS', 'cars'),
+  createRoute('/your-cars', 'Your Cars', 'List of vehicles you own/manage', 'cars'),
+  createRoute('/your-cars/:id', 'View Car', 'Detail view of a specific vehicle', 'cars', true),
+  createRoute('/your-cars/:id/edit', 'Edit Car', 'Edit vehicle details', 'cars', true),
+  createRoute('/cars-owner', 'Cars Owner', 'Manage vehicle ownership records', 'cars'),
+  createRoute('/travel-bookings', 'Travel Bookings', 'Car/travel booking list for your vehicles', 'cars'),
+  createRoute('/car-booking', 'All Cars (Browse)', 'Browse all available cars for booking', 'cars'),
+  createRoute('/admin-travel-bookings', 'Admin: All Travel Bookings', 'Admin view of all travel/car bookings', 'cars', false, true),
+]
+
+/* ── TMS — Tours ───────────────────────────────────────── */
+const TOUR_ROUTES = [
+  createRoute('/tours-book', 'Browse & Book Tours', 'Explore tour packages and book seats with GST pricing', 'tours'),
+  createRoute('/tours/:id', 'Browse & Book Tours', 'Explore tour packages and book seats with GST pricing', 'tours', true),
+  createRoute('/add-tour-data', 'Add Tour Package', 'Create a new tour package listing', 'tours'),
+  createRoute('/my-tour', 'My Tours', 'Tour packages linked to your agency', 'tours'),
+  createRoute('/my-tour/:id', 'View Tour', 'Detail page for a specific tour package', 'tours', true),
+  createRoute('/my-tour/:id/edit', 'Edit Tour', 'Edit a tour package', 'tours', true),
+  createRoute('/tour-booking/:id', 'Book Tour', 'Multi-step tour booking: seat selection, passenger details and GST pricing', 'tours', true),
+  createRoute('/admin/tour-bookings', 'All Tour Bookings', 'Admin view of all tour bookings across all agencies', 'tours', false, true),
+]
+
+/* ── Complaints ────────────────────────────────────────── */
+const COMPLAINT_ROUTES = [
+  createRoute('/complaints', 'All Complaints', 'Admin view of all hotel complaints', 'complaints', false, true),
+  createRoute('/complaint/create', 'File a Complaint', 'Submit a new complaint about a hotel', 'complaints'),
+  createRoute('/complaint/chat/:id', 'Complaint Chat', 'Chat support for a specific complaint', 'complaints', true),
+  createRoute('/my-complaints', 'My Complaints', 'View and track complaints filed by the logged-in user', 'complaints'),
+  createRoute('/user-complaint', 'User Complaints', 'View and track complaints filed by the logged-in user', 'complaints'),
+]
+
+/* ── Flat Route List ───────────────────────────────────── */
+export const ROUTE_LIST = [
+  ...GENERAL_ROUTES,
+  ...USER_ROUTES,
+  ...ADMIN_ROUTES,
+  ...PMS_ROUTES,
+  ...BOOKING_ROUTES,
+  ...CAR_ROUTES,
+  ...TOUR_ROUTES,
+  ...COMPLAINT_ROUTES,
+]
+
+/* ── Group Metadata ────────────────────────────────────── */
 export const ROUTE_GROUPS = [
   {
     key: 'general',
@@ -408,21 +170,22 @@ export const ROUTE_GROUPS = [
  */
 export const getGroupedRoutes = () => {
   const byKey = {}
+
   for (const route of ROUTE_LIST) {
     if (!byKey[route.groupKey]) byKey[route.groupKey] = []
     byKey[route.groupKey].push(route)
   }
 
-  const result = []
-  for (const group of ROUTE_GROUPS) {
-    if (byKey[group.key]?.length) {
-      result.push({ ...group, routes: byKey[group.key] })
-    }
-  }
+  const result = ROUTE_GROUPS
+    .filter((group) => byKey[group.key]?.length)
+    .map((group) => ({
+      ...group,
+      routes: byKey[group.key],
+    }))
 
-  // Catch any routes whose groupKey doesn't match a ROUTE_GROUPS entry
-  const knownKeys = new Set(ROUTE_GROUPS.map((g) => g.key))
-  const ungrouped = ROUTE_LIST.filter((r) => !knownKeys.has(r.groupKey))
+  const knownKeys = new Set(ROUTE_GROUPS.map((group) => group.key))
+  const ungrouped = ROUTE_LIST.filter((route) => !knownKeys.has(route.groupKey))
+
   if (ungrouped.length) {
     result.push({
       key: 'other',
@@ -437,4 +200,4 @@ export const getGroupedRoutes = () => {
 }
 
 /** Flat list of all paths — useful for "all paths" sets */
-export const ALL_ROUTE_PATHS = ROUTE_LIST.map((r) => r.path)
+export const ALL_ROUTE_PATHS = ROUTE_LIST.map((route) => route.path)

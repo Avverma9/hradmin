@@ -34,6 +34,7 @@ import Complaints from '../pages/admin/complaints'
 import CreateComplaint from '../components/complaints/create-complaint'
 import ComplaintChat from '../components/complaints/complaint-chat'
 import MyComplaints from '../pages/complaints/my-complaints'
+import UserComplaintsPage from '../pages/complaints/user-complaints'
 import Availability from '../pages/admin/availability'
 import MonthlyPrice from '../pages/admin/monthlyPrice'
 import AllHotels from '../pages/admin/hotel/all-hotel'
@@ -86,6 +87,7 @@ export const APP_ROUTES = [
   { path: "/complaint/create", Component: CreateComplaint },
   { path: "/complaint/chat/:id", Component: ComplaintChat },
   { path: "/your-complaints", Component: MyComplaints },
+  { path: "/user-complaint", Component: UserComplaintsPage },
   { path: "/hotels/availability", Component: Availability },
   { path: "/hotels/monthly-price", Component: MonthlyPrice },
   { path: "/hotels/bulk-management", Component: BulkManagement },

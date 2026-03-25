@@ -135,6 +135,7 @@ function SidebarLinkModal({
   const isCreateMode = mode === 'create'
   const isParentCreate = isCreateMode && createKind === 'parent'
   const isChildCreate = isCreateMode && createKind === 'child'
+  const shouldUseParentDropdown = isChildCreate || (mode === 'edit' && !formState.isParentOnly)
   const isParentOnlyLocked = isParentCreate || isChildCreate
   const dialogTitle = isParentCreate
     ? 'Create Parent Group'
@@ -177,7 +178,7 @@ function SidebarLinkModal({
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-gray-700">Parent Group</label>
-              {isChildCreate ? (
+              {shouldUseParentDropdown ? (
                 <select
                   required
                   name="parentLink"
@@ -186,7 +187,7 @@ function SidebarLinkModal({
                   className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 >
                   <option value="">Select parent group</option>
-                  {parentOptions.map((parent) => (
+                  {[...new Set([...parentOptions, formState.parentLink].filter(Boolean))].map((parent) => (
                     <option key={parent} value={parent}>
                       {parent}
                     </option>

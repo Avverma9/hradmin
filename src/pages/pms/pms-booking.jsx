@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 import {
   Building2,
   CalendarDays,
@@ -19,7 +20,8 @@ import {
   CreditCard,
   BedDouble,
   Clock,
-  Info
+  Info,
+  MessageSquarePlus
 } from 'lucide-react'
 
 import { selectAuth } from '../../../redux/slices/authSlice'
@@ -336,6 +338,7 @@ const StatusTimeline = ({ history, currentUpdatedAt, currentUserName }) => {
 function BookingViewModal({ booking, loading, shouldHideGuestContact, showCreatedBy = false, currentUserName = 'System Auto', onClose }) {
   if (!booking) return null
 
+  const navigate = useNavigate()
   const hotelContactNo = booking?.hotelDetails?.hotelContactNo || booking?.hotelDetails?.contactNo || booking?.hotelDetails?.mobile || 'Not available'
   // const paymentStatus = booking?.paymentStatus || (String(booking?.pm || '').toLowerCase() === 'offline' ? 'Pending (Pay at Hotel)' : 'Completed')
 
@@ -352,9 +355,28 @@ function BookingViewModal({ booking, loading, shouldHideGuestContact, showCreate
               <span className="text-xs text-slate-400">• Created {formatDate(booking?.createdAt)}</span>
             </div>
           </div>
-          <button onClick={onClose} className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900 focus:outline-none">
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                navigate('/complaint/create', {
+                  state: {
+                    bookingId: booking?.bookingId || '',
+                    hotelId: booking?.hotelDetails?.hotelId || booking?.hotelId || '',
+                    hotelName: booking?.hotelDetails?.hotelName || '',
+                    hotelEmail: booking?.hotelDetails?.hotelEmail || '',
+                  },
+                })
+              }
+              className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-600 transition-colors hover:bg-rose-100 focus:outline-none"
+            >
+              <MessageSquarePlus size={16} />
+              Raise a Complaint
+            </button>
+            <button onClick={onClose} className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900 focus:outline-none">
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Scrollable Content */}

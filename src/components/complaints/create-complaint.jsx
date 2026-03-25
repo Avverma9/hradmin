@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, ChevronLeft, Loader2, Send, ShieldCheck } from 'lucide-react'
 import { createComplaint } from '../../../redux/slices/complaintSlice'
 import { selectAuth } from '../../../redux/slices/authSlice'
+import { getAllHotels } from '../../../redux/slices/admin/hotel'
 
 const REGARDING_OPTIONS = ['Hotel', 'Room', 'Service', 'Staff', 'Cleanliness', 'Food', 'Billing', 'Other']
 
@@ -16,24 +17,60 @@ const InputField = ({ label, required, children }) => (
   </div>
 )
 
+const normalizeHotelOption = (hotel) => ({
+  id: hotel?._id || hotel?.hotelId || hotel?.id || '',
+  hotelName: hotel?.hotelName || hotel?.name || hotel?.basicInfo?.name || '',
+  hotelEmail: hotel?.hotelEmail || hotel?.email || hotel?.basicInfo?.contacts?.email || '',
+})
+
 export default function CreateComplaint() {
   const dispatch  = useDispatch()
   const navigate  = useNavigate()
+  const location  = useLocation()
   const { user }  = useSelector(selectAuth)
+  const { allHotels, loading: hotelsLoading } = useSelector((state) => state.hotel)
+  const prefilledState = location.state || {}
 
   const [form, setForm] = useState({
     regarding:  'Hotel',
     issue:      '',
-    hotelName:  '',
-    hotelEmail: '',
-    hotelId:    '',
-    bookingId:  '',
+    hotelName:  prefilledState.hotelName || '',
+    hotelEmail: prefilledState.hotelEmail || '',
+    hotelId:    prefilledState.hotelId || '',
+    bookingId:  prefilledState.bookingId || '',
   })
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
   const [success, setSuccess] = useState(null)    // { complaintId, _id }
 
   const set = (key) => (e) => setForm((p) => ({ ...p, [key]: e.target.value }))
+
+  useEffect(() => {
+    if (!allHotels?.length) {
+      dispatch(getAllHotels())
+    }
+  }, [allHotels?.length, dispatch])
+
+  const hotelOptions = useMemo(
+    () =>
+      (allHotels || [])
+        .map(normalizeHotelOption)
+        .filter((hotel) => hotel.hotelName)
+        .sort((first, second) => first.hotelName.localeCompare(second.hotelName)),
+    [allHotels],
+  )
+
+  const handleHotelChange = (event) => {
+    const selectedHotelName = event.target.value
+    const selectedHotel = hotelOptions.find((hotel) => hotel.hotelName === selectedHotelName)
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      hotelName: selectedHotelName,
+      hotelEmail: selectedHotel?.hotelEmail || '',
+      hotelId: selectedHotel?.id || '',
+    }))
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -155,12 +192,19 @@ export default function CreateComplaint() {
             <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Hotel Details</p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <InputField label="Hotel Name">
-                <input value={form.hotelName} onChange={set('hotelName')} placeholder="e.g. Grand Palace Hotel"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-indigo-500" />
+                <select value={form.hotelName} onChange={handleHotelChange}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-indigo-500">
+                  <option value="">{hotelsLoading ? 'Loading hotels...' : 'Select hotel'}</option>
+                  {hotelOptions.map((hotel) => (
+                    <option key={`${hotel.id}-${hotel.hotelName}`} value={hotel.hotelName}>
+                      {hotel.hotelName}
+                    </option>
+                  ))}
+                </select>
               </InputField>
               <InputField label="Hotel Email">
-                <input type="email" value={form.hotelEmail} onChange={set('hotelEmail')} placeholder="contact@hotel.com"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-indigo-500" />
+                <input type="email" value={form.hotelEmail} readOnly placeholder="contact@hotel.com"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-100 px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-indigo-500" />
               </InputField>
             </div>
           </div>
