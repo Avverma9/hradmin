@@ -234,7 +234,7 @@ function HotelDetails({ listPath, listLabel }) {
     : basicInfo?.propertyType
       ? [basicInfo.propertyType]
       : []
-  const displayHotelId = hotel?.hotelId || id
+  const displayHotelId = hotel?.hotelId || hotel?._id || id
 
   const handleHotelUpdate = async (formData) => {
     await dispatch(

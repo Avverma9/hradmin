@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   EllipsisVertical,
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react'
 import Breadcrumb from '../../components/breadcrumb'
 import PartnerForm from '../../components/partner-form'
+import MasterFilter from '../../components/master-filter'
 import {
   addPartner,
   addContacts,
@@ -29,6 +31,7 @@ import {
   deletePartner,
   getAll,
   getAllPartners,
+  findPartnerByQuery,
   getContacts,
   getPartnerById,
   selectPartner,
@@ -288,6 +291,7 @@ function ContactManagementModal({
   onAddContact,
   onDeleteContact,
   onClose,
+  findPartnerByQuery,
 }) {
   const activeContacts = useMemo(
     () =>
@@ -439,11 +443,16 @@ function ContactManagementModal({
 
 function Partner() {
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const { partners, selectedPartner, contacts, loading, contactsLoading, error } =
     useSelector(selectPartner)
-  const [searchValue, setSearchValue] = useState('')
-  const [selectedRole, setSelectedRole] = useState('All')
-  const [selectedStatus, setSelectedStatus] = useState('All')
+  const [filterValues, setFilterValues] = useState({
+    search: '',
+    role: 'All',
+    status: 'All',
+    city: '',
+    isOnline: '',
+  })
   const [dialogType, setDialogType] = useState(null)
   const [activePartnerId, setActivePartnerId] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -454,34 +463,55 @@ function Partner() {
     dispatch(getAllPartners())
   }, [dispatch])
 
-  const filteredPartners = useMemo(() => {
-    const query = searchValue.trim().toLowerCase()
+  const masterFilterFields = useMemo(
+    () => [
+      { key: 'search', placeholder: 'Search by name, email, mobile, city or role', label: 'Search' },
+      { key: 'role', type: 'select', options: ROLE_OPTIONS, label: 'Role', emptyOptionLabel: 'Any role' },
+      { key: 'status', type: 'select', options: ['All', 'Active', 'Inactive'], label: 'Status', emptyOptionLabel: 'Any status' },
+      { key: 'city', placeholder: 'City', label: 'City' },
+      {
+        key: 'isOnline',
+        type: 'select',
+        options: [
+          { value: '', label: 'Any' },
+          { value: 'true', label: 'Online' },
+          { value: 'false', label: 'Offline' },
+        ],
+        label: 'Online',
+      },
+    ],
+    [],
+  )
 
-    return partners.filter((partner) => {
-      const matchesQuery =
-        !query ||
-        [
-          partner.name,
-          partner.email,
-          String(partner.mobile || ''),
-          partner.role,
-          partner.city,
-          partner.state,
-          partner.address,
-        ]
-          .join(' ')
-          .toLowerCase()
-          .includes(query)
+  const handleFilterChange = (key, value) => {
+    setFilterValues((current) => ({ ...current, [key]: value }))
+  }
 
-      const matchesRole = selectedRole === 'All' || partner.role === selectedRole
-      const matchesStatus =
-        selectedStatus === 'All' ||
-        (selectedStatus === 'Active' && partner.status) ||
-        (selectedStatus === 'Inactive' && !partner.status)
+  const handleFilterApply = () => {
+    const params = {}
+    if (filterValues.search?.trim()) params.search = filterValues.search.trim()
+    if (filterValues.role && filterValues.role !== 'All') params.role = filterValues.role
+    if (filterValues.city?.trim()) params.city = filterValues.city.trim()
+    if (filterValues.status && filterValues.status !== 'All')
+      params.status = filterValues.status === 'Active'
+    if (filterValues.isOnline !== '' && filterValues.isOnline !== undefined) {
+      params.isOnline = filterValues.isOnline === true || filterValues.isOnline === 'true'
+    }
 
-      return matchesQuery && matchesRole && matchesStatus
-    })
-  }, [partners, searchValue, selectedRole, selectedStatus])
+    if (Object.keys(params).length) {
+      dispatch(findPartnerByQuery(params))
+    } else {
+      dispatch(getAllPartners())
+    }
+  }
+
+  const handleFilterReset = () => {
+    setFilterValues({ search: '', role: 'All', status: 'All', city: '', isOnline: '' })
+    dispatch(getAllPartners())
+  }
+
+  // Partner list is populated by server-side search or full list
+  const filteredPartners = partners
 
   const stats = useMemo(() => {
     const activePartners = partners.filter((partner) => partner.status).length
@@ -514,7 +544,7 @@ function Partner() {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchValue, selectedRole, selectedStatus])
+  }, [filterValues])
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -744,51 +774,28 @@ function Partner() {
       <section className="rounded-3xl border border-slate-200 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.05)]">
               <div className="border-b border-slate-200 px-4 py-4 md:px-5">
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                  <div>
-                    <h2 className="text-base font-semibold text-slate-900">
-                      All Partners Table
-                    </h2>
-                    <p className="mt-0.5 text-sm text-slate-500">
-                      {filteredPartners.length} records shown across {stats.uniqueRoles} active roles
-                    </p>
-                  </div>
+                  <div className="flex items-center gap-4">
+                    <MasterFilter
+                      fields={masterFilterFields}
+                      values={filterValues}
+                      loading={loading}
+                      enableFieldPicker
+                      fieldPickerLabel="Add filter"
+                      initialActiveFieldKeys={['search', 'role', 'status']}
+                      applyLabel="Apply Filters"
+                      onChange={handleFilterChange}
+                      onApply={handleFilterApply}
+                      onReset={handleFilterReset}
+                    />
 
-                  <div className="flex flex-col gap-2.5 md:flex-row md:items-center">
-                    <label className="relative min-w-0 md:w-80">
-                      <Search
-                        size={16}
-                        className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                      />
-                      <input
-                        type="text"
-                        value={searchValue}
-                        onChange={(event) => setSearchValue(event.target.value)}
-                        placeholder="Search by name, email, mobile, city or role"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white"
-                      />
-                    </label>
-
-                    <select
-                      value={selectedRole}
-                      onChange={(event) => setSelectedRole(event.target.value)}
-                      className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-indigo-300"
-                    >
-                      {ROLE_OPTIONS.map((role) => (
-                        <option key={role} value={role}>
-                          {role}
-                        </option>
-                      ))}
-                    </select>
-
-                    <select
-                      value={selectedStatus}
-                      onChange={(event) => setSelectedStatus(event.target.value)}
-                      className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-indigo-300"
-                    >
-                      <option value="All">All Status</option>
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                    </select>
+                    <div>
+                      <h2 className="text-base font-semibold text-slate-900">
+                        All Partners Table
+                      </h2>
+                      <p className="mt-0.5 text-sm text-slate-500">
+                        {filteredPartners.length} records shown across {stats.uniqueRoles} active roles
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -954,6 +961,18 @@ function Partner() {
                                 >
                                   <MessageSquareMore size={16} />
                                   Messenger Contacts
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenActionMenuId(null)
+                                    navigate(`/user-complaint?userId=${partner._id}`)
+                                  }}
+                                  className="flex w-full items-center gap-3 border-b border-slate-100 px-4 py-2.5 text-left text-sm font-medium text-sky-700 transition hover:bg-sky-50"
+                                >
+                                  <ShieldCheck size={16} />
+                                  View Complaints
                                 </button>
 
                                 <button

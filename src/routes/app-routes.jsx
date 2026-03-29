@@ -44,6 +44,7 @@ import BulkManagement from '../pages/admin/hotel/bulk-management'
 import BulkCouponManage from '../pages/admin/hotel/bulk-coupon-manage'
 import AddLocations from '../pages/admin/locations/add-locations'
 import ListLocations from '../pages/admin/locations/list-locations'
+import { AllUsers } from '../pages/admin/alluser/AllUser'
 
 const EditCarPage = () => <Car isEditMode />
 
@@ -97,6 +98,7 @@ export const APP_ROUTES = [
   { path: "/hotels/", Component: AllHotels },
   { path: "/hotels/:id", Component: HotelDetails },
   { path: "/hotels/:id/edit", Component: HotelEditPage },
+  { path: "/all-users", Component: AllUsers },
 
 
 

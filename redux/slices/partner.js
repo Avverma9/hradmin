@@ -153,11 +153,26 @@ export const deletePartner = createAsyncThunk(
 
 export const findPartnerByQuery = createAsyncThunk(
   'partner/findByQuery',
-  async (searchQuery, { rejectWithValue }) => {
+  async (params = {}, { rejectWithValue }) => {
     try {
-      const response = await api.get(
-        `/api/users-get-user/by/query?search=${encodeURIComponent(searchQuery)}`,
-      )
+      let query = ''
+
+      if (typeof params === 'string') {
+        query = `?search=${encodeURIComponent(params)}`
+      } else {
+        const parts = []
+        if (params.search) parts.push(`search=${encodeURIComponent(params.search)}`)
+        if (params.role && params.role !== 'All') parts.push(`role=${encodeURIComponent(params.role)}`)
+        if (params.city) parts.push(`city=${encodeURIComponent(params.city)}`)
+        if (params.status !== undefined && params.status !== null)
+          parts.push(`status=${params.status}`)
+        if (params.isOnline !== undefined && params.isOnline !== null)
+          parts.push(`isOnline=${params.isOnline}`)
+
+        query = parts.length ? `?${parts.join('&')}` : ''
+      }
+
+      const response = await api.get(`/api/users-get-user/by/query${query}`)
       return getListFromPayload(response.data)
     } catch (error) {
       return rejectWithValue(

@@ -36,6 +36,7 @@ const GENERAL_ROUTES = [
 /* ── User Management ───────────────────────────────────── */
 const USER_ROUTES = [
   createRoute('/user', 'All Partners / Users', 'List of all dashboard users & partners', 'users'),
+  createRoute('/all-users', 'All Users', 'List of all users', 'users'),
 ]
 
 /* ── Admin ─────────────────────────────────────────────── */
@@ -46,7 +47,7 @@ const ADMIN_ROUTES = [
   createRoute('/gst-management', 'GST Management', 'Configure GST slabs and settings', 'admin', false, true),
   createRoute('/gst-page', 'GST Page (View)', 'Read-only GST overview page', 'admin', false, true),
   createRoute('/hotel-bookings', 'Hotel Bookings (Admin)', 'Admin view of all hotel bookings', 'admin', false, true),
-  createRoute('/hotels/', 'All Hotels', 'Admin view of all hotels', 'admin', false, true),
+  createRoute('/hotels', 'All Hotels', 'Admin view of all hotels', 'admin', false, true),
   createRoute('/hotels/:id', 'Hotel Details', 'Detailed view of a specific hotel by hotelId', 'admin', true, true),
   createRoute('/manage-route-access', 'Manage Route Access', 'Grant / revoke route-level access per user', 'admin', false, true),
 ]
@@ -54,6 +55,7 @@ const ADMIN_ROUTES = [
 /* ── PMS — Bookings ────────────────────────────────────── */
 const PMS_ROUTES = [
   createRoute('/your-bookings', 'PMS Bookings', 'PMS: personal hotel booking list', 'pms'),
+  createRoute('/your-complaints', 'PMS Complaints', 'PMS: personal complaint list', 'pms'),
   createRoute('/panel-booking', 'Panel Booking', 'PMS: panel-level booking management', 'pms'),
   createRoute('/your-hotels', 'Your Hotels', 'PMS: hotels owned by the logged-in user', 'pms'),
   createRoute('/your-hotels/:id', 'Your Hotel Details', 'PMS: detail view of a hotel owned by the logged-in user', 'pms', true),

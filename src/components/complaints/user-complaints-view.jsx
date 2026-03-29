@@ -171,7 +171,7 @@ function DeleteConfirm({ complaint, onClose, onConfirm, deleting }) {
   );
 }
 
-export default function UserComplaintsView({ mode = 'hotel_email' }) {
+export default function UserComplaintsView({ mode = 'hotel_email', targetUserId = null, targetHotelEmail = null, canEdit = true }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector(selectAuth);
@@ -183,20 +183,24 @@ export default function UserComplaintsView({ mode = 'hotel_email' }) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const userId =  user?.userId;
-  const userEmail = user?.email || '';
+  const authUserId = user?._id || user?.id || user?.userId || null;
+  const requestedUserId = targetUserId || authUserId;
+  const requestedUserEmail = targetUserId
+    ? null
+    : (targetHotelEmail || user?.hotelEmail || user?.hotel?.email || user?.email || '');
+  const canModify = canEdit;
 
   const loadData = () => {
     if (mode === 'user_id') {
-      if (userId) dispatch(fetchComplaintsByUser(userId));
+      if (requestedUserId) dispatch(fetchComplaintsByUser(requestedUserId));
       return;
     }
-    if (userEmail) dispatch(filterComplaints({ hotelEmail: userEmail }));
+    if (requestedUserEmail) dispatch(filterComplaints({ hotelEmail: requestedUserEmail }));
   };
 
   useEffect(() => {
     loadData();
-  }, [mode, userId, userEmail, dispatch]);
+  }, [mode, requestedUserId, requestedUserEmail, dispatch]);
 
   const sourceList = mode === 'user_id' ? userComplaints : filteredComplaints;
 
@@ -220,6 +224,7 @@ export default function UserComplaintsView({ mode = 'hotel_email' }) {
   );
 
   const handleSaveUpdate = async (id, data) => {
+    if (!canModify) return;
     setSaving(true);
     await dispatch(updateComplaint({ id, updateData: data })).unwrap().catch(() => {});
     setSaving(false);
@@ -228,6 +233,7 @@ export default function UserComplaintsView({ mode = 'hotel_email' }) {
   };
 
   const handleDelete = async (id) => {
+    if (!canModify) return;
     setDeleting(true);
     await dispatch(deleteComplaint(id)).unwrap().catch(() => {});
     setDeleting(false);
@@ -389,12 +395,16 @@ export default function UserComplaintsView({ mode = 'hotel_email' }) {
                         <button onClick={() => navigate(`/complaint/chat/${c._id}`)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-all hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-600/20 active:scale-95" title="View Discussion">
                           <MessageSquare size={16} />
                         </button>
-                        <button onClick={() => setUpdateTarget(c)} title="Update Status" className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600 transition-all hover:bg-purple-600 hover:text-white hover:shadow-lg hover:shadow-purple-600/20 active:scale-95">
-                          <Edit3 size={16} />
-                        </button>
-                        <button onClick={() => setDeleteTarget(c)} title="Delete Ticket" className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 text-red-600 transition-all hover:bg-red-600 hover:text-white hover:shadow-lg hover:shadow-red-600/20 active:scale-95">
-                          <Trash2 size={16} />
-                        </button>
+                        {canModify && (
+                          <>
+                            <button onClick={() => setUpdateTarget(c)} title="Update Status" className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600 transition-all hover:bg-purple-600 hover:text-white hover:shadow-lg hover:shadow-purple-600/20 active:scale-95">
+                              <Edit3 size={16} />
+                            </button>
+                            <button onClick={() => setDeleteTarget(c)} title="Delete Ticket" className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 text-red-600 transition-all hover:bg-red-600 hover:text-white hover:shadow-lg hover:shadow-red-600/20 active:scale-95">
+                              <Trash2 size={16} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -410,8 +420,23 @@ export default function UserComplaintsView({ mode = 'hotel_email' }) {
         </div>
       </div>
 
-      {updateTarget && <UpdateModal complaint={updateTarget} user={user} onClose={() => setUpdateTarget(null)} onSave={handleSaveUpdate} saving={saving} />}
-      {deleteTarget && <DeleteConfirm complaint={deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} deleting={deleting} />}
+      {updateTarget && canModify && (
+        <UpdateModal
+          complaint={updateTarget}
+          user={user}
+          onClose={() => setUpdateTarget(null)}
+          onSave={handleSaveUpdate}
+          saving={saving}
+        />
+      )}
+      {deleteTarget && canModify && (
+        <DeleteConfirm
+          complaint={deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleDelete}
+          deleting={deleting}
+        />
+      )}
     </div>
   );
 }

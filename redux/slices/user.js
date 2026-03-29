@@ -18,6 +18,20 @@ export const findUserByMobile = createAsyncThunk(
     }
 );
 
+export const getAllUsers = createAsyncThunk(
+    'user/getAllUsers',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get('/get/all-users-data/all-data');
+            return response.data?.data || response.data;
+        } catch (error) {
+            return rejectWithValue(
+                error.response?.data?.message || 'Failed to fetch users.',
+            );
+        }
+    }
+);
+
 export const createUser = createAsyncThunk(
   "user/createUser",
   async (userData, { rejectWithValue }) => {
@@ -29,11 +43,22 @@ export const createUser = createAsyncThunk(
     }
   }
 );
+export const filterUsers = createAsyncThunk(
+  "user/filterUsers",
+  async (query, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/admin/users/filter?search=${query}`);
+      return response.data;
+    } catch (error) {      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
 
 const userSlice = createSlice({
     name: 'user',
     initialState: {
         user: null,
+        users: [],
         loading: false,
         error: null,
     },
@@ -68,6 +93,18 @@ const userSlice = createSlice({
                 state.user = action.payload;
             })
             .addCase(createUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(getAllUsers.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(getAllUsers.fulfilled, (state, action) => {
+                state.loading = false;
+                state.users = action.payload;
+            })
+            .addCase(getAllUsers.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });

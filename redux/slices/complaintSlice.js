@@ -41,7 +41,7 @@ export const fetchComplaintsByUser = createAsyncThunk(
   "complaints/fetchComplaintsByUser",
   async (userId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/api/complaints/${userId}`);
+      const response = await api.get(`/complaints/${userId}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);

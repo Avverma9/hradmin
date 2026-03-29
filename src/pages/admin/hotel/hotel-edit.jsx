@@ -168,17 +168,17 @@ function HotelEditPage() {
   const [editingRoomId, setEditingRoomId] = useState('')
 
   const hotel = selectedHotel?.data || selectedHotel
-  const displayHotelId = hotel?.hotelId || id
+  const displayHotelId = hotel?.hotelId 
   const hotelImage = hotel?.basicInfo?.images?.[0] || hotel?.images?.[0] || ''
   const listPath =
     location.state?.from ||
     (location.pathname.startsWith('/your-hotels') ? '/your-hotels' : '/hotels')
-
+console.log('HotelEditPage render', hotel )
   useEffect(() => {
-    if (id) {
-      dispatch(getHotelById(id))
+    if (displayHotelId) {
+      dispatch(getHotelById(displayHotelId))
     }
-  }, [dispatch, id])
+  }, [dispatch, displayHotelId])
 
   useEffect(() => {
     if (!hotel) return
@@ -205,16 +205,26 @@ function HotelEditPage() {
   }, [dispatch, roomSuccess])
 
   const normalizedRooms = useMemo(() => rooms.map((room, index) => normalizeRoom(room, index)), [rooms])
+const saveHotel = async (event) => {
+  if (event && event.preventDefault) event.preventDefault()
 
-  const saveHotel = async (event) => {
-    event.preventDefault()
+  // Guard: ID missing hone par API call rok do
+  if (!displayHotelId) {
+    console.error('saveHotel aborted: hotelId missing', { selectedHotel, id })
+    return
+  }
+
+  try {
     await dispatch(
       updateHotel({
         hotelId: displayHotelId,
         hotelData: buildHotelPayload(hotelForm),
       }),
     ).unwrap()
+  } catch (err) {
+    console.error('updateHotel failed', err)
   }
+}
 
   const setHotelField = (key) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
@@ -347,8 +357,8 @@ function HotelEditPage() {
             View Details
           </button>
           <button
-            type="submit"
-            form="hotel-edit-form"
+            type="button"
+            onClick={saveHotel}
             disabled={updating}
             className="inline-flex items-center gap-2 rounded-2xl bg-stone-900 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-stone-900/10 transition hover:bg-stone-800 disabled:pointer-events-none disabled:opacity-50"
           >
