@@ -86,11 +86,11 @@ export const getAllHotels = createAsyncThunk(
   },
 )
 
-export const updateHotel = createAsyncThunk(
-  'admin/updateHotel',
+export const updateHotelInfo = createAsyncThunk(
+  'admin/updateHotelInfo',
   async ({ hotelId, hotelData }, { rejectWithValue }) => {
     try {
-      const response = await api.patch(`/hotels/${hotelId}`, hotelData)
+      const response = await api.patch(`/hotels/master/${hotelId}`, hotelData)
       return response.data
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update hotel.')
@@ -242,12 +242,12 @@ const hotelSlice = createSlice({
         state.loading = false
         state.error = action.payload
       })
-      .addCase(updateHotel.pending, (state) => {
+      .addCase(updateHotelInfo.pending, (state) => {
         state.updating = true
         state.error = null
         state.updateSuccess = null
       })
-      .addCase(updateHotel.fulfilled, (state, action) => {
+      .addCase(updateHotelInfo.fulfilled, (state, action) => {
         const updatedHotel = resolveUpdatedHotel(action.payload)
         state.updating = false
         state.updateSuccess = action.payload?.message || 'Hotel updated successfully.'
@@ -257,7 +257,7 @@ const hotelSlice = createSlice({
           state.allHotels = replaceEntityInList(state.allHotels, updatedHotel)
         }
       })
-      .addCase(updateHotel.rejected, (state, action) => {
+      .addCase(updateHotelInfo.rejected, (state, action) => {
         state.updating = false
         state.error = action.payload
       })

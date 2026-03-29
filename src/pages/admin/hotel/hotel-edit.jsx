@@ -16,19 +16,19 @@ import {
 import Breadcrumb from '../../../components/breadcrumb'
 import {
   clearHotelUpdateStatus,
-  clearRoomStatus,
-  createRoomToHotel,
-  deleteRoomById,
   getHotelById,
-  getRoomsByHotelEmail,
-  updateHotel,
-  updateRoom,
+  updateHotelInfo,
 } from '../../../../redux/slices/admin/hotel'
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+const s = (v) => String(v ?? '').trim()
 
 const createHotelForm = (hotel) => {
   const basicInfo = hotel?.basicInfo || {}
-  const location = basicInfo?.location || {}
-  const contacts = basicInfo?.contacts || {}
+  const location  = basicInfo?.location  || {}
+  const contacts  = basicInfo?.contacts  || {}
+
   const propertyType = Array.isArray(basicInfo?.propertyType)
     ? basicInfo.propertyType
     : basicInfo?.propertyType
@@ -40,259 +40,244 @@ const createHotelForm = (hotel) => {
           : []
 
   return {
-    hotelName: basicInfo?.name || hotel?.hotelName || '',
-    city: location?.city || hotel?.city || '',
-    state: location?.state || hotel?.state || '',
-    address: location?.address || hotel?.address || '',
-    pinCode: location?.pinCode || hotel?.pinCode || '',
-    starRating: String(basicInfo?.starRating || hotel?.starRating || ''),
+    hotelName:    basicInfo?.name   || hotel?.hotelName || '',
+    city:         location?.city    || hotel?.city      || '',
+    state:        location?.state   || hotel?.state     || '',
+    address:      location?.address || hotel?.address   || '',
+    pinCode:      location?.pinCode || hotel?.pinCode   || '',
+    starRating:   String(basicInfo?.starRating || hotel?.starRating || ''),
     propertyType: propertyType.join(', '),
-    hotelEmail: contacts?.email || hotel?.hotelEmail || hotel?.email || '',
-    phone: contacts?.phone || hotel?.phone || '',
-    owner: basicInfo?.owner || hotel?.owner || '',
-    description: basicInfo?.description || hotel?.description || '',
-    onFront: Boolean(hotel?.onFront),
-    isAccepted: Boolean(hotel?.isAccepted),
+    hotelEmail:   contacts?.email   || hotel?.hotelEmail || hotel?.email || '',
+    phone:        contacts?.phone   || hotel?.phone      || '',
+    owner:        basicInfo?.owner  || hotel?.owner      || '',
+    description:  basicInfo?.description || hotel?.description || '',
+    onFront:      Boolean(hotel?.onFront),
+    isAccepted:   Boolean(hotel?.isAccepted),
   }
 }
 
+/**
+ * Normalize a raw room document into a flat form-friendly shape.
+ */
 const normalizeRoom = (room, index = 0) => ({
-  id: room?._id || room?.roomId || room?.id || `room-${index + 1}`,
-  roomId: room?.roomId || room?._id || room?.id || `room-${index + 1}`,
-  name: room?.name || room?.type || `Room ${index + 1}`,
-  type: room?.type || room?.name || `Room ${index + 1}`,
-  bedType: room?.bedType || room?.bedTypes || room?.beds || '',
-  basePrice: String(room?.pricing?.basePrice ?? room?.basePrice ?? room?.pricing?.finalPrice ?? room?.price ?? ''),
-  finalPrice: String(room?.pricing?.finalPrice ?? room?.price ?? room?.pricing?.basePrice ?? room?.basePrice ?? ''),
-  totalRooms: String(room?.inventory?.total ?? room?.totalRooms ?? room?.countRooms ?? ''),
-  availableRooms: String(room?.inventory?.available ?? room?.availableRooms ?? room?.availableCount ?? ''),
-  description: room?.description || room?.about || '',
-  amenities: Array.isArray(room?.amenities) ? room.amenities.join(', ') : '',
-  images: Array.isArray(room?.images) ? room.images.join(', ') : '',
-  isOffer: Boolean(room?.features?.isOffer || room?.isOffer),
-  offerText: room?.features?.offerText || room?.offerText || room?.offerName || '',
+  // Use _id as the stable key for edit/delete operations
+  _id:            room?._id || room?.id || `room-${index}`,
+  roomId:         room?.roomId || room?.id || '',
+  name:           room?.name  || room?.type || `Room ${index + 1}`,
+  type:           room?.type  || room?.name || `Room ${index + 1}`,
+  bedType:        room?.bedType || room?.bedTypes || '',
+  price:          String(room?.price ?? room?.originalPrice ?? ''),
+  countRooms:     String(room?.countRooms ?? room?.totalRooms ?? ''),
+  totalRooms:     String(room?.totalRooms ?? room?.countRooms ?? ''),
+  description:    room?.description || '',
+  amenities:      Array.isArray(room?.amenities) ? room.amenities.join(', ') : '',
+  images:         Array.isArray(room?.images)    ? room.images.join(', ')    : '',
+  isOffer:        Boolean(room?.isOffer),
+  offerName:      room?.offerName || room?.offerText || '',
 })
 
 const createEmptyRoomForm = () => ({
-  roomId: '',
-  type: '',
-  bedType: '',
-  basePrice: '',
-  finalPrice: '',
-  totalRooms: '',
-  availableRooms: '',
-  description: '',
-  amenities: '',
-  images: '',
-  isOffer: false,
-  offerText: '',
+  // roomId intentionally absent for new rooms — backend generates it
+  type:           '',
+  bedType:        '',
+  price:          '',
+  countRooms:     '',
+  description:    '',
+  amenities:      '',
+  images:         '',
+  isOffer:        false,
+  offerName:      '',
 })
 
+/**
+ * Build the hotel-level basic info payload (no rooms key).
+ */
 const buildHotelPayload = (form) => ({
-  hotelName: form.hotelName.trim(),
-  city: form.city.trim(),
-  state: form.state.trim(),
-  address: form.address.trim(),
-  pinCode: form.pinCode.trim(),
-  starRating: form.starRating.trim(),
-  propertyType: form.propertyType.split(',').map((item) => item.trim()).filter(Boolean),
-  hotelEmail: form.hotelEmail.trim(),
-  phone: form.phone.trim(),
-  owner: form.owner.trim(),
-  description: form.description.trim(),
-  onFront: form.onFront,
-  isAccepted: form.isAccepted,
+  hotelName:    s(form.hotelName),
+  city:         s(form.city),
+  state:        s(form.state),
+  address:      s(form.address),
+  pinCode:      s(form.pinCode),
+  starRating:   s(form.starRating),
+  propertyType: s(form.propertyType).split(',').map((v) => v.trim()).filter(Boolean),
+  hotelEmail:   s(form.hotelEmail),
+  phone:        s(form.phone),
+  owner:        s(form.owner),
+  description:  s(form.description),
+  onFront:      form.onFront,
+  isAccepted:   form.isAccepted,
 })
 
-const buildRoomPayload = (form, hotelForm) => {
-  const basePrice = Number(form.basePrice || 0)
-  const finalPrice = Number(form.finalPrice || form.basePrice || 0)
-  const totalRooms = Number(form.totalRooms || 0)
-  const availableRooms = Number(form.availableRooms || 0)
-  const amenities = form.amenities.split(',').map((item) => item.trim()).filter(Boolean)
-  const images = form.images.split(',').map((item) => item.trim()).filter(Boolean)
-
-  return {
-    hotelEmail: hotelForm.hotelEmail.trim(),
-    roomId: form.roomId.trim(),
-    name: form.type.trim(),
-    type: form.type.trim(),
-    roomType: form.type.trim(),
-    bedType: form.bedType.trim(),
-    bedTypes: form.bedType.trim(),
-    price: finalPrice,
-    basePrice,
-    description: form.description.trim(),
-    amenities,
-    images,
-    isOffer: form.isOffer,
-    offerText: form.offerText.trim(),
-    offerName: form.offerText.trim(),
-    pricing: {
-      basePrice,
-      finalPrice,
-      displayPrice: finalPrice ? `Rs ${finalPrice}` : '',
-    },
-    inventory: {
-      total: totalRooms,
-      available: availableRooms,
-    },
-    totalRooms,
-    availableRooms,
-    features: {
-      isOffer: form.isOffer,
-      offerText: form.offerText.trim(),
-    },
+/**
+ * Build a single-room entry for the `rooms` array in the master payload.
+ * Pass roomId only when updating an existing room.
+ */
+const buildRoomEntry = (form, existingRoomId = null) => {
+  const entry = {
+    type:        s(form.type),
+    name:        s(form.type),
+    bedType:     s(form.bedType),
+    bedTypes:    s(form.bedType),
+    price:       Number(form.price) || 0,
+    countRooms:  Number(form.countRooms) || 1,
+    totalRooms:  Number(form.countRooms) || 1,
+    description: s(form.description),
+    amenities:   s(form.amenities).split(',').map((v) => v.trim()).filter(Boolean),
+    images:      s(form.images).split(',').map((v) => v.trim()).filter(Boolean),
+    isOffer:     form.isOffer,
+    offerName:   s(form.offerName),
   }
+  if (existingRoomId) entry.roomId = existingRoomId
+  return entry
 }
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 function HotelEditPage() {
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { id } = useParams()
+  const dispatch  = useDispatch()
+  const navigate  = useNavigate()
+  const location  = useLocation()
+  const { id }    = useParams()
+
   const {
     selectedHotel,
-    rooms,
     loading,
     updating,
-    roomsLoading,
-    roomSaving,
     error,
     updateSuccess,
-    roomSuccess,
   } = useSelector((state) => state.hotel)
 
-  const [hotelForm, setHotelForm] = useState(() => createHotelForm(null))
-  const [roomForm, setRoomForm] = useState(createEmptyRoomForm)
-  const [editingRoomId, setEditingRoomId] = useState('')
+  const [hotelForm,     setHotelForm]     = useState(() => createHotelForm(null))
+  const [roomForm,      setRoomForm]      = useState(createEmptyRoomForm)
+  const [editingRoomId, setEditingRoomId] = useState(null) // roomId (string) of room being edited
 
-  const hotel = selectedHotel?.data || selectedHotel
-  const displayHotelId = hotel?.hotelId 
-  const hotelImage = hotel?.basicInfo?.images?.[0] || hotel?.images?.[0] || ''
-  const listPath =
+  const hotel           = selectedHotel?.data || selectedHotel
+  const displayHotelId  = id || hotel?.hotelId || hotel?._id
+  const hotelImage      = hotel?.basicInfo?.images?.[0] || hotel?.images?.[0] || ''
+  const listPath        =
     location.state?.from ||
     (location.pathname.startsWith('/your-hotels') ? '/your-hotels' : '/hotels')
-console.log('HotelEditPage render', hotel )
-  useEffect(() => {
-    if (displayHotelId) {
-      dispatch(getHotelById(displayHotelId))
-    }
-  }, [dispatch, displayHotelId])
 
+  // Derive rooms straight from the hotel document — no separate rooms state needed
+  const normalizedRooms = useMemo(
+    () => (Array.isArray(hotel?.rooms) ? hotel.rooms.map(normalizeRoom) : []),
+    [hotel?.rooms],
+  )
+
+  // ── Load hotel ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!hotel) return
-    setHotelForm(createHotelForm(hotel))
+    if (id) dispatch(getHotelById(id))
+  }, [dispatch, id])
+
+  // ── Sync form when hotel loads ──────────────────────────────────────────
+  useEffect(() => {
+    if (hotel) setHotelForm(createHotelForm(hotel))
   }, [hotel])
 
+  // ── Auto-clear success banner ───────────────────────────────────────────
   useEffect(() => {
-    const hotelEmail = hotel?.basicInfo?.contacts?.email || hotel?.hotelEmail || hotel?.email
-    if (hotelEmail) {
-      dispatch(getRoomsByHotelEmail(hotelEmail))
-    }
-  }, [dispatch, hotel?.basicInfo?.contacts?.email, hotel?.email, hotel?.hotelEmail])
-
-  useEffect(() => {
-    if (!updateSuccess) return undefined
-    const timeout = setTimeout(() => dispatch(clearHotelUpdateStatus()), 2800)
-    return () => clearTimeout(timeout)
+    if (!updateSuccess) return
+    const t = setTimeout(() => dispatch(clearHotelUpdateStatus()), 2800)
+    return () => clearTimeout(t)
   }, [dispatch, updateSuccess])
 
-  useEffect(() => {
-    if (!roomSuccess) return undefined
-    const timeout = setTimeout(() => dispatch(clearRoomStatus()), 2800)
-    return () => clearTimeout(timeout)
-  }, [dispatch, roomSuccess])
-
-  const normalizedRooms = useMemo(() => rooms.map((room, index) => normalizeRoom(room, index)), [rooms])
-const saveHotel = async (event) => {
-  if (event && event.preventDefault) event.preventDefault()
-
-  // Guard: ID missing hone par API call rok do
-  if (!displayHotelId) {
-    console.error('saveHotel aborted: hotelId missing', { selectedHotel, id })
-    return
+  // ── Field setters ───────────────────────────────────────────────────────
+  const setHotelField = (key) => (e) => {
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
+    setHotelForm((prev) => ({ ...prev, [key]: value }))
   }
 
-  try {
-    await dispatch(
-      updateHotel({
-        hotelId: displayHotelId,
-        hotelData: buildHotelPayload(hotelForm),
-      }),
-    ).unwrap()
-  } catch (err) {
-    console.error('updateHotel failed', err)
-  }
-}
-
-  const setHotelField = (key) => (event) => {
-    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
-    setHotelForm((current) => ({ ...current, [key]: value }))
+  const setRoomField = (key) => (e) => {
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
+    setRoomForm((prev) => ({ ...prev, [key]: value }))
   }
 
-  const setRoomField = (key) => (event) => {
-    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
-    setRoomForm((current) => ({ ...current, [key]: value }))
-  }
-
+  // ── Reset room editor ───────────────────────────────────────────────────
   const resetRoomEditor = () => {
-    setEditingRoomId('')
+    setEditingRoomId(null)
     setRoomForm(createEmptyRoomForm())
-    dispatch(clearRoomStatus())
   }
 
+  // ── Save hotel basic info ───────────────────────────────────────────────
+  const saveHotel = async (event) => {
+    if (event?.preventDefault) event.preventDefault()
+    if (!displayHotelId) return
+
+    try {
+      await dispatch(
+        updateHotelInfo({
+          hotelId:   displayHotelId,
+          hotelData: buildHotelPayload(hotelForm),
+        }),
+      ).unwrap()
+      dispatch(getHotelById(displayHotelId))
+    } catch (err) {
+      console.error('saveHotel failed', err)
+    }
+  }
+
+  // ── Save room (add or update) via master endpoint ───────────────────────
+  const saveRoom = async (event) => {
+    event.preventDefault()
+    if (!displayHotelId) return
+
+    try {
+      await dispatch(
+        updateHotelInfo({
+          hotelId:   displayHotelId,
+          hotelData: {
+            rooms: [buildRoomEntry(roomForm, editingRoomId)],
+          },
+        }),
+      ).unwrap()
+
+      resetRoomEditor()
+      dispatch(getHotelById(displayHotelId))
+    } catch (err) {
+      console.error('saveRoom failed', err)
+    }
+  }
+
+  // ── Delete room via master endpoint ─────────────────────────────────────
+  const handleRoomDelete = async (roomId) => {
+    if (!roomId || !displayHotelId) return
+    if (!window.confirm('Delete this room from the hotel?')) return
+
+    try {
+      await dispatch(
+        updateHotelInfo({
+          hotelId:   displayHotelId,
+          hotelData: {
+            rooms: [{ roomId, _delete: true }],
+          },
+        }),
+      ).unwrap()
+
+      if (editingRoomId === roomId) resetRoomEditor()
+      dispatch(getHotelById(displayHotelId))
+    } catch (err) {
+      console.error('handleRoomDelete failed', err)
+    }
+  }
+
+  // ── Open room in editor ─────────────────────────────────────────────────
   const handleRoomEdit = (room) => {
-    setEditingRoomId(room.id)
+    setEditingRoomId(room.roomId)
     setRoomForm({
-      roomId: room.roomId,
-      type: room.type,
-      bedType: room.bedType,
-      basePrice: room.basePrice,
-      finalPrice: room.finalPrice,
-      totalRooms: room.totalRooms,
-      availableRooms: room.availableRooms,
+      type:        room.type,
+      bedType:     room.bedType,
+      price:       room.price,
+      countRooms:  room.countRooms,
       description: room.description,
-      amenities: room.amenities,
-      images: room.images,
-      isOffer: room.isOffer,
-      offerText: room.offerText,
+      amenities:   room.amenities,
+      images:      room.images,
+      isOffer:     room.isOffer,
+      offerName:   room.offerName,
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const saveRoom = async (event) => {
-    event.preventDefault()
-    const payload = buildRoomPayload(roomForm, hotelForm)
-
-    if (editingRoomId) {
-      await dispatch(updateRoom({ roomId: editingRoomId, roomData: payload })).unwrap()
-    } else {
-      await dispatch(createRoomToHotel(payload)).unwrap()
-    }
-
-    if (hotelForm.hotelEmail.trim()) {
-      await dispatch(getRoomsByHotelEmail(hotelForm.hotelEmail.trim()))
-    }
-
-    resetRoomEditor()
-  }
-
-  const handleRoomDelete = async (roomId) => {
-    if (!roomId) return
-    if (!window.confirm('Delete this room from the hotel?')) return
-
-    await dispatch(deleteRoomById(roomId)).unwrap()
-
-    if (hotelForm.hotelEmail.trim()) {
-      await dispatch(getRoomsByHotelEmail(hotelForm.hotelEmail.trim()))
-    }
-
-    if (editingRoomId === roomId) {
-      resetRoomEditor()
-    }
-  }
-
+  // ── Loading / error screens ─────────────────────────────────────────────
   if (loading && !hotel) {
     return (
       <div className="mx-auto max-w-7xl bg-stone-50 px-4 py-8 sm:px-6 lg:px-8">
@@ -326,10 +311,12 @@ const saveHotel = async (event) => {
     )
   }
 
+  // ── Main render ─────────────────────────────────────────────────────────
   return (
     <div className="mx-auto max-w-7xl bg-stone-50 px-4 py-8 sm:px-6 lg:px-8">
       <Breadcrumb />
 
+      {/* ── Header ── */}
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex items-start gap-4">
           <button
@@ -343,7 +330,7 @@ const saveHotel = async (event) => {
             <p className="text-[11px] font-black uppercase tracking-[0.28em] text-blue-600">Hotel Workspace</p>
             <h1 className="mt-2 text-3xl font-black tracking-tight text-stone-900">Edit Hotel & Rooms</h1>
             <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-stone-500">
-              Hotel profile update, room add, room update, aur room delete sab ek hi clean page me manage hoga.
+              Hotel profile, rooms, amenities aur policies — sab ek hi page se manage karo.
             </p>
           </div>
         </div>
@@ -368,16 +355,12 @@ const saveHotel = async (event) => {
         </div>
       </div>
 
-      {(updateSuccess || roomSuccess || (error && hotel)) && (
+      {/* ── Banners ── */}
+      {(updateSuccess || error) && (
         <div className="mb-6 grid gap-3">
           {updateSuccess && (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
               {updateSuccess}
-            </div>
-          )}
-          {roomSuccess && (
-            <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">
-              {roomSuccess}
             </div>
           )}
           {error && (
@@ -389,6 +372,8 @@ const saveHotel = async (event) => {
       )}
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+
+        {/* ── Hotel basic info form ── */}
         <form
           id="hotel-edit-form"
           onSubmit={saveHotel}
@@ -404,11 +389,7 @@ const saveHotel = async (event) => {
                 </p>
               </div>
               {hotelImage ? (
-                <img
-                  src={hotelImage}
-                  alt={hotelForm.hotelName || 'Hotel'}
-                  className="h-24 w-32 rounded-2xl object-cover shadow-sm"
-                />
+                <img src={hotelImage} alt={hotelForm.hotelName || 'Hotel'} className="h-24 w-32 rounded-2xl object-cover shadow-sm" />
               ) : (
                 <div className="flex h-24 w-32 items-center justify-center rounded-2xl bg-stone-100 text-stone-400">
                   <Building2 size={28} />
@@ -418,46 +399,40 @@ const saveHotel = async (event) => {
           </div>
 
           <div className="grid gap-5 px-6 py-6 md:grid-cols-2">
-            <label className="space-y-2">
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Hotel Name</span>
-              <input required value={hotelForm.hotelName} onChange={setHotelField('hotelName')} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
-            </label>
-            <label className="space-y-2">
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Hotel Email</span>
-              <input required type="email" value={hotelForm.hotelEmail} onChange={setHotelField('hotelEmail')} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
-            </label>
-            <label className="space-y-2">
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">City</span>
-              <input required value={hotelForm.city} onChange={setHotelField('city')} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
-            </label>
-            <label className="space-y-2">
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">State</span>
-              <input required value={hotelForm.state} onChange={setHotelField('state')} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
-            </label>
+            {[
+              { label: 'Hotel Name',  key: 'hotelName',  required: true },
+              { label: 'Hotel Email', key: 'hotelEmail', required: true, type: 'email' },
+              { label: 'City',        key: 'city',       required: true },
+              { label: 'State',       key: 'state',      required: true },
+            ].map(({ label, key, required, type = 'text' }) => (
+              <label key={key} className="space-y-2">
+                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">{label}</span>
+                <input required={required} type={type} value={hotelForm[key]} onChange={setHotelField(key)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
+              </label>
+            ))}
+
             <label className="space-y-2 md:col-span-2">
               <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Address</span>
               <input value={hotelForm.address} onChange={setHotelField('address')} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
             </label>
-            <label className="space-y-2">
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Pin Code</span>
-              <input value={hotelForm.pinCode} onChange={setHotelField('pinCode')} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
-            </label>
-            <label className="space-y-2">
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Star Rating</span>
-              <input type="number" min="0" max="5" value={hotelForm.starRating} onChange={setHotelField('starRating')} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
-            </label>
-            <label className="space-y-2">
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Owner</span>
-              <input value={hotelForm.owner} onChange={setHotelField('owner')} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
-            </label>
-            <label className="space-y-2">
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Phone</span>
-              <input value={hotelForm.phone} onChange={setHotelField('phone')} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
-            </label>
+
+            {[
+              { label: 'Pin Code',    key: 'pinCode' },
+              { label: 'Star Rating', key: 'starRating', type: 'number', min: '0', max: '5' },
+              { label: 'Owner',       key: 'owner' },
+              { label: 'Phone',       key: 'phone' },
+            ].map(({ label, key, type = 'text', min, max }) => (
+              <label key={key} className="space-y-2">
+                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">{label}</span>
+                <input type={type} min={min} max={max} value={hotelForm[key]} onChange={setHotelField(key)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
+              </label>
+            ))}
+
             <label className="space-y-2 md:col-span-2">
               <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Property Type</span>
               <input value={hotelForm.propertyType} onChange={setHotelField('propertyType')} placeholder="Hotel, Resort" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
             </label>
+
             <label className="space-y-2 md:col-span-2">
               <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Description</span>
               <textarea value={hotelForm.description} onChange={setHotelField('description')} rows={5} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
@@ -466,26 +441,28 @@ const saveHotel = async (event) => {
 
           <div className="border-t border-stone-100 px-6 py-5">
             <div className="flex flex-wrap gap-4 rounded-3xl bg-stone-50 px-4 py-4">
-              <label className="inline-flex items-center gap-3 text-sm font-bold text-stone-700">
-                <input type="checkbox" checked={hotelForm.onFront} onChange={setHotelField('onFront')} className="h-4 w-4 rounded border-stone-300 text-blue-600 focus:ring-blue-500" />
-                Show on front
-              </label>
-              <label className="inline-flex items-center gap-3 text-sm font-bold text-stone-700">
-                <input type="checkbox" checked={hotelForm.isAccepted} onChange={setHotelField('isAccepted')} className="h-4 w-4 rounded border-stone-300 text-blue-600 focus:ring-blue-500" />
-                Accepted
-              </label>
+              {[
+                { label: 'Show on front', key: 'onFront' },
+                { label: 'Accepted',      key: 'isAccepted' },
+              ].map(({ label, key }) => (
+                <label key={key} className="inline-flex items-center gap-3 text-sm font-bold text-stone-700">
+                  <input type="checkbox" checked={hotelForm[key]} onChange={setHotelField(key)} className="h-4 w-4 rounded border-stone-300 text-blue-600 focus:ring-blue-500" />
+                  {label}
+                </label>
+              ))}
             </div>
           </div>
         </form>
 
+        {/* ── Right column: stats + room editor ── */}
         <div className="space-y-6">
+
+          {/* Stats cards */}
           <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
             <div className="rounded-[26px] border border-stone-200 bg-white p-5 shadow-lg shadow-stone-200/40">
               <p className="text-[11px] font-black uppercase tracking-[0.24em] text-stone-400">Location</p>
               <div className="mt-3 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-                  <MapPin size={20} />
-                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600"><MapPin size={20} /></div>
                 <div>
                   <p className="text-lg font-black text-stone-900">{hotelForm.city || 'Unknown City'}</p>
                   <p className="text-sm font-medium text-stone-500">{hotelForm.state || 'State pending'}</p>
@@ -496,9 +473,7 @@ const saveHotel = async (event) => {
             <div className="rounded-[26px] border border-stone-200 bg-white p-5 shadow-lg shadow-stone-200/40">
               <p className="text-[11px] font-black uppercase tracking-[0.24em] text-stone-400">Rooms</p>
               <div className="mt-3 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                  <BedDouble size={20} />
-                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600"><BedDouble size={20} /></div>
                 <div>
                   <p className="text-lg font-black text-stone-900">{normalizedRooms.length}</p>
                   <p className="text-sm font-medium text-stone-500">Managed room entries</p>
@@ -509,21 +484,16 @@ const saveHotel = async (event) => {
             <div className="rounded-[26px] border border-stone-200 bg-white p-5 shadow-lg shadow-stone-200/40">
               <p className="text-[11px] font-black uppercase tracking-[0.24em] text-stone-400">Status</p>
               <div className="mt-3 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-100 text-stone-700">
-                  <CheckCircle2 size={20} />
-                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-100 text-stone-700"><CheckCircle2 size={20} /></div>
                 <div>
-                  <p className="text-lg font-black text-stone-900">
-                    {hotelForm.isAccepted ? 'Accepted' : 'Pending'}
-                  </p>
-                  <p className="text-sm font-medium text-stone-500">
-                    {hotelForm.onFront ? 'Front listed' : 'Hidden from front'}
-                  </p>
+                  <p className="text-lg font-black text-stone-900">{hotelForm.isAccepted ? 'Accepted' : 'Pending'}</p>
+                  <p className="text-sm font-medium text-stone-500">{hotelForm.onFront ? 'Front listed' : 'Hidden from front'}</p>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* ── Room editor ── */}
           <form
             onSubmit={saveRoom}
             className="overflow-hidden rounded-[30px] border border-stone-200 bg-white shadow-xl shadow-stone-200/50"
@@ -536,15 +506,13 @@ const saveHotel = async (event) => {
                     {editingRoomId ? 'Update Room' : 'Add New Room'}
                   </h2>
                   <p className="mt-1 text-sm font-medium text-stone-500">
-                    Room create aur update dono isi inline editor se honge.
+                    {editingRoomId
+                      ? `Editing room: ${editingRoomId}`
+                      : 'Naya room add karo — ID backend khud generate karega.'}
                   </p>
                 </div>
                 {editingRoomId && (
-                  <button
-                    type="button"
-                    onClick={resetRoomEditor}
-                    className="rounded-2xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-bold text-stone-700 transition hover:bg-stone-50"
-                  >
+                  <button type="button" onClick={resetRoomEditor} className="rounded-2xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-bold text-stone-700 transition hover:bg-stone-50">
                     Cancel Edit
                   </button>
                 )}
@@ -554,10 +522,6 @@ const saveHotel = async (event) => {
             <div className="grid gap-4 px-6 py-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="space-y-2">
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Room ID</span>
-                  <input required value={roomForm.roomId} onChange={setRoomField('roomId')} placeholder="ROOM-101" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
-                </label>
-                <label className="space-y-2">
                   <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Room Type</span>
                   <input required value={roomForm.type} onChange={setRoomField('type')} placeholder="Deluxe Room" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
                 </label>
@@ -566,20 +530,12 @@ const saveHotel = async (event) => {
                   <input value={roomForm.bedType} onChange={setRoomField('bedType')} placeholder="King Bed" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Base Price</span>
-                  <input type="number" min="0" value={roomForm.basePrice} onChange={setRoomField('basePrice')} placeholder="2500" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
-                </label>
-                <label className="space-y-2">
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Final Price</span>
-                  <input type="number" min="0" value={roomForm.finalPrice} onChange={setRoomField('finalPrice')} placeholder="2999" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Price (₹)</span>
+                  <input type="number" min="0" value={roomForm.price} onChange={setRoomField('price')} placeholder="2999" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
                 </label>
                 <label className="space-y-2">
                   <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Total Rooms</span>
-                  <input type="number" min="0" value={roomForm.totalRooms} onChange={setRoomField('totalRooms')} placeholder="10" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
-                </label>
-                <label className="space-y-2">
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Available Rooms</span>
-                  <input type="number" min="0" value={roomForm.availableRooms} onChange={setRoomField('availableRooms')} placeholder="6" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
+                  <input type="number" min="1" value={roomForm.countRooms} onChange={setRoomField('countRooms')} placeholder="10" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
                 </label>
                 <label className="space-y-2 md:col-span-2">
                   <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Amenities</span>
@@ -595,30 +551,27 @@ const saveHotel = async (event) => {
                 </label>
               </div>
 
+              {/* Offer toggle */}
               <div className="rounded-3xl border border-stone-200 bg-stone-50 px-4 py-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <label className="inline-flex items-center gap-3 text-sm font-bold text-stone-700">
                     <input type="checkbox" checked={roomForm.isOffer} onChange={setRoomField('isOffer')} className="h-4 w-4 rounded border-stone-300 text-blue-600 focus:ring-blue-500" />
                     Offer active
                   </label>
-                  <input value={roomForm.offerText} onChange={setRoomField('offerText')} placeholder="Flat 20% off" className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-50 sm:max-w-xs" />
+                  <input value={roomForm.offerName} onChange={setRoomField('offerName')} placeholder="Flat 20% off" className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm font-semibold text-stone-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-50 sm:max-w-xs" />
                 </div>
               </div>
 
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  onClick={resetRoomEditor}
-                  className="rounded-2xl border border-stone-200 bg-white px-5 py-3 text-sm font-bold text-stone-700 transition hover:bg-stone-50"
-                >
+                <button type="button" onClick={resetRoomEditor} className="rounded-2xl border border-stone-200 bg-white px-5 py-3 text-sm font-bold text-stone-700 transition hover:bg-stone-50">
                   Reset
                 </button>
                 <button
                   type="submit"
-                  disabled={roomSaving || !hotelForm.hotelEmail.trim()}
+                  disabled={updating}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:pointer-events-none disabled:opacity-50"
                 >
-                  {roomSaving ? <Loader2 size={16} className="animate-spin" /> : editingRoomId ? <PencilLine size={16} /> : <Plus size={16} />}
+                  {updating ? <Loader2 size={16} className="animate-spin" /> : editingRoomId ? <PencilLine size={16} /> : <Plus size={16} />}
                   {editingRoomId ? 'Update Room' : 'Add Room'}
                 </button>
               </div>
@@ -627,21 +580,22 @@ const saveHotel = async (event) => {
         </div>
       </div>
 
+      {/* ── Room inventory list ── */}
       <div className="mt-6 overflow-hidden rounded-[30px] border border-stone-200 bg-white shadow-xl shadow-stone-200/50">
         <div className="flex flex-col gap-3 border-b border-stone-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.26em] text-stone-400">Room Inventory</p>
             <h2 className="mt-2 text-2xl font-black text-stone-900">Existing Rooms</h2>
           </div>
-          {roomsLoading && (
+          {updating && (
             <div className="inline-flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1.5 text-xs font-bold text-stone-600">
               <Loader2 size={14} className="animate-spin" />
-              Syncing rooms...
+              Syncing...
             </div>
           )}
         </div>
 
-        {normalizedRooms.length === 0 && !roomsLoading ? (
+        {normalizedRooms.length === 0 ? (
           <div className="px-6 py-20 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-stone-100 text-stone-400">
               <BedDouble size={28} />
@@ -655,9 +609,9 @@ const saveHotel = async (event) => {
           <div className="grid gap-4 px-6 py-6">
             {normalizedRooms.map((room) => (
               <div
-                key={room.id}
+                key={room._id}
                 className={`rounded-[26px] border px-5 py-5 transition ${
-                  editingRoomId === room.id
+                  editingRoomId === room.roomId
                     ? 'border-blue-300 bg-blue-50/70 shadow-lg shadow-blue-100/60'
                     : 'border-stone-200 bg-stone-50/50 hover:border-stone-300 hover:bg-white'
                 }`}
@@ -666,29 +620,24 @@ const saveHotel = async (event) => {
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-stone-500">
-                        {room.roomId}
+                        {room.roomId || 'No ID'}
                       </span>
                       <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-stone-600">
                         {room.type}
                       </span>
-                      {room.isOffer && room.offerText && (
+                      {room.isOffer && room.offerName && (
                         <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
-                          {room.offerText}
+                          {room.offerName}
                         </span>
                       )}
                     </div>
                     <div>
                       <h3 className="text-xl font-black text-stone-900">{room.name}</h3>
-                      <p className="mt-1 text-sm font-medium text-stone-500">
-                        {room.bedType || 'Bed type not added'}
-                      </p>
+                      <p className="mt-1 text-sm font-medium text-stone-500">{room.bedType || 'Bed type not added'}</p>
                     </div>
                     <div className="flex flex-wrap gap-3 text-sm font-semibold text-stone-600">
-                      <span className="rounded-2xl bg-white px-3 py-2">Base: Rs {room.basePrice || '0'}</span>
-                      <span className="rounded-2xl bg-white px-3 py-2">Final: Rs {room.finalPrice || '0'}</span>
-                      <span className="rounded-2xl bg-white px-3 py-2">
-                        Inventory: {room.availableRooms || '0'} / {room.totalRooms || '0'}
-                      </span>
+                      <span className="rounded-2xl bg-white px-3 py-2">₹ {room.price || '0'}</span>
+                      <span className="rounded-2xl bg-white px-3 py-2">Rooms: {room.countRooms || '0'}</span>
                     </div>
                     {room.description && (
                       <p className="max-w-3xl text-sm leading-6 text-stone-600">{room.description}</p>
@@ -701,16 +650,15 @@ const saveHotel = async (event) => {
                       onClick={() => handleRoomEdit(room)}
                       className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-stone-700 shadow-sm transition hover:bg-stone-100"
                     >
-                      <PencilLine size={15} />
-                      Edit
+                      <PencilLine size={15} /> Edit
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleRoomDelete(room.id)}
-                      className="inline-flex items-center gap-2 rounded-2xl bg-rose-50 px-4 py-2.5 text-sm font-bold text-rose-700 transition hover:bg-rose-100"
+                      onClick={() => handleRoomDelete(room.roomId)}
+                      disabled={!room.roomId || updating}
+                      className="inline-flex items-center gap-2 rounded-2xl bg-rose-50 px-4 py-2.5 text-sm font-bold text-rose-700 transition hover:bg-rose-100 disabled:pointer-events-none disabled:opacity-40"
                     >
-                      <Trash2 size={15} />
-                      Delete
+                      <Trash2 size={15} /> Delete
                     </button>
                   </div>
                 </div>
@@ -724,4 +672,3 @@ const saveHotel = async (event) => {
 }
 
 export default HotelEditPage
-

@@ -21,7 +21,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import Breadcrumb from '../../../components/breadcrumb'
-import { clearHotelUpdateStatus, getHotelById, updateHotel } from '../../../../redux/slices/admin/hotel'
+import { clearHotelUpdateStatus, getHotelById, updateHotelInfo } from '../../../../redux/slices/admin/hotel'
 
 const createHotelEditForm = (hotel) => {
   const basicInfo = hotel?.basicInfo || {}
@@ -234,11 +234,11 @@ function HotelDetails({ listPath, listLabel }) {
     : basicInfo?.propertyType
       ? [basicInfo.propertyType]
       : []
-  const displayHotelId = hotel?.hotelId || hotel?._id || id
+  const displayHotelId = hotel?.hotelId || id
 
   const handleHotelUpdate = async (formData) => {
     await dispatch(
-      updateHotel({
+      updateHotelInfo({
         hotelId: displayHotelId,
         hotelData: formData,
       }),
