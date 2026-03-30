@@ -30,6 +30,8 @@ import ViewTour from '../pages/tms/view-tour'
 import EditTour from '../pages/tms/edit-tour'
 import TourBookingList from '../pages/tms/tour-booking-list'
 import AllTourBookings from '../pages/admin/all-tour-bookings'
+import TourListPage from '../pages/admin/tour-list'
+import TourRequestPage from '../pages/tour-request'
 import Complaints from '../pages/admin/complaints'
 import CreateComplaint from '../components/complaints/create-complaint'
 import ComplaintChat from '../components/complaints/complaint-chat'
@@ -84,6 +86,8 @@ export const APP_ROUTES = [
   { path: "/my-tour/:id/edit", Component: EditTour },
   { path: "/tour-bookings", Component: TourBookingList },
   { path: "/admin-tour/bookings", Component: AllTourBookings },
+  { path: "/tour-list", Component: TourListPage },
+  { path: "/tour-request", Component: TourRequestPage },
   { path: "/complaints", Component: Complaints },
   { path: "/complaint/create", Component: CreateComplaint },
   { path: "/complaint/chat/:id", Component: ComplaintChat },
