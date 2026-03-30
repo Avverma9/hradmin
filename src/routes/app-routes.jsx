@@ -47,6 +47,10 @@ import BulkCouponManage from '../pages/admin/hotel/bulk-coupon-manage'
 import AddLocations from '../pages/admin/locations/add-locations'
 import ListLocations from '../pages/admin/locations/list-locations'
 import { AllUsers } from '../pages/admin/alluser/AllUser'
+import AllCabs from '../pages/admin/all-cabs'
+import PushNotification from '../pages/admin/push-notification'
+import PmsCoupon from '../pages/pms/pms-coupon'
+import AllReviews from '../pages/admin/all-reviews'
 
 const EditCarPage = () => <Car isEditMode />
 
@@ -103,6 +107,12 @@ export const APP_ROUTES = [
   { path: "/hotels/:id", Component: HotelDetails },
   { path: "/hotels/:id/edit", Component: HotelEditPage },
   { path: "/all-users", Component: AllUsers },
+  { path: "/admin-cabs", Component: AllCabs },
+  { path: "/apply-pms-coupon", Component: PmsCoupon },
+  { path: "/admin-notification", Component: PushNotification },
+  { path: "/all-hotel-reviews", Component: AllReviews },
+
+
 
 
 

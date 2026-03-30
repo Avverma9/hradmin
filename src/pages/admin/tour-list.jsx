@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -19,6 +19,8 @@ import {
   Map as MapIcon,
 } from 'lucide-react'
 import Breadcrumb from '../../components/breadcrumb'
+import MasterFilter from '../../components/master-filter'
+import { tableClasses } from '../../components/admin-table'
 import {
   fetchFilteredTours,
   getAllTours,
@@ -316,7 +318,7 @@ const TourTableRow = ({ tour, onEdit, onView }) => {
   return (
     <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors" data-testid={`tour-row-${tour._id}`}>
       {/* Tour Info */}
-      <td className="px-4 py-4">
+      <td className={tableClasses.td}>
         <div className="flex items-center gap-3">
           <div className="h-12 w-16 overflow-hidden rounded-lg bg-slate-100 shrink-0">
             {imageUrl ? (
@@ -337,7 +339,7 @@ const TourTableRow = ({ tour, onEdit, onView }) => {
       </td>
 
       {/* Location */}
-      <td className="px-4 py-4">
+      <td className={tableClasses.td}>
         <div className="flex items-start gap-1.5 text-[12px] font-medium text-slate-600">
           <MapPin size={12} className="text-slate-400 mt-0.5 shrink-0" />
           <span className="line-clamp-2">{[tour.city, tour.state].filter(Boolean).join(', ') || 'N/A'}</span>
@@ -345,12 +347,12 @@ const TourTableRow = ({ tour, onEdit, onView }) => {
       </td>
 
       {/* Price */}
-      <td className="px-4 py-4">
+      <td className={tableClasses.td}>
         <span className="text-sm font-bold text-slate-900">{formatCurrency(displayPrice)}</span>
       </td>
 
       {/* Duration */}
-      <td className="px-4 py-4">
+      <td className={tableClasses.td}>
         <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-600">
           <CalendarDays size={12} className="text-slate-400" />
           {tour.nights ?? 0}N / {tour.days ?? (tour.nights ? tour.nights + 1 : 0)}D
@@ -358,7 +360,7 @@ const TourTableRow = ({ tour, onEdit, onView }) => {
       </td>
 
       {/* Rating */}
-      <td className="px-4 py-4">
+      <td className={tableClasses.td}>
         {tour.starRating > 0 ? (
           <div className="flex items-center gap-1 text-sm font-bold text-amber-600">
             <Star size={12} className="fill-amber-400 text-amber-400" />
@@ -370,7 +372,7 @@ const TourTableRow = ({ tour, onEdit, onView }) => {
       </td>
 
       {/* Status */}
-      <td className="px-4 py-4">
+      <td className={tableClasses.td}>
         <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${cfg.cls}`}>
           <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
           {status}
@@ -378,11 +380,11 @@ const TourTableRow = ({ tour, onEdit, onView }) => {
       </td>
 
       {/* Actions */}
-      <td className="px-4 py-4">
+      <td className={tableClasses.td}>
         <div className="flex items-center gap-2">
           <button
             onClick={() => onView(tour)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors"
+            className={tableClasses.actionBtn}
             title="View"
             data-testid={`view-tour-${tour._id}`}
           >
@@ -390,7 +392,7 @@ const TourTableRow = ({ tour, onEdit, onView }) => {
           </button>
           <button
             onClick={() => onEdit(tour)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+            className={tableClasses.actionBtnPrimary}
             title="Edit"
             data-testid={`edit-tour-${tour._id}`}
           >
@@ -461,13 +463,54 @@ function TourListPage() {
   const [appliedFilters, setAppliedFilters] = useState(DEFAULT_FILTERS)
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  // Use allTours when available, fallback to tours
-  const displayTours = allTours.length > 0 ? allTours : tours
-  const totalPages = filterMeta?.totalPages || Math.ceil((filterMeta?.total || displayTours.length) / limit) || 1
+  
+  // Fields configuration for MasterFilter (hotel-style compact filter)
+  const filterFields = useMemo(() => [
+    { key: 'q', label: 'Search', type: 'text', placeholder: 'Search tours...' },
+    { key: 'country', label: 'Country', type: 'text', placeholder: 'Country' },
+    { key: 'state', label: 'State', type: 'text', placeholder: 'State' },
+    { key: 'city', label: 'City', type: 'text', placeholder: 'City' },
+    { key: 'fromWhere', label: 'Route From', type: 'text', placeholder: 'From city' },
+    { key: 'to', label: 'Route To', type: 'text', placeholder: 'To city' },
+    { key: 'visitingPlace', label: 'Visiting Place', type: 'text', placeholder: 'e.g. Taj Mahal' },
+    { key: 'visitingPlaces', label: 'Visiting Places', type: 'text', placeholder: 'Comma separated' },
+    { key: 'themes', label: 'Themes', type: 'text', placeholder: 'Theme (comma separated)' },
+    { key: 'amenities', label: 'Amenities', type: 'text', placeholder: 'Amenities (comma separated)' },
+    { key: 'amenitiesMode', label: 'Amenities Mode', type: 'select', options: [{ value: 'AND', label: 'All (AND)' }, { value: 'OR', label: 'Any (OR)' }], emptyOptionLabel: 'Any Mode' },
+    { key: 'minPrice', label: 'Min Price', type: 'number', placeholder: 'Min price' },
+    { key: 'maxPrice', label: 'Max Price', type: 'number', placeholder: 'Max price' },
+    { key: 'price', label: 'Exact Price', type: 'number', placeholder: 'Exact price' },
+    { key: 'minNights', label: 'Min Nights', type: 'number', placeholder: 'Min nights' },
+    { key: 'maxNights', label: 'Max Nights', type: 'number', placeholder: 'Max nights' },
+    { key: 'nights', label: 'Exact Nights', type: 'number', placeholder: 'Exact nights' },
+    { key: 'minRating', label: 'Min Rating', type: 'number', placeholder: 'Min rating (1-5)' },
+    { key: 'starRating', label: 'Star Rating', type: 'number', placeholder: 'Exact star rating' },
+    { key: 'runningStatus', label: 'Status', type: 'select', options: STATUS_OPTIONS, emptyOptionLabel: 'All Status' },
+    { key: 'fromDate', label: 'From Date', type: 'date' },
+    { key: 'toDate', label: 'To Date', type: 'date' },
+    { key: 'startDate', label: 'Start Date', type: 'date' },
+    { key: 'endDate', label: 'End Date', type: 'date' },
+    { key: 'agencyEmail', label: 'Agency Email', type: 'text', placeholder: 'agency@example.com' },
+    { key: 'isCustomizable', label: 'Customizable', type: 'select', options: [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }], emptyOptionLabel: 'Any' },
+    { key: 'hasImages', label: 'Has Images', type: 'select', options: [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }], emptyOptionLabel: 'Any' },
+    { key: 'hasVehicles', label: 'Has Vehicles', type: 'select', options: [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }], emptyOptionLabel: 'Any' },
+    { key: 'sortBy', label: 'Sort By', type: 'select', options: [
+      { value: 'createdAt', label: 'Created Date' },
+      { value: 'price', label: 'Price' },
+      { value: 'nights', label: 'Nights' },
+      { value: 'starRating', label: 'Star Rating' },
+    ], emptyOptionLabel: 'Default' },
+    { key: 'sortOrder', label: 'Sort Order', type: 'select', options: [
+      { value: 'desc', label: 'Descending' },
+      { value: 'asc', label: 'Ascending' },
+    ], emptyOptionLabel: 'Default' },
+  ], [])
 
   const isFiltered = JSON.stringify(appliedFilters) !== JSON.stringify(DEFAULT_FILTERS)
+
+  // Prefer filtered `tours` when filters are applied; otherwise use `allTours`
+  const displayTours = isFiltered ? (tours || []) : (allTours.length > 0 ? allTours : tours)
+  const totalPages = filterMeta?.totalPages || Math.ceil((filterMeta?.total || displayTours.length) / limit) || 1
 
   // Fetch tours on mount and when filters/page change
   useEffect(() => {
@@ -485,7 +528,6 @@ function TourListPage() {
   const handleApplyFilters = useCallback(() => {
     setAppliedFilters(filters)
     setPage(1)
-    setSidebarOpen(false)
   }, [filters])
 
   const handleResetFilters = useCallback(() => {
@@ -495,18 +537,20 @@ function TourListPage() {
   }, [])
 
   const handleView = useCallback((tour) => {
-    navigate(`/my-tour/${tour._id}`)
-  }, [navigate])
+    const from = window.location.pathname + window.location.search
+    const url = `${window.location.origin}/my-tour/${tour._id}?from=${encodeURIComponent(from)}`
+    window.open(url, '_blank')
+  }, [])
 
   const handleEdit = useCallback((tour) => {
-    navigate(`/my-tour/${tour._id}/edit`)
-  }, [navigate])
+    const from = window.location.pathname + window.location.search
+    const url = `${window.location.origin}/my-tour/${tour._id}/edit?from=${encodeURIComponent(from)}`
+    window.open(url, '_blank')
+  }, [])
 
   const handlePageChange = useCallback((newPage) => {
     setPage(newPage)
   }, [])
-
-  const isFiltered = JSON.stringify(appliedFilters) !== JSON.stringify(DEFAULT_FILTERS)
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -524,12 +568,6 @@ function TourListPage() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setSidebarOpen(true)}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors lg:hidden"
-            >
-              <SlidersHorizontal size={16} /> Filters
-            </button>
-            <button
               onClick={() => navigate('/add-tour-data')}
               className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-indigo-700 transition-colors"
               data-testid="add-new-tour-btn"
@@ -540,30 +578,18 @@ function TourListPage() {
         </div>
 
         <div className="flex gap-6">
-          {/* Filter Sidebar (Desktop) */}
-          <div className="hidden lg:block w-80 shrink-0">
-            <MasterFilterSidebar
-              filters={filters}
-              onChange={handleFilterChange}
-              onApply={handleApplyFilters}
-              onReset={handleResetFilters}
-              isOpen={true}
-              onClose={() => {}}
-            />
-          </div>
-
-          {/* Mobile Filter Sidebar */}
-          <MasterFilterSidebar
-            filters={filters}
-            onChange={handleFilterChange}
-            onApply={handleApplyFilters}
-            onReset={handleResetFilters}
-            isOpen={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-          />
-
           {/* Main Content */}
           <div className="flex-1 min-w-0">
+            {/* Master Filter (compact hotel-style) */}
+            <div className="mb-4">
+              <MasterFilter
+                fields={filterFields}
+                values={filters}
+                onChange={handleFilterChange}
+                onApply={handleApplyFilters}
+                onReset={handleResetFilters}
+              />
+            </div>
             {/* Active Filters Banner */}
             {isFiltered && (
               <div className="mb-4 flex items-center gap-3 rounded-xl border border-indigo-100 bg-indigo-50/50 px-4 py-3">
@@ -612,13 +638,13 @@ function TourListPage() {
                   <table className="w-full" data-testid="tours-table">
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50/50">
-                        <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">Tour</th>
-                        <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">Location</th>
-                        <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">Price</th>
-                        <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">Duration</th>
-                        <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">Rating</th>
-                        <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">Status</th>
-                        <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">Actions</th>
+                        <th className={tableClasses.th}>Tour</th>
+                        <th className={tableClasses.th}>Location</th>
+                        <th className={tableClasses.th}>Price</th>
+                        <th className={tableClasses.th}>Duration</th>
+                        <th className={tableClasses.th}>Rating</th>
+                        <th className={tableClasses.th}>Status</th>
+                        <th className={tableClasses.th}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>

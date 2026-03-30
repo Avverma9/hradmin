@@ -10,15 +10,6 @@ const normalizeHotelCollection = (payload) => {
   return []
 }
 
-const normalizeRoomCollection = (payload) => {
-  if (Array.isArray(payload)) return payload
-  if (Array.isArray(payload?.data)) return payload.data
-  if (Array.isArray(payload?.rooms)) return payload.rooms
-  if (Array.isArray(payload?.items)) return payload.items
-  if (Array.isArray(payload?.data?.rooms)) return payload.data.rooms
-  return []
-}
-
 const sanitizeFilters = (filters = {}) =>
   Object.fromEntries(
     Object.entries(filters).filter(([, value]) => {
@@ -28,7 +19,6 @@ const sanitizeFilters = (filters = {}) =>
   )
 
 const resolveUpdatedHotel = (payload) => payload?.data || payload?.hotel || payload || null
-const resolveUpdatedRoom = (payload) => payload?.data || payload?.room || payload || null
 
 const getEntityId = (entity) => entity?.hotelId || entity?._id || entity?.id || entity?.roomId || ''
 
@@ -73,6 +63,19 @@ export const getHotelsByFilters = createAsyncThunk(
     }
   },
 )
+ 
+
+export const getAllHotelReviews = createAsyncThunk(
+  'admin/getAllHotelReviews',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/find-all-users-hotel-review')
+      return response.data
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch hotel reviews.')
+    }
+  },
+)
 
 export const getAllHotels = createAsyncThunk(
   'admin/getAllHotels',
@@ -98,6 +101,32 @@ export const updateHotelInfo = createAsyncThunk(
   },
 )
 
+
+
+export const deleteHotelReview = createAsyncThunk(
+  'admin/deleteHotelReview',
+  async (reviewId, { rejectWithValue }) => {
+    try {
+      const response = await api.delete(`/delete/${reviewId}`)
+      return response.data
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to delete review.')
+    }
+  },
+)
+
+export const updateHotelReview = createAsyncThunk(
+  'admin/updateHotelReview',
+  async ({ reviewId, reviewData }, { rejectWithValue }) => {
+    try {
+      const response = await api.put(`/update-review/${reviewId}`, reviewData)
+      return response.data
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to update review.')
+    }
+  },
+)
+
 export const getHotelById = createAsyncThunk(
   'admin/getHotelById',
   async (hotelId, { rejectWithValue }) => {
@@ -110,91 +139,23 @@ export const getHotelById = createAsyncThunk(
   },
 )
 
-export const getRoomsByHotelEmail = createAsyncThunk(
-  'admin/getRoomsByHotelEmail',
-  async (hotelEmail, { rejectWithValue }) => {
-    try {
-      const response = await api.get('/get-list-of/rooms', {
-        params: { hotelEmail },
-      })
-      return {
-        hotelEmail,
-        payload: response.data,
-      }
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch rooms.')
-    }
-  },
-)
-
-export const createRoomToHotel = createAsyncThunk(
-  'admin/createRoomToHotel',
-  async (roomData, { rejectWithValue }) => {
-    try {
-      const response = await api.post('/create-a-room-to-your-hotel', roomData)
-      return response.data
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to create room.')
-    }
-  },
-)
-
-export const updateRoom = createAsyncThunk(
-  'admin/updateRoom',
-  async ({ roomId, roomData }, { rejectWithValue }) => {
-    try {
-      const response = await api.patch('/update-your/room', {
-        roomId,
-        ...roomData,
-      })
-      return response.data
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update room.')
-    }
-  },
-)
-
-export const deleteRoomById = createAsyncThunk(
-  'admin/deleteRoomById',
-  async (roomId, { rejectWithValue }) => {
-    try {
-      const response = await api.delete('/delete-rooms-by-id', {
-        data: { roomId },
-      })
-      return {
-        roomId,
-        payload: response.data,
-      }
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to delete room.')
-    }
-  },
-)
-
 const hotelSlice = createSlice({
   name: 'hotel',
   initialState: {
     hotels: [],
     allHotels: [],
     selectedHotel: null,
-    rooms: [],
-    roomHotelEmail: '',
+    hotelReviews: [],
+
     filters: {},
     loading: false,
     updating: false,
-    roomsLoading: false,
-    roomSaving: false,
     error: null,
     updateSuccess: null,
-    roomSuccess: null,
   },
   reducers: {
     clearHotelUpdateStatus: (state) => {
       state.updateSuccess = null
-      state.error = null
-    },
-    clearRoomStatus: (state) => {
-      state.roomSuccess = null
       state.error = null
     },
   },
@@ -233,10 +194,8 @@ const hotelSlice = createSlice({
         state.error = null
       })
       .addCase(getHotelById.fulfilled, (state, action) => {
-        const hotelPayload = action.payload?.data || action.payload
         state.loading = false
         state.selectedHotel = action.payload
-        state.rooms = normalizeRoomCollection(hotelPayload?.rooms)
       })
       .addCase(getHotelById.rejected, (state, action) => {
         state.loading = false
@@ -246,6 +205,18 @@ const hotelSlice = createSlice({
         state.updating = true
         state.error = null
         state.updateSuccess = null
+      })
+      .addCase(getAllHotelReviews.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(getAllHotelReviews.fulfilled, (state, action) => {
+        state.loading = false
+        state.hotelReviews = action.payload
+      })
+      .addCase(getAllHotelReviews.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
       })
       .addCase(updateHotelInfo.fulfilled, (state, action) => {
         const updatedHotel = resolveUpdatedHotel(action.payload)
@@ -261,69 +232,8 @@ const hotelSlice = createSlice({
         state.updating = false
         state.error = action.payload
       })
-      .addCase(getRoomsByHotelEmail.pending, (state) => {
-        state.roomsLoading = true
-        state.error = null
-      })
-      .addCase(getRoomsByHotelEmail.fulfilled, (state, action) => {
-        state.roomsLoading = false
-        state.roomHotelEmail = action.payload.hotelEmail
-        state.rooms = normalizeRoomCollection(action.payload.payload)
-      })
-      .addCase(getRoomsByHotelEmail.rejected, (state, action) => {
-        state.roomsLoading = false
-        state.error = action.payload
-      })
-      .addCase(createRoomToHotel.pending, (state) => {
-        state.roomSaving = true
-        state.roomSuccess = null
-        state.error = null
-      })
-      .addCase(createRoomToHotel.fulfilled, (state, action) => {
-        const createdRoom = resolveUpdatedRoom(action.payload)
-        state.roomSaving = false
-        state.roomSuccess = action.payload?.message || 'Room created successfully.'
-        if (createdRoom) {
-          state.rooms = [createdRoom, ...state.rooms]
-        }
-      })
-      .addCase(createRoomToHotel.rejected, (state, action) => {
-        state.roomSaving = false
-        state.error = action.payload
-      })
-      .addCase(updateRoom.pending, (state) => {
-        state.roomSaving = true
-        state.roomSuccess = null
-        state.error = null
-      })
-      .addCase(updateRoom.fulfilled, (state, action) => {
-        const updatedRoom = resolveUpdatedRoom(action.payload)
-        state.roomSaving = false
-        state.roomSuccess = action.payload?.message || 'Room updated successfully.'
-        if (updatedRoom) {
-          state.rooms = replaceEntityInList(state.rooms, updatedRoom)
-        }
-      })
-      .addCase(updateRoom.rejected, (state, action) => {
-        state.roomSaving = false
-        state.error = action.payload
-      })
-      .addCase(deleteRoomById.pending, (state) => {
-        state.roomSaving = true
-        state.roomSuccess = null
-        state.error = null
-      })
-      .addCase(deleteRoomById.fulfilled, (state, action) => {
-        state.roomSaving = false
-        state.roomSuccess = action.payload.payload?.message || 'Room deleted successfully.'
-        state.rooms = state.rooms.filter((room) => getEntityId(room) !== action.payload.roomId)
-      })
-      .addCase(deleteRoomById.rejected, (state, action) => {
-        state.roomSaving = false
-        state.error = action.payload
-      })
   },
 })
 
-export const { clearHotelUpdateStatus, clearRoomStatus } = hotelSlice.actions
+export const { clearHotelUpdateStatus } = hotelSlice.actions
 export default hotelSlice.reducer

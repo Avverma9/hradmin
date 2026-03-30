@@ -19,6 +19,7 @@ import availabilityReducer from './slices/availability'
 import monthlyReducer from './slices/admin/monthly'
 import bulkReducer from './slices/admin/bulk'
 import locationsReducer from './slices/admin/locations'
+import notificationReducer from './slices/admin/notification'
 
 const rootReducer = combineReducers({
   adminAdditional: adminAdditionalReducer,
@@ -41,6 +42,7 @@ const rootReducer = combineReducers({
   monthly: monthlyReducer,
   bulk: bulkReducer,
   locations: locationsReducer,
+  notification: notificationReducer,
 })
 
 export default rootReducer

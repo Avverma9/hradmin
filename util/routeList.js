@@ -50,6 +50,10 @@ const ADMIN_ROUTES = [
   createRoute('/hotels', 'All Hotels', 'Admin view of all hotels', 'admin', false, true),
   createRoute('/hotels/:id', 'Hotel Details', 'Detailed view of a specific hotel by hotelId', 'admin', true, true),
   createRoute('/manage-route-access', 'Manage Route Access', 'Grant / revoke route-level access per user', 'admin', false, true),
+createRoute('/admin-cabs', 'All Cabs', 'Admin view of all cars in TMS', 'admin', false, true),
+createRoute('/apply-pms-coupon', 'Apply PMS Coupon', 'Apply a coupon in PMS', 'admin', false, true),
+createRoute('/admin-notification', 'Push Notifications', 'Admin view of all notifications', 'admin', false, true),
+  createRoute('/all-hotel-reviews', 'All Hotel Reviews', 'View and manage all hotel reviews submitted by users', 'admin', false, true),
 ]
 
 /* ── PMS — Bookings ────────────────────────────────────── */

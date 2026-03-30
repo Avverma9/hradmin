@@ -8,6 +8,7 @@ import {
 import { fetchFilteredTours } from '../../../redux/slices/tms/travel/tour/tour'
 import { selectAuth } from '../../../redux/slices/authSlice'
 import { formatCurrency } from '../../utils/format'
+import { tableClasses } from '../../components/admin-table'
 
 const selectTour = (state) => state.tour
 
@@ -113,16 +114,16 @@ export default function MyTour() {
             <table className="w-full min-w-[960px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50">
-                  <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">#</th>
-                  <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Tour / Agency</th>
-                  <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Route</th>
-                  <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Location</th>
-                  <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Duration</th>
-                  <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Price</th>
-                  <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Rating</th>
-                  <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Running</th>
-                  <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Status</th>
-                  <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Actions</th>
+                  <th className={tableClasses.th}>#</th>
+                  <th className={tableClasses.th}>Tour / Agency</th>
+                  <th className={tableClasses.th}>Route</th>
+                  <th className={tableClasses.th}>Location</th>
+                  <th className={tableClasses.th}>Duration</th>
+                  <th className={tableClasses.th}>Price</th>
+                  <th className={tableClasses.th}>Rating</th>
+                  <th className={tableClasses.th}>Running</th>
+                  <th className={tableClasses.th}>Status</th>
+                  <th className={tableClasses.th}>Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -143,14 +144,14 @@ export default function MyTour() {
                   tours.map((tour, idx) => (
                     <tr key={tour._id || idx} className="hover:bg-slate-50/60 transition-colors">
                       {/* # */}
-                      <td className="px-4 py-4">
+                      <td className={tableClasses.td}>
                         <span className="text-[12px] font-mono font-semibold text-slate-400">
                           {(page - 1) * (filterMeta?.limit ?? 10) + idx + 1}
                         </span>
                       </td>
 
                       {/* Tour / Agency */}
-                      <td className="px-4 py-4">
+                      <td className={tableClasses.td}>
                         <div className="flex items-center gap-3">
                           {tour.images?.[0] ? (
                             <img src={tour.images[0]} alt="" className="h-10 w-14 shrink-0 rounded-lg object-cover border border-slate-200" />
@@ -176,7 +177,7 @@ export default function MyTour() {
                       </td>
 
                       {/* Route */}
-                      <td className="px-4 py-4">
+                      <td className={tableClasses.td}>
                         <div className="flex items-center gap-1 text-sm text-slate-700">
                           <MapPin size={12} className="shrink-0 text-slate-400" />
                           <span className="font-semibold">{tour?.route?.substring(0,30)}</span>
@@ -185,7 +186,7 @@ export default function MyTour() {
                       </td>
 
                       {/* Location */}
-                      <td className="px-4 py-4">
+                      <td className={tableClasses.td}>
                         <p className="text-sm font-semibold text-slate-700">{tour.city || '—'}</p>
                         <p className="text-[11px] text-slate-400">
                           {[tour.state, tour.country].filter(Boolean).join(', ') || '—'}
@@ -193,7 +194,7 @@ export default function MyTour() {
                       </td>
 
                       {/* Duration */}
-                      <td className="px-4 py-4">
+                      <td className={tableClasses.td}>
                         <div className="flex items-center gap-1.5">
                           <CalendarDays size={13} className="shrink-0 text-slate-400" />
                           <span className="text-sm font-semibold text-slate-700">
@@ -208,7 +209,7 @@ export default function MyTour() {
                       </td>
 
                       {/* Price */}
-                      <td className="px-4 py-4">
+                      <td className={tableClasses.td}>
                         <div className="flex items-center gap-0.5">
                           <IndianRupee size={12} className="shrink-0 text-emerald-600" />
                           <span className="text-sm font-extrabold text-emerald-700">
@@ -218,7 +219,7 @@ export default function MyTour() {
                       </td>
 
                       {/* Rating */}
-                      <td className="px-4 py-4">
+                      <td className={tableClasses.td}>
                         {tour.starRating ? (
                           <div className="flex items-center gap-1">
                             <Star size={13} className="shrink-0 fill-amber-400 text-amber-400" />
@@ -230,17 +231,17 @@ export default function MyTour() {
                       </td>
 
                       {/* Running Status */}
-                      <td className="px-4 py-4">
+                      <td className={tableClasses.td}>
                         <RunningStatusBadge status={tour.runningStatus} />
                       </td>
 
                       {/* Status */}
-                      <td className="px-4 py-4">
+                      <td className={tableClasses.td}>
                         <StatusBadge accepted={tour.isAccepted} />
                       </td>
 
                       {/* Actions */}
-                      <td className="px-4 py-4">
+                      <td className={tableClasses.td}>
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => navigate(`/my-tour/${tour._id}`)}

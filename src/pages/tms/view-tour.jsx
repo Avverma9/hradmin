@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
@@ -39,6 +40,8 @@ export default function ViewTour() {
   const { id } = useParams()
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = new URLSearchParams(location.search).get('from')
   const { tourDetails: tour, loading, error } = useSelector(selectTour)
 
   useEffect(() => {
@@ -57,7 +60,7 @@ export default function ViewTour() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate('/my-tour')}
+              onClick={() => navigate(from || '/my-tour')}
               className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2 shadow-sm transition-colors hover:bg-slate-50"
             >
               <ArrowLeft size={16} />
@@ -72,7 +75,7 @@ export default function ViewTour() {
           </div>
           {tour && (
             <button
-              onClick={() => navigate(`/my-tour/${id}/edit`)}
+              onClick={() => navigate(`/my-tour/${id}/edit${from ? `?from=${encodeURIComponent(from)}` : ''}`)}
               className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-bold text-violet-700 shadow-sm transition-colors hover:bg-violet-100"
             >
               <Pencil size={13} /> Edit Tour

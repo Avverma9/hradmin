@@ -3,7 +3,19 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Bell, ChevronRight, LogOut, Search, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { logoutUser, selectAuth } from '../../redux/slices/authSlice'
+import NotificationDropdown from './notification-dropdown'
+import { selectUnreadCount } from '../../redux/slices/admin/notification'
 import { getSidebarLinkLabel, getSidebarLinkPath } from '../utils/sidebar-links'
+
+function UnreadBadge() {
+  const unread = useSelector(selectUnreadCount)
+  if (!unread) return null
+  return (
+    <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+      {unread > 99 ? '99+' : unread}
+    </span>
+  )
+}
 
 function Header({ className = '' }) {
   const dispatch = useDispatch()
@@ -165,34 +177,14 @@ function Header({ className = '' }) {
               title="Notifications"
             >
               <Bell size={18} />
-              <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-rose-500" />
+              <UnreadBadge />
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 top-[calc(100%+12px)] z-30 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.12)]">
-                <div className="border-b border-slate-100 px-4 py-4">
-                  <p className="text-sm font-semibold text-slate-900">Notifications</p>
-                  <p className="text-xs text-slate-500">Recent updates and alerts</p>
-                </div>
-                <div className="space-y-3 px-4 py-4">
-                  <div className="rounded-xl bg-slate-50 px-3 py-3">
-                    <p className="text-sm font-medium text-slate-800">
-                      Dashboard data synced
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      Latest analytics are now available for review.
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-slate-50 px-3 py-3">
-                    <p className="text-sm font-medium text-slate-800">
-                      New route access loaded
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      Sidebar links have been refreshed from your session.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <NotificationDropdown
+                userId={user?.id}
+                onClose={() => setShowNotifications(false)}
+              />
             )}
           </div>
 

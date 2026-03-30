@@ -60,17 +60,36 @@ function MasterFilter({
     const merged = [...requestedKeys, ...filledKeys]
     return Array.from(new Set(merged))
   }, [initialActiveFieldKeys, normalizedFields, values])
+  // Create a lightweight signature of values for stable dependency tracking.
+  // This prevents unnecessary recomputations when the `values` object reference changes
+  // but the actual field values remain the same.
+  const valuesSignature = useMemo(() => {
+    return normalizedFields.map((f) => String(values?.[f.key] ?? '')).join('|')
+  }, [normalizedFields, values])
 
   const [activeFieldKeys, setActiveFieldKeys] = useState(defaultActiveFieldKeys)
 
   useEffect(() => {
     setActiveFieldKeys((current) => {
-      const merged = [...current, ...defaultActiveFieldKeys].filter((key) =>
-        normalizedFields.some((field) => field.key === key),
+      const merged = Array.from(
+        new Set(
+          [...current, ...defaultActiveFieldKeys].filter((key) =>
+            normalizedFields.some((field) => field.key === key),
+          ),
+        ),
       )
-      return Array.from(new Set(merged))
+
+      // Avoid updating state if merged keys are identical to current keys
+      if (current.length === merged.length) {
+        const curSet = new Set(current)
+        const same = merged.every((k) => curSet.has(k))
+        if (same) return current
+      }
+
+      return merged
     })
-  }, [defaultActiveFieldKeys, normalizedFields])
+    // Note: include valuesSignature instead of raw `values` to avoid loops
+  }, [defaultActiveFieldKeys, normalizedFields, valuesSignature])
 
   useEffect(() => {
     const handleClickOutside = (event) => {

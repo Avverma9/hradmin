@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
   ArrowLeft, Plus, Trash2, Save, Package, AlertCircle,
   CheckCircle, Loader2,
@@ -56,6 +56,8 @@ export default function EditTour() {
   const { id } = useParams()
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = new URLSearchParams(location.search).get('from')
   const { tourDetails, loading, error } = useSelector(selectTour)
 
   const [form, setForm] = useState(null)
@@ -180,7 +182,7 @@ export default function EditTour() {
     const result = await dispatch(updateTour({ tourId: id, updatedData: payload }))
     if (updateTour.fulfilled.match(result)) {
       setSaved(true)
-      setTimeout(() => navigate(`/my-tour/${id}`), 1200)
+      setTimeout(() => navigate(from || `/my-tour/${id}`), 1200)
     } else {
       setSaveError(result.payload || 'Failed to save changes.')
     }
@@ -215,7 +217,7 @@ export default function EditTour() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => navigate(`/my-tour/${id}`)}
+              onClick={() => navigate(from || `/my-tour/${id}`)}
               className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2 shadow-sm transition-colors hover:bg-slate-50"
             >
               <ArrowLeft size={16} />

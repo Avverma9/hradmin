@@ -76,21 +76,29 @@ const normalizeRoom = (room, index = 0) => {
     imagesStr = room.images
   }
 
+  // Handle nested API response structure (getHotelsById) vs flat DB structure
+  const price      = room?.pricing?.basePrice ?? room?.price      ?? room?.originalPrice ?? 0
+  const countRooms = room?.inventory?.total   ?? room?.countRooms ?? room?.totalRooms    ?? 0
+  const isOffer    = room?.features?.isOffer  ?? room?.isOffer    ?? false
+  const offerName  = room?.features?.offerText ?? room?.offerName ?? room?.offerText     ?? ''
+  // roomId: prefer roomId field, then id from API mapping (server sets id = roomId)
+  const roomId     = room?.roomId || room?.id || ''
+
   return {
     // Use _id as the stable key for edit/delete operations
     _id:            room?._id || room?.id || `room-${index}`,
-    roomId:         room?.roomId || '',  // Only use actual roomId, not _id
+    roomId,
     name:           room?.name  || room?.type || `Room ${index + 1}`,
     type:           room?.type  || room?.name || `Room ${index + 1}`,
     bedType:        room?.bedType || room?.bedTypes || '',
-    price:          String(room?.price ?? room?.originalPrice ?? ''),
-    countRooms:     String(room?.countRooms ?? room?.totalRooms ?? ''),
-    totalRooms:     String(room?.totalRooms ?? room?.countRooms ?? ''),
+    price:          String(price),
+    countRooms:     String(countRooms),
+    totalRooms:     String(countRooms),
     description:    room?.description || '',
     amenities:      amenitiesStr,
     images:         imagesStr,
-    isOffer:        Boolean(room?.isOffer),
-    offerName:      room?.offerName || room?.offerText || '',
+    isOffer,
+    offerName,
   }
 }
 
