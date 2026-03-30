@@ -90,7 +90,11 @@ const TOUR_ROUTES = [
   createRoute('/my-tour/:id', 'View Tour', 'Detail page for a specific tour package', 'tours', true),
   createRoute('/my-tour/:id/edit', 'Edit Tour', 'Edit a tour package', 'tours', true),
   createRoute('/tour-booking/:id', 'Book Tour', 'Multi-step tour booking: seat selection, passenger details and GST pricing', 'tours', true),
+  
   createRoute('/admin/tour-bookings', 'All Tour Bookings', 'Admin view of all tour bookings across all agencies', 'tours', false, true),
+  createRoute('/tour-request', 'Admin Tour Requests', 'Admin Requests of all tour packages', 'tours', false, true),
+  createRoute('/tour-list', 'Admin Tour List', 'Admin List of all tour packages', 'tours', false, true),
+
 ]
 
 /* ── Complaints ────────────────────────────────────────── */

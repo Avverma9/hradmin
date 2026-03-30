@@ -149,7 +149,9 @@ function HotelEditPage() {
 
   const [hotelForm,     setHotelForm]     = useState(() => createHotelForm(null))
   const [roomForm,      setRoomForm]      = useState(createEmptyRoomForm)
-  const [editingRoomId, setEditingRoomId] = useState(null) // roomId (string) of room being edited
+  const [editingRoomId, setEditingRoomId] = useState(null) // _id (local key) of room being edited
+  const [rooms,         setRooms]         = useState(() => [])
+  const [deletedRoomIds, setDeletedRoomIds] = useState(() => [])
 
   const hotel           = selectedHotel?.data || selectedHotel
   const displayHotelId  = id || hotel?.hotelId || hotel?._id
@@ -163,6 +165,11 @@ function HotelEditPage() {
     () => (Array.isArray(hotel?.rooms) ? hotel.rooms.map(normalizeRoom) : []),
     [hotel?.rooms],
   )
+
+  // Local staging area for rooms — initialize from normalizedRooms when hotel loads
+  useEffect(() => {
+    setRooms(normalizedRooms)
+  }, [normalizedRooms])
 
   // ── Load hotel ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -202,67 +209,73 @@ function HotelEditPage() {
   const saveHotel = async (event) => {
     if (event?.preventDefault) event.preventDefault()
     if (!displayHotelId) return
+    const hotelPayload = buildHotelPayload(hotelForm)
+
+    // Build rooms payload from staged rooms and deletions
+    const roomsPayload = rooms.map((r) => buildRoomEntry(r, r.roomId || null))
+    const deletionPayload = deletedRoomIds.map((id) => ({ roomId: id, _delete: true }))
+    const hotelData = { ...hotelPayload, rooms: [...roomsPayload, ...deletionPayload] }
 
     try {
       await dispatch(
         updateHotelInfo({
           hotelId:   displayHotelId,
-          hotelData: buildHotelPayload(hotelForm),
+          hotelData,
         }),
       ).unwrap()
+      // clear staged deletions after successful sync
+      setDeletedRoomIds([])
       dispatch(getHotelById(displayHotelId))
     } catch (err) {
       console.error('saveHotel failed', err)
     }
   }
 
-  // ── Save room (add or update) via master endpoint ───────────────────────
-  const saveRoom = async (event) => {
-    event.preventDefault()
-    if (!displayHotelId) return
+  // ── Save room locally (add or update) — staging only, no API call ─────
+  const saveRoomLocal = (event) => {
+    if (event?.preventDefault) event.preventDefault()
 
-    try {
-      await dispatch(
-        updateHotelInfo({
-          hotelId:   displayHotelId,
-          hotelData: {
-            rooms: [buildRoomEntry(roomForm, editingRoomId)],
-          },
-        }),
-      ).unwrap()
+    const makeRoomObject = (key) => ({
+      _id: key || `room-temp-${Date.now()}`,
+      roomId: key ? (rooms.find((r) => r._id === key)?.roomId || '') : '',
+      name: roomForm.type || `Room ${rooms.length + 1}`,
+      type: roomForm.type,
+      bedType: roomForm.bedType,
+      price: String(roomForm.price ?? ''),
+      countRooms: String(roomForm.countRooms ?? ''),
+      totalRooms: String(roomForm.countRooms ?? ''),
+      description: roomForm.description,
+      amenities: roomForm.amenities,
+      images: roomForm.images,
+      isOffer: roomForm.isOffer,
+      offerName: roomForm.offerName,
+    })
 
-      resetRoomEditor()
-      dispatch(getHotelById(displayHotelId))
-    } catch (err) {
-      console.error('saveRoom failed', err)
+    if (editingRoomId) {
+      const updated = rooms.map((r) => (r._id === editingRoomId ? { ...r, ...makeRoomObject(editingRoomId) } : r))
+      setRooms(updated)
+    } else {
+      setRooms((prev) => [...prev, makeRoomObject(null)])
     }
+
+    resetRoomEditor()
   }
 
-  // ── Delete room via master endpoint ─────────────────────────────────────
-  const handleRoomDelete = async (roomId) => {
-    if (!roomId || !displayHotelId) return
+  // ── Delete room locally (mark server-side ids for deletion on save) ────
+  const handleRoomDelete = (room) => {
+    const { _id, roomId } = room || {}
+    if (!_id) return
     if (!window.confirm('Delete this room from the hotel?')) return
 
-    try {
-      await dispatch(
-        updateHotelInfo({
-          hotelId:   displayHotelId,
-          hotelData: {
-            rooms: [{ roomId, _delete: true }],
-          },
-        }),
-      ).unwrap()
+    if (roomId) setDeletedRoomIds((prev) => [...prev, roomId])
+    setRooms((prev) => prev.filter((r) => r._id !== _id))
 
-      if (editingRoomId === roomId) resetRoomEditor()
-      dispatch(getHotelById(displayHotelId))
-    } catch (err) {
-      console.error('handleRoomDelete failed', err)
-    }
+    if (editingRoomId === _id) resetRoomEditor()
   }
 
   // ── Open room in editor ─────────────────────────────────────────────────
   const handleRoomEdit = (room) => {
-    setEditingRoomId(room.roomId)
+    setEditingRoomId(room._id)
     setRoomForm({
       type:        room.type,
       bedType:     room.bedType,
@@ -475,7 +488,7 @@ function HotelEditPage() {
               <div className="mt-3 flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600"><BedDouble size={20} /></div>
                 <div>
-                  <p className="text-lg font-black text-stone-900">{normalizedRooms.length}</p>
+                  <p className="text-lg font-black text-stone-900">{rooms.length}</p>
                   <p className="text-sm font-medium text-stone-500">Managed room entries</p>
                 </div>
               </div>
@@ -495,7 +508,7 @@ function HotelEditPage() {
 
           {/* ── Room editor ── */}
           <form
-            onSubmit={saveRoom}
+            onSubmit={saveRoomLocal}
             className="overflow-hidden rounded-[30px] border border-stone-200 bg-white shadow-xl shadow-stone-200/50"
           >
             <div className="border-b border-stone-100 bg-[linear-gradient(135deg,#eff6ff_0%,#ffffff_55%,#f8fafc_100%)] px-6 py-5">
@@ -572,7 +585,7 @@ function HotelEditPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:pointer-events-none disabled:opacity-50"
                 >
                   {updating ? <Loader2 size={16} className="animate-spin" /> : editingRoomId ? <PencilLine size={16} /> : <Plus size={16} />}
-                  {editingRoomId ? 'Update Room' : 'Add Room'}
+                  {editingRoomId ? 'Update (local)' : 'Add (local)'}
                 </button>
               </div>
             </div>
@@ -595,7 +608,7 @@ function HotelEditPage() {
           )}
         </div>
 
-        {normalizedRooms.length === 0 ? (
+        {rooms.length === 0 ? (
           <div className="px-6 py-20 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-stone-100 text-stone-400">
               <BedDouble size={28} />
@@ -607,11 +620,11 @@ function HotelEditPage() {
           </div>
         ) : (
           <div className="grid gap-4 px-6 py-6">
-            {normalizedRooms.map((room) => (
+            {rooms.map((room) => (
               <div
                 key={room._id}
                 className={`rounded-[26px] border px-5 py-5 transition ${
-                  editingRoomId === room.roomId
+                  editingRoomId === room._id
                     ? 'border-blue-300 bg-blue-50/70 shadow-lg shadow-blue-100/60'
                     : 'border-stone-200 bg-stone-50/50 hover:border-stone-300 hover:bg-white'
                 }`}
@@ -644,23 +657,23 @@ function HotelEditPage() {
                     )}
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleRoomEdit(room)}
-                      className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-stone-700 shadow-sm transition hover:bg-stone-100"
-                    >
-                      <PencilLine size={15} /> Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRoomDelete(room.roomId)}
-                      disabled={!room.roomId || updating}
-                      className="inline-flex items-center gap-2 rounded-2xl bg-rose-50 px-4 py-2.5 text-sm font-bold text-rose-700 transition hover:bg-rose-100 disabled:pointer-events-none disabled:opacity-40"
-                    >
-                      <Trash2 size={15} /> Delete
-                    </button>
-                  </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleRoomEdit(room)}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-stone-700 shadow-sm transition hover:bg-stone-100"
+                      >
+                        <PencilLine size={15} /> Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRoomDelete(room)}
+                        disabled={updating}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-rose-50 px-4 py-2.5 text-sm font-bold text-rose-700 transition hover:bg-rose-100 disabled:pointer-events-none disabled:opacity-40"
+                      >
+                        <Trash2 size={15} /> Delete
+                      </button>
+                    </div>
                 </div>
               </div>
             ))}
