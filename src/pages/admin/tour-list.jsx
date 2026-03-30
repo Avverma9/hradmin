@@ -21,6 +21,7 @@ import {
 import Breadcrumb from '../../components/breadcrumb'
 import {
   fetchFilteredTours,
+  getAllTours,
 } from '../../../redux/slices/tms/travel/tour/tour'
 import { formatCurrency } from '../../utils/format'
 
@@ -454,7 +455,7 @@ const Pagination = ({ page, totalPages, onPageChange }) => {
 function TourListPage() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const { tours, loading, error, filterMeta } = useSelector((state) => state.tour)
+  const { tours, allTours, loading, error, filterMeta } = useSelector((state) => state.tour)
 
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState(DEFAULT_FILTERS)
@@ -462,12 +463,20 @@ function TourListPage() {
   const [limit] = useState(10)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  const totalPages = filterMeta?.totalPages || Math.ceil((filterMeta?.total || tours.length) / limit) || 1
+  // Use allTours when available, fallback to tours
+  const displayTours = allTours.length > 0 ? allTours : tours
+  const totalPages = filterMeta?.totalPages || Math.ceil((filterMeta?.total || displayTours.length) / limit) || 1
+
+  const isFiltered = JSON.stringify(appliedFilters) !== JSON.stringify(DEFAULT_FILTERS)
 
   // Fetch tours on mount and when filters/page change
   useEffect(() => {
-    dispatch(fetchFilteredTours(buildParams(appliedFilters, page, limit)))
-  }, [dispatch, appliedFilters, page, limit])
+    if (isFiltered) {
+      dispatch(fetchFilteredTours(buildParams(appliedFilters, page, limit)))
+    } else {
+      dispatch(getAllTours({ page, limit }))
+    }
+  }, [dispatch, appliedFilters, page, limit, isFiltered])
 
   const handleFilterChange = useCallback((key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
@@ -575,7 +584,7 @@ function TourListPage() {
               <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
                 <div>
                   <p className="text-sm font-bold text-slate-900">
-                    {filterMeta?.total || tours.length} Tours Found
+                    {filterMeta?.total || displayTours.length} Tours Found
                   </p>
                   <p className="text-[11px] font-medium text-slate-500">
                     Showing page {page} of {totalPages}
@@ -598,7 +607,7 @@ function TourListPage() {
               )}
 
               {/* Table */}
-              {tours.length > 0 ? (
+              {displayTours.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full" data-testid="tours-table">
                     <thead>
@@ -613,7 +622,7 @@ function TourListPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {tours.map((tour) => (
+                      {displayTours.map((tour) => (
                         <TourTableRow
                           key={tour._id}
                           tour={tour}
@@ -648,7 +657,7 @@ function TourListPage() {
               ) : null}
 
               {/* Pagination */}
-              {tours.length > 0 && (
+              {displayTours.length > 0 && (
                 <Pagination
                   page={page}
                   totalPages={totalPages}

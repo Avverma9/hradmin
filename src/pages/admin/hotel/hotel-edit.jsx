@@ -59,22 +59,40 @@ const createHotelForm = (hotel) => {
 /**
  * Normalize a raw room document into a flat form-friendly shape.
  */
-const normalizeRoom = (room, index = 0) => ({
-  // Use _id as the stable key for edit/delete operations
-  _id:            room?._id || room?.id || `room-${index}`,
-  roomId:         room?.roomId || room?.id || '',
-  name:           room?.name  || room?.type || `Room ${index + 1}`,
-  type:           room?.type  || room?.name || `Room ${index + 1}`,
-  bedType:        room?.bedType || room?.bedTypes || '',
-  price:          String(room?.price ?? room?.originalPrice ?? ''),
-  countRooms:     String(room?.countRooms ?? room?.totalRooms ?? ''),
-  totalRooms:     String(room?.totalRooms ?? room?.countRooms ?? ''),
-  description:    room?.description || '',
-  amenities:      Array.isArray(room?.amenities) ? room.amenities.join(', ') : '',
-  images:         Array.isArray(room?.images)    ? room.images.join(', ')    : '',
-  isOffer:        Boolean(room?.isOffer),
-  offerName:      room?.offerName || room?.offerText || '',
-})
+const normalizeRoom = (room, index = 0) => {
+  // Handle amenities - convert to comma-separated string for form display
+  let amenitiesStr = ''
+  if (Array.isArray(room?.amenities)) {
+    amenitiesStr = room.amenities.join(', ')
+  } else if (typeof room?.amenities === 'string') {
+    amenitiesStr = room.amenities
+  }
+
+  // Handle images - convert to comma-separated string for form display
+  let imagesStr = ''
+  if (Array.isArray(room?.images)) {
+    imagesStr = room.images.join(', ')
+  } else if (typeof room?.images === 'string') {
+    imagesStr = room.images
+  }
+
+  return {
+    // Use _id as the stable key for edit/delete operations
+    _id:            room?._id || room?.id || `room-${index}`,
+    roomId:         room?.roomId || '',  // Only use actual roomId, not _id
+    name:           room?.name  || room?.type || `Room ${index + 1}`,
+    type:           room?.type  || room?.name || `Room ${index + 1}`,
+    bedType:        room?.bedType || room?.bedTypes || '',
+    price:          String(room?.price ?? room?.originalPrice ?? ''),
+    countRooms:     String(room?.countRooms ?? room?.totalRooms ?? ''),
+    totalRooms:     String(room?.totalRooms ?? room?.countRooms ?? ''),
+    description:    room?.description || '',
+    amenities:      amenitiesStr,
+    images:         imagesStr,
+    isOffer:        Boolean(room?.isOffer),
+    offerName:      room?.offerName || room?.offerText || '',
+  }
+}
 
 const createEmptyRoomForm = () => ({
   // roomId intentionally absent for new rooms — backend generates it
@@ -113,18 +131,34 @@ const buildHotelPayload = (form) => ({
  * Pass roomId only when updating an existing room.
  */
 const buildRoomEntry = (form, existingRoomId = null) => {
+  // Handle amenities - could be string or array
+  let amenitiesArr = []
+  if (Array.isArray(form.amenities)) {
+    amenitiesArr = form.amenities
+  } else if (typeof form.amenities === 'string' && form.amenities.trim()) {
+    amenitiesArr = form.amenities.split(',').map((v) => v.trim()).filter(Boolean)
+  }
+
+  // Handle images - could be string or array
+  let imagesArr = []
+  if (Array.isArray(form.images)) {
+    imagesArr = form.images
+  } else if (typeof form.images === 'string' && form.images.trim()) {
+    imagesArr = form.images.split(',').map((v) => v.trim()).filter(Boolean)
+  }
+
   const entry = {
     type:        s(form.type),
-    name:        s(form.type),
+    name:        s(form.type) || s(form.name),
     bedType:     s(form.bedType),
     bedTypes:    s(form.bedType),
     price:       Number(form.price) || 0,
     countRooms:  Number(form.countRooms) || 1,
     totalRooms:  Number(form.countRooms) || 1,
     description: s(form.description),
-    amenities:   s(form.amenities).split(',').map((v) => v.trim()).filter(Boolean),
-    images:      s(form.images).split(',').map((v) => v.trim()).filter(Boolean),
-    isOffer:     form.isOffer,
+    amenities:   amenitiesArr,
+    images:      imagesArr,
+    isOffer:     Boolean(form.isOffer),
     offerName:   s(form.offerName),
   }
   if (existingRoomId) entry.roomId = existingRoomId
@@ -235,21 +269,25 @@ function HotelEditPage() {
   const saveRoomLocal = (event) => {
     if (event?.preventDefault) event.preventDefault()
 
-    const makeRoomObject = (key) => ({
-      _id: key || `room-temp-${Date.now()}`,
-      roomId: key ? (rooms.find((r) => r._id === key)?.roomId || '') : '',
-      name: roomForm.type || `Room ${rooms.length + 1}`,
-      type: roomForm.type,
-      bedType: roomForm.bedType,
-      price: String(roomForm.price ?? ''),
-      countRooms: String(roomForm.countRooms ?? ''),
-      totalRooms: String(roomForm.countRooms ?? ''),
-      description: roomForm.description,
-      amenities: roomForm.amenities,
-      images: roomForm.images,
-      isOffer: roomForm.isOffer,
-      offerName: roomForm.offerName,
-    })
+    const makeRoomObject = (existingId) => {
+      // When editing, preserve the original roomId from the existing room
+      const existingRoom = existingId ? rooms.find((r) => r._id === existingId) : null
+      return {
+        _id: existingId || `room-temp-${Date.now()}`,
+        roomId: existingRoom?.roomId || '', // Preserve existing roomId for updates
+        name: roomForm.type || `Room ${rooms.length + 1}`,
+        type: roomForm.type,
+        bedType: roomForm.bedType,
+        price: String(roomForm.price ?? ''),
+        countRooms: String(roomForm.countRooms ?? ''),
+        totalRooms: String(roomForm.countRooms ?? ''),
+        description: roomForm.description,
+        amenities: roomForm.amenities,
+        images: roomForm.images,
+        isOffer: roomForm.isOffer,
+        offerName: roomForm.offerName,
+      }
+    }
 
     if (editingRoomId) {
       const updated = rooms.map((r) => (r._id === editingRoomId ? { ...r, ...makeRoomObject(editingRoomId) } : r))

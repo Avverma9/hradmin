@@ -120,6 +120,19 @@ export const deleteTourImage = createAsyncThunk(
   }
 );
 
+// GET /get-all-tours (Admin — all tours list)
+export const getAllTours = createAsyncThunk(
+  "tour/getAllTours",
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get(`/get-all-tours`, { params });
+      return data;
+    } catch (err) {
+      return rejectWithValue(extractError(err));
+    }
+  }
+);
+
 // GET /get-requests (admin — pending approval)
 export const getRequestedTours = createAsyncThunk(
   "tour/getRequestedTours",
@@ -281,6 +294,7 @@ export const deleteBooking = createAsyncThunk(
 const initialState = {
   // ── tour state ──
   tours: [],
+  allTours: [],
   tourDetails: null,
   requestedTours: [],
   ownerTours: [],
@@ -352,6 +366,12 @@ const tourSlice = createSlice({
       if (state.tourDetails && action.payload?.remaining) {
         state.tourDetails.images = action.payload.remaining;
       }
+    });
+
+    // getAllTours
+    asyncHandlers(builder, getAllTours, (state, action) => {
+      state.allTours = action.payload?.data || action.payload?.tours || action.payload || [];
+      state.filterMeta = action.payload?.pagination || action.payload?.meta || null;
     });
 
     // getRequestedTours
