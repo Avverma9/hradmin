@@ -1,24 +1,40 @@
 import axios from 'axios'
 import store from '../redux/store'
+import { clearCredentials, updateToken } from '../redux/slices/authSlice'
 import { requestFinished, requestStarted } from '../redux/slices/globalLoader'
-import { baseURL, HEALTH_POLL_INTERVAL, SESSION_STORAGE_KEY } from '../util/util'
+import {
+  baseURL,
+  HEALTH_POLL_INTERVAL,
+  LOCAL_STORAGE_KEY,
+  SESSION_STORAGE_KEY,
+} from '../util/util'
 
 export const SERVER_STATUS_EVENT = 'hrsadmin:server-status'
+const LOGIN_PATH = '/login'
 
 const getSavedSession = () => {
   if (typeof window === 'undefined') {
     return null
   }
 
-  const savedSession = window.sessionStorage.getItem(SESSION_STORAGE_KEY)
+  const savedSession =
+    window.localStorage.getItem(LOCAL_STORAGE_KEY) ||
+    window.sessionStorage.getItem(SESSION_STORAGE_KEY)
 
   if (!savedSession) {
     return null
   }
 
   try {
-    return JSON.parse(savedSession)
+    const parsedSession = JSON.parse(savedSession)
+
+    if (!window.localStorage.getItem(LOCAL_STORAGE_KEY)) {
+      window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsedSession))
+    }
+
+    return parsedSession
   } catch {
+    window.localStorage.removeItem(LOCAL_STORAGE_KEY)
     window.sessionStorage.removeItem(SESSION_STORAGE_KEY)
     return null
   }
@@ -43,6 +59,12 @@ const getStoredToken = () => {
   return String(rawToken).replace(/^Bearer\s+/i, '').trim()
 }
 
+const getStoredRefreshToken = () => {
+  const savedSession = getSavedSession()
+  const state = store.getState()
+  return state?.auth?.refreshToken || savedSession?.refreshToken || ''
+}
+
 const emitServerStatus = (hasServerError) => {
   if (typeof window === 'undefined') {
     return
@@ -55,6 +77,33 @@ const emitServerStatus = (hasServerError) => {
   )
 }
 
+const redirectToLogin = () => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const currentPath = window.location?.pathname || ''
+  if (currentPath !== LOGIN_PATH) {
+    window.location.replace(LOGIN_PATH)
+  }
+}
+
+const shouldForceLogin = (error) => {
+  const status = error?.response?.status
+  const message = String(error?.response?.data?.message || '').toLowerCase()
+
+  if (status === 401 || status === 403) {
+    return true
+  }
+
+  return (
+    message.includes('no token provided') ||
+    message.includes('invalid token') ||
+    message.includes('jwt malformed') ||
+    message.includes('jwt expired')
+  )
+}
+
 const api = axios.create({
   baseURL,
   timeout: 15000,
@@ -64,6 +113,16 @@ const api = axios.create({
 // lagaataar 2+ failures aayein, ek momentary error se nahi
 let _consecutiveServerErrors = 0
 const FAILURES_BEFORE_OFFLINE = 2
+
+// Refresh token queue management
+let _isRefreshing = false
+let _refreshSubscribers = []
+
+const subscribeTokenRefresh = (cb) => _refreshSubscribers.push(cb)
+const onRefreshed = (token) => {
+  _refreshSubscribers.forEach((cb) => cb(token))
+  _refreshSubscribers = []
+}
 
 const shouldTrackRequest = (config) => config?.url !== '/health' && !config?.skipGlobalLoader
 
@@ -103,6 +162,53 @@ api.interceptors.response.use(
   (error) => {
     if (error.config?._trackedByGlobalLoader) {
       store.dispatch(requestFinished())
+    }
+
+    if (shouldForceLogin(error) && !error.config?._skipRefreshIntercept) {
+      const refreshToken = getStoredRefreshToken()
+
+      // Agar refresh token nahi hai ya already retry ho chuka hai
+      if (!refreshToken || error.config?._retry) {
+        store.dispatch(clearCredentials())
+        redirectToLogin()
+        return Promise.reject(error)
+      }
+
+      // Agar refresh already chal raha hai, queue mein daal do
+      if (_isRefreshing) {
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh((newToken) => {
+            if (newToken) {
+              const retryConfig = { ...error.config, _retry: true }
+              retryConfig.headers = { ...retryConfig.headers, Authorization: `Bearer ${newToken}` }
+              resolve(api(retryConfig))
+            } else {
+              reject(error)
+            }
+          })
+        })
+      }
+
+      _isRefreshing = true
+      return axios
+        .post(`${baseURL}/auth/refresh/dashboard`, { refreshToken }, { _skipRefreshIntercept: true })
+        .then((res) => {
+          const newToken = res.data.rsToken
+          const newRefreshToken = res.data.refreshToken
+          store.dispatch(updateToken({ token: newToken, refreshToken: newRefreshToken }))
+          _isRefreshing = false
+          onRefreshed(newToken)
+          const retryConfig = { ...error.config, _retry: true }
+          retryConfig.headers = { ...retryConfig.headers, Authorization: `Bearer ${newToken}` }
+          return api(retryConfig)
+        })
+        .catch((refreshError) => {
+          _isRefreshing = false
+          onRefreshed(null)
+          store.dispatch(clearCredentials())
+          redirectToLogin()
+          return Promise.reject(refreshError)
+        })
     }
 
     const isServerDown =
