@@ -1,0 +1,406 @@
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import api from '../../src/api'
+import { LOCAL_STORAGE_KEY, SESSION_STORAGE_KEY } from '../../util/util'
+
+const getSavedAuthData = () => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const savedData =
+    window.localStorage.getItem(LOCAL_STORAGE_KEY) ||
+    window.sessionStorage.getItem(SESSION_STORAGE_KEY)
+
+  if (!savedData) {
+    return null
+  }
+
+  try {
+    const parsedData = JSON.parse(savedData)
+
+    if (!window.localStorage.getItem(LOCAL_STORAGE_KEY)) {
+      window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsedData))
+    }
+
+    return parsedData
+  } catch {
+    window.localStorage.removeItem(LOCAL_STORAGE_KEY)
+    window.sessionStorage.removeItem(SESSION_STORAGE_KEY)
+    return null
+  }
+}
+
+const saveAuthData = (authData) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(authData))
+  window.sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(authData))
+}
+
+const removeAuthData = () => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.removeItem(LOCAL_STORAGE_KEY)
+  window.sessionStorage.removeItem(SESSION_STORAGE_KEY)
+}
+
+const makeAuthData = (apiData) => {
+  const sessionData = apiData?.sessionData || {}
+  const user = sessionData.user || {
+    id: apiData?.loggedUserId || '',
+    role: apiData?.loggedUserRole || apiData?.role || '',
+    status: apiData?.loggedUserStatus || false,
+    name: apiData?.loggedUserName || '',
+    email: apiData?.loggedUserEmail || '',
+    image: apiData?.loggedUserImage || [],
+  }
+
+  const sidebarLinks = sessionData.sidebarLinks || apiData?.sidebarLinks || {}
+  const token = sessionData.token || apiData?.rsToken || ''
+  const refreshToken = apiData?.refreshToken || ''
+
+  return {
+    user,
+    role: user.role || apiData?.loggedUserRole || '',
+    token,
+    refreshToken,
+    sidebarLinks,
+    message: apiData?.message || '',
+    sessionData: {
+      ...sessionData,
+      token,
+      user,
+      sidebarLinks,
+    },
+  }
+}
+
+const updateSavedSidebarLinks = (state, sidebarLinks) => {
+  state.sidebarLinks = sidebarLinks
+  state.sessionData = {
+    ...(state.sessionData || {}),
+    sidebarLinks,
+    user: state.user,
+    token: state.token,
+  }
+
+  saveAuthData({
+    user: state.user,
+    role: state.role,
+    token: state.token,
+    sidebarLinks,
+    message: state.message,
+    sessionData: state.sessionData,
+  })
+}
+
+const savedAuthData = getSavedAuthData()
+
+const getInitialState = () => ({
+  user: savedAuthData?.user || null,
+  role: savedAuthData?.role || '',
+  token: savedAuthData?.token || '',
+  refreshToken: savedAuthData?.refreshToken || '',
+  sidebarLinks: savedAuthData?.sidebarLinks || {},
+  sessionData: savedAuthData?.sessionData || null,
+  isAuthenticated: Boolean(savedAuthData?.token),
+  loading: false,
+  message: '',
+  error: '',
+})
+
+export const loginWithPassword = createAsyncThunk(
+  'auth/loginWithPassword',
+  async (loginData, thunkAPI) => {
+    try {
+      const response = await api.post('/login/dashboard/user', loginData)
+      const authData = makeAuthData(response.data)
+
+      saveAuthData(authData)
+      return authData
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || 'Invalid email or password.',
+      )
+    }
+  },
+)
+
+export const sendOtp = createAsyncThunk('auth/sendOtp', async (email, thunkAPI) => {
+  try {
+    const response = await api.post('/mail/send-otp', {
+      email,
+      loginType: 'dashboard',
+    })
+
+    return response.data
+  } catch (error) {
+    return thunkAPI.rejectWithValue(
+      error.response?.data?.message || 'Failed to send OTP. Try again.',
+    )
+  }
+})
+
+export const verifyOtp = createAsyncThunk(
+  'auth/verifyOtp',
+  async ({ email, otp }, thunkAPI) => {
+    try {
+      const response = await api.post('/mail/verify-otp', {
+        email,
+        otp,
+        loginType: 'dashboard',
+      })
+      const authData = makeAuthData(response.data)
+
+      saveAuthData(authData)
+      return authData
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message ||
+          'Invalid OTP. Please check and try again.',
+      )
+    }
+  },
+)
+
+export const refreshSidebarLinks = createAsyncThunk(
+  'auth/refreshSidebarLinks',
+  async (userId, thunkAPI) => {
+    try {
+      const response = await api.get(`/additional/sidebar-links/for-user/${userId}`, {
+        params: { grouped: true },
+        skipGlobalLoader: true,
+      })
+
+      return response.data?.data || {}
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || 'Failed to refresh sidebar links.',
+      )
+    }
+  },
+)
+
+export const refreshRoutePermissions = createAsyncThunk(
+  'auth/refreshRoutePermissions',
+  async (userId, thunkAPI) => {
+    try {
+      const response = await api.get(`/additional/route-permissions/${userId}`, {
+        skipGlobalLoader: true,
+      })
+      return response.data?.data?.routePermissions || null
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || 'Failed to refresh route permissions.',
+      )
+    }
+  },
+)
+
+export const refreshAccessToken = createAsyncThunk(
+  'auth/refreshAccessToken',
+  async (_, thunkAPI) => {
+    try {
+      const state = thunkAPI.getState()
+      const refreshToken = state?.auth?.refreshToken || getSavedAuthData()?.refreshToken || ''
+      if (!refreshToken) {
+        return thunkAPI.rejectWithValue('No refresh token')
+      }
+      const response = await api.post('/auth/refresh/dashboard', { refreshToken }, { _skipRefreshIntercept: true })
+      const authData = {
+        token: response.data.rsToken,
+        refreshToken: response.data.refreshToken,
+      }
+      return authData
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || 'Token refresh failed',
+      )
+    }
+  },
+)
+
+export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
+  removeAuthData()
+  return true
+})
+
+const authSlice = createSlice({
+  name: 'auth',
+  initialState: getInitialState(),
+  reducers: {
+    clearAuthMessage(state) {
+      state.message = ''
+      state.error = ''
+    },
+    clearCredentials(state) {
+      removeAuthData()
+      state.user = null
+      state.role = ''
+      state.token = ''
+      state.refreshToken = ''
+      state.sidebarLinks = {}
+      state.sessionData = null
+      state.isAuthenticated = false
+      state.loading = false
+      state.message = ''
+      state.error = ''
+    },
+    updateToken(state, action) {
+      state.token = action.payload.token
+      if (action.payload.refreshToken) {
+        state.refreshToken = action.payload.refreshToken
+      }
+      const updatedAuthData = {
+        user: state.user,
+        role: state.role,
+        token: action.payload.token,
+        refreshToken: action.payload.refreshToken || state.refreshToken,
+        sidebarLinks: state.sidebarLinks,
+        message: state.message,
+        sessionData: {
+          ...(state.sessionData || {}),
+          token: action.payload.token,
+          user: state.user,
+          sidebarLinks: state.sidebarLinks,
+        },
+      }
+      saveAuthData(updatedAuthData)
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(loginWithPassword.pending, (state) => {
+        state.loading = true
+        state.message = ''
+        state.error = ''
+      })
+      .addCase(loginWithPassword.fulfilled, (state, action) => {
+        state.loading = false
+        state.user = action.payload.user
+        state.role = action.payload.role
+        state.token = action.payload.token
+        state.refreshToken = action.payload.refreshToken || ''
+        state.sidebarLinks = action.payload.sidebarLinks
+        state.sessionData = action.payload.sessionData
+        state.isAuthenticated = true
+        state.message = action.payload.message || 'Logged in successfully!'
+        state.error = ''
+      })
+      .addCase(loginWithPassword.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || 'Login failed'
+      })
+      .addCase(sendOtp.pending, (state) => {
+        state.loading = true
+        state.message = ''
+        state.error = ''
+      })
+      .addCase(sendOtp.fulfilled, (state, action) => {
+        state.loading = false
+        state.message = action.payload?.message || 'OTP has been sent to your email.'
+        state.error = ''
+      })
+      .addCase(sendOtp.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || 'Failed to send OTP.'
+      })
+      .addCase(verifyOtp.pending, (state) => {
+        state.loading = true
+        state.message = ''
+        state.error = ''
+      })
+      .addCase(verifyOtp.fulfilled, (state, action) => {
+        state.loading = false
+        state.user = action.payload.user
+        state.role = action.payload.role
+        state.token = action.payload.token
+        state.refreshToken = action.payload.refreshToken || ''
+        state.sidebarLinks = action.payload.sidebarLinks
+        state.sessionData = action.payload.sessionData
+        state.isAuthenticated = true
+        state.message =
+          action.payload.message || 'OTP verified successfully! Logging in...'
+        state.error = ''
+      })
+      .addCase(verifyOtp.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || 'OTP verification failed'
+      })
+      .addCase(refreshSidebarLinks.pending, (state) => {
+        state.loading = true
+        state.error = ''
+      })
+      .addCase(refreshSidebarLinks.fulfilled, (state, action) => {
+        state.loading = false
+        updateSavedSidebarLinks(state, action.payload)
+      })
+      .addCase(refreshSidebarLinks.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || 'Failed to refresh sidebar links'
+      })
+      .addCase(refreshRoutePermissions.fulfilled, (state, action) => {
+        if (state.user) {
+          state.user = { ...state.user, routePermissions: action.payload }
+          const updatedSessionData = {
+            ...(state.sessionData || {}),
+            user: state.user,
+            token: state.token,
+            sidebarLinks: state.sidebarLinks,
+          }
+          state.sessionData = updatedSessionData
+          saveAuthData({
+            user: state.user,
+            role: state.role,
+            token: state.token,
+            sidebarLinks: state.sidebarLinks,
+            message: state.message,
+            sessionData: updatedSessionData,
+          })
+        }
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null
+        state.role = ''
+        state.token = ''
+        state.refreshToken = ''
+        state.sidebarLinks = {}
+        state.sessionData = null
+        state.isAuthenticated = false
+        state.loading = false
+        state.message = ''
+        state.error = ''
+      })
+      .addCase(refreshAccessToken.fulfilled, (state, action) => {
+        state.token = action.payload.token
+        if (action.payload.refreshToken) {
+          state.refreshToken = action.payload.refreshToken
+        }
+        const updatedAuthData = {
+          user: state.user,
+          role: state.role,
+          token: action.payload.token,
+          refreshToken: action.payload.refreshToken || state.refreshToken,
+          sidebarLinks: state.sidebarLinks,
+          message: state.message,
+          sessionData: {
+            ...(state.sessionData || {}),
+            token: action.payload.token,
+            user: state.user,
+            sidebarLinks: state.sidebarLinks,
+          },
+        }
+        saveAuthData(updatedAuthData)
+      })
+  },
+})
+
+export const { clearAuthMessage, clearCredentials, updateToken } = authSlice.actions
+
+export const selectAuth = (state) => state.auth
+
+export default authSlice.reducer
