@@ -27,6 +27,7 @@ import {
   selectAdminRoute,
   updateRoutePermissions,
 } from '../../../redux/slices/admin/route'
+import { refreshRoutePermissions, selectAuth } from '../../../redux/slices/authSlice'
 import { ROUTE_LIST, getGroupedRoutes, ALL_ROUTE_PATHS } from '../../../util/routeList'
 
 
@@ -157,6 +158,7 @@ export default function ManageRouteAccess() {
   const dispatch = useDispatch()
   const { users, loadingUsers, error: usersError } = useSelector(selectAdminSidebar)
   const { routePermissions, loading: loadingRoutePermissions, saving: savingRoutePermissions, checkResult, checking, successMessage, error } = useSelector(selectAdminRoute)
+  const { user: currentUser } = useSelector(selectAuth)
 
   const [selectedUserId, setSelectedUserId] = useState('')
   const [userSearch, setUserSearch] = useState('')
@@ -253,6 +255,11 @@ export default function ManageRouteAccess() {
     // In allow_all mode, no routes are ever blocked — send empty array
     const blockedRoutes = mode === 'allow_all' ? [] : allPaths.filter((p) => !allowedSet.has(p))
     dispatch(updateRoutePermissions({ userId: selectedUserId, mode, allowedRoutes, blockedRoutes }))
+    // If saving own permissions, refresh auth slice so frontend checks use fresh data
+    const currentUserId = currentUser?._id || currentUser?.id
+    if (currentUserId && currentUserId === selectedUserId) {
+      dispatch(refreshRoutePermissions(currentUserId))
+    }
     setHasChanges(false)
   }
 

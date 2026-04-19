@@ -158,13 +158,13 @@ export default function TourBookingTable({
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-1.5">
                         <button
-                          onClick={() => navigate(`/my-tour/${b.tourId || b._id}`)}
+                          onClick={() => navigate(`/admin-tour/booking/${b._id}`)}
                           className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
                         >
                           <Eye size={12} /> View
                         </button>
                         <button
-                          onClick={() => navigate(`/my-tour/${b.tourId || b._id}/edit`)}
+                          onClick={() => navigate(`/admin-tour/booking/${b._id}?edit=true`)}
                           className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm transition-all hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700"
                         >
                           <Pencil size={12} /> Edit

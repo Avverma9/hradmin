@@ -98,6 +98,19 @@ export const updateUser = createAsyncThunk(
   }
 );
 
+// Admin-only: reset a user's password and get a temporary password back (shown once).
+export const adminResetUserPassword = createAsyncThunk(
+  "user/adminResetUserPassword",
+  async ({ userId }, { rejectWithValue }) => {
+    try {
+      const response = await api.post("/admin/users/reset-password", { userId });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 const userSlice = createSlice({
     name: 'user',
     initialState: {
@@ -116,6 +129,11 @@ const userSlice = createSlice({
         error: null,
         updateError: null,
         updateSuccess: false,
+
+        tempPassword: null,
+        tempPasswordUserId: null,
+        tempPasswordLoading: false,
+        tempPasswordError: null,
     },
     reducers: {
         clearUser: (state) => {
@@ -128,6 +146,9 @@ const userSlice = createSlice({
         },
         clearSelectedUserDetail: (state) => {
             state.selectedUserDetail = null;
+            state.tempPassword = null;
+            state.tempPasswordUserId = null;
+            state.tempPasswordError = null;
         },
     },
     extraReducers: (builder) => {
@@ -238,6 +259,23 @@ const userSlice = createSlice({
                 state.updating = false;
                 state.updateError = action.payload;
             });
+
+        builder
+          .addCase(adminResetUserPassword.pending, (state) => {
+            state.tempPasswordLoading = true;
+            state.tempPasswordError = null;
+            state.tempPassword = null;
+            state.tempPasswordUserId = null;
+          })
+          .addCase(adminResetUserPassword.fulfilled, (state, action) => {
+            state.tempPasswordLoading = false;
+            state.tempPassword = action.payload?.tempPassword || null;
+            state.tempPasswordUserId = action.payload?.userId || null;
+          })
+          .addCase(adminResetUserPassword.rejected, (state, action) => {
+            state.tempPasswordLoading = false;
+            state.tempPasswordError = action.payload || "Failed to reset password.";
+          });
     },
 });
 

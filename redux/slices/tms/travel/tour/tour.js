@@ -205,9 +205,9 @@ export const createBooking = createAsyncThunk(
 
 export const getBookings = createAsyncThunk(
   "tour/getBookings",
-  async (_, { rejectWithValue }) => {
+  async (params = {}, { rejectWithValue }) => {
     try {
-      const { data } = await api.get(`/tour-booking/get-bookings`);
+      const { data } = await api.get(`/tour-booking/get-bookings`, { params });
       return data;
     } catch (err) {
       return rejectWithValue(extractError(err));

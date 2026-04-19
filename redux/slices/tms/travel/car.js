@@ -126,7 +126,8 @@ export const changeBookingStatus = createAsyncThunk(
   "car/changeBookingStatus",
   async ({ bookingId, status }, { rejectWithValue }) => {
     try {
-      const response = await api.patch(`/travel/change-booking-status/${bookingId}`, { status });
+      // Server expects { bookingStatus } not { status }
+      const response = await api.patch(`/travel/change-booking-status/${bookingId}`, { bookingStatus: status });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to change booking status.");
@@ -397,7 +398,8 @@ const carSlice = createSlice({
       .addCase(getSeatsData.pending, pending)
       .addCase(getSeatsData.fulfilled, (state, action) => {
         state.loading = false;
-        state.seatsData = action.payload?.data || action.payload;
+        // Server returns { carId, seats: [...] }; fall back to .data or raw payload
+        state.seatsData = action.payload?.seats || action.payload?.data || action.payload || [];
       })
       .addCase(getSeatsData.rejected, rejected)
 

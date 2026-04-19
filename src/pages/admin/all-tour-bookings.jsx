@@ -1,24 +1,71 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Bus, RefreshCw, AlertCircle } from 'lucide-react'
 import { getBookings } from '../../../redux/slices/tms/travel/tour/tour'
 import TourBookingTable from '../../components/tour/tour-booking-table'
 import { formatCurrency } from '../../utils/format'
+import MasterFilter from '../../components/master-filter'
 
 export default function AllTourBookings() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { bookings, loading, error } = useSelector((s) => s.tour)
+  const [filters, setFilters] = useState({})
 
-  const load = () => dispatch(getBookings())
-  useEffect(() => { load() }, [])
+  const load = () => dispatch(getBookings(filters))
+  useEffect(() => { dispatch(getBookings({})) }, [])
 
   const total     = bookings.length
   const revenue   = bookings.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0)
   const confirmed = bookings.filter((b) => b.status?.toLowerCase() === 'confirmed').length
   const pending   = bookings.filter((b) => b.status?.toLowerCase() === 'pending').length
   const cancelled = bookings.filter((b) => b.status?.toLowerCase() === 'cancelled').length
+
+  const filterFields = [
+    {
+      key: 'status',
+      label: 'Booking Status',
+      type: 'select',
+      options: [
+        { value: 'pending', label: 'Pending' },
+        { value: 'confirmed', label: 'Confirmed' },
+        { value: 'cancelled', label: 'Cancelled' },
+        { value: 'held', label: 'Held' },
+        { value: 'failed', label: 'Failed' },
+      ],
+    },
+    {
+      key: 'bookingCode',
+      label: 'Booking Code',
+      placeholder: 'Search by Code (PNR)',
+    },
+    {
+      key: 'agencyName',
+      label: 'Agency Name',
+      placeholder: 'Search by Agency',
+    },
+    {
+      key: 'agencyEmail',
+      label: 'Agency Email',
+      placeholder: 'Search by Email',
+    },
+    {
+      key: 'bookingSource',
+      label: 'Source',
+      type: 'select',
+      options: [
+        { value: 'app', label: 'Mobile App' },
+        { value: 'panel', label: 'Admin Panel' },
+        { value: 'web', label: 'Website' },
+      ],
+    },
+    {
+      key: 'date',
+      label: 'Date',
+      type: 'date',
+    },
+  ]
 
   return (
     <div className="min-h-screen bg-slate-50/60 px-4 py-6 sm:px-6 lg:px-8 font-sans text-slate-900">
@@ -38,6 +85,21 @@ export default function AllTourBookings() {
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-50">
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
           </button>
+        </div>
+
+        {/* Filters */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <MasterFilter
+            fields={filterFields}
+            values={filters}
+            loading={loading}
+            onChange={(key, val) => setFilters(prev => ({ ...prev, [key]: val }))}
+            onApply={load}
+            onReset={() => {
+              setFilters({})
+              dispatch(getBookings({}))
+            }}
+          />
         </div>
 
         {/* Stats */}

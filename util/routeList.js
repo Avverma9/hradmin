@@ -49,12 +49,17 @@ const ADMIN_ROUTES = [
   createRoute('/hotel-bookings', 'Hotel Bookings (Admin)', 'Admin view of all hotel bookings', 'admin', false, true),
   createRoute('/hotels', 'All Hotels', 'Admin view of all hotels', 'admin', false, true),
   createRoute('/hotels/:id', 'Hotel Details', 'Detailed view of a specific hotel by hotelId', 'admin', true, true),
+  createRoute('/hotels/:id/edit', 'Edit Hotel', 'Edit details of a specific hotel', 'admin', true, true),
   createRoute('/manage-route-access', 'Manage Route Access', 'Grant / revoke route-level access per user', 'admin', false, true),
 createRoute('/admin-cabs', 'All Cabs', 'Admin view of all cars in TMS', 'admin', false, true),
 createRoute('/apply-pms-coupon', 'Apply PMS Coupon', 'Apply a coupon in PMS', 'admin', false, true),
 createRoute('/admin-notification', 'Push Notifications', 'Admin view of all notifications', 'admin', false, true),
   createRoute('/all-hotel-reviews', 'All Hotel Reviews', 'View and manage all hotel reviews submitted by users', 'admin', false, true),
   createRoute('/admin-new-hotel', 'Add New Hotel', 'Create a new hotel entry', 'admin', false, true),
+  createRoute('/hotels/availability', 'Hotel Availability', 'Manage hotel room availability calendar', 'admin', false, true),
+  createRoute('/hotels/monthly-price', 'Monthly Pricing', 'Manage monthly pricing for all hotels', 'admin', false, true),
+  createRoute('/hotels/bulk-management', 'Bulk Room Management', 'Bulk operations for hotel rooms and inventory', 'admin', false, true),
+  createRoute('/hotels/bulk-coupon-manage', 'Bulk Coupon Management', 'Apply and manage coupons in bulk across hotels', 'admin', false, true),
 ]
 
 /* ── PMS — Bookings ────────────────────────────────────── */
@@ -64,6 +69,8 @@ const PMS_ROUTES = [
   createRoute('/panel-booking', 'Panel Booking', 'PMS: panel-level booking management', 'pms'),
   createRoute('/your-hotels', 'Your Hotels', 'PMS: hotels owned by the logged-in user', 'pms'),
   createRoute('/your-hotels/:id', 'Your Hotel Details', 'PMS: detail view of a hotel owned by the logged-in user', 'pms', true),
+  createRoute('/your-hotels/:id/edit', 'Edit Your Hotel', 'PMS: edit a hotel owned by the logged-in user', 'pms', true),
+  createRoute('/hotels/monthly-price-pms', 'PMS Monthly Pricing', 'PMS: manage monthly pricing for your hotels', 'pms'),
 ]
 
 /* ── Booking Creation ──────────────────────────────────── */
@@ -84,6 +91,8 @@ const CAR_ROUTES = [
   createRoute('/travel-bookings', 'Travel Bookings', 'Car/travel booking list for your vehicles', 'cars'),
   createRoute('/car-booking', 'All Cars (Browse)', 'Browse all available cars for booking', 'cars'),
   createRoute('/admin-travel-bookings', 'Admin: All Travel Bookings', 'Admin view of all travel/car bookings', 'cars', false, true),
+  createRoute('/travel-locations', 'Travel Locations', 'List of all travel pickup and drop locations', 'cars'),
+  createRoute('/travel-locations/add', 'Add Travel Location', 'Add a new pickup or drop location for travel', 'cars'),
 ]
 
 /* ── TMS — Tours ───────────────────────────────────────── */
@@ -95,8 +104,10 @@ const TOUR_ROUTES = [
   createRoute('/my-tour/:id', 'View Tour', 'Detail page for a specific tour package', 'tours', true),
   createRoute('/my-tour/:id/edit', 'Edit Tour', 'Edit a tour package', 'tours', true),
   createRoute('/tour-booking/:id', 'Book Tour', 'Multi-step tour booking: seat selection, passenger details and GST pricing', 'tours', true),
-  
-  createRoute('/admin/tour-bookings', 'All Tour Bookings', 'Admin view of all tour bookings across all agencies', 'tours', false, true),
+  createRoute('/tour-bookings', 'My Tour Bookings', 'List of all tour bookings for your packages', 'tours'),
+
+  createRoute('/admin-tour/bookings', 'All Tour Bookings', 'Admin view of all tour bookings across all agencies', 'tours', false, true),
+  createRoute('/admin-tour/booking/:id', 'Tour Booking Details', 'Full detail view and edit of a specific tour booking', 'tours', true, true),
   createRoute('/tour-request', 'Admin Tour Requests', 'Admin Requests of all tour packages', 'tours', false, true),
   createRoute('/tour-list', 'Admin Tour List', 'Admin List of all tour packages', 'tours', false, true),
 
@@ -105,10 +116,12 @@ const TOUR_ROUTES = [
 /* ── Complaints ────────────────────────────────────────── */
 const COMPLAINT_ROUTES = [
   createRoute('/complaints', 'All Complaints', 'Admin view of all hotel complaints', 'complaints', false, true),
+  createRoute('/file-complaint', 'File a Complaint (Admin)', 'Admin: file a complaint against a hotel', 'complaints', false, true),
   createRoute('/complaint/create', 'File a Complaint', 'Submit a new complaint about a hotel', 'complaints'),
   createRoute('/complaint/chat/:id', 'Complaint Chat', 'Chat support for a specific complaint', 'complaints', true),
   createRoute('/my-complaints', 'My Complaints', 'View and track complaints filed by the logged-in user', 'complaints'),
   createRoute('/user-complaint', 'User Complaints', 'View and track complaints filed by the logged-in user', 'complaints'),
+  createRoute('/user/file-complaint', 'File a Complaint (User)', 'User: submit a new complaint about a hotel stay', 'complaints'),
 ]
 
 /* ── Flat Route List ───────────────────────────────────── */

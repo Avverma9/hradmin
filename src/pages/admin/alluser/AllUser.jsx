@@ -5,6 +5,7 @@ import {
   filterUsers,
   getUserDetails,
   updateUser,
+  adminResetUserPassword,
   clearUpdateStatus,
   clearSelectedUserDetail,
 } from "../../../../redux/slices/user";
@@ -12,7 +13,7 @@ import {
   Search, Edit2, Save, X, ChevronLeft, Download,
   Calendar, Tag, AlertCircle, Eye, Shield,
   CheckCircle, Clock, ChevronRight, Car, Navigation,
-  Building2, RefreshCw,
+  Building2, RefreshCw, Copy, KeyRound,
 } from "lucide-react";
 
 // Detect search type from input to route to the right API param
@@ -59,6 +60,10 @@ export const AllUsers = () => {
     updateError,
     updateSuccess,
     error,
+    tempPassword,
+    tempPasswordUserId,
+    tempPasswordLoading,
+    tempPasswordError,
   } = useSelector((state) => state.user);
 
   const [viewState, setViewState] = useState("list");
@@ -68,6 +73,7 @@ export const AllUsers = () => {
   const [bookingTypeFilter, setBookingTypeFilter] = useState("");
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({});
+  const [copiedPwd, setCopiedPwd] = useState(false);
   const debounceRef = useRef(null);
 
   // Initial + page change load
@@ -123,6 +129,36 @@ export const AllUsers = () => {
     setViewState("list");
     dispatch(clearSelectedUserDetail());
     dispatch(clearUpdateStatus());
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedUserDetail?.userId) return;
+    setCopiedPwd(false);
+    await dispatch(adminResetUserPassword({ userId: selectedUserDetail.userId }));
+  };
+
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(String(text));
+      setCopiedPwd(true);
+      setTimeout(() => setCopiedPwd(false), 1200);
+    } catch (e) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = String(text);
+        ta.setAttribute("readonly", "");
+        ta.style.position = "absolute";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        setCopiedPwd(true);
+        setTimeout(() => setCopiedPwd(false), 1200);
+      } catch (err) {
+        console.error("Copy failed", err);
+      }
+    }
   };
 
   const handleProfileChange = (e) => {
@@ -286,6 +322,50 @@ export const AllUsers = () => {
                       {updating ? <Clock size={14} className="mr-1 animate-spin" /> : <Save size={14} className="mr-1" />}
                       {updating ? "Saving…" : "Save"}
                     </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Security: admin reset password */}
+              <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-500">Security</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-800">
+                      Temporary password generate karke user ko share karein.
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Note: Existing password show nahi hota; reset ke baad yeh password sirf ek baar display hota hai.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleResetPassword}
+                    disabled={tempPasswordLoading}
+                    className="flex items-center whitespace-nowrap rounded-lg bg-slate-900 px-4 py-2 text-sm font-black text-white hover:bg-slate-800 disabled:opacity-60"
+                  >
+                    {tempPasswordLoading ? <Clock size={14} className="mr-2 animate-spin" /> : <KeyRound size={14} className="mr-2" />}
+                    Reset Password
+                  </button>
+                </div>
+
+                {tempPasswordError && (
+                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700">
+                    <X size={14} /> {tempPasswordError}
+                  </div>
+                )}
+
+                {tempPassword && String(tempPasswordUserId) === String(detail.userId) && (
+                  <div className="mt-3 flex flex-col gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-3">
+                    <p className="text-xs font-black text-emerald-800">Temporary Password</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <code className="rounded bg-white px-3 py-2 text-sm font-black text-slate-900">{tempPassword}</code>
+                      <button
+                        onClick={() => copyToClipboard(tempPassword)}
+                        className="flex items-center rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs font-black text-emerald-700 hover:bg-emerald-100"
+                      >
+                        <Copy size={14} className="mr-2" /> {copiedPwd ? "Copied" : "Copy"}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

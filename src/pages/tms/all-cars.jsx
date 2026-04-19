@@ -291,12 +291,15 @@ const CarDetailDrawer = ({ car, onClose }) => {
   ].filter((s) => s.value)
 
   return (
-    <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
-
-      {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col bg-white shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      {/* Modal container — stop propagation so inner clicks don't close */}
+      <div
+        className="relative flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[92vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
 
         {/* Sticky Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-3.5">
@@ -349,107 +352,91 @@ const CarDetailDrawer = ({ car, onClose }) => {
 
         {/* ── DETAIL + BOOK VIEWS ── */}
         {!bookingResult && (
-          <div className="flex flex-1 flex-col overflow-y-auto">
+          <div className="flex flex-1 flex-col overflow-hidden">
 
-            {/* Image */}
-            <div className="relative h-48 w-full shrink-0 overflow-hidden bg-slate-100">
-              <img src={image} alt={`${car.make} ${car.model}`} className="h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-transparent to-transparent" />
-              <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
-                <div>
-                  <p className="text-lg font-extrabold text-white">{car.make} {car.model}</p>
-                  <p className="text-xs text-slate-300">{car.year} · {car.color}</p>
+            {/* ── Scrollable area ── */}
+            <div className="flex-1 overflow-y-auto">
+
+              {/* Image */}
+              <div className="relative h-48 w-full shrink-0 overflow-hidden bg-slate-100">
+                <img src={image} alt={`${car.make} ${car.model}`} className="h-full w-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-transparent to-transparent" />
+                <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+                  <div>
+                    <p className="text-lg font-extrabold text-white">{car.make} {car.model}</p>
+                    <p className="text-xs text-slate-300">{car.year} · {car.color}</p>
+                  </div>
+                  <StatusBadge runningStatus={car.runningStatus} isAvailable={car.isAvailable} />
                 </div>
-                <StatusBadge runningStatus={car.runningStatus} isAvailable={car.isAvailable} />
               </div>
-            </div>
 
-            {/* KPI pills */}
-            <div className="flex flex-wrap gap-2 border-b border-slate-100 px-5 py-3">
-              {[
-                { label: 'Type', value: car.vehicleType },
-                { label: 'Mode', value: car.sharingType },
-                { label: 'Price', value: car.price ? `₹${car.price}` : 'On request' },
-                { label: 'Seats', value: car.seater || '-' },
-              ].map((kpi) => (
-                <div key={kpi.label} className="flex flex-col items-center rounded-xl bg-slate-50 px-4 py-2 text-center">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{kpi.label}</span>
-                  <span className="text-sm font-extrabold text-slate-900">{kpi.value}</span>
-                </div>
-              ))}
-            </div>
+              {/* KPI pills */}
+              <div className="flex flex-wrap gap-2 border-b border-slate-100 px-5 py-3">
+                {[
+                  { label: 'Type', value: car.vehicleType },
+                  { label: 'Mode', value: car.sharingType },
+                  { label: 'Price', value: car.price ? `₹${car.price}` : 'On request' },
+                  { label: 'Seats', value: car.seater || '-' },
+                ].map((kpi) => (
+                  <div key={kpi.label} className="flex flex-col items-center rounded-xl bg-slate-50 px-4 py-2 text-center">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{kpi.label}</span>
+                    <span className="text-sm font-extrabold text-slate-900">{kpi.value}</span>
+                  </div>
+                ))}
+              </div>
 
-            {/* ── DETAIL view ── */}
-            {view === 'detail' && (
-              <>
-                {/* Specs */}
-                <div className="border-b border-slate-100 px-5 py-4">
-                  <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Specifications</p>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-                    {specs.map((spec) => (
-                      <div key={spec.label} className="flex items-center gap-2">
-                        <span className="shrink-0 text-slate-400">{spec.icon}</span>
-                        <span className="text-[11px] text-slate-500 shrink-0">{spec.label}:</span>
-                        <span className="truncate text-[11px] font-semibold text-slate-800">{spec.value}</span>
+              {/* ── DETAIL view ── */}
+              {view === 'detail' && (
+                <>
+                  {/* Specs */}
+                  <div className="border-b border-slate-100 px-5 py-4">
+                    <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Specifications</p>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+                      {specs.map((spec) => (
+                        <div key={spec.label} className="flex items-center gap-2">
+                          <span className="shrink-0 text-slate-400">{spec.icon}</span>
+                          <span className="text-[11px] text-slate-500 shrink-0">{spec.label}:</span>
+                          <span className="truncate text-[11px] font-semibold text-slate-800">{spec.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Route */}
+                  {(car.pickupP || car.dropP) && (
+                    <div className="border-b border-slate-100 px-5 py-3">
+                      <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Route</p>
+                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                        <MapPin size={13} className="text-emerald-500 shrink-0" />
+                        <span className="truncate">{car.pickupP || 'Any'}</span>
+                        <span className="mx-1 text-slate-300">→</span>
+                        <MapPin size={13} className="text-rose-400 shrink-0" />
+                        <span className="truncate">{car.dropP || 'Any'}</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Route */}
-                {(car.pickupP || car.dropP) && (
-                  <div className="border-b border-slate-100 px-5 py-3">
-                    <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Route</p>
-                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                      <MapPin size={13} className="text-emerald-500 shrink-0" />
-                      <span className="truncate">{car.pickupP || 'Any'}</span>
-                      <span className="mx-1 text-slate-300">→</span>
-                      <MapPin size={13} className="text-rose-400 shrink-0" />
-                      <span className="truncate">{car.dropP || 'Any'}</span>
                     </div>
-                  </div>
-                )}
-
-                {/* Seat layout (read-only in detail view) */}
-                <div className="px-5 py-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Seat Layout</p>
-                    <div className="flex items-center gap-3 text-[9px] font-bold">
-                      <span className="flex items-center gap-1 text-emerald-600"><span className="h-2 w-2 rounded bg-emerald-200 border border-emerald-300" /> Available</span>
-                      <span className="flex items-center gap-1 text-rose-500"><span className="h-2 w-2 rounded bg-rose-200 border border-rose-300" /> Booked</span>
-                    </div>
-                  </div>
-                  {loading ? (
-                    <div className="flex items-center justify-center py-8"><Loader2 size={20} className="animate-spin text-indigo-500" /></div>
-                  ) : (
-                    <SeatGrid seatsData={seatsData} totalSeats={car.seater} selectable={false} />
                   )}
-                </div>
 
-                {/* Footer CTA */}
-                <div className="sticky bottom-0 border-t border-slate-100 bg-white px-5 py-3.5">
-                  <div className="flex items-center gap-2 mb-2.5">
-                    {car.isAvailable ? <CheckCircle2 size={13} className="text-emerald-500 shrink-0" /> : <XCircle size={13} className="text-rose-400 shrink-0" />}
-                    <span className="text-xs font-semibold text-slate-500">
-                      {car.isAvailable ? 'Available for booking' : `Unavailable · ${car.runningStatus || ''}`}
-                    </span>
+                  {/* Seat layout (read-only in detail view) */}
+                  <div className="px-5 py-4 pb-6">
+                    <div className="mb-3 flex items-center justify-between">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Seat Layout</p>
+                      <div className="flex items-center gap-3 text-[9px] font-bold">
+                        <span className="flex items-center gap-1 text-emerald-600"><span className="h-2 w-2 rounded bg-emerald-200 border border-emerald-300" /> Available</span>
+                        <span className="flex items-center gap-1 text-rose-500"><span className="h-2 w-2 rounded bg-rose-200 border border-rose-300" /> Booked</span>
+                      </div>
+                    </div>
+                    {loading ? (
+                      <div className="flex items-center justify-center py-8"><Loader2 size={20} className="animate-spin text-indigo-500" /></div>
+                    ) : (
+                      <SeatGrid seatsData={seatsData} totalSeats={car.seater} selectable={false} />
+                    )}
                   </div>
-                  <button
-                    disabled={!car.isAvailable}
-                    onClick={() => setView('book')}
-                    className="w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Book Now
-                  </button>
-                </div>
-              </>
-            )}
+                </>
+              )}
 
-            {/* ── BOOK view ── */}
-            {view === 'book' && (
-              <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
-                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-
+              {/* ── BOOK view ── */}
+              {view === 'book' && (
+                <div className="px-5 py-4 space-y-5">
                   {/* Error banner */}
                   {bookingError && (
                     <div className="flex items-center justify-between gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-700">
@@ -606,31 +593,52 @@ const CarDetailDrawer = ({ car, onClose }) => {
                     </div>
                   )}
                 </div>
+              )}
+            </div>
 
-                {/* Sticky submit footer */}
-                <div className="shrink-0 border-t border-slate-100 bg-white px-5 py-3.5 space-y-2">
-                  <button
-                    type="submit"
-                    disabled={bookingLoading || !canBook()}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
-                  >
-                    {bookingLoading ? <><Loader2 size={14} className="animate-spin" />Processing…</> : 'Confirm Booking'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setView('detail'); setBookingError('') }}
-                    className="w-full rounded-xl py-2 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
-                  >
-                    ← Back to Car Details
-                  </button>
+            {/* ── Fixed footer outside scroll area ── */}
+            {view === 'detail' && (
+              <div className="shrink-0 border-t border-slate-100 bg-white px-5 py-3.5">
+                <div className="flex items-center gap-2 mb-2.5">
+                  {car.isAvailable ? <CheckCircle2 size={13} className="text-emerald-500 shrink-0" /> : <XCircle size={13} className="text-rose-400 shrink-0" />}
+                  <span className="text-xs font-semibold text-slate-500">
+                    {car.isAvailable ? 'Available for booking' : `Unavailable · ${car.runningStatus || ''}`}
+                  </span>
                 </div>
-              </form>
+                <button
+                  disabled={!car.isAvailable}
+                  onClick={() => setView('book')}
+                  className="w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Book Now
+                </button>
+              </div>
+            )}
+
+            {view === 'book' && (
+              <div className="shrink-0 border-t border-slate-100 bg-white px-5 py-3.5 space-y-2">
+                <button
+                  type="button"
+                  disabled={bookingLoading || !canBook()}
+                  onClick={handleSubmit}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                >
+                  {bookingLoading ? <><Loader2 size={14} className="animate-spin" />Processing…</> : 'Confirm Booking'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setView('detail'); setBookingError('') }}
+                  className="w-full rounded-xl py-2 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
+                >
+                  ← Back to Car Details
+                </button>
+              </div>
             )}
 
           </div>
         )}
       </div>
-    </>
+    </div>
   )
 }
 

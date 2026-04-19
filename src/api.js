@@ -88,20 +88,32 @@ const redirectToLogin = () => {
   }
 }
 
+const TOKEN_FAILURE_PHRASES = [
+  'no token provided',
+  'invalid token',
+  'jwt malformed',
+  'jwt expired',
+  'token has expired',
+  'access denied: token',
+]
+
 const shouldForceLogin = (error) => {
   const status = error?.response?.status
   const message = String(error?.response?.data?.message || '').toLowerCase()
 
-  if (status === 401 || status === 403) {
+  // 401 always means the request was unauthenticated — force re-login
+  if (status === 401) {
     return true
   }
 
-  return (
-    message.includes('no token provided') ||
-    message.includes('invalid token') ||
-    message.includes('jwt malformed') ||
-    message.includes('jwt expired')
-  )
+  // 403 can be either a token failure OR a route-permissions denial.
+  // Only force re-login when the message clearly points to a token problem.
+  // Generic "Access denied for this route" (routeAccess) should NOT log the user out.
+  if (status === 403) {
+    return TOKEN_FAILURE_PHRASES.some((phrase) => message.includes(phrase))
+  }
+
+  return TOKEN_FAILURE_PHRASES.some((phrase) => message.includes(phrase))
 }
 
 const api = axios.create({

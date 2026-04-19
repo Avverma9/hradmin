@@ -107,7 +107,10 @@ export const updateHotelInfo = createAsyncThunk(
   'admin/updateHotelInfo',
   async ({ hotelId, hotelData }, { rejectWithValue }) => {
     try {
-      const response = await api.patch(`/hotels/master/${hotelId}`, hotelData)
+      const isFormData = typeof FormData !== 'undefined' && hotelData instanceof FormData
+      const response = await api.patch(`/hotels/master/${hotelId}`, hotelData, isFormData
+        ? { headers: { 'Content-Type': 'multipart/form-data' } }
+        : undefined)
       return response.data
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update hotel.')

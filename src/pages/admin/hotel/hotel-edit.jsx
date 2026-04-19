@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft, ArrowRight, BedDouble, Building2, Check,
   CheckCircle2, Loader2, MapPin, PencilLine, Plus,
@@ -13,6 +13,11 @@ import {
   updateHotelInfo,
 } from '../../../../redux/slices/admin/hotel'
 import api from '../../../api'
+import { useBedTypes } from '../../../../util/additional-fields/bedTypes'
+import { useHotelCategories } from '../../../../util/additional-fields/hotelCategories'
+import { useHotelAmenities } from '../../../../util/additional-fields/hotelAmenities'
+import { usePropertyTypes } from '../../../../util/additional-fields/propertyTypes'
+import { useRoomTypes } from '../../../../util/additional-fields/roomTypes'
 
 /* ─── Google Fonts injection ─────────────────────────────────── */
 const FontInjector = () => (
@@ -27,11 +32,16 @@ const FontInjector = () => (
 
 /* ─── Step config ────────────────────────────────────────────── */
 const STEPS = [
-  { id: 1, key: 'basic',    label: 'Basic Info',      sub: 'Name, location & contacts' },
-  { id: 2, key: 'property', label: 'Property Details', sub: 'Type, rating & description' },
-  { id: 3, key: 'rooms',    label: 'Rooms',            sub: 'Inventory management' },
-  { id: 4, key: 'foods',    label: 'Dining',           sub: 'Food menu management' },
-  { id: 5, key: 'policies', label: 'Policies',         sub: 'Rules & terms' },
+  { id: 1,  key: 'identity',  label: 'Identity',        sub: 'Name, category & description' },
+  { id: 2,  key: 'location',  label: 'Location',         sub: 'Address & coordinates' },
+  { id: 3,  key: 'ratings',   label: 'Ratings & Dates',  sub: 'Stars, score & availability' },
+  { id: 4,  key: 'amenities', label: 'Amenities',        sub: 'Hotel facilities & features' },
+  { id: 5,  key: 'foods',     label: 'Dining',           sub: 'Food menu management' },
+  { id: 6,  key: 'policies',  label: 'Policies',         sub: 'Rules & terms' },
+  { id: 7,  key: 'rooms',     label: 'Rooms',            sub: 'Inventory management' },
+  { id: 8,  key: 'contact',   label: 'Contact',          sub: 'Hotel & management contacts' },
+  { id: 9,  key: 'images',    label: 'Images & Status',  sub: 'Gallery & visibility' },
+  { id: 10, key: 'preview',   label: 'Preview & Save',   sub: 'Review & push to server' },
 ]
 
 /* ─── Policy config ──────────────────────────────────────────── */
@@ -86,12 +96,59 @@ const createEmptyPolicies = () => ({
   offDoubleSharingMAp: '', offTrippleSharingMAp: '', offQuadSharingMAp: '', offBulkBookingMAp: '', offMoreThanFourMAp: '',
 })
 
+const createClientKey = (prefix = 'item') => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+const normalizeImageUrls = (value) => {
+  if (Array.isArray(value)) return value.map((item) => s(item)).filter(Boolean)
+  if (typeof value === 'string') return value.split(',').map((item) => item.trim()).filter(Boolean)
+  return []
+}
+
+const normalizeAmenityList = (amenities) => {
+  if (!amenities) return []
+  if (Array.isArray(amenities)) {
+    return amenities
+      .flatMap((item) => {
+        if (!item) return []
+        if (typeof item === 'string') return [item]
+        if (Array.isArray(item.amenities)) return item.amenities
+        if (item.amenities) return [item.amenities]
+        if (item.name) return [item.name]
+        return []
+      })
+      .map((item) => s(item))
+      .filter(Boolean)
+  }
+  if (typeof amenities === 'object') {
+    if (Array.isArray(amenities.amenities)) return normalizeAmenityList(amenities.amenities)
+    if (Array.isArray(amenities.list)) return normalizeAmenityList(amenities.list)
+    if (amenities.name) return [s(amenities.name)].filter(Boolean)
+  }
+  return []
+}
+
+const makeExistingImageItem = (url) => ({
+  id: createClientKey('img'),
+  url,
+  preview: url,
+  file: null,
+  isExisting: true,
+})
+
+const makeNewImageItem = (file) => ({
+  id: createClientKey('img'),
+  url: '',
+  preview: URL.createObjectURL(file),
+  file,
+  isExisting: false,
+})
+
 /* ─── PolicyEditor ───────────────────────────────────────────── */
 const PolicyEditor = ({ label, value, onChange }) => {
   const [fmt, setFmt] = useState(() => {
     if (!value) return 'bullet'
     if (/^\d+\.\s/m.test(value)) return 'number'
-    if (/^[•\-]\s/m.test(value)) return 'bullet'
+    if (/^[•-]\s/m.test(value)) return 'bullet'
     return 'plain'
   })
   const taRef = useRef(null)
@@ -211,19 +268,24 @@ const createHotelForm = (hotel) => {
     onFront:      Boolean(hotel?.onFront),
     isAccepted:   Boolean(hotel?.isAccepted),
     destination:  hotel?.destination  || '',
-    hotelCategory:hotel?.hotelCategory || '',
-    latitude:     hotel?.latitude      || '',
-    longitude:    hotel?.longitude     || '',
+    hotelCategory:basicInfo?.category || hotel?.hotelCategory || '',
+    latitude:     String(location?.coordinates?.lat ?? hotel?.latitude ?? ''),
+    longitude:    String(location?.coordinates?.lng ?? hotel?.longitude ?? ''),
     customerWelcomeNote:    hotel?.customerWelcomeNote    || '',
-    generalManagerContact:  hotel?.generalManagerContact  || '',
-    salesManagerContact:    hotel?.salesManagerContact    || '',
+    generalManagerContact:  contacts?.generalManager || hotel?.generalManagerContact  || '',
+    salesManagerContact:    contacts?.salesManager   || hotel?.salesManagerContact    || '',
     localId:      hotel?.localId       || 'Accepted',
+    numRooms:     String(hotel?.numRooms || ''),
+    rating:       String(hotel?.rating   || ''),
+    reviews:      String(hotel?.reviewCount || hotel?.reviews || ''),
+    startDate:    hotel?.startDate || '',
+    endDate:      hotel?.endDate   || '',
+    images:       normalizeImageUrls(basicInfo?.images || hotel?.images),
   }
 }
 
 const normalizeRoom = (room, index = 0) => {
   let amenitiesStr = Array.isArray(room?.amenities) ? room.amenities.join(', ') : (room?.amenities || '')
-  let imagesStr    = Array.isArray(room?.images)    ? room.images.join(', ')    : (room?.images    || '')
   const price      = room?.pricing?.basePrice ?? room?.price      ?? room?.originalPrice ?? 0
   const countRooms = room?.inventory?.total   ?? room?.countRooms ?? room?.totalRooms    ?? 0
   const isOffer      = room?.features?.isOffer    ?? room?.isOffer      ?? false
@@ -244,23 +306,23 @@ const normalizeRoom = (room, index = 0) => {
     totalRooms:     String(countRooms),
     description:    room?.description || '',
     amenities:      amenitiesStr,
-    images:         imagesStr,
+    images:         normalizeImageUrls(room?.images).map(makeExistingImageItem),
     isOffer,
     offerName,
     offerPriceLess: String(offerPLess),
     offerExp,
+    clientKey:      roomId || room?._id || room?.id || createClientKey('room'),
   }
 }
 
 const createEmptyRoomForm = () => ({
   type: '', bedType: '', price: '', originalPrice: '', countRooms: '',
-  description: '', amenities: '', images: '', isOffer: false, offerName: '',
-  offerPriceLess: '', offerExp: '',
+  description: '', amenities: '', images: [], isOffer: false, offerName: '',
+  offerPriceLess: '', offerExp: '', clientKey: createClientKey('room'),
 })
 
 const normalizeFood = (food, index = 0) => {
   const foodId = food?.foodId || food?.id || ''
-  const images = Array.isArray(food?.images) ? food.images.join(', ') : (food?.images || '')
   return {
     _id: food?._id || foodId || `food-${index}`,
     foodId,
@@ -268,26 +330,25 @@ const normalizeFood = (food, index = 0) => {
     foodType: food?.foodType || food?.type || 'Veg',
     price: String(food?.price ?? ''),
     about: food?.about || food?.description || '',
-    images,
+    images: normalizeImageUrls(food?.images).map(makeExistingImageItem),
+    clientKey: foodId || food?._id || food?.id || createClientKey('food'),
   }
 }
 
 const createEmptyFoodForm = () => ({
-  name: '', foodType: 'Veg', price: '', about: '', images: '',
+  name: '', foodType: 'Veg', price: '', about: '', images: [], clientKey: createClientKey('food'),
 })
 
 const buildFoodEntry = (form, existingFoodId = null) => {
-  const imagesArr = Array.isArray(form.images)
-    ? form.images
-    : (typeof form.images === 'string' && form.images.trim()
-        ? form.images.split(',').map((v) => v.trim()).filter(Boolean)
-        : [])
   const entry = {
     name: s(form.name),
     foodType: s(form.foodType) || 'Veg',
     price: Number(form.price) || 0,
     about: s(form.about),
-    images: imagesArr,
+    images: (Array.isArray(form.images) ? form.images : [])
+      .filter((item) => item?.isExisting && item.url)
+      .map((item) => item.url),
+    _clientKey: form.clientKey,
   }
   if (existingFoodId) entry.foodId = existingFoodId
   return entry
@@ -297,13 +358,13 @@ const buildHotelPayload = (form) => ({
   hotelName:    s(form.hotelName),
   city:         s(form.city),
   state:        s(form.state),
-  address:      s(form.address),
+  landmark:     s(form.address),
   pinCode:      s(form.pinCode),
   starRating:   s(form.starRating),
   propertyType: s(form.propertyType).split(',').map((v) => v.trim()).filter(Boolean),
   hotelEmail:   s(form.hotelEmail),
-  phone:        s(form.phone),
-  owner:        s(form.owner),
+  contact:      s(form.phone),
+  hotelOwnerName: s(form.owner),
   description:  s(form.description),
   onFront:      form.onFront,
   isAccepted:   form.isAccepted,
@@ -315,6 +376,11 @@ const buildHotelPayload = (form) => ({
   generalManagerContact: s(form.generalManagerContact),
   salesManagerContact:   s(form.salesManagerContact),
   localId:      s(form.localId) || 'Accepted',
+  ...(s(form.numRooms)   ? { numRooms: Number(form.numRooms) || 0 }   : {}),
+  ...(s(form.rating)     ? { rating:   Number(form.rating)   || 0 }   : {}),
+  ...(s(form.reviews)    ? { reviews:  Number(form.reviews)  || 0 }   : {}),
+  ...(s(form.startDate)  ? { startDate: s(form.startDate) }           : {}),
+  ...(s(form.endDate)    ? { endDate:   s(form.endDate)   }           : {}),
 })
 
 const buildRoomEntry = (form, existingRoomId = null) => {
@@ -323,11 +389,6 @@ const buildRoomEntry = (form, existingRoomId = null) => {
     : (typeof form.amenities === 'string' && form.amenities.trim()
         ? form.amenities.split(',').map((v) => v.trim()).filter(Boolean)
         : [])
-  const imagesArr = Array.isArray(form.images)
-    ? form.images
-    : (typeof form.images === 'string' && form.images.trim()
-        ? form.images.split(',').map((v) => v.trim()).filter(Boolean)
-        : [])
   const entry = {
     type: s(form.type), name: s(form.type) || s(form.name),
     bedType: s(form.bedType), bedTypes: s(form.bedType),
@@ -335,9 +396,13 @@ const buildRoomEntry = (form, existingRoomId = null) => {
     originalPrice: Number(form.originalPrice) || Number(form.price) || 0,
     countRooms: Number(form.countRooms) || 1,
     totalRooms: Number(form.countRooms) || 1, description: s(form.description),
-    amenities: amenitiesArr, images: imagesArr,
+    amenities: amenitiesArr,
+    images: (Array.isArray(form.images) ? form.images : [])
+      .filter((item) => item?.isExisting && item.url)
+      .map((item) => item.url),
     isOffer: Boolean(form.isOffer), offerName: s(form.offerName),
     offerPriceLess: Number(form.offerPriceLess) || 0,
+    _clientKey: form.clientKey,
     ...(s(form.offerExp) ? { offerExp: s(form.offerExp) } : {}),
   }
   if (existingRoomId) entry.roomId = existingRoomId
@@ -369,6 +434,56 @@ const FieldInput = ({ label, type = 'text', value, onChange, placeholder, requir
   </div>
 )
 
+const ImageManager = ({ label, items, onAddFiles, onRemove, helperText }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8', fontFamily: "'DM Sans', sans-serif" }}>
+        {label}
+      </label>
+      <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#334155' }}>
+        <Plus size={14} />
+        Upload Images
+        <input type="file" accept="image/*" multiple onChange={onAddFiles} style={{ display: 'none' }} />
+      </label>
+    </div>
+
+    {helperText && (
+      <p style={{ margin: 0, fontSize: 12, color: '#64748b', lineHeight: 1.6 }}>
+        {helperText}
+      </p>
+    )}
+
+    {items.length > 0 ? (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12 }}>
+        {items.map((item) => (
+          <div key={item.id} style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', border: '1.5px solid #e2e8f0', background: '#fff' }}>
+            <img src={item.preview || item.url} alt="" style={{ width: '100%', height: 100, objectFit: 'cover', display: 'block' }} />
+            <button
+              type="button"
+              onClick={() => onRemove(item.id)}
+              style={{
+                position: 'absolute', top: 8, right: 8, width: 26, height: 26,
+                borderRadius: '50%', border: 'none', background: 'rgba(15,23,42,0.78)',
+                color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={14} />
+            </button>
+            <div style={{ padding: '8px 10px', fontSize: 11, color: '#64748b', background: '#fff' }}>
+              {item.isExisting ? 'Existing image' : item.file?.name || 'New upload'}
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div style={{ padding: '18px 16px', border: '1.5px dashed #cbd5e1', borderRadius: 12, background: '#f8fafc', fontSize: 12, color: '#94a3b8' }}>
+        No images selected.
+      </div>
+    )}
+  </div>
+)
+
 /* ─── Step Sidebar ───────────────────────────────────────────── */
 const StepSidebar = ({ currentStep, completedSteps, hotelName, hotelImage, onStepClick }) => (
   <div style={{
@@ -395,7 +510,7 @@ const StepSidebar = ({ currentStep, completedSteps, hotelName, hotelImage, onSte
     </div>
 
     {/* Steps */}
-    {STEPS.map((step, i) => {
+    {STEPS.map((step) => {
       const done    = completedSteps.includes(step.id)
       const active  = currentStep === step.id
       return (
@@ -518,7 +633,6 @@ const NavRow = ({ currentStep, totalSteps, onPrev, onNext, onSave, saving }) => 
 function HotelEditPage() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const location = useLocation()
   const { id }   = useParams()
 
   const { selectedHotel, loading, updating, error, updateSuccess } =
@@ -527,6 +641,9 @@ function HotelEditPage() {
   const [currentStep,     setCurrentStep]     = useState(1)
   const [completedSteps,  setCompletedSteps]  = useState([])
   const [hotelForm,       setHotelForm]       = useState(() => createHotelForm(null))
+  const [hotelImageItems, setHotelImageItems] = useState([])
+  const [hotelAmenities,  setHotelAmenities]  = useState([])
+  const [amenityInput,    setAmenityInput]    = useState('')
   const [roomForm,        setRoomForm]        = useState(createEmptyRoomForm)
   const [editingRoomId,   setEditingRoomId]   = useState(null)
   const [rooms,           setRooms]           = useState([])
@@ -538,13 +655,16 @@ function HotelEditPage() {
   const [policies,        setPolicies]        = useState(createEmptyPolicies)
   const [policyLoading,   setPolicyLoading]   = useState(false)
   const [policyMsg,       setPolicyMsg]       = useState(null)
+  const hotelAmenityOptions  = useHotelAmenities()
+  const bedTypeOptions       = useBedTypes()
+  const hotelCategoryOptions = useHotelCategories()
+  const propertyTypeOptions  = usePropertyTypes()
+  const roomTypeOptions      = useRoomTypes()
+  const [selectedAmenity, setSelectedAmenity] = useState('')
 
   const hotel          = selectedHotel?.data || selectedHotel
   const displayHotelId = id || hotel?.hotelId || hotel?._id
   const hotelImage     = hotel?.basicInfo?.images?.[0] || hotel?.images?.[0] || ''
-  const listPath       = location.state?.from ||
-    (location.pathname.startsWith('/your-hotels') ? '/your-hotels' : '/hotels')
-
   const normalizedRooms = useMemo(
     () => (Array.isArray(hotel?.rooms) ? hotel.rooms.map(normalizeRoom) : []),
     [hotel?.rooms],
@@ -559,8 +679,12 @@ function HotelEditPage() {
   useEffect(() => { if (id) dispatch(getHotelById(id)) }, [dispatch, id])
   useEffect(() => { if (hotel) setHotelForm(createHotelForm(hotel)) }, [hotel])
   useEffect(() => {
+    setHotelImageItems(normalizeImageUrls(hotel?.basicInfo?.images || hotel?.images).map(makeExistingImageItem))
+    setHotelAmenities(normalizeAmenityList(hotel?.amenities))
+  }, [hotel])
+  useEffect(() => {
     if (!hotel) return
-    const dp = hotel?.policies?.[0]?.detailed || hotel?.policies?.[0] || {}
+    const dp = hotel?.policies?.detailed || hotel?.rawPolicies?.[0] || {}
     setPolicies({
       checkInPolicy:     dp.checkInPolicy     || '',
       checkOutPolicy:    dp.checkOutPolicy    || '',
@@ -620,6 +744,22 @@ function HotelEditPage() {
     return () => clearTimeout(t)
   }, [policyMsg])
 
+  useEffect(() => {
+    return () => {
+      hotelImageItems.forEach((item) => { if (!item.isExisting && item.preview) URL.revokeObjectURL(item.preview) })
+      rooms.forEach((room) => {
+        ;(Array.isArray(room.images) ? room.images : []).forEach((item) => {
+          if (!item?.isExisting && item.preview) URL.revokeObjectURL(item.preview)
+        })
+      })
+      foods.forEach((food) => {
+        ;(Array.isArray(food.images) ? food.images : []).forEach((item) => {
+          if (!item?.isExisting && item.preview) URL.revokeObjectURL(item.preview)
+        })
+      })
+    }
+  }, [hotelImageItems, rooms, foods])
+
   const setHotelField = (key) => (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
     setHotelForm((p) => ({ ...p, [key]: value }))
@@ -631,6 +771,36 @@ function HotelEditPage() {
   const setFoodField = (key) => (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
     setFoodForm((p) => ({ ...p, [key]: value }))
+  }
+
+  const buildImageItems = (files) => files.map(makeNewImageItem)
+
+  const appendImageItems = (setter) => (event) => {
+    const files = Array.from(event.target.files || [])
+    if (!files.length) return
+    setter((prev) => [...prev, ...buildImageItems(files)])
+    event.target.value = ''
+  }
+
+  const removeImageItem = (setter) => (itemId) => {
+    setter((prev) => {
+      const target = prev.find((item) => item.id === itemId)
+      if (target && !target.isExisting && target.preview) URL.revokeObjectURL(target.preview)
+      return prev.filter((item) => item.id !== itemId)
+    })
+  }
+
+  const handleAmenityInput = (event) => setAmenityInput(event.target.value)
+
+  const addAmenityTag = () => {
+    const parsed = amenityInput.split(',').map((item) => item.trim()).filter(Boolean)
+    if (!parsed.length) return
+    setHotelAmenities((prev) => [...prev, ...parsed.filter((item) => !prev.includes(item))])
+    setAmenityInput('')
+  }
+
+  const removeAmenityTag = (value) => {
+    setHotelAmenities((prev) => prev.filter((item) => item !== value))
   }
 
   const markComplete = (step) => {
@@ -645,6 +815,40 @@ function HotelEditPage() {
 
   const resetRoomEditor = () => { setEditingRoomId(null); setRoomForm(createEmptyRoomForm()) }
   const resetFoodEditor = () => { setEditingFoodId(null); setFoodForm(createEmptyFoodForm()) }
+
+  const addHotelImages = appendImageItems(setHotelImageItems)
+
+  const addRoomImages = (event) => {
+    const files = Array.from(event.target.files || [])
+    if (!files.length) return
+    setRoomForm((prev) => ({ ...prev, images: [...(prev.images || []), ...buildImageItems(files)] }))
+    event.target.value = ''
+  }
+
+  const removeRoomImage = (itemId) => {
+    setRoomForm((prev) => {
+      const current = Array.isArray(prev.images) ? prev.images : []
+      const target = current.find((item) => item.id === itemId)
+      if (target && !target.isExisting && target.preview) URL.revokeObjectURL(target.preview)
+      return { ...prev, images: current.filter((item) => item.id !== itemId) }
+    })
+  }
+
+  const addFoodImages = (event) => {
+    const files = Array.from(event.target.files || [])
+    if (!files.length) return
+    setFoodForm((prev) => ({ ...prev, images: [...(prev.images || []), ...buildImageItems(files)] }))
+    event.target.value = ''
+  }
+
+  const removeFoodImage = (itemId) => {
+    setFoodForm((prev) => {
+      const current = Array.isArray(prev.images) ? prev.images : []
+      const target = current.find((item) => item.id === itemId)
+      if (target && !target.isExisting && target.preview) URL.revokeObjectURL(target.preview)
+      return { ...prev, images: current.filter((item) => item.id !== itemId) }
+    })
+  }
 
   const savePolicies = async (e) => {
     if (e?.preventDefault) e.preventDefault()
@@ -669,15 +873,39 @@ function HotelEditPage() {
     const deletionPayload = deletedRoomIds.map((rid) => ({ roomId: rid, _delete: true }))
     const foodsPayload = foods.map((f) => buildFoodEntry(f, f.foodId || null))
     const foodDeletionPayload = deletedFoodIds.map((fid) => ({ foodId: fid, _delete: true }))
+    const originalHotelImages = normalizeImageUrls(hotel?.basicInfo?.images || hotel?.images)
+    const retainedHotelImages = hotelImageItems.filter((item) => item.isExisting && item.url).map((item) => item.url)
+    const removedHotelImages = originalHotelImages.filter((url) => !retainedHotelImages.includes(url))
+    const hotelDataPayload = new FormData()
+
+    for (const [key, value] of Object.entries(hotelPayload)) {
+      if (value === undefined || value === null || value === '') continue
+      if (Array.isArray(value) || typeof value === 'object') hotelDataPayload.append(key, JSON.stringify(value))
+      else hotelDataPayload.append(key, value)
+    }
+    hotelDataPayload.append('amenities', JSON.stringify(hotelAmenities))
+    hotelDataPayload.append('rooms', JSON.stringify([...roomsPayload, ...deletionPayload]))
+    hotelDataPayload.append('foods', JSON.stringify([...foodsPayload, ...foodDeletionPayload]))
+    if (removedHotelImages.length) hotelDataPayload.append('removeImages', JSON.stringify(removedHotelImages))
+
+    hotelImageItems
+      .filter((item) => !item.isExisting && item.file)
+      .forEach((item) => hotelDataPayload.append('images', item.file))
+
+    rooms.forEach((room) => {
+      ;(Array.isArray(room.images) ? room.images : [])
+        .filter((item) => !item.isExisting && item.file)
+        .forEach((item) => hotelDataPayload.append(`roomImages:${room.roomId || room.clientKey}`, item.file))
+    })
+
+    foods.forEach((food) => {
+      ;(Array.isArray(food.images) ? food.images : [])
+        .filter((item) => !item.isExisting && item.file)
+        .forEach((item) => hotelDataPayload.append(`foodImages:${food.foodId || food.clientKey}`, item.file))
+    })
+
     try {
-      await dispatch(updateHotelInfo({
-        hotelId: displayHotelId,
-        hotelData: {
-          ...hotelPayload,
-          rooms: [...roomsPayload, ...deletionPayload],
-          foods: [...foodsPayload, ...foodDeletionPayload],
-        },
-      })).unwrap()
+      await dispatch(updateHotelInfo({ hotelId: displayHotelId, hotelData: hotelDataPayload })).unwrap()
       setDeletedRoomIds([])
       setDeletedFoodIds([])
       dispatch(getHotelById(displayHotelId))
@@ -693,12 +921,16 @@ function HotelEditPage() {
       return {
         _id: existingId || `room-temp-${Date.now()}`,
         roomId: existing?.roomId || '',
+        clientKey: existing?.clientKey || roomForm.clientKey || createClientKey('room'),
         name: roomForm.type || `Room ${rooms.length + 1}`,
         type: roomForm.type, bedType: roomForm.bedType,
         price: String(roomForm.price ?? ''), countRooms: String(roomForm.countRooms ?? ''),
         totalRooms: String(roomForm.countRooms ?? ''), description: roomForm.description,
         amenities: roomForm.amenities, images: roomForm.images,
         isOffer: roomForm.isOffer, offerName: roomForm.offerName,
+        originalPrice: String(roomForm.originalPrice ?? roomForm.price ?? ''),
+        offerPriceLess: String(roomForm.offerPriceLess ?? ''),
+        offerExp: roomForm.offerExp || '',
       }
     }
     if (editingRoomId) {
@@ -727,6 +959,7 @@ function HotelEditPage() {
       isOffer: room.isOffer, offerName: room.offerName,
       offerPriceLess: room.offerPriceLess || '',
       offerExp: room.offerExp || '',
+      clientKey: room.clientKey || room.roomId || createClientKey('room'),
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -738,6 +971,7 @@ function HotelEditPage() {
       return {
         _id: existingId || `food-temp-${Date.now()}`,
         foodId: existing?.foodId || '',
+        clientKey: existing?.clientKey || foodForm.clientKey || createClientKey('food'),
         name: foodForm.name,
         foodType: foodForm.foodType || 'Veg',
         price: String(foodForm.price ?? ''),
@@ -769,6 +1003,7 @@ function HotelEditPage() {
       price: food.price,
       about: food.about,
       images: food.images,
+      clientKey: food.clientKey || food.foodId || createClientKey('food'),
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -863,239 +1098,147 @@ function HotelEditPage() {
         }}>
           <StepHeader step={currentStepObj} total={STEPS.length} />
 
-          {/* ════ STEP 1: Basic Info ════════════════════════════════ */}
+          {/* ════ STEP 1: Identity ════════════════════════════════ */}
           {currentStep === 1 && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px 20px' }}>
-              <FieldInput label="Hotel Name" required value={hotelForm.hotelName} onChange={setHotelField('hotelName')} />
-              <FieldInput label="Hotel Email" type="email" required value={hotelForm.hotelEmail} onChange={setHotelField('hotelEmail')} />
-              <FieldInput label="Owner" value={hotelForm.owner} onChange={setHotelField('owner')} />
-              <FieldInput label="Phone" value={hotelForm.phone} onChange={setHotelField('phone')} />
-              <div style={{ gridColumn: '1 / -1' }}>
-                <FieldInput label="Address" value={hotelForm.address} onChange={setHotelField('address')} />
-              </div>
-              <FieldInput label="City" required value={hotelForm.city} onChange={setHotelField('city')} />
-              <FieldInput label="State" required value={hotelForm.state} onChange={setHotelField('state')} />
-              <FieldInput label="Pin Code" value={hotelForm.pinCode} onChange={setHotelField('pinCode')} />
-              <FieldInput label="Destination" value={hotelForm.destination} onChange={setHotelField('destination')} placeholder="e.g. Shimla" />
-            </div>
-          )}
-
-          {/* ════ STEP 2: Property Details ══════════════════════════ */}
-          {currentStep === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '18px 20px' }}>
-                <FieldInput label="Star Rating" type="number" min="0" max="5" value={hotelForm.starRating} onChange={setHotelField('starRating')} placeholder="e.g. 4" />
-                <FieldInput label="Property Type" value={hotelForm.propertyType} onChange={setHotelField('propertyType')} placeholder="Hotel, Resort" />
-                <FieldInput label="Hotel Category" value={hotelForm.hotelCategory} onChange={setHotelField('hotelCategory')} placeholder="e.g. Luxury" />
-                <FieldInput label="Latitude" value={hotelForm.latitude} onChange={setHotelField('latitude')} placeholder="e.g. 31.1048" />
-                <FieldInput label="Longitude" value={hotelForm.longitude} onChange={setHotelField('longitude')} placeholder="e.g. 77.1734" />
-                <FieldInput label="General Manager Contact" value={hotelForm.generalManagerContact} onChange={setHotelField('generalManagerContact')} placeholder="+91 XXXXXXXXXX" />
-                <FieldInput label="Sales Manager Contact" value={hotelForm.salesManagerContact} onChange={setHotelField('salesManagerContact')} placeholder="+91 XXXXXXXXXX" />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px 20px' }}>
+                <FieldInput label="Hotel Name" required value={hotelForm.hotelName} onChange={setHotelField('hotelName')} placeholder="e.g. Taj Palace, The Grand Oberoi" />
+                <FieldInput label="Owner Name" value={hotelForm.owner} onChange={setHotelField('owner')} placeholder="Rahul Sharma" />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8' }}>Local ID</label>
-                  <select
-                    value={hotelForm.localId} onChange={setHotelField('localId')}
-                    style={{ ...inputCls }}
+                  <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8', fontFamily: "'DM Sans', sans-serif" }}>Property Type</label>
+                  <select value={hotelForm.propertyType} onChange={setHotelField('propertyType')} style={{ ...inputCls }}
                     onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff' }}
-                    onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }}
-                  >
-                    <option value="Accepted">Accepted</option>
-                    <option value="Not Accepted">Not Accepted</option>
+                    onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }}>
+                    <option value="">Select property type</option>
+                    {propertyTypeOptions.map((opt, i) => <option key={opt?._id || opt?.name || i} value={opt?.name || ''}>{opt?.name || 'Unnamed'}</option>)}
                   </select>
                 </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8', fontFamily: "'DM Sans', sans-serif" }}>Hotel Category</label>
+                  <select value={hotelForm.hotelCategory} onChange={setHotelField('hotelCategory')} style={{ ...inputCls }}
+                    onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff' }}
+                    onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }}>
+                    <option value="">Select hotel category</option>
+                    {hotelCategoryOptions.map((opt, i) => <option key={opt?._id || opt?.name || i} value={opt?.name || ''}>{opt?.name || 'Unnamed'}</option>)}
+                  </select>
+                </div>
+                <FieldInput label="Number of Rooms" type="number" value={hotelForm.numRooms} onChange={setHotelField('numRooms')} placeholder="50" />
               </div>
-
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8' }}>
-                  Customer Welcome Note
-                </label>
-                <textarea
-                  value={hotelForm.customerWelcomeNote} onChange={setHotelField('customerWelcomeNote')} rows={3}
-                  placeholder="Welcome message for guests…"
+                <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8' }}>Description</label>
+                <textarea value={hotelForm.description} onChange={setHotelField('description')} rows={5}
+                  placeholder="Describe your property in a way that captivates guests…"
                   style={{ ...inputCls, resize: 'vertical', lineHeight: 1.7 }}
                   onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.08)' }}
-                  onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; e.target.style.boxShadow = 'none' }}
-                />
+                  onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; e.target.style.boxShadow = 'none' }} />
               </div>
-
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8' }}>
-                  Description
-                </label>
-                <textarea
-                  value={hotelForm.description} onChange={setHotelField('description')} rows={5}
-                  placeholder="Brief description of the property for guests and internal ops…"
+                <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8' }}>Customer Welcome Note</label>
+                <textarea value={hotelForm.customerWelcomeNote} onChange={setHotelField('customerWelcomeNote')} rows={3}
+                  placeholder="Dear Guest, welcome to our property…"
                   style={{ ...inputCls, resize: 'vertical', lineHeight: 1.7 }}
                   onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.08)' }}
-                  onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; e.target.style.boxShadow = 'none' }}
-                />
-              </div>
-
-              {/* Status toggles */}
-              <div style={{ background: '#f8fafc', borderRadius: 12, padding: '16px 20px', display: 'flex', flexWrap: 'wrap', gap: 20 }}>
-                <p style={{ width: '100%', margin: '0 0 8px', fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8' }}>
-                  Visibility Settings
-                </p>
-                {[
-                  { label: 'Show on Front Page', key: 'onFront' },
-                  { label: 'Mark as Accepted',   key: 'isAccepted' },
-                ].map(({ label, key }) => (
-                  <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 500, color: '#334155', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox" checked={hotelForm[key]} onChange={setHotelField(key)}
-                      style={{ width: 16, height: 16, accentColor: '#6366f1', cursor: 'pointer' }}
-                    />
-                    {label}
-                  </label>
-                ))}
+                  onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; e.target.style.boxShadow = 'none' }} />
               </div>
             </div>
           )}
 
-          {/* ════ STEP 3: Rooms ════════════════════════════════════ */}
+
+          {/* ════ STEP 2: Location ════════════════════════════════ */}
+          {currentStep === 2 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px 20px' }}>
+                <FieldInput label="Destination / Region" value={hotelForm.destination} onChange={setHotelField('destination')} placeholder="Jaipur, Goa, Shimla…" />
+                <FieldInput label="Pin Code" type="number" value={hotelForm.pinCode} onChange={setHotelField('pinCode')} placeholder="302001" />
+                <FieldInput label="State" required value={hotelForm.state} onChange={setHotelField('state')} placeholder="Rajasthan" />
+                <FieldInput label="City" required value={hotelForm.city} onChange={setHotelField('city')} placeholder="Jaipur" />
+              </div>
+              <FieldInput label="Landmark / Street Address" value={hotelForm.address} onChange={setHotelField('address')} placeholder="Near Hawa Mahal, Opposite City Centre Mall…" />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px 20px' }}>
+                <FieldInput label="Latitude" value={hotelForm.latitude} onChange={setHotelField('latitude')} placeholder="26.9124" />
+                <FieldInput label="Longitude" value={hotelForm.longitude} onChange={setHotelField('longitude')} placeholder="75.7873" />
+              </div>
+            </div>
+          )}
+
+          {/* ════ STEP 3: Ratings & Dates ════════════════════════ */}
           {currentStep === 3 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-
-              {/* Room form */}
-              <div style={{ background: '#f8fafc', borderRadius: 14, padding: 24 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-                  <div>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: '#6366f1', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 2px' }}>
-                      {editingRoomId ? 'Edit Room' : 'Add Room'}
-                    </p>
-                    <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>
-                      {editingRoomId ? 'Changes will save locally. Hit "Save" to push to server.' : 'Fill in room details and add to the list below.'}
-                    </p>
-                  </div>
-                  {editingRoomId && (
-                    <button type="button" onClick={resetRoomEditor}
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', fontSize: 12, fontWeight: 600, color: '#64748b', cursor: 'pointer' }}>
-                      <X size={13} /> Cancel
-                    </button>
-                  )}
-                </div>
-
-                <form onSubmit={saveRoomLocal}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px 16px' }}>
-                    <FieldInput label="Room Type" required value={roomForm.type} onChange={setRoomField('type')} placeholder="Deluxe Room" />
-                    <FieldInput label="Bed Type" value={roomForm.bedType} onChange={setRoomField('bedType')} placeholder="King Bed" />
-                    <FieldInput label="Price (₹)" type="number" min="0" value={roomForm.price} onChange={setRoomField('price')} placeholder="2999" />
-                    <FieldInput label="Total Rooms" type="number" min="1" value={roomForm.countRooms} onChange={setRoomField('countRooms')} placeholder="10" />
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <FieldInput label="Amenities (comma separated)" value={roomForm.amenities} onChange={setRoomField('amenities')} placeholder="WiFi, AC, Breakfast" />
-                    </div>
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <FieldInput label="Image URLs (comma separated)" value={roomForm.images} onChange={setRoomField('images')} placeholder="https://..." />
-                    </div>
-                    <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8' }}>Description</label>
-                      <textarea
-                        value={roomForm.description} onChange={setRoomField('description')} rows={3}
-                        placeholder="Short room description…"
-                        style={{ ...inputCls, resize: 'vertical', lineHeight: 1.7 }}
-                        onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff' }}
-                        onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Offer row */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14, padding: '14px 16px', background: '#fff', borderRadius: 10, border: '1.5px solid #e2e8f0' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#334155', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={roomForm.isOffer} onChange={setRoomField('isOffer')} style={{ width: 15, height: 15, accentColor: '#6366f1' }} />
-                      Active Offer
-                    </label>
-                    {roomForm.isOffer && (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px 14px' }}>
-                        <input
-                          value={roomForm.offerName} onChange={setRoomField('offerName')} placeholder="Offer name e.g. Flat 20% off"
-                          style={{ ...inputCls }}
-                          onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff' }}
-                          onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }}
-                        />
-                        <FieldInput label="Original Price (₹)" type="number" min="0" value={roomForm.originalPrice} onChange={setRoomField('originalPrice')} placeholder="3999" />
-                        <FieldInput label="Offer Price Less (₹)" type="number" min="0" value={roomForm.offerPriceLess} onChange={setRoomField('offerPriceLess')} placeholder="500" />
-                        <FieldInput label="Offer Expiry" type="date" value={roomForm.offerExp} onChange={setRoomField('offerExp')} />
-                      </div>
-                    )}
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
-                    <button type="submit"
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px',
-                        borderRadius: 10, border: 'none', background: '#6366f1',
-                        fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600,
-                        color: '#fff', cursor: 'pointer',
-                      }}>
-                      {editingRoomId ? <><PencilLine size={14} /> Update Room</> : <><Plus size={14} /> Add Room</>}
-                    </button>
-                  </div>
-                </form>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '18px 20px' }}>
+                <FieldInput label="Star Rating" type="number" min="0" max="5" value={hotelForm.starRating} onChange={setHotelField('starRating')} placeholder="3" />
+                <FieldInput label="Score (out of 5)" type="number" min="0" max="5" value={hotelForm.rating} onChange={setHotelField('rating')} placeholder="4.5" />
+                <FieldInput label="Reviews Count" type="number" min="0" value={hotelForm.reviews} onChange={setHotelField('reviews')} placeholder="128" />
               </div>
-
-              {/* Room list */}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94a3b8', margin: 0 }}>
-                    Saved Rooms ({rooms.length})
-                  </p>
-                  {updating && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6366f1' }}>
-                      <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Syncing…
-                    </div>
-                  )}
-                </div>
-
-                {rooms.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '40px 20px', background: '#f8fafc', borderRadius: 12, border: '1.5px dashed #e2e8f0' }}>
-                    <BedDouble size={28} color="#cbd5e1" style={{ margin: '0 auto 10px', display: 'block' }} />
-                    <p style={{ fontSize: 13, color: '#94a3b8', margin: 0 }}>No rooms added yet. Use the form above to add the first room.</p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {rooms.map((room) => (
-                      <div key={room._id}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px',
-                          borderRadius: 12, border: `1.5px solid ${editingRoomId === room._id ? '#6366f1' : '#f1f5f9'}`,
-                          background: editingRoomId === room._id ? '#eef2ff' : '#fafafa',
-                          transition: 'all .15s',
-                        }}>
-                        <div style={{ width: 40, height: 40, borderRadius: 10, background: '#ede9fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <BedDouble size={18} color="#7c3aed" />
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                            <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', margin: 0 }}>{room.name}</p>
-                            {room.isOffer && room.offerName && (
-                              <span style={{ fontSize: 10, fontWeight: 700, background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: 20 }}>{room.offerName}</span>
-                            )}
-                          </div>
-                          <p style={{ fontSize: 12, color: '#64748b', margin: '2px 0 0' }}>
-                            {room.bedType || '—'} &nbsp;·&nbsp; ₹{room.price} &nbsp;·&nbsp; {room.countRooms} rooms
-                          </p>
-                        </div>
-                        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                          <button type="button" onClick={() => handleRoomEdit(room)}
-                            style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', fontSize: 12, fontWeight: 600, color: '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <PencilLine size={12} /> Edit
-                          </button>
-                          <button type="button" onClick={() => handleRoomDelete(room)}
-                            style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid #fecdd3', background: '#fff1f2', fontSize: 12, fontWeight: 600, color: '#be123c', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <Trash2 size={12} /> Del
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <p style={{ fontSize: 12, fontStyle: 'italic', color: '#94a3b8', margin: 0, fontFamily: "'DM Sans', sans-serif" }}>
+                Optional — set a promotional or seasonal date range for this listing.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px 20px' }}>
+                <FieldInput label="Start Date" type="date" value={hotelForm.startDate} onChange={setHotelField('startDate')} />
+                <FieldInput label="End Date" type="date" value={hotelForm.endDate} onChange={setHotelField('endDate')} />
               </div>
             </div>
           )}
 
-          {/* ════ STEP 4: Dining ════════════════════════════════════ */}
+          {/* ════ STEP 4: Amenities ════════════════════════════════ */}
           {currentStep === 4 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {hotelAmenities.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: 14, background: '#eef2ff', borderRadius: 12, border: '1px solid #e0e7ff' }}>
+                  {hotelAmenities.map((amenity) => (
+                    <span key={amenity} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999, background: '#fff', border: '1.5px solid #c7d2fe', color: '#4338ca', fontSize: 12, fontWeight: 600 }}>
+                      {amenity}
+                      <button type="button" onClick={() => removeAmenityTag(amenity)} style={{ border: 'none', background: 'transparent', padding: 0, lineHeight: 0, color: '#6366f1', cursor: 'pointer' }}>
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 10 }}>
+                <select value={selectedAmenity} onChange={(e) => setSelectedAmenity(e.target.value)} style={{ ...inputCls }}
+                  onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff' }}
+                  onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }}>
+                  <option value="">Select amenity from additional fields…</option>
+                  {hotelAmenityOptions.filter((item) => item?.name && !hotelAmenities.includes(item.name)).map((item) => (
+                    <option key={item._id || item.name} value={item.name}>{item.name}</option>
+                  ))}
+                </select>
+                <button type="button" disabled={!selectedAmenity}
+                  onClick={() => { if (selectedAmenity && !hotelAmenities.includes(selectedAmenity)) { setHotelAmenities((p) => [...p, selectedAmenity]); setSelectedAmenity('') } }}
+                  style={{ padding: '11px 18px', borderRadius: 10, border: 'none', background: selectedAmenity ? '#6366f1' : '#e2e8f0', color: selectedAmenity ? '#fff' : '#94a3b8', fontSize: 12, fontWeight: 700, cursor: selectedAmenity ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>
+                  + Add Selected
+                </button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 10 }}>
+                <input value={amenityInput} onChange={handleAmenityInput}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addAmenityTag() } }}
+                  placeholder="Type amenity, press Enter or comma to add…"
+                  style={{ ...inputCls }}
+                  onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff' }}
+                  onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }} />
+                <button type="button" onClick={addAmenityTag}
+                  style={{ padding: '11px 18px', borderRadius: 10, border: 'none', background: '#0f172a', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                  + Add
+                </button>
+              </div>
+              <div>
+                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8', margin: '0 0 10px' }}>Quick Add</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {['Free WiFi','Air Conditioning','Swimming Pool','Gym & Fitness','Parking','Restaurant','Room Service','Spa & Wellness','Bar & Lounge','Conference Hall','Laundry Service','24/7 Reception','Airport Transfer','CCTV Security'].filter((p) => !hotelAmenities.includes(p)).map((preset) => (
+                    <button key={preset} type="button" onClick={() => setHotelAmenities((prev) => [...prev, preset])}
+                      style={{ padding: '6px 13px', background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: 999, fontSize: 11, color: '#475569', cursor: 'pointer', fontWeight: 500 }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#eef2ff'; e.currentTarget.style.borderColor = '#6366f1'; e.currentTarget.style.color = '#4338ca' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#475569' }}>
+                      + {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ════ STEP 5: Dining ════════════════════════════════════ */}
+          {currentStep === 5 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               <div style={{ background: '#f8fafc', borderRadius: 14, padding: 24 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
@@ -1114,19 +1257,14 @@ function HotelEditPage() {
                     </button>
                   )}
                 </div>
-
                 <form onSubmit={saveFoodLocal}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px 16px' }}>
                     <FieldInput label="Food Name" required value={foodForm.name} onChange={setFoodField('name')} placeholder="Paneer Butter Masala" />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8' }}>Food Type</label>
-                      <select
-                        value={foodForm.foodType}
-                        onChange={setFoodField('foodType')}
-                        style={{ ...inputCls }}
+                      <select value={foodForm.foodType} onChange={setFoodField('foodType')} style={{ ...inputCls }}
                         onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff' }}
-                        onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }}
-                      >
+                        onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }}>
                         <option value="Veg">Veg</option>
                         <option value="Non Veg">Non Veg</option>
                         <option value="Vegan">Vegan</option>
@@ -1135,45 +1273,30 @@ function HotelEditPage() {
                     <FieldInput label="Price (₹)" type="number" min="0" value={foodForm.price} onChange={setFoodField('price')} placeholder="299" />
                     <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8' }}>Description</label>
-                      <textarea
-                        value={foodForm.about} onChange={setFoodField('about')} rows={3}
+                      <textarea value={foodForm.about} onChange={setFoodField('about')} rows={3}
                         placeholder="Short description for guests…"
                         style={{ ...inputCls, resize: 'vertical', lineHeight: 1.7 }}
                         onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff' }}
-                        onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }}
-                      />
+                        onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }} />
                     </div>
                     <div style={{ gridColumn: '1 / -1' }}>
-                      <FieldInput label="Image URLs (comma separated)" value={foodForm.images} onChange={setFoodField('images')} placeholder="https://..." />
+                      <ImageManager label="Food Images" items={Array.isArray(foodForm.images) ? foodForm.images : []}
+                        onAddFiles={addFoodImages} onRemove={removeFoodImage}
+                        helperText="Upload menu photos here. You can keep existing photos and add new ones in the same edit." />
                     </div>
                   </div>
-
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
-                    <button type="submit"
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px',
-                        borderRadius: 10, border: 'none', background: '#6366f1',
-                        fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600,
-                        color: '#fff', cursor: 'pointer',
-                      }}>
+                    <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px', borderRadius: 10, border: 'none', background: '#6366f1', fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer' }}>
                       {editingFoodId ? <><PencilLine size={14} /> Update Food</> : <><Plus size={14} /> Add Food</>}
                     </button>
                   </div>
                 </form>
               </div>
-
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94a3b8', margin: 0 }}>
-                    Saved Food Items ({foods.length})
-                  </p>
-                  {updating && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6366f1' }}>
-                      <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Syncing…
-                    </div>
-                  )}
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94a3b8', margin: 0 }}>Saved Food Items ({foods.length})</p>
+                  {updating && <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6366f1' }}><Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Syncing…</div>}
                 </div>
-
                 {foods.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '40px 20px', background: '#f8fafc', borderRadius: 12, border: '1.5px dashed #e2e8f0' }}>
                     <p style={{ fontSize: 13, color: '#94a3b8', margin: 0 }}>No food items added yet. Use the form above to add the first menu item.</p>
@@ -1181,36 +1304,20 @@ function HotelEditPage() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {foods.map((food) => (
-                      <div key={food._id}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px',
-                          borderRadius: 12, border: `1.5px solid ${editingFoodId === food._id ? '#6366f1' : '#f1f5f9'}`,
-                          background: editingFoodId === food._id ? '#eef2ff' : '#fafafa',
-                          transition: 'all .15s',
-                        }}>
+                      <div key={food._id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 12, border: `1.5px solid ${editingFoodId === food._id ? '#6366f1' : '#f1f5f9'}`, background: editingFoodId === food._id ? '#eef2ff' : '#fafafa', transition: 'all .15s' }}>
                         <div style={{ width: 40, height: 40, borderRadius: 10, background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           <span style={{ fontSize: 11, fontWeight: 700, color: '#c2410c' }}>{food.foodType?.slice(0, 3)?.toUpperCase() || 'FOOD'}</span>
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                             <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', margin: 0 }}>{food.name || 'Untitled food item'}</p>
-                            <span style={{ fontSize: 10, fontWeight: 700, background: food.foodType?.toLowerCase() === 'veg' ? '#dcfce7' : '#fee2e2', color: food.foodType?.toLowerCase() === 'veg' ? '#15803d' : '#b91c1c', padding: '2px 8px', borderRadius: 20 }}>
-                              {food.foodType || 'Veg'}
-                            </span>
+                            <span style={{ fontSize: 10, fontWeight: 700, background: food.foodType?.toLowerCase() === 'veg' ? '#dcfce7' : '#fee2e2', color: food.foodType?.toLowerCase() === 'veg' ? '#15803d' : '#b91c1c', padding: '2px 8px', borderRadius: 20 }}>{food.foodType || 'Veg'}</span>
                           </div>
-                          <p style={{ fontSize: 12, color: '#64748b', margin: '2px 0 0' }}>
-                            ₹{food.price || 0}{food.about ? ` · ${food.about}` : ''}
-                          </p>
+                          <p style={{ fontSize: 12, color: '#64748b', margin: '2px 0 0' }}>₹{food.price || 0}{food.about ? ` · ${food.about}` : ''}</p>
                         </div>
                         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                          <button type="button" onClick={() => handleFoodEdit(food)}
-                            style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', fontSize: 12, fontWeight: 600, color: '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <PencilLine size={12} /> Edit
-                          </button>
-                          <button type="button" onClick={() => handleFoodDelete(food)}
-                            style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid #fecdd3', background: '#fff1f2', fontSize: 12, fontWeight: 600, color: '#be123c', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <Trash2 size={12} /> Del
-                          </button>
+                          <button type="button" onClick={() => handleFoodEdit(food)} style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', fontSize: 12, fontWeight: 600, color: '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}><PencilLine size={12} /> Edit</button>
+                          <button type="button" onClick={() => handleFoodDelete(food)} style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid #fecdd3', background: '#fff1f2', fontSize: 12, fontWeight: 600, color: '#be123c', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}><Trash2 size={12} /> Del</button>
                         </div>
                       </div>
                     ))}
@@ -1220,49 +1327,28 @@ function HotelEditPage() {
             </div>
           )}
 
-          {/* ════ STEP 5: Policies ══════════════════════════════════ */}
-          {currentStep === 5 && (
+          {/* ════ STEP 6: Policies ══════════════════════════════════ */}
+          {currentStep === 6 && (
             <div>
               {policyMsg && (
-                <div style={{
-                  marginBottom: 20, padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                  background: policyMsg.type === 'success' ? '#f0fdf4' : '#fff1f2',
-                  border: `1px solid ${policyMsg.type === 'success' ? '#bbf7d0' : '#fecdd3'}`,
-                  color: policyMsg.type === 'success' ? '#15803d' : '#be123c',
-                  display: 'flex', alignItems: 'center', gap: 8,
-                }}>
+                <div style={{ marginBottom: 20, padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, background: policyMsg.type === 'success' ? '#f0fdf4' : '#fff1f2', border: `1px solid ${policyMsg.type === 'success' ? '#bbf7d0' : '#fecdd3'}`, color: policyMsg.type === 'success' ? '#15803d' : '#be123c', display: 'flex', alignItems: 'center', gap: 8 }}>
                   {policyMsg.type === 'success' ? <CheckCircle2 size={14} /> : <X size={14} />}
                   {policyMsg.text}
                 </div>
               )}
-
-              {/* General Policies */}
-              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8', margin: '0 0 12px' }}>
-                General Policies
-              </p>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8', margin: '0 0 12px' }}>General Policies</p>
               {POLICY_LABELS.map(({ label, key }) => (
-                <PolicyEditor
-                  key={key} label={label}
-                  value={policies[key]}
-                  onChange={(v) => setPolicies((p) => ({ ...p, [key]: v }))}
-                />
+                <PolicyEditor key={key} label={label} value={policies[key]} onChange={(v) => setPolicies((p) => ({ ...p, [key]: v }))} />
               ))}
-
-              {/* Guest Rules */}
               <div style={{ margin: '24px 0 12px' }}>
-                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8', margin: '0 0 12px' }}>
-                  Guest Rules
-                </p>
+                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8', margin: '0 0 12px' }}>Guest Rules</p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px 16px' }}>
                   {GUEST_RULES.map(({ label, key }) => (
                     <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                       <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#94a3b8' }}>{label}</label>
-                      <select
-                        value={policies[key]} onChange={(e) => setPolicies((p) => ({ ...p, [key]: e.target.value }))}
-                        style={{ ...inputCls }}
+                      <select value={policies[key]} onChange={(e) => setPolicies((p) => ({ ...p, [key]: e.target.value }))} style={{ ...inputCls }}
                         onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff' }}
-                        onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }}
-                      >
+                        onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }}>
                         <option value="">-- Select --</option>
                         {YES_NO.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                       </select>
@@ -1270,12 +1356,8 @@ function HotelEditPage() {
                   ))}
                 </div>
               </div>
-
-              {/* Seasonal Pricing */}
               <div style={{ margin: '24px 0 12px' }}>
-                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8', margin: '0 0 16px' }}>
-                  Seasonal Pricing (per person per night)
-                </p>
+                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8', margin: '0 0 16px' }}>Seasonal Pricing (per person per night)</p>
                 {SEASONAL_SECTIONS.map(({ label, prefix, suffix }) => (
                   <div key={`${prefix}${suffix}`} style={{ marginBottom: 18, background: '#f8fafc', borderRadius: 12, padding: '14px 16px' }}>
                     <p style={{ fontSize: 11, fontWeight: 700, color: '#6366f1', margin: '0 0 10px', letterSpacing: '0.06em' }}>{label}</p>
@@ -1286,15 +1368,10 @@ function HotelEditPage() {
                         return (
                           <div key={fieldKey} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                             <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94a3b8' }}>{col}</label>
-                            <input
-                              type="number" min="0"
-                              value={policies[fieldKey] ?? ''}
-                              onChange={(e) => setPolicies((p) => ({ ...p, [fieldKey]: e.target.value }))}
-                              placeholder="₹"
+                            <input type="number" min="0" value={policies[fieldKey] ?? ''} onChange={(e) => setPolicies((p) => ({ ...p, [fieldKey]: e.target.value }))} placeholder="₹"
                               style={{ ...inputCls, fontSize: 12 }}
                               onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff' }}
-                              onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }}
-                            />
+                              onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }} />
                           </div>
                         )
                       })}
@@ -1302,18 +1379,207 @@ function HotelEditPage() {
                   </div>
                 ))}
               </div>
-
-              <button
-                type="button" onClick={savePolicies} disabled={policyLoading}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '11px 24px', borderRadius: 10, border: 'none',
-                  background: '#6366f1', fontFamily: "'DM Sans', sans-serif",
-                  fontSize: 13, fontWeight: 600, color: '#fff', cursor: policyLoading ? 'not-allowed' : 'pointer',
-                  opacity: policyLoading ? 0.7 : 1,
-                }}>
+              <button type="button" onClick={savePolicies} disabled={policyLoading}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 24px', borderRadius: 10, border: 'none', background: '#6366f1', fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: '#fff', cursor: policyLoading ? 'not-allowed' : 'pointer', opacity: policyLoading ? 0.7 : 1 }}>
                 {policyLoading ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> : <ShieldCheck size={15} />}
                 Save Policies
+              </button>
+            </div>
+          )}
+
+          {/* ════ STEP 7: Rooms ════════════════════════════════════ */}
+          {currentStep === 7 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <div style={{ background: '#f8fafc', borderRadius: 14, padding: 24 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                  <div>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: '#6366f1', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 2px' }}>
+                      {editingRoomId ? 'Edit Room' : 'Add Room'}
+                    </p>
+                    <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>
+                      {editingRoomId ? 'Changes will save locally. Hit "Save" to push to server.' : 'Fill in room details and add to the list below.'}
+                    </p>
+                  </div>
+                  {editingRoomId && (
+                    <button type="button" onClick={resetRoomEditor}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', fontSize: 12, fontWeight: 600, color: '#64748b', cursor: 'pointer' }}>
+                      <X size={13} /> Cancel
+                    </button>
+                  )}
+                </div>
+                <form onSubmit={saveRoomLocal}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px 16px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8', fontFamily: "'DM Sans', sans-serif" }}>
+                        Room Type<span style={{ color: '#f43f5e', marginLeft: 3 }}>*</span>
+                      </label>
+                      <select required value={roomForm.type} onChange={setRoomField('type')} style={{ ...inputCls }}
+                        onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.08)' }}
+                        onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; e.target.style.boxShadow = 'none' }}>
+                        <option value="">Select room type</option>
+                        {roomTypeOptions.map((opt, i) => <option key={opt?._id || opt?.name || i} value={opt?.name || ''}>{opt?.name || 'Unnamed'}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8', fontFamily: "'DM Sans', sans-serif" }}>Bed Type</label>
+                      <select value={roomForm.bedType} onChange={setRoomField('bedType')} style={{ ...inputCls }}
+                        onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.08)' }}
+                        onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; e.target.style.boxShadow = 'none' }}>
+                        <option value="">Select bed type</option>
+                        {bedTypeOptions.map((opt, i) => <option key={opt?._id || opt?.name || i} value={opt?.name || ''}>{opt?.name || 'Unnamed'}</option>)}
+                      </select>
+                    </div>
+                    <FieldInput label="Price (₹)" type="number" min="0" value={roomForm.price} onChange={setRoomField('price')} placeholder="2999" />
+                    <FieldInput label="Total Rooms" type="number" min="1" value={roomForm.countRooms} onChange={setRoomField('countRooms')} placeholder="10" />
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <FieldInput label="Amenities (comma separated)" value={roomForm.amenities} onChange={setRoomField('amenities')} placeholder="WiFi, AC, Breakfast" />
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <ImageManager label="Room Images" items={Array.isArray(roomForm.images) ? roomForm.images : []}
+                        onAddFiles={addRoomImages} onRemove={removeRoomImage}
+                        helperText="Existing room images stay attached unless you remove them. New uploads will be added when you save the hotel." />
+                    </div>
+                    <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8' }}>Description</label>
+                      <textarea value={roomForm.description} onChange={setRoomField('description')} rows={3}
+                        placeholder="Short room description…"
+                        style={{ ...inputCls, resize: 'vertical', lineHeight: 1.7 }}
+                        onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff' }}
+                        onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14, padding: '14px 16px', background: '#fff', borderRadius: 10, border: '1.5px solid #e2e8f0' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#334155', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={roomForm.isOffer} onChange={setRoomField('isOffer')} style={{ width: 15, height: 15, accentColor: '#6366f1' }} />
+                      Active Offer
+                    </label>
+                    {roomForm.isOffer && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px 14px' }}>
+                        <input value={roomForm.offerName} onChange={setRoomField('offerName')} placeholder="Offer name e.g. Flat 20% off"
+                          style={{ ...inputCls }}
+                          onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff' }}
+                          onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }} />
+                        <FieldInput label="Original Price (₹)" type="number" min="0" value={roomForm.originalPrice} onChange={setRoomField('originalPrice')} placeholder="3999" />
+                        <FieldInput label="Offer Price Less (₹)" type="number" min="0" value={roomForm.offerPriceLess} onChange={setRoomField('offerPriceLess')} placeholder="500" />
+                        <FieldInput label="Offer Expiry" type="date" value={roomForm.offerExp} onChange={setRoomField('offerExp')} />
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
+                    <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px', borderRadius: 10, border: 'none', background: '#6366f1', fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer' }}>
+                      {editingRoomId ? <><PencilLine size={14} /> Update Room</> : <><Plus size={14} /> Add Room</>}
+                    </button>
+                  </div>
+                </form>
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94a3b8', margin: 0 }}>Saved Rooms ({rooms.length})</p>
+                  {updating && <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6366f1' }}><Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Syncing…</div>}
+                </div>
+                {rooms.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px 20px', background: '#f8fafc', borderRadius: 12, border: '1.5px dashed #e2e8f0' }}>
+                    <BedDouble size={28} color="#cbd5e1" style={{ margin: '0 auto 10px', display: 'block' }} />
+                    <p style={{ fontSize: 13, color: '#94a3b8', margin: 0 }}>No rooms added yet. Use the form above to add the first room.</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {rooms.map((room) => (
+                      <div key={room._id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 12, border: `1.5px solid ${editingRoomId === room._id ? '#6366f1' : '#f1f5f9'}`, background: editingRoomId === room._id ? '#eef2ff' : '#fafafa', transition: 'all .15s' }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 10, background: '#ede9fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <BedDouble size={18} color="#7c3aed" />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', margin: 0 }}>{room.name}</p>
+                            {room.isOffer && room.offerName && <span style={{ fontSize: 10, fontWeight: 700, background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: 20 }}>{room.offerName}</span>}
+                          </div>
+                          <p style={{ fontSize: 12, color: '#64748b', margin: '2px 0 0' }}>{room.bedType || '—'} &nbsp;·&nbsp; ₹{room.price} &nbsp;·&nbsp; {room.countRooms} rooms</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                          <button type="button" onClick={() => handleRoomEdit(room)} style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', fontSize: 12, fontWeight: 600, color: '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}><PencilLine size={12} /> Edit</button>
+                          <button type="button" onClick={() => handleRoomDelete(room)} style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid #fecdd3', background: '#fff1f2', fontSize: 12, fontWeight: 600, color: '#be123c', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}><Trash2 size={12} /> Del</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ════ STEP 8: Contact ════════════════════════════════ */}
+          {currentStep === 8 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px 20px' }}>
+              <FieldInput label="Hotel Email" type="email" value={hotelForm.hotelEmail} onChange={setHotelField('hotelEmail')} placeholder="info@hotel.com" />
+              <FieldInput label="Hotel Contact" value={hotelForm.phone} onChange={setHotelField('phone')} placeholder="9876543210" />
+              <FieldInput label="General Manager Contact" value={hotelForm.generalManagerContact} onChange={setHotelField('generalManagerContact')} placeholder="+91 XXXXXXXXXX" />
+              <FieldInput label="Sales Manager Contact" value={hotelForm.salesManagerContact} onChange={setHotelField('salesManagerContact')} placeholder="+91 XXXXXXXXXX" />
+            </div>
+          )}
+
+          {/* ════ STEP 9: Images & Status ════════════════════════ */}
+          {currentStep === 9 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <ImageManager label="Hotel Images" items={hotelImageItems} onAddFiles={addHotelImages}
+                onRemove={removeImageItem(setHotelImageItems)}
+                helperText="Existing gallery images stay unless you remove them. New uploads will be added when you save." />
+              <div style={{ background: '#f8fafc', borderRadius: 12, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8' }}>Visibility & Status</p>
+                {[
+                  { label: 'Show on Front Page', key: 'onFront' },
+                  { label: 'Mark as Accepted',   key: 'isAccepted' },
+                ].map(({ label, key }) => (
+                  <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 500, color: '#334155', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={hotelForm[key]} onChange={setHotelField(key)} style={{ width: 16, height: 16, accentColor: '#6366f1', cursor: 'pointer' }} />
+                    {label}
+                  </label>
+                ))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94a3b8' }}>Local ID</label>
+                  <select value={hotelForm.localId} onChange={setHotelField('localId')} style={{ ...inputCls, maxWidth: 220 }}
+                    onFocus={(e) => { e.target.style.borderColor = '#6366f1'; e.target.style.background = '#fff' }}
+                    onBlur={(e)  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }}>
+                    <option value="Accepted">Accepted</option>
+                    <option value="Not Accepted">Not Accepted</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ════ STEP 10: Preview & Save ════════════════════════ */}
+          {currentStep === 10 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ padding: '14px 18px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <CheckCircle2 size={18} color="#2563eb" />
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#1e40af', margin: 0 }}>Review before saving</p>
+                  <p style={{ fontSize: 12, color: '#3b82f6', margin: '2px 0 0' }}>Sab changes check kar lo — "Save Hotel" dabane pe server update ho jaayega.</p>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+                {[
+                  { label: 'Hotel Name',  value: hotelForm.hotelName   || '—' },
+                  { label: 'City',        value: hotelForm.city         || '—' },
+                  { label: 'Category',    value: hotelForm.hotelCategory || '—' },
+                  { label: 'Star Rating', value: hotelForm.starRating   ? `${hotelForm.starRating} ★` : '—' },
+                  { label: 'Amenities',   value: `${hotelAmenities.length} added` },
+                  { label: 'Room Types',  value: `${rooms.length} types` },
+                  { label: 'Food Items',  value: `${foods.length} items` },
+                  { label: 'Images',      value: `${hotelImageItems.length} photos` },
+                ].map(({ label, value }) => (
+                  <div key={label} style={{ padding: '14px 16px', background: '#f8fafc', borderRadius: 12, border: '1.5px solid #f1f5f9' }}>
+                    <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#94a3b8', margin: '0 0 4px' }}>{label}</p>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', margin: 0 }}>{value}</p>
+                  </div>
+                ))}
+              </div>
+              <button type="button" onClick={saveHotel} disabled={updating}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '14px 28px', borderRadius: 12, border: 'none', background: updating ? '#94a3b8' : '#6366f1', fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 700, color: '#fff', cursor: updating ? 'not-allowed' : 'pointer', transition: 'background .15s', width: '100%' }}
+                onMouseEnter={(e) => { if (!updating) e.currentTarget.style.background = '#4f46e5' }}
+                onMouseLeave={(e) => { if (!updating) e.currentTarget.style.background = '#6366f1' }}>
+                {updating ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Saving Hotel…</> : <><Save size={16} /> Save Hotel</>}
               </button>
             </div>
           )}
